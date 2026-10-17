@@ -1,0 +1,105 @@
+name: Linting
+
+# Least-privilege default for all jobs — read-only access to repo contents.
+#
+# `pull-requests: read` is required by the `changes` job: dorny/paths-filter calls the
+# GitHub API to list a PR's changed files, and with `contents: read` alone that call fails
+# with "Resource not accessible by integration". The gate then errors, and because every
+# lint job is conditioned on its output, python-lint / go-lint / docker-lint were all
+# silently skipped on pull requests — linting looked configured but never ran on a PR.
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/lint.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/lint.yml'
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      python: ${{ steps.filter.outputs.python }}
+      go: ${{ steps.filter.outputs.go }}
+      dockerfiles: ${{ steps.filter.outputs.dockerfiles }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            python:
+              - 'backend/**'
+              - '!backend/connectors/**'
+            go:
+              - 'backend/connectors/**'
+            dockerfiles:
+              - 'backend/Dockerfile'
+              - 'backend/connectors/Dockerfile'
+
+  python-lint:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run Ruff (Python Linter)
+        uses: astral-sh/ruff-action@278981a28ce3188b1e39527901f38254bf3aac89 # v4.1.0
+        with:
+          src: "./backend"
+          # Pinned deliberately. Unpinned, this job took whatever ruff was newest and its
+          # default rule set came with it — Linting went from green to 608 errors on an
+          # unchanged tree when 0.16.0 shipped. Rule selection lives in backend/ruff.toml;
+          # bump this pin as its own change so the new findings get reviewed.
+          version: "0.16.0"
+
+  go-lint:
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Go
+        uses: actions/setup-go@v7
+        with:
+          # Must match backend/connectors/go.mod (1.26 since 2026-10: the net/http advisories
+          # GO-2026-6611 to 6617 are fixed only from go1.26.9).
+          go-version: '1.26'
+          # The runner's cached 1.26.x can lag the patch that carries a fix (1.26.8 was served when
+          # the net/http advisories needed 1.26.9), so always resolve the newest patch.
+          check-latest: true
+          cache-dependency-path: backend/connectors/go.sum
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          # The linter must be built with at least the Go version it typechecks; an older one
+          # produces spurious "undefined: <pkg>" typecheck errors on every import.
+          version: v2.14.0
+          working-directory: backend/connectors
+
+  docker-lint:
+    needs: changes
+    if: needs.changes.outputs.dockerfiles == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Lint Backend Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: backend/Dockerfile
+      - name: Lint Go Connector Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: backend/connectors/Dockerfile
