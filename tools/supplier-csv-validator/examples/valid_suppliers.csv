@@ -1,0 +1,5 @@
+product,quantity,unit,destination,transport_mode,target_count,component,current_manufacturer,current_country,current_city,current_website,current_certifications,current_disclosure_status,current_revenue_usd_m,current_renewable_pct,countries,shipment_weight_kg
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com/sustainability,iso14001|sbt_committed,verified,38,22,CN|TW,450.5
+LED desk lamp,8000,units,US,sea,6,led module,LuxLED Korea,KR,Suwon,https://example.com/esg,iso14001,partial,52,31,KR,120
+LED desk lamp,  8000.0 ,units, us , SEA ,6,power adapter,VoltPeak Electronics,TW,Taichung,https://example.com/impact,iso14001,verified,28.50,41,TW|cn,75.25
+Organic cotton tote,1200,units,DE,rail,3,fabric,Nordtextil RO SRL,RO,Iași,https://example.com/eco,eu_ecolabel|grs,verified,4.5,88,RO,210

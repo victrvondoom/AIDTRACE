@@ -1,0 +1,17 @@
+product,quantity,unit,destination,transport_mode,target_count,component,current_manufacturer,current_country,current_city,current_website,current_certifications,current_disclosure_status,current_revenue_usd_m,current_renewable_pct,countries,shipment_weight_kg
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,example.com/sustainability,iso14001|sbt_committed,verified,38,22,CN,450.5
+LED desk lamp,8000,units,US,sea,6,,Ghost Supplier,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,8000,units,USA,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,abc,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,0,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,-50
+LED desk lamp,8000,units,US,horse,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,example.com/sustainability,iso14001|sbt_committed,verified,38,22,CN,450.5
+LED desk lamp,8000,units,US,sea,six,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,abc,22,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,150,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,Supxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+=cmd|' /C calc.exe,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN|XX,100
+LED desk lamp,8000,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,maybe,38,22,CN,100
+LED desk lamp,=1+1,units,US,sea,6,aluminum housing,MetalForm Precision,CN,Shenzhen,https://example.com,iso14001,verified,38,22,CN,100
