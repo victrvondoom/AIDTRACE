@@ -1,0 +1,99 @@
+{
+  "benchmark": "evidence-drift-bench",
+  "evaluation_scope": "Fixture traversal correctness is separate from actual Kairos engine evaluation.",
+  "falkordb": {
+    "cleanup": "deleted",
+    "cross_tenant_isolation": {
+      "cases": [
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-014-cross_tenant_isolation"
+        },
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-029-cross_tenant_isolation"
+        },
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-044-cross_tenant_isolation"
+        }
+      ],
+      "checked": 3,
+      "passed": 3,
+      "status": "PASS"
+    },
+    "decision_metrics": {
+      "correctly_identified_impacted_decisions": 52,
+      "decision_count": 107,
+      "false_invalidations": 0,
+      "missed_invalidations": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative_decisions": 55
+    },
+    "duplicate_event_stability": {
+      "checked_scenarios": 3,
+      "graph_counts_unchanged_after_replay": true,
+      "stable_scenarios": 3,
+      "status": "PASS"
+    },
+    "engine_evaluation": "NOT_RUN",
+    "graph_name": "EDB_TEST_20261018T042038_3db8db3b",
+    "graph_nodes": 367,
+    "graph_relationships": 504,
+    "graph_traversal_latency_ms": {
+      "max_ms": 16.4684,
+      "mean_ms": 7.1416,
+      "p50_ms": 6.4171,
+      "p95_ms": 12.5026,
+      "sample_count": 50
+    },
+    "memory_metrics": {
+      "accuracy": 1.0,
+      "correct": 50,
+      "incorrect": 0,
+      "scenario_count": 50
+    },
+    "server_version": "8.10.2",
+    "status": "PASS"
+  },
+  "fixture_reference_validation": {
+    "failed_scenarios": [],
+    "missing_fields": [],
+    "scenario_checks_passed": 50,
+    "scenario_count": 50,
+    "status": "PASS"
+  },
+  "fixture_seed": 98,
+  "kairos_engine": {
+    "reason": "No Kairos API endpoint was configured.",
+    "status": "NOT_RUN"
+  },
+  "run_timestamp_utc": "2026-10-18T04:20:39.169642+00:00",
+  "runtime": {
+    "falkordb_client": "1.6.0",
+    "python": "3.12.10"
+  },
+  "scenario_count": 50,
+  "scenario_types": [
+    "agent_memory_recall",
+    "approval_invalidation",
+    "changed_supplier_relationship",
+    "conflicting_sources",
+    "cross_tenant_isolation",
+    "cybersecurity_risk_evidence",
+    "cyclic_dependencies",
+    "direct_decision_invalidation",
+    "duplicate_events",
+    "independently_supported_conclusion",
+    "irrelevant_evidence_update",
+    "multi_hop_dependency_invalidation",
+    "outdated_emissions_estimate",
+    "stale_agent_memory",
+    "supplier_evidence_supersession"
+  ],
+  "status": "PASS"
+}
