@@ -1,4 +1,4 @@
-"""Scenario evaluation: RESOLVE AI (graph) versus the checklist baseline, on synthetic cases.
+"""Scenario evaluation: RESOLVE (FalkorDB graph) versus the checklist baseline, on synthetic cases.
 
 Run:  python -m app.consumer.evaluate          (writes ../docs/evaluation.json and prints a table)
 

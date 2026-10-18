@@ -1,111 +1,252 @@
 "use client";
 
-// AIDTRACE workspace: one page, three panels. Left = investigation and agent control, centre = Globe / Graph / Lineage / Workflow / Agent Memory,
-// right = contextual inspector. Every other capability opens as an in-page extension in the centre; the address bar never changes.
-import { useCallback, useEffect, useState } from "react";
-import { Boundary, FEATURES } from "@/features/feature-host";
+// AIDTRACE workspace: one page, three panels. Left = Investigate (one input, three actions), centre = Globe / Graph / Lineage / Timeline, right = Risk /
+// Evidence / Decision inspector. The Globe is always the first thing shown. Secondary tools open in the centre and never leave the page.
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { Boundary } from "@/features/feature-host";
+import { useRole } from "@/components/use-role";
 import { Button, StatusBadge } from "@/components/ui";
 import { isUnsafe } from "@/lib/aidtrace-lineage";
-import { askAgent, SUGGESTED_QUESTIONS, useAidtraceData, type AgentAnswer, type AidtraceData, type Selection, type ViewId } from "./data";
-import { Inspector, type InspectorTab } from "./inspector";
-import { GlobeView, GraphView, LineageView, MemoryView, WorkflowView } from "./views";
+import { investigateRisk, latestScenarioId, updateEvidence, type EvidenceResult, type InvestigationResult, type Stage } from "./automation";
+import { askAgent, useAidtraceData, type AgentAnswer, type AidtraceData, type Selection, type ViewId } from "./data";
+import { Inspector, type Section } from "./inspector";
+import { GlobeView, GraphView, LineageView, TimelineView, type RunLogEntry } from "./views";
+import { AidtraceProvider, type AidtraceContextValue } from "./extensions/context";
+import { ExtensionLauncher } from "./extensions/launcher";
+import { ExtensionPanel } from "./extensions/panel";
+import { EXTENSIONS, extensionById, isAvailable } from "./extensions/registry";
 
-const VIEWS: { id: ViewId; label: string }[] = [
-  { id: "globe", label: "Globe" }, { id: "graph", label: "Graph" }, { id: "lineage", label: "Lineage" }, { id: "workflow", label: "Workflow" }, { id: "memory", label: "Agent Memory" },
-];
-const KEY_VIEW = "aidtrace.hub.view";
-const KEY_EXT = "aidtrace.hub.extension";
-const EXTENSIONS = FEATURES.filter((f) => f.id !== "overview");
+const VIEWS: { id: ViewId; label: string }[] = [{ id: "globe", label: "Globe" }, { id: "graph", label: "Graph" }, { id: "lineage", label: "Lineage" }, { id: "timeline", label: "Timeline" }];
+const EXAMPLES = ["Which suppliers are exposed?", "What changed since the last review?", "Which decision needs attention?"];
+const plain = (name: string) => name.replace("Illustrative ", "");
+const dot: Record<Stage["status"], string> = { pending: "bg-line", running: "bg-accent animate-pulse", done: "bg-ink", skipped: "bg-muted", failed: "bg-danger" };
 
-function stored(key: string): string | null { try { return window.sessionStorage.getItem(key); } catch { return null; } }
-function store(key: string, value: string | null) { try { if (value === null) window.sessionStorage.removeItem(key); else window.sessionStorage.setItem(key, value); } catch { /* storage blocked */ } }
+/** The supplier the graph currently recommends, read from the newest decision that is still valid ("Recommend Illustrative Packaging B for …"). */
+function recommendedFrom(data: AidtraceData): string | null {
+  const latest = data.snap ? latestScenarioId(data.snap.decisions) : null;
+  if (!data.snap || !latest) return null;
+  const valid = data.snap.decisions.filter((d) => d.id.startsWith(`gc:${latest}:`) && !isUnsafe(d.status));
+  const m = /Recommend (Illustrative [A-Za-z0-9 ]+?) for/.exec(valid[valid.length - 1]?.summary ?? "");
+  return m ? m[1] : null;
+}
 
-function LeftPanel({ data, selection, onSelect, onView, onTab, extension, onExtension }: {
-  data: AidtraceData; selection: Selection; onSelect: (s: Selection) => void; onView: (v: ViewId) => void; onTab: (t: InspectorTab) => void; extension: string | null; onExtension: (id: string | null) => void;
+interface RunState { kind: "investigate" | "evidence"; stages: Stage[]; error: string | null; running: boolean }
+
+function StoryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-line bg-surface p-6 shadow-xl text-ink">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 grid size-7 place-items-center rounded border border-line text-muted hover:text-ink text-sm"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+
+        <div className="mb-4 border-b border-line pb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-title font-bold text-ink">AIDTRACE</h2>
+            <StatusBadge tone="info">Powered by FalkorDB</StatusBadge>
+          </div>
+          <p className="mt-1.5 text-caption text-muted leading-relaxed">
+            An AI-powered supply-chain and industrial risk intelligence platform that detects connected risks,
+            remembers the evidence behind decisions, and automatically identifies which decisions need reconsideration when new information arrives.
+          </p>
+        </div>
+
+        <div className="mb-5 space-y-3">
+          <h3 className="text-caption font-semibold uppercase tracking-wider text-muted">The 5-Step Operational Lifecycle</h3>
+          <ol className="space-y-2.5 text-caption">
+            <li className="flex items-start gap-2.5 rounded border border-line/70 bg-canvas p-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-on-accent">1</span>
+              <div>
+                <p className="font-semibold text-ink">Global Supply Chain on CesiumJS 3D Earth</p>
+                <p className="text-micro text-muted">Visualizes global suppliers, shipping corridors, and downstream industrial facilities with real terrain.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 rounded border border-line/70 bg-canvas p-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-on-accent">2</span>
+              <div>
+                <p className="font-semibold text-ink">Connected Risk & Cyber Exposure Detection</p>
+                <p className="text-micro text-muted">Monitors technology dependencies, grid carbon intensity, and logistical chokepoints across the extended supply tier.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 rounded border border-line/70 bg-canvas p-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-on-accent">3</span>
+              <div>
+                <p className="font-semibold text-ink">FalkorDB Evidence Lineage & Persistent Memory</p>
+                <p className="text-micro text-muted">Tracks past assessments, traverses GraphBLAS sparse matrices, and discovers every purchasing decision resting on affected evidence.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 rounded border border-line/70 bg-canvas p-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-on-accent">4</span>
+              <div>
+                <p className="font-semibold text-ink">Evidence Governance & Decision Gate</p>
+                <p className="text-micro text-muted">Automatically halts approvals based on invalidated claims, holds transactions for review, and evaluates pre-qualified alternatives.</p>
+              </div>
+            </li>
+            <li className="flex items-start gap-2.5 rounded border border-line/70 bg-canvas p-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-on-accent">5</span>
+              <div>
+                <p className="font-semibold text-ink">Actionable Recommendation & Sourcing Pivot</p>
+                <p className="text-micro text-muted">The human reviewer reviews what changed, why it matters, and approves a verified replacement with complete audit receipts.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div className="border-t border-line pt-3">
+          <h3 className="mb-2 text-micro font-semibold uppercase tracking-wider text-muted">Unified Architecture Ecosystem</h3>
+          <div className="grid grid-cols-2 gap-2 text-micro">
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">Operations:</span> <span className="text-muted">Governance, compliance, approvals, investigation & audit receipts</span>
+            </div>
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">GreenChain:</span> <span className="text-muted">Global suppliers, shipping corridors, emissions & quantile scoring</span>
+            </div>
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">CyberFlow & Track 01:</span> <span className="text-muted">Cyber dependencies, circular risk, and fraud containment</span>
+            </div>
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">Resolve:</span> <span className="text-muted">Specialist agent investigations, evidence retrieval & case synthesis with FALKOR DB</span>
+            </div>
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">FalkorDB:</span> <span className="text-muted">Sparse GraphBLAS matrix memory tying evidence to decisions</span>
+            </div>
+            <div className="rounded border border-line p-2">
+              <span className="font-semibold text-ink">CesiumJS:</span> <span className="text-muted">Photorealistic 3D Earth showcasing facilities, routes & risks</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button variant="primary" onClick={onClose}>Explore Workspace</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LeftPanel(props: {
+  data: AidtraceData; selection: Selection; onSelect: (s: Selection) => void; run: RunState | null; busy: boolean;
+  onInvestigate: () => void; onUpdate: () => void; onReview: () => void; extension: string | null; onOpenExtensions: () => void; onShow: (kind: "memory" | "node" | "supplier") => void;
+  onOpenStory: () => void;
 }) {
+  const { data, selection, run, busy, extension, onOpenStory } = props;
+  const { demo, snap } = data;
   const [question, setQuestion] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [history, setHistory] = useState<AgentAnswer[]>([]);
-  const { demo, health, snap, lineage, errors } = data;
-  const stale = (snap?.decisions ?? []).filter((d) => isUnsafe(d.status)).length;
+  const [focused, setFocused] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const [answer, setAnswer] = useState<AgentAnswer | null>(null);
 
   async function ask(text: string) {
     const q = text.trim();
-    if (!q || busy) return;
-    setBusy(true); setQuestion("");
-    const answer = await askAgent(q, { demo: data.demo, scenario: data.scenario, snap: data.snap, selected: selection });
-    setHistory((h) => [answer, ...h].slice(0, 12));
-    setBusy(false);
+    if (!q || asking) return;
+    setAsking(true); setQuestion("");
+    setAnswer(await askAgent(q, { demo: data.demo, scenario: data.scenario, snap: data.snap, selected: selection }));
+    setAsking(false);
   }
-  function show(a: AgentAnswer) {
-    if (!a.select) return;
-    onSelect(a.select);
-    if (a.select.kind === "memory") { onView("memory"); onTab("Memory"); } else if (a.select.kind === "node") { onView("graph"); onTab("Cyber Risk"); } else { onView("globe"); onTab("Overview"); }
-  }
-
-  const steps: [string, boolean | null][] = [
-    ["Supplier data", errors.supply ? false : demo ? true : null], ["Agent memory", errors.memory ? false : snap ? snap.memories.length > 0 : null],
-    ["Evidence lineage", lineage ? lineage.nodes.length > 0 : null], ["Decisions current", snap ? snap.decisions.length > 0 && stale === 0 : null],
-  ];
+  const reviewable = (snap?.decisions.length ?? 0) > 0;
   return (
     <div className="flex size-full min-h-0 flex-col overflow-y-auto">
-      <header className="border-b border-line px-4 py-3 pr-10">
-        <h1 className="text-body font-semibold tracking-wide text-ink">AIDTRACE</h1>
-        <p className="mt-0.5 text-micro text-muted">Connected supply chain &amp; cyber risk intelligence</p>
-      </header>
-      <section aria-label="Active investigation" className="border-b border-line px-4 py-3">
-        <p className="text-micro font-medium uppercase tracking-wider text-muted">Investigation</p>
-        <p className="mt-1 text-caption text-ink">{demo ? `${demo.product} → ${demo.destination}` : errors.supply ? "GreenChain unavailable" : "Loading…"}</p>
-        <p className="mt-0.5 text-micro text-muted">Illustrative suppliers; synthetic incidents.</p>
-      </section>
-      <section aria-label="Ask the agent" className="border-b border-line px-4 py-3">
-        <form onSubmit={(e) => { e.preventDefault(); void ask(question); }}>
-          <label htmlFor="aidtrace-ask" className="text-micro font-medium uppercase tracking-wider text-muted">Ask the agent</label>
-          <div className="mt-1 flex gap-1.5">
-            <input id="aidtrace-ask" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask about suppliers, risk or decisions" autoComplete="off"
-              className="h-10 min-w-0 flex-1 border border-line bg-canvas px-3 text-caption text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-accent" />
-            <Button type="submit" variant="primary" disabled={busy || !question.trim()} aria-label="Send question">{busy ? "…" : "Ask"}</Button>
-          </div>
-        </form>
-        <ul className="mt-2 space-y-1">{SUGGESTED_QUESTIONS.map((q) => <li key={q}><button type="button" disabled={busy} onClick={() => void ask(q)} className="w-full border border-line bg-surface px-2 py-1.5 text-left text-micro leading-snug text-ink hover:bg-surface-2 disabled:opacity-60">{q}</button></li>)}</ul>
-        <p className="mt-1.5 text-micro text-muted">Answers come from the graph engines, not a language model.</p>
-        {history.length > 0 && <ol className="mt-3 space-y-2" aria-label="Investigation history">{history.map((a) => (
-          <li key={a.at + a.question} className={`border-l-2 bg-surface p-2.5 text-caption ${a.ok ? "border-accent" : "border-line"}`}>
-            <p className="text-micro text-muted">{a.question}</p>
-            <p className="mt-1 text-ink">{a.text}</p>
-            {a.lines.length > 0 && <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto text-micro text-muted">{a.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>}
-            <p className="mt-1 text-micro text-muted">{a.route} · {a.at.slice(11, 19)} UTC</p>
-            {a.select && <Button className="mt-1" variant="ghost" onClick={() => show(a)}>Show in workspace</Button>}
-          </li>))}</ol>}
-      </section>
-      <section aria-label="Evidence source" className="border-b border-line px-4 py-3">
-        <label htmlFor="aidtrace-source" className="text-micro font-medium uppercase tracking-wider text-muted">Evidence source</label>
-        <select id="aidtrace-source" value={selection?.kind === "source" ? selection.id : ""} disabled={!snap?.sources.length}
-          onChange={(e) => { const s = snap?.sources.find((x) => x.id === e.target.value); if (s) { onSelect({ kind: "source", id: s.id, label: s.title || s.id }); onView("lineage"); onTab("Lineage"); } }}
-          className="mt-1 h-10 w-full border border-line bg-canvas px-2 text-caption">
-          <option value="">{snap?.sources.length ? "Choose a source to trace…" : "No sources recorded yet"}</option>
-          {snap?.sources.map((s) => <option key={s.id} value={s.id}>{s.title || s.id}</option>)}
-        </select>
-      </section>
-      <section aria-label="Status" className="border-b border-line px-4 py-3">
-        <p className="text-micro font-medium uppercase tracking-wider text-muted">Status</p>
-        <ul className="mt-1 space-y-0.5 text-caption">{steps.map(([label, ok]) => <li key={label} className="flex items-center justify-between"><span>{label}</span><span className={`text-micro ${ok === null ? "text-muted" : ok ? "text-ink" : "text-danger"}`}>{ok === null ? "checking" : ok ? "ok" : "needs attention"}</span></li>)}</ul>
-        {(errors.supply || errors.memory || stale > 0 || (health && health.live_discovery !== "ENABLED")) && (
-          <ul className="mt-2 space-y-1 text-micro" aria-label="Warnings">
-            {errors.supply && <li role="alert" className="text-danger">GreenChain: {errors.supply}</li>}
-            {errors.memory && <li role="alert" className="text-danger">Agent memory: {errors.memory}</li>}
-            {stale > 0 && <li className="text-danger">{stale} decision(s) rest on stale evidence.</li>}
-            {health && health.live_discovery !== "ENABLED" && <li className="text-muted">Live supplier discovery is off; candidates are illustrative.</li>}
+      <div className="px-4 pb-3 pt-3 pr-10">
+        <div className="flex items-center justify-between">
+          <h1 className="text-body font-bold text-ink tracking-tight">AIDTRACE</h1>
+          <button
+            type="button"
+            onClick={onOpenStory}
+            className="rounded border border-line bg-surface px-1.5 py-0.5 text-[11px] font-medium text-accent hover:border-accent transition-colors"
+            title="How AIDTRACE works (The 5-step lifecycle)"
+          >
+            About
+          </button>
+        </div>
+        <p className="text-[11px] font-medium text-muted">Powered by FalkorDB</p>
+        <p className="mt-1 flex items-center gap-1.5 text-micro text-muted">
+          <span className="size-1.5 rounded-full bg-verified animate-pulse" aria-hidden="true" />
+          <span className="font-semibold text-verified">FalkorDB Memory</span>
+          <span>· GraphBLAS OpenCypher</span>
+        </p>
+      </div>
+
+      <form className="relative px-4 pb-3" onSubmit={(e) => { e.preventDefault(); void ask(question); }}>
+        <label htmlFor="aidtrace-ask" className="sr-only">Ask about a supplier, risk, or decision</label>
+        <div className="flex gap-1.5">
+          <input id="aidtrace-ask" value={question} onChange={(e) => setQuestion(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => window.setTimeout(() => setFocused(false), 150)}
+            placeholder="Ask about a supplier, risk, or decision…" autoComplete="off"
+            className="h-10 min-w-0 flex-1 border border-line bg-canvas px-3 text-caption text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-accent" />
+          <Button type="submit" variant="primary" disabled={asking || !question.trim()} aria-label="Send question">{asking ? "…" : "Ask"}</Button>
+        </div>
+        {focused && !question && (
+          <ul className="absolute inset-x-4 top-[calc(100%-0.5rem)] z-10 border border-line bg-surface shadow-sm" aria-label="Examples">
+            {EXAMPLES.map((q) => <li key={q}><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => void ask(q)} className="block w-full px-3 py-2 text-left text-micro text-ink hover:bg-surface-2">{q}</button></li>)}
           </ul>
         )}
-      </section>
-      <details className="px-4 py-3" open={extension !== null}>
-        <summary className="cursor-pointer text-micro font-medium uppercase tracking-wider text-muted">Extensions</summary>
-        <ul className="mt-2 space-y-1">{EXTENSIONS.map((f) => (
-          <li key={f.id}><button type="button" aria-current={extension === f.id ? "true" : undefined} onClick={() => onExtension(extension === f.id ? null : f.id)}
-            className={`flex w-full items-center justify-between border px-2 py-1.5 text-left text-caption ${extension === f.id ? "border-ink bg-surface-2 font-semibold" : "border-line bg-surface hover:bg-surface-2"}`}>
-            {f.name}{f.status === "PARTIAL" && <span className="text-micro font-normal text-muted">partial</span>}</button></li>))}</ul>
-      </details>
+      </form>
+
+      <ol className="space-y-1.5 px-4 pb-3" aria-label="Primary actions">
+        <li>
+          <Button variant="primary" className="h-auto w-full justify-start text-left flex flex-col items-start py-2" disabled={busy || !data.scenario} onClick={props.onInvestigate}>
+            <span className="font-semibold text-caption">1 · Investigate Risk</span>
+            <span className="text-[11px] opacity-85 font-normal">CesiumJS 3D routes · cyber & ESG reach</span>
+          </Button>
+        </li>
+        <li>
+          <Button variant="ghost" className="h-auto w-full justify-start text-left flex flex-col items-start py-2 border border-line" disabled={busy || !data.scenario} onClick={props.onUpdate}>
+            <span className="font-semibold text-caption">2 · Update Evidence</span>
+            <span className="text-[11px] text-muted font-normal">Propagate grid/cyber drift into FalkorDB</span>
+          </Button>
+        </li>
+        <li>
+          <Button variant="ghost" className="h-auto w-full justify-start text-left flex flex-col items-start py-2 border border-line" disabled={!reviewable} onClick={props.onReview}>
+            <span className="font-semibold text-caption">3 · Review Decision</span>
+            <span className="text-[11px] text-muted font-normal">Hold stale approval · review an alternative</span>
+          </Button>
+        </li>
+      </ol>
+
+      {run && (
+        <section aria-label="Progress" className="border-t border-line px-4 py-3">
+          <p className="mb-1 text-micro font-medium uppercase tracking-wider text-muted">{run.kind === "investigate" ? "Investigating" : "Updating evidence"}{run.running && " …"}</p>
+          <ol className="space-y-1" data-testid="aidtrace-progress">
+            {run.stages.map((s) => (
+              <li key={s.id} className="flex items-start gap-2 text-micro">
+                <span className={`mt-1 size-1.5 shrink-0 rounded-full ${dot[s.status]}`} aria-hidden="true" />
+                <span className={s.status === "pending" ? "text-muted" : "text-ink"}>{s.label}{s.detail && <span className="block text-muted">{s.detail}</span>}<span className="sr-only"> ({s.status})</span></span>
+              </li>
+            ))}
+          </ol>
+          {run.error && <p role="alert" className="mt-2 border-l-2 border-danger pl-2 text-micro text-danger">{run.error}</p>}
+        </section>
+      )}
+
+      {answer && (
+        <section aria-label="Answer" className={`mx-4 mb-3 border-l-2 bg-surface p-2.5 text-caption ${answer.ok ? "border-accent" : "border-line"}`}>
+          <p className="text-micro text-muted">{answer.question}</p>
+          <p className="mt-1 text-ink">{answer.text}</p>
+          {answer.lines.length > 0 && answer.ok && <ul className="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-micro text-muted">{answer.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>}
+          <p className="mt-1 text-micro text-muted">{answer.route}</p>
+          {answer.select && <Button className="mt-1" variant="ghost" onClick={() => { props.onSelect(answer.select!); props.onShow(answer.select!.kind === "memory" ? "memory" : answer.select!.kind === "node" ? "node" : "supplier"); }}>Show in workspace</Button>}
+        </section>
+      )}
+
+      <div className="mt-auto space-y-2 border-t border-line px-4 py-3">
+        <label htmlFor="aidtrace-source" className="block text-micro font-medium uppercase tracking-wider text-muted">Evidence source</label>
+        <select id="aidtrace-source" value={selection?.kind === "source" ? selection.id : ""} disabled={!snap?.sources.length}
+          onChange={(e) => { const s = snap?.sources.find((x) => x.id === e.target.value); if (s) { props.onSelect({ kind: "source", id: s.id, label: s.title || s.id }); props.onShow("memory"); } }}
+          className="h-9 w-full border border-line bg-canvas px-2 text-caption">
+          <option value="">{snap?.sources.length ? "Inspect a source…" : "No sources recorded yet"}</option>
+          {snap?.sources.map((s) => <option key={s.id} value={s.id}>{s.title || s.id}</option>)}
+        </select>
+        <button type="button" onClick={props.onOpenExtensions} aria-haspopup="dialog" data-testid="aidtrace-extensions-button"
+          className={`flex w-full items-center justify-between border px-3 py-2 text-left text-caption ${extension ? "border-ink bg-surface-2 font-semibold" : "border-line bg-surface hover:bg-surface-2"}`}>
+          <span>Extensions</span><span className="text-micro font-normal text-muted">{extension ? extensionById(extension)?.title : "More tools"}</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -113,32 +254,97 @@ function LeftPanel({ data, selection, onSelect, onView, onTab, extension, onExte
 export function AidtraceWorkspace() {
   const data = useAidtraceData();
   const [view, setView] = useState<ViewId>("globe");
-  const [extension, setExtension] = useState<string | null>(null);
+  const role = useRole();
+  const [extension, setExtension] = useState<{ id: string; path: string | null; nonce: number } | null>(null);
+  const [launcherOpen, setLauncherOpen] = useState(false);
+  const [storyOpen, setStoryOpen] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
-  const [tab, setTab] = useState<InspectorTab>("Overview");
+  const [section, setSection] = useState<Section>("risk");
   const [leftOpen, setLeftOpen] = useState(true);
   const [rightOpen, setRightOpen] = useState(true);
+  const [run, setRun] = useState<RunState | null>(null);
+  const [investigation, setInvestigation] = useState<InvestigationResult | null>(null);
+  const [evidence, setEvidence] = useState<EvidenceResult | null>(null);
+  const [runs, setRuns] = useState<RunLogEntry[]>([]);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const busy = Boolean(run?.running);
+  const recommended = evidence?.topAfter ?? recommendedFrom(data);
 
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      const v = stored(KEY_VIEW); if (VIEWS.some((x) => x.id === v)) setView(v as ViewId);
-      const e = stored(KEY_EXT); if (e && EXTENSIONS.some((x) => x.id === e)) setExtension(e);
-    }, 0);
-    return () => window.clearTimeout(t);
-  }, []);
+  useEffect(() => { const t = window.setTimeout(() => setSlot(document.getElementById("aidtrace-topbar-slot")), 0); return () => window.clearTimeout(t); }, []);
+  useEffect(() => { if (!banner) return; const t = window.setTimeout(() => setBanner(null), 14000); return () => window.clearTimeout(t); }, [banner]);
 
-  const changeView = useCallback((v: ViewId) => { setView(v); setExtension(null); store(KEY_VIEW, v); store(KEY_EXT, null); }, []);
-  const openExtension = useCallback((id: string | null) => { setExtension(id); store(KEY_EXT, id); }, []);
   const select = useCallback((s: Selection) => {
     setSelection(s);
     if (!s) return;
     setRightOpen(true);
-    setTab(s.kind === "supplier" || s.kind === "node" ? "Overview" : s.kind === "memory" ? "Memory" : s.kind === "decision" || s.kind === "action" ? "Decisions" : "Lineage");
+    setSection(s.kind === "supplier" || s.kind === "node" ? "risk" : s.kind === "decision" || s.kind === "action" ? "decision" : "evidence");
   }, []);
+  const changeView = useCallback((v: ViewId) => { setView(v); setExtension(null); }, []);
+  /** Open an extension in the centre. Role rules decide who may; the investigation state stays where it is. */
+  const openExtension = useCallback((id: string, path?: string) => {
+    const ext = extensionById(id);
+    if (!ext || !isAvailable(ext, role)) return;
+    setLauncherOpen(false);
+    setExtension((cur) => ({ id, path: path ?? null, nonce: (cur?.nonce ?? 0) + 1 }));
+  }, [role]);
+  const closeExtension = useCallback(() => setExtension(null), []);
 
-  const ext = EXTENSIONS.find((f) => f.id === extension) ?? null;
+  async function execute<T>(kind: RunState["kind"], fn: (onStages: (s: Stage[]) => void) => Promise<T>): Promise<T | null> {
+    setExtension(null);
+    let latest: Stage[] = [];
+    setRun({ kind, stages: [], error: null, running: true });
+    try {
+      const out = await fn((stages) => { latest = stages; setRun({ kind, stages, error: null, running: true }); });
+      setRun({ kind, stages: latest, error: null, running: false });
+      return out;
+    } catch (e) {
+      const failed = latest.map((s) => (s.status === "running" ? { ...s, status: "failed" as const } : s));
+      setRun({ kind, stages: failed, error: e instanceof Error ? e.message : "The workflow failed.", running: false });
+      return null;
+    }
+  }
+  const log = (kind: string, text: string) => setRuns((r) => [{ at: new Date().toISOString(), kind, text }, ...r]);
+
+  async function onInvestigate() {
+    // With nothing selected, investigate the supplier the current decision recommends: it is the one the recorded evidence is about.
+    const target = selection?.kind === "supplier" ? selection.id : data.scenario?.manufacturers.find((m) => m.name === recommended)?.id ?? null;
+    const r = await execute("investigate", (on) => investigateRisk({ data, supplierId: target }, on));
+    if (!r) return;
+    setInvestigation(r);
+    await data.refreshMemory();
+    setView((v) => (v === "timeline" ? v : "globe"));
+    select({ kind: "supplier", id: r.supplierId, label: r.supplierName });
+    setSection("risk");
+    setBanner(`${plain(r.supplierName)}: ${r.dependents.length} dependants · ${r.decisions.filter((d) => d.stale).length} stale decision(s)`);
+    log("investigation", `Investigated ${plain(r.supplierName)}: ${r.findings[0]}`);
+  }
+  async function onUpdate() {
+    const r = await execute("evidence", (on) => updateEvidence(data, on));
+    if (!r) return;
+    setEvidence(r);
+    setView("globe");
+    const affected = data.scenario?.manufacturers.find((m) => m.name === r.topBefore);
+    if (affected) setSelection({ kind: "supplier", id: affected.id, label: affected.name });
+    setSection("decision"); setRightOpen(true);
+    setBanner(r.alreadyApplied ? "This evidence update was already applied." : r.recommendationChanged ? `Recommendation changed: ${plain(r.topBefore ?? "")} → ${plain(r.topAfter ?? "")}` : `Re-evaluated: ${plain(r.topAfter ?? "")} stays recommended`);
+    log("evidence update", `${r.revision.dataset} ${r.revision.country} ×${r.revision.factor} (synthetic): ${r.alreadyApplied ? "already applied" : `${r.invalidated.length} record(s) invalidated, recommendation ${r.recommendationChanged ? `${plain(r.topBefore ?? "")} → ${plain(r.topAfter ?? "")}` : "unchanged"}`}`);
+  }
+  function onReview() { setRightOpen(true); setSection("decision"); }
+
+  const connected = !data.errors.memory && Boolean(data.snap);
+  const ext = extension ? extensionById(extension.id) : null;
+  const shared: AidtraceContextValue = { data, selection, select, investigation, evidence, recommended, view, runs, openExtension };
   const common = { data, selection, onSelect: select };
-  const cols = `${leftOpen ? "clamp(260px,22%,340px)" : "40px"} minmax(0,1fr) ${rightOpen ? "clamp(280px,24%,360px)" : "40px"}`;
+  const cols = `${leftOpen ? "288px" : "40px"} minmax(0,1fr) ${rightOpen ? "312px" : "40px"}`;
+  const scenarioName = data.demo ? `${data.demo.product} → ${data.demo.destination}` : "Loading scenario…";
+
+  const topbar = useMemo(() => (
+    <>
+      <span className="hidden truncate text-caption text-ink xl:inline" title={scenarioName}>{scenarioName}</span>
+      <span className={`ml-auto flex items-center gap-1.5 text-micro ${connected ? "text-ink" : "text-danger"}`} role="status"><span className={`size-1.5 rounded-full ${connected ? "bg-verified" : "bg-danger"}`} aria-hidden="true" />{data.loading ? "Connecting…" : connected ? "Graph connected" : "Graph unavailable"}</span>
+    </>
+  ), [scenarioName, connected, data.loading]);
 
   function onKey(e: React.KeyboardEvent) {
     const i = VIEWS.findIndex((v) => v.id === view);
@@ -149,56 +355,56 @@ export function AidtraceWorkspace() {
   }
 
   return (
-    <div data-testid="aidtrace-workspace" className="grid min-h-dvh grid-cols-1 lg:h-dvh lg:[grid-template-columns:var(--cols)]" style={{ "--cols": cols } as React.CSSProperties}>
-      <aside aria-label="Investigation and agent control" className="order-2 min-h-0 border-b border-line bg-surface lg:order-1 lg:border-b-0 lg:border-r">
+    <AidtraceProvider value={shared}>
+    <div data-testid="aidtrace-workspace" className="grid h-full min-h-dvh grid-cols-1 lg:min-h-0 lg:[grid-template-columns:var(--cols)]" style={{ "--cols": cols } as React.CSSProperties}>
+      {slot && createPortal(topbar, slot)}
+      <StoryModal open={storyOpen} onClose={() => setStoryOpen(false)} />
+      <aside aria-label="Investigate" className="order-2 min-h-0 border-b border-line bg-surface lg:order-1 lg:border-b-0 lg:border-r">
         {leftOpen ? (
           <div className="relative size-full">
-            <button type="button" aria-label="Collapse investigation panel" onClick={() => setLeftOpen(false)} className="absolute right-2 top-3 z-10 hidden size-7 place-items-center text-muted hover:text-ink lg:grid">‹</button>
-            <LeftPanel data={data} selection={selection} onSelect={select} onView={changeView} onTab={setTab} extension={extension} onExtension={openExtension} />
+            <button type="button" aria-label="Collapse investigate panel" onClick={() => setLeftOpen(false)} className="absolute right-2 top-2.5 z-10 hidden size-7 place-items-center text-muted hover:text-ink lg:grid">‹</button>
+            <LeftPanel data={data} selection={selection} onSelect={select} run={run} busy={busy} onInvestigate={() => void onInvestigate()} onUpdate={() => void onUpdate()} onReview={onReview}
+              extension={extension?.id ?? null} onOpenExtensions={() => setLauncherOpen(true)} onOpenStory={() => setStoryOpen(true)} onShow={(k) => changeView(k === "memory" ? "lineage" : k === "node" ? "graph" : "globe")} />
           </div>
-        ) : <button type="button" aria-label="Expand investigation panel" onClick={() => setLeftOpen(true)} className="hidden size-full place-items-start justify-center pt-3 text-muted hover:text-ink lg:grid">›</button>}
+        ) : <button type="button" aria-label="Expand investigate panel" onClick={() => setLeftOpen(true)} className="hidden size-full place-items-start justify-center pt-3 text-muted hover:text-ink lg:grid">›</button>}
       </aside>
 
-      <section aria-label="Intelligence workspace" className="order-1 flex min-h-[70dvh] min-w-0 flex-col lg:order-2 lg:min-h-0">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-3 py-2">
-          <div role="tablist" aria-label="Workspace view" onKeyDown={onKey} className="flex gap-1 overflow-x-auto">
+      <section aria-label="Intelligence workspace" className="relative order-1 flex min-h-[72dvh] min-w-0 flex-col lg:order-2 lg:min-h-0">
+        <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-1.5">
+          <div role="tablist" aria-label="Workspace view" onKeyDown={onKey} className="flex gap-1">
             {VIEWS.map((v) => (
               <button key={v.id} role="tab" type="button" aria-selected={!ext && view === v.id} tabIndex={!ext && view === v.id ? 0 : -1} onClick={() => changeView(v.id)}
-                className={`shrink-0 border px-3 py-1.5 text-caption ${!ext && view === v.id ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink hover:bg-surface-2"}`}>{v.label}</button>
+                className={`border px-3 py-1 text-caption ${!ext && view === v.id ? "border-ink bg-ink text-canvas" : "border-line bg-surface text-ink hover:bg-surface-2"}`}>{v.label}</button>
             ))}
           </div>
-          <div className="flex items-center gap-2 text-micro text-muted">
-            {data.loading && <span role="status">Loading…</span>}
-            {ext && <Button variant="ghost" onClick={() => openExtension(null)}>← Back to workspace</Button>}
-          </div>
+          {ext && <span className="text-micro text-muted">Viewing an extension — your investigation is preserved.</span>}
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden" role="tabpanel" aria-label={ext ? ext.name : VIEWS.find((v) => v.id === view)?.label}>
-          {ext ? (
-            <div className="size-full overflow-y-auto p-4">
-              <div className="mb-3 flex flex-wrap items-center gap-2"><h2 className="text-title font-semibold">{ext.name}</h2><StatusBadge tone={ext.status === "PARTIAL" ? "caution" : "verified"}>{ext.status === "PARTIAL" ? "partial" : "extension"}</StatusBadge></div>
-              <p className="mb-3 max-w-3xl text-caption leading-relaxed text-muted">{ext.summary}</p>
-              <Boundary key={ext.id} label={ext.name}>{ext.render(openExtension)}</Boundary>
-            </div>
+        <div className="min-h-0 flex-1 overflow-hidden" role="tabpanel" aria-label={ext ? ext.title : VIEWS.find((v) => v.id === view)?.label}>
+          {ext && extension ? (
+            <Boundary key={`${ext.id}:${extension.nonce}`} label={ext.title}>
+              <ExtensionPanel ext={ext} initialPath={extension.path} onClose={closeExtension} onOpen={openExtension} />
+            </Boundary>
           ) : (
             <Boundary key={view} label={VIEWS.find((v) => v.id === view)?.label ?? "View"}>
-              {view === "globe" && <GlobeView {...common} />}
+              {view === "globe" && <GlobeView {...common} recommendedName={recommended} banner={banner} />}
               {view === "graph" && <GraphView {...common} />}
               {view === "lineage" && <LineageView {...common} />}
-              {view === "workflow" && <WorkflowView {...common} onOpenView={changeView} />}
-              {view === "memory" && <MemoryView {...common} />}
+              {view === "timeline" && <TimelineView data={data} runs={runs} onSelect={select} />}
             </Boundary>
           )}
         </div>
+        <ExtensionLauncher open={launcherOpen} role={role} onClose={() => setLauncherOpen(false)} onSelect={(id) => openExtension(id)} />
       </section>
 
-      <aside aria-label="Contextual inspector" className="order-3 min-h-0 border-t border-line bg-surface lg:border-l lg:border-t-0">
+      <aside aria-label="Inspector" className="order-3 min-h-0 border-t border-line bg-surface lg:border-l lg:border-t-0">
         {rightOpen ? (
           <div className="relative size-full">
-            <button type="button" aria-label="Collapse inspector" onClick={() => setRightOpen(false)} className="absolute right-1 top-2 z-10 hidden size-7 place-items-center bg-surface text-muted hover:text-ink lg:grid">›</button>
-            <Inspector data={data} selection={selection} onSelect={select} tab={tab} onTab={setTab} />
+            <button type="button" aria-label="Collapse inspector" onClick={() => setRightOpen(false)} className="absolute right-1 top-2 z-10 hidden size-7 place-items-center text-muted hover:text-ink lg:grid">›</button>
+            <Inspector data={data} selection={selection} onSelect={select} open={section} onOpen={(s) => setSection(s)} investigation={investigation} evidence={evidence} onInvestigate={() => void onInvestigate()} busy={busy} />
           </div>
         ) : <button type="button" aria-label="Expand inspector" onClick={() => setRightOpen(true)} className="hidden size-full place-items-start justify-center pt-3 text-muted hover:text-ink lg:grid">‹</button>}
       </aside>
     </div>
+    </AidtraceProvider>
   );
 }

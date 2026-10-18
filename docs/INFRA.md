@@ -31,6 +31,7 @@ All services run as Docker containers. Start with `make dev` (or `docker compose
 | `kairos-elicitation-worker` | Python 3.12 (local build) | — | Temporal worker (elicitation workflows) |
 | `kairos-backend-go` | Go 1.26 (local build) | `8090` | OT historian + EAM connector. Go is at 1.26 because the `net/http` advisories GO-2026-6611 to 6617 are fixed only from go1.26.9 (it went 1.22 → 1.25 earlier for `golang.org/x/crypto` 0.52). |
 | `kairos-neo4j` | neo4j:5.20-community | `7474`, `7687` | Temporal knowledge graph — **CLOUD (Neo4j Aura) by default**; local container is profile-gated (`--profile local-stores`) |
+| `kairos-falkordb` | pinned falkordb/falkordb image | `6380` (host) / `6379` (container) | Decision, evidence and agent-memory graphs — local container is profile-gated; Cloud is an explicit URL opt-in |
 | `kairos-qdrant` | qdrant:v1.9.4 | `6333`, `6334` | Vector store — **CLOUD (Qdrant Cloud) by default**; local container is profile-gated |
 | `kairos-elasticsearch` | elasticsearch:8.13.4 | `9200` | Full-text search (local container) |
 | `kairos-redis` | redis:7.2-alpine | `6379` | Cache + event streams + Celery broker |
@@ -59,6 +60,12 @@ All services run as Docker containers. Start with `make dev` (or `docker compose
 > local container **crash-looped whenever `.env` pointed at Aura** — precisely when you want local
 > stores. To point the app at the local container, also set `NEO4J_USERNAME=neo4j` and
 > `NEO4J_PASSWORD=$NEO4J_LOCAL_PASSWORD` in `.env`.
+
+> **FalkorDB:** host-run Python uses `FALKORDB_URL=redis://localhost:6380`; Compose services use
+> `FALKORDB_CONTAINER_URL=redis://kairos-falkordb:6379`. Both are in `.env.example`. Set both to an
+> authenticated `rediss://` URL only when explicitly using an existing Cloud instance. The local
+> `kairos-falkordb_data` volume contains AOF and RDB data; it is not a backup. See the
+> [setup, migration and rollback guide](./integration/FALKORDB_SETUP.md).
 >
 > **Run modes & networks:** the stack is split into a production-safe base
 > (`docker-compose.yml`) + an auto-loaded dev override (`docker-compose.override.yml`).
@@ -75,6 +82,7 @@ All services run as Docker containers. Start with `make dev` (or `docker compose
 | FastAPI health | http://localhost:8000/health/ (liveness, open). `/health/detailed` needs a signed-in user's Bearer token |
 | Temporal UI | http://localhost:8088 |
 | Neo4j Browser | Aura console (cloud) — or http://localhost:7474 with `--profile local-stores` |
+| FalkorDB | `redis://localhost:6380` from host with `--profile local-stores`; `redis://kairos-falkordb:6379` in Compose; signed-in API check at `/health/falkordb` |
 | Qdrant Dashboard | Qdrant Cloud console — or http://localhost:6333/dashboard with `--profile local-stores` |
 | Grafana / Tempo | Grafana Cloud (hosted — traces + dashboards) |
 | OPA | http://localhost:8181/health |

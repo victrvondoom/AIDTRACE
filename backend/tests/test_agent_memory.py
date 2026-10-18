@@ -49,6 +49,7 @@ def test_agents_share_memory_and_recall_records_what_influenced_them(mem) -> Non
     got = a.recall(agent_id="agent-B", fact_key="fact_A")
     assert [u["id"] for u in got["usable"]] == ["mem-A"] and got["blocked"] == []
     assert got["influenced_by"] == ["mem-A"] and got["usable"][0]["sources"][0]["id"] == "src-A-v1"
+    assert [u["id"] for u in a.recall(agent_id="agent-B", fact_key="fact_A", verified_only=True)["usable"]] == ["mem-A"]
     assert any(e["rel"] == "RECALLED_IN" for e in a.store.edges_of(a.site, "mem-A")["out"])
 
 
@@ -76,6 +77,52 @@ def test_superseding_a_source_marks_only_its_dependants_and_blocks_recall(mem) -
     got = a.recall(agent_id="agent-B", fact_key="fact_A")
     assert got["usable"] == [] and got["blocked"][0]["blocked_reason"]
     assert [u["id"] for u in a.recall(agent_id="agent-A", fact_key="fact_B")["usable"]] == ["mem-B"]
+
+
+def test_replaying_old_ids_cannot_revive_superseded_evidence_or_stale_memory(mem) -> None:
+    a, _, store = mem
+    seed(a)
+    a.supersede_source(old_source_id="src-A-v1", new_source=NEW_A,
+                       new_claims=[{"claim_id": "claim-A-v2", "fact_key": "fact_A", "fact_value": 40, "replaces": "claim-A-v1"}],
+                       change_id="chg-replay")
+
+    with pytest.raises(ContractError, match="source src-A-v1 is no longer ACTIVE"):
+        a.record_source(document_id="doc-A", source_id="src-A-v1", title="Dataset A")
+    with pytest.raises(ContractError, match="claim claim-A-v1 is no longer ACTIVE"):
+        a.record_claim(claim_id="claim-A-v1", source_id="src-A-v1", fact_key="fact_A", fact_value=100)
+    with pytest.raises(ContractError, match="source src-A-v1 is no longer ACTIVE"):
+        a.record_claim(claim_id="claim-A-replayed", source_id="src-A-v1", fact_key="fact_A", fact_value=100)
+    with pytest.raises(ContractError, match="memory mem-A is no longer VALID"):
+        a.remember(memory_id="mem-A", agent_id="agent-A", kind="SEMANTIC", summary="old fact",
+                   claim_ids=["claim-A-v2"])
+    with pytest.raises(ContractError, match="memories that are not VALID"):
+        a.remember(memory_id="mem-replayed", agent_id="agent-B", kind="EPISODIC", summary="old memory",
+                   from_memories=["mem-A"])
+
+    assert store.read_node(a.site, "src-A-v1")["properties"]["status"] == "SUPERSEDED"
+    assert store.read_node(a.site, "claim-A-v1")["properties"]["status"] == "SUPERSEDED"
+    assert store.read_node(a.site, "mem-A")["properties"]["status"] == "STALE"
+    assert store.read_node(a.site, "mem-replayed") is None
+    assert a.recall(agent_id="agent-B", fact_key="fact_A")["usable"] == []
+    assert a.eligibility("act-A")["eligible"] is False
+
+
+def test_unverified_source_cannot_be_laundered_into_verified_memory_context(mem) -> None:
+    a, _, _ = mem
+    a.record_source(document_id="doc-unverified", source_id="src-unverified", title="Unverified document",
+                    verification="UNVERIFIED")
+    a.record_claim(claim_id="claim-unverified", source_id="src-unverified", fact_key="test_fact", fact_value="x",
+                   verification="VERIFIED")
+    a.register_agent("agent-producer", "Producer")
+    stored = a.remember(memory_id="mem-unverified", agent_id="agent-producer", kind="SEMANTIC",
+                        summary="Unverified source", claim_ids=["claim-unverified"])
+    assert stored["verified"] is False
+    assert [m["id"] for m in a.recall(agent_id="agent-reader", fact_key="test_fact")["usable"]] == ["mem-unverified"]
+    handoffs_before = len(a.handoffs())
+    strict = a.recall(agent_id="agent-llm", fact_key="test_fact", verified_only=True)
+    assert strict["usable"] == []
+    assert strict["blocked"][0]["blocked_reason"] == "memory verification is UNVERIFIED"
+    assert len(a.handoffs()) == handoffs_before
 
 
 def test_a_stale_decision_cannot_be_approved_and_says_why(mem) -> None:

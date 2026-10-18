@@ -22,6 +22,8 @@ managed cloud services**:
 > **profile-gated** — they do not start by default. Credentials live in `.env` only (never in this
 > committed file). For offline dev / tests without touching cloud data:
 > `docker compose --profile local-stores up` and point `NEO4J_URI` / `QDRANT_URL` at the local containers.
+> The same profile starts local FalkorDB. Host and container URLs, backup and cutover instructions
+> are in [`integration/FALKORDB_SETUP.md`](./integration/FALKORDB_SETUP.md).
 | | NVIDIA NIM · Jina · Groq (inference APIs) |
 
 There is **no HashiCorp Vault container** and **no app Postgres container** —
@@ -64,6 +66,7 @@ The deployed setup and its full procedure are in [`DEPLOY.md`](./DEPLOY.md).
 | `kairos-elicitation-worker` | `kairos-backend:local` (shared) | — | — | internal |
 | `kairos-backend-go` | `kairos-connector:local` (multi-stage) | 8090 | — | internal |
 | `kairos-neo4j` | `neo4j:5.20-community` | 7474, 7687 | — | internal · **profile `local-stores` only** (cloud by default) |
+| `kairos-falkordb` | pinned `falkordb/falkordb` image | 6380 → 6379 (loopback) | — | internal · **profile `local-stores` only** (cloud opt-in by URL) |
 | `kairos-qdrant` | `qdrant/qdrant:v1.9.4` | 6333, 6334 | — | internal · **profile `local-stores` only** (cloud by default) |
 | `kairos-elasticsearch` | `elasticsearch:8.13.4` | 9200, 9300 | — | internal |
 | `kairos-redis` | `redis:7.2-alpine` | 6379 | — | internal |
@@ -101,6 +104,7 @@ Redis, Elasticsearch, etc. directly — defence-in-depth for the AWS deployment.
 |--------|-----------|-------|
 | `kairos-neo4j_data` | neo4j `/data` | **Knowledge graph** (was an anonymous volume before — now durable) |
 | `kairos-neo4j_logs` | neo4j `/logs` | Neo4j logs |
+| `kairos-falkordb_data` | FalkorDB `/var/lib/falkordb/data` | Site graphs, agent memory, AOF and RDB snapshots |
 | `kairos-qdrant_data` | qdrant `/qdrant/storage` | Vectors |
 | `kairos-elasticsearch_data` | es `/usr/share/elasticsearch/data` | Full-text indices |
 | `kairos-redis_data` | redis `/data` | AOF (streams, cache, Celery) |

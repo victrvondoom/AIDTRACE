@@ -10,7 +10,10 @@ export interface LineageNode {
   id: string; kind: LineageKind; label: string; status: string; detail: string;
   /** Sources only: the content hash. Sources sharing one hash are copies of the same origin. */
   origin?: string;
+  /** Sources only: how this source relates to the others. Never "independent" without a content hash. */
+  trust?: SourceTrust;
 }
+export type SourceTrust = "Original source" | "Independent support" | "Repeated citation" | "Disputed" | "Unverified" | "Superseded";
 export interface LineageEdge { from: string; to: string }
 export interface Lineage { nodes: LineageNode[]; edges: LineageEdge[]; originCount: number; sourceCount: number; hashedCount: number }
 
@@ -45,6 +48,15 @@ export function buildLineage(snap: MemorySnapshot): Lineage {
   }
 
   const sources = [...nodes.values()].filter((n) => n.kind === "source");
+  const seenOrigins = new Set<string>();
+  for (const src of [...sources].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (/SUPERSEDED|RETRACT|REVOKED/i.test(src.status)) src.trust = "Superseded";
+    else if (/DISPUT|CONFLICT/i.test(src.status)) src.trust = "Disputed";
+    else if (!src.origin) src.trust = "Unverified";
+    else if (seenOrigins.has(src.origin)) src.trust = "Repeated citation";
+    else src.trust = seenOrigins.size === 0 ? "Original source" : "Independent support";
+    if (src.origin) seenOrigins.add(src.origin);
+  }
   const origins = new Set(sources.map((s) => s.origin ?? s.id));
   const hashedCount = sources.filter((s) => s.origin).length;
   const seen = new Set<string>();
@@ -67,3 +79,17 @@ export function chainOf(lineage: Lineage, id: string): { upstream: Set<string>; 
 
 /** Stale, invalidated or blocked states that must read as a warning rather than as current evidence. */
 export const isUnsafe = (status: string) => /STALE|INVALID|SUPERSEDED|SUSPENDED|VOID|BLOCKED|REVOKED|RETRACT/i.test(status);
+
+export type DecisionStateLabel = "Valid" | "Needs review" | "Stale evidence" | "Approval blocked" | "Re-evaluated";
+export interface DecisionState { label: DecisionStateLabel; tone: "verified" | "caution" | "danger"; reason: string | null }
+
+/** A decision's state is read from backend fields only: its own status, its action's eligibility and whether an approval still binds to its current revision. */
+export function decisionState(
+  decision: { status: string; revision_n: number },
+  action: { eligibility: { eligible: boolean; reasons: string[]; approval_current: boolean } } | undefined,
+): DecisionState {
+  if (isUnsafe(decision.status)) return { label: "Stale evidence", tone: "danger", reason: `Decision is ${decision.status.toLowerCase()}` };
+  if (action && !action.eligibility.eligible) return { label: "Approval blocked", tone: "danger", reason: action.eligibility.reasons[0] ?? "Not eligible" };
+  if (action && !action.eligibility.approval_current) return { label: decision.revision_n > 1 ? "Re-evaluated" : "Needs review", tone: "caution", reason: "No approval binds to this revision yet" };
+  return { label: "Valid", tone: "verified", reason: null };
+}

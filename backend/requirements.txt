@@ -38,6 +38,11 @@ temporalio==1.6.0
 aiohttp==3.14.4
 anyio==4.15.1
 
+# --- AIDTRACE agent (Claude reasoning) ---
+# Imported lazily by api/services/aidtrace_agent/provider.py. With no key or the switch off nothing is
+# imported, so this pin does not make the key a requirement. Bump deliberately, with the tests run.
+anthropic==1.14.0
+
 # --- Observability ---
 # OTEL core + instrumentation move as a matched pair (1.x <-> 0.xxbN). Upgrade all six together.
 #

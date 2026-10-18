@@ -16,6 +16,10 @@ SIM_PREFIX = "resolve_sim_"
 # Relationship types that can change a verdict. Only these may be dropped by the demo mutation endpoint.
 DECISION_EDGE_TYPES = ["INCLUDES", "REFUNDS", "CONTRADICTS", "REQUIRES_EVIDENCE", "GOVERNED_BY",
                        "CITES", "CONCERNS", "REQUIRES", "CLAIMS_RECOVERY_FOR", "PROPOSES"]
+CONSUMER_NODE_LABELS = frozenset({
+    "CitizenCase", "Domain", "Institution", "Event", "Claim", "Evidence", "Source", "Rule",
+    "Obligation", "Condition", "Remedy", "Strategy",
+})
 
 
 class GraphUnavailable(RuntimeError):
@@ -86,6 +90,8 @@ def drop_decision_edge(store: GraphStore, src_label: str, src_id: str, rel: str,
                        dst_label: str, dst_id: str) -> int:
     if rel not in DECISION_EDGE_TYPES:
         raise ValueError(f"relationship {rel} is not a decision relationship")
+    if src_label not in CONSUMER_NODE_LABELS or dst_label not in CONSUMER_NODE_LABELS:
+        raise ValueError("node labels must be in the consumer graph schema")
     match = f"(a:{src_label} {{id: $a}})-[r:{rel}]->(b:{dst_label} {{id: $b}})"
     found = store.query(f"MATCH {match} RETURN count(r)", {"a": src_id, "b": dst_id})
     count = found[0][0] if found else 0

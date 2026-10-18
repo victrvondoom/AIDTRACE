@@ -20,9 +20,9 @@ from api.routers.resolveai import _site_for_user
 from api.services import tenant
 from api.services.drift.model import ContractError
 from api.services.drift.store import TraversalLimitExceeded
-from api.services.memory import greenchain_decisions
-from api.services.memory import resolveai_memory
+from api.services.memory import greenchain_decisions, resolveai_memory
 from api.services.memory.agent_memory import AgentMemory
+from api.services.memory.context import build_llm_context
 
 log = structlog.get_logger(__name__)
 router = APIRouter()
@@ -57,6 +57,12 @@ class RecallBody(BaseModel):
     agent_id: str = Field(pattern=ID)
     fact_key: str | None = Field(default=None, max_length=200)
     limit: int = Field(default=10, ge=1, le=50)
+
+
+class ContextBody(BaseModel):
+    agent_id: str = Field(pattern=ID)
+    fact_key: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/\-]{0,199}$")
+    limit: int = Field(default=5, ge=1, le=10)
 
 
 async def _run(fn):
@@ -122,6 +128,15 @@ async def approve(body: ApproveBody, user: CurrentUserDep, store: FalkorDriftDep
 async def recall(body: RecallBody, user: CurrentUserDep, store: FalkorDriftDep, _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
     mem = _memory(user, store, write=True)  # recalling records which memory influenced the agent
     return await _run(lambda: mem.recall(agent_id=body.agent_id, fact_key=body.fact_key, limit=body.limit))
+
+
+@router.post("/context", summary="Verified, site-scoped graph memory for an agent, with claim and source provenance")
+async def context(body: ContextBody, user: CurrentUserDep, store: FalkorDriftDep, _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    mem = _memory(user, store, write=True)  # retrieval records exactly which memory influenced this agent
+    return await _run(lambda: build_llm_context(
+        mem.recall(agent_id=body.agent_id, fact_key=body.fact_key, limit=body.limit, verified_only=True),
+        fact_key=body.fact_key,
+    ))
 
 
 @router.post("/greenchain/preview-revision", summary="Dry run: how would the ranking change under a revised factor? Writes nothing")

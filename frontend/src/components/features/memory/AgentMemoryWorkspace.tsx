@@ -4,6 +4,7 @@
 // remembered, the evidence behind it, which memories are still usable, and whether a human approval still applies. The dataset
 // revision is a counterfactual the user enters (country and factor); the cascade and the re-ranking that follow are real.
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { normalizeSnapshot } from "@/components/aidtrace/data";
 import { Button, StatusBadge } from "@/components/ui";
 import {
   memoryApprove, memoryHandoffs, memoryPreviewRevision, memoryRecall, memoryRecordScenario, memoryRevise, memorySnapshot,
@@ -57,7 +58,7 @@ export function AgentMemoryWorkspace() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    try { const [s, h] = await Promise.all([memorySnapshot(), memoryHandoffs()]); setSnap(s); setHandoffs(h.handoffs); setError(null); }
+    try { const [s, h] = await Promise.all([memorySnapshot(), memoryHandoffs()]); setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setError(null); }
     catch (e) { setError(e instanceof Error ? e.message : "Agent memory could not be read."); }
   }, []);
   useEffect(() => { const t = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(t); }, [refresh]);

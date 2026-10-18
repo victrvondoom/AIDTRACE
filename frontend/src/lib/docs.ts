@@ -44,6 +44,8 @@ export const REDACTIONS: [RegExp, string][] = [
   [/\bi-[0-9a-f]{12,17}\b/g, "<instance-id>"],
   [/\b(?:prj|team)_[A-Za-z0-9]{20,}\b/g, "<vercel-id>"],
   [/\bernffgrvdcikwwhkhiix\b/g, "<project-ref>"],
+  [/\bKairos\b/g, "AIDTRACE"],
+  [/\bkairos\b/g, "aidtrace"],
 ];
 
 export function redact(source: string): string {

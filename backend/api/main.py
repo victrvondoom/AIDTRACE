@@ -17,6 +17,9 @@ from api.middleware.opa import OPAMiddleware
 from api.middleware.ratelimit import RateLimitMiddleware
 from api.middleware.telemetry import setup_telemetry
 from api.routers import (
+    agent_memory,
+    agents,
+    aidtrace_agent,
     annotations,
     assets,
     audit_log,
@@ -26,19 +29,17 @@ from api.routers import (
     consumer,
     documents,
     drift,
-    fraud,
     elicitation,
     events,
+    fraud,
     governance,
     graphlab,
     greenchain,
     health,
-    search,
+    hub,
     resolveai,
     resolveai_platform,
-    hub,
-    agent_memory,
-    agents,
+    search,
     sources,
 )
 from api.services import tenant
@@ -183,6 +184,7 @@ def create_app() -> FastAPI:
     app.include_router(hub.router, prefix="/hub", tags=["Hub capabilities"])
     app.include_router(agent_memory.router, prefix="/agent-memory", tags=["Agent memory"])
     app.include_router(agents.router, prefix="/agents", tags=["Agent operations"])
+    app.include_router(aidtrace_agent.router, prefix="/aidtrace-agent", tags=["AIDTRACE agent"])
     app.include_router(resolveai_platform.router, prefix="/resolveai/platform", tags=["ResolveAI Platform (private worker gateway)"])
     app.include_router(sources.router, prefix="/sources", tags=["Source Library"])
 

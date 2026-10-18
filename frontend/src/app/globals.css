@@ -1100,3 +1100,12 @@ button:not(:disabled),
 :root:not([data-devtools="show"]) script[data-nextjs-dev-overlay] {
   display: none !important;
 }
+
+/* Legacy pages hosted inside the AIDTRACE workspace (components/aidtrace/extensions/route-host.tsx).
+   Their content and controls are kept; the page-level chrome (decorative header slab, long intro paragraph, centred dashboard width) is not. */
+.aidtrace-ext { padding: 1rem; }
+.aidtrace-ext .max-w-\[1400px\] { max-width: none; }
+.aidtrace-ext .kairos-architecture { display: none; }
+.aidtrace-ext header.kairos-spatial-header { padding: 0 0 0.75rem; min-height: 0; }
+.aidtrace-ext header.kairos-spatial-header h1 { font-size: 1.125rem; line-height: 1.3; }
+.aidtrace-ext header.kairos-spatial-header > div > p { display: none; }

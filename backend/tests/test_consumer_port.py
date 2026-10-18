@@ -1,4 +1,4 @@
-﻿"""RESOLVE AI consumer module: proof checks against a live FalkorDB on the separate test graph.
+"""RESOLVE consumer module: proof checks against a live FalkorDB on the separate test graph.
 
 Maps to the directive's proof list (numbers in the test docstrings):
   1 multi-domain routing, 2 cross-domain dependency, 3 missing document flips the strategy,

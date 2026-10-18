@@ -17,20 +17,20 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Optional
 
 import httpx
 from bs4 import BeautifulSoup
 
 # ml_bridge must be imported first to set up sys.path before ml.* imports.
-from . import ml_bridge  # noqa: F401  (side-effect: configures sys.path)
-from . import machine_host
+from . import (
+    machine_host,
+    ml_bridge,  # noqa: F401  (side-effect: configures sys.path)
+)
 from .ml_bridge import (
     get_emissions_model,
     get_transport_calculator,
 )
 from .naics_classifier import classify_naics
-
 
 # Realistic UA — corporate sustainability pages reject obvious bots.
 _UA = (
@@ -63,7 +63,7 @@ def lookup_emission_factor(
     country_iso: str,
     revenue_usd_m: float = 25.0,
     year: int = 2023,
-    region: Optional[str] = None,
+    region: str | None = None,
     renewable_pct: float = 0.0,
 ) -> dict:
     """

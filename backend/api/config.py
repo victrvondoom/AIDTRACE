@@ -4,6 +4,7 @@ All settings are read from environment variables (via .env file in development).
 """
 
 from functools import lru_cache
+from typing import Literal
 
 import structlog
 from pydantic import field_validator, model_validator
@@ -191,6 +192,26 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_BASE_URL: str = "https://generativelanguage.googleapis.com/v1beta/openai"
     GEMINI_MODEL: str = "gemini-2.5-flash-lite"
+
+    # -------------------------------------------------------------------------
+    # AIDTRACE agent — Claude tool-use layer (api/services/aidtrace_agent).
+    # Off until deliberately enabled. With AIDTRACE_LLM_ENABLED=false, or no key,
+    # no Anthropic request is made and every question answers from the graph engines.
+    # -------------------------------------------------------------------------
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-opus-5-5"
+    AIDTRACE_LLM_ENABLED: bool = False
+    AIDTRACE_LLM_FALLBACK: Literal["graph-only"] = "graph-only"
+    AIDTRACE_LLM_MAX_OUTPUT_TOKENS: int = 2048
+    AIDTRACE_LLM_MAX_TOOL_STEPS: int = 6
+    AIDTRACE_LLM_REQUEST_TIMEOUT_SECONDS: float = 60.0
+    AIDTRACE_LLM_MAX_CONCURRENT_REQUESTS: int = 2
+    # Per signed-in staff user, counted in the shared Redis. Demo accounts stay on demo_llm_budget.
+    AIDTRACE_LLM_MAX_REQUESTS_PER_USER_PER_HOUR: int = 30
+    # USD per million tokens, set from the provider's current price sheet. Left at 0 the
+    # estimate reads "not priced" instead of a guessed figure.
+    AIDTRACE_LLM_PRICE_INPUT_PER_MTOK: float = 0.0
+    AIDTRACE_LLM_PRICE_OUTPUT_PER_MTOK: float = 0.0
 
     # -------------------------------------------------------------------------
     # Jina AI (embeddings — keeps NIM key free for synthesis/LLM tasks)

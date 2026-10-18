@@ -47,14 +47,14 @@ export function circleLayout(g: LabGraph): Positions {
   return out;
 }
 
-/** Fruchterman-Reingold from a deterministic circular seed. */
+/** Fruchterman-Reingold from a deterministic circular seed with anti-overlap and center-gravity forces. */
 export function networkLayout(g: LabGraph, iterations = 140): Positions {
   const ids = sortedIds(g);
   if (ids.length > FORCE_NODE_LIMIT) return radialLayout(g);
   const pos: Positions = circleLayout(g);
-  const k = Math.sqrt(1 / Math.max(ids.length, 1)) * 0.9;
+  const k = Math.sqrt(1 / Math.max(ids.length, 1)) * 0.85;
   const edges = g.edges.filter((e) => e.source !== e.target);
-  let temp = 0.12;
+  let temp = 0.14;
   for (let step = 0; step < iterations; step++) {
     const disp: Positions = Object.fromEntries(ids.map((i) => [i, { x: 0, y: 0 }]));
     for (let i = 0; i < ids.length; i++) {
@@ -63,19 +63,25 @@ export function networkLayout(g: LabGraph, iterations = 140): Positions {
         let dx = a.x - b.x, dy = a.y - b.y;
         let d = Math.hypot(dx, dy);
         if (d < 1e-6) { dx = 1e-3 * (i + 1); dy = 1e-3 * (j + 1); d = Math.hypot(dx, dy); }
-        const f = (k * k) / d;
+        // Anti-clustering: stronger repulsion when nodes get too close to prevent dense clumps
+        const f = d < k * 0.4 ? (k * k * 2.2) / Math.max(d, 0.005) : (k * k) / d;
         disp[ids[i]].x += (dx / d) * f; disp[ids[i]].y += (dy / d) * f;
         disp[ids[j]].x -= (dx / d) * f; disp[ids[j]].y -= (dy / d) * f;
       }
     }
     for (const e of edges) {
       const a = pos[e.source], b = pos[e.target];
+      if (!a || !b) continue;
       const dx = a.x - b.x, dy = a.y - b.y, d = Math.max(Math.hypot(dx, dy), 1e-6);
-      const f = (d * d) / k;
+      // Bound attractive force so highly connected cliques do not collapse into single points
+      const f = Math.min((d * d) / k, k * 3.5);
       disp[e.source].x -= (dx / d) * f; disp[e.source].y -= (dy / d) * f;
       disp[e.target].x += (dx / d) * f; disp[e.target].y += (dy / d) * f;
     }
+    // Gentle gravity to center to keep components balanced
     for (const id of ids) {
+      disp[id].x += (0.5 - pos[id].x) * 0.04;
+      disp[id].y += (0.5 - pos[id].y) * 0.04;
       const d = Math.max(Math.hypot(disp[id].x, disp[id].y), 1e-9);
       const m = Math.min(d, temp);
       pos[id] = { x: pos[id].x + (disp[id].x / d) * m, y: pos[id].y + (disp[id].y / d) * m };

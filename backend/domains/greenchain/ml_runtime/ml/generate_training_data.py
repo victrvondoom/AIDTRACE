@@ -29,10 +29,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from ml.reference_data import (
-    NAICS_DETAIL, EMBER_GRID_INTENSITY,
-    COUNTRY_EMISSION_MULTIPLIER
-)
+from ml.reference_data import COUNTRY_EMISSION_MULTIPLIER, EMBER_GRID_INTENSITY, NAICS_DETAIL
 
 RAW_OUT   = "data/raw/cdp_synthetic.csv"
 FEAT_OUT  = "data/processed/cdp_features.csv"

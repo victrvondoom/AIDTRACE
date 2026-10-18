@@ -9,9 +9,9 @@ from fastapi.testclient import TestClient
 
 from api.dependencies import get_current_user, get_falkor_drift_store
 from api.routers.resolveai import router as resolveai_router
+from api.services.drift.demo_workflow import run_evidence_supersession
 from api.services.drift.model import Label, Rel
 from api.services.drift.store import FalkorDriftStore, TraversalLimitExceeded
-from api.services.drift.demo_workflow import run_evidence_supersession
 
 
 @pytest.fixture
@@ -52,6 +52,29 @@ def test_local_falkordb_rejects_unapproved_labels(local_drift_store) -> None:
 
     with pytest.raises(ValueError, match="label"):
         store.upsert_node(site_id, "UserControlledLabel", "n1", {})
+
+
+def test_local_falkordb_client_reconnects_after_its_pool_disconnects(local_drift_store) -> None:
+    store, (site_id, _) = local_drift_store
+    store.upsert_node(site_id, Label.SOURCE_VERSION, "source-reconnect", {"status": "ACTIVE"})
+    store._client.connection.connection_pool.disconnect()
+    assert store.inspect_site(site_id) == {"reachable": True, "site_graph_exists": True}
+    assert store.read_node(site_id, "source-reconnect")["properties"]["status"] == "ACTIVE"
+
+
+def test_memory_lineage_keeps_every_claim_in_selected_memory(local_drift_store) -> None:
+    store, (site_id, _) = local_drift_store
+    store.upsert_node(site_id, Label.MEMORY, "memory-fanout", {"status": "VALID"})
+    for n in range(9):
+        source_id, claim_id = f"source-{n}", f"claim-{n}"
+        store.upsert_node(site_id, Label.SOURCE_VERSION, source_id, {"status": "ACTIVE"})
+        store.upsert_node(site_id, Label.CLAIM, claim_id, {"status": "ACTIVE", "fact_key": "fanout"})
+        store.link(site_id, Label.CLAIM, claim_id, Rel.SUPPORTED_BY, Label.SOURCE_VERSION, source_id)
+        store.link(site_id, Label.MEMORY, "memory-fanout", Rel.DERIVED_FROM, Label.CLAIM, claim_id)
+    lineage = store.memory_lineage(site_id, limit=1)
+    assert len(lineage) == 1
+    assert len(lineage[0]["claims"]) == 9
+    assert len(lineage[0]["sources"]) == 9
 
 
 def test_local_falkordb_impact_overflow_fails_closed(local_drift_store) -> None:

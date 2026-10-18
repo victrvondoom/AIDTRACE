@@ -1,7 +1,7 @@
 "use client";
 
 // Simulations: every tab runs a REAL computation on a copy of the inputs and says what it changed (nothing). Rankings come from
-// GreenChain's scorer, impact previews from graph traversal on the site's FalkorDB graph, and domain comparisons from ResolveAI's
+// GreenChain's scorer, impact previews from graph traversal on the site's FalkorDB graph, and domain comparisons from Resolve's
 // retrieval. Counterfactual inputs are labelled as such.
 import { useCallback, useEffect, useState } from "react";
 import { Button, FilterTabs, StatusBadge } from "@/components/ui";
@@ -124,8 +124,8 @@ export function SimulationsWorkspace() {
       )}
 
       {tab === "compare" && (
-        <Frame title="Compare ResolveAI domain packs for one question" hint="Runs the worker's retrieval in several domain packs and shows each pack's best passage side by side. Retrieval only; no model.">
-          {domains.length === 0 ? <p className="text-caption text-muted">The ResolveAI worker is not connected, so there is nothing to compare.</p> : <>
+        <Frame title="Compare Resolve domain packs for one question" hint="Runs the worker's retrieval in several domain packs on FALKOR DB and shows each pack's best passage side by side. Retrieval only; no model.">
+          {domains.length === 0 ? <p className="text-caption text-muted">The Resolve worker is not connected, so there is nothing to compare.</p> : <>
             <div className="flex flex-wrap gap-2">{domains.map((d) => { const on = picked.includes(d); return <Button key={d} variant={on ? "primary" : "ghost"} aria-pressed={on} onClick={() => setPicked(on ? picked.filter((x) => x !== d) : [...picked, d].slice(-4))}>{d.replace(/_/g, " ")}</Button>; })}</div>
             <div className="flex flex-wrap gap-2"><input aria-label="Question" className="min-h-11 min-w-0 flex-1 border border-line bg-surface px-2 text-caption" value={query} onChange={(e) => setQuery(e.target.value)} />
               <Button variant="primary" disabled={busy || query.length < 3 || picked.length === 0} onClick={() => void run(async () => { const out: Record<string, PlatformSearchHit[]> = {}; for (const d of picked) out[d] = (await platformSearch(d, query, 2)).hits; setHits(out); })}>Compare</Button></div>

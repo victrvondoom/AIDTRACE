@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { MemorySnapshot } from "@/lib/lab-api";
 import { buildLineage } from "@/lib/aidtrace-lineage";
 import type { AidtraceData } from "./data";
-import { LineageView } from "./views";
+import { LineageView, TimelineView } from "./views";
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 
@@ -24,7 +24,7 @@ const snap: MemorySnapshot = {
 };
 
 const data = (over: Partial<AidtraceData> = {}): AidtraceData => ({
-  demo: null, health: null, snap, handoffs: [], scenario: null, lineage: buildLineage(snap), errors: {}, loading: false, refreshMemory: async () => {}, ...over,
+  demo: null, health: null, snap, handoffs: [], site: null, scenario: null, lineage: buildLineage(snap), errors: {}, loading: false, refreshMemory: async () => ({ snap: null, site: null }), ...over,
 });
 
 describe("LineageView", () => {
@@ -47,10 +47,34 @@ describe("LineageView", () => {
     const empty: MemorySnapshot = { ...snap, sources: [], memories: [], decisions: [], actions: [] };
     render(<LineageView data={data({ snap: empty, lineage: buildLineage(empty) })} selection={null} onSelect={() => {}} />);
     expect(screen.getByText("No evidence lineage yet")).toBeInTheDocument();
+    expect(screen.getByText(/Choose Investigate Risk/)).toBeInTheDocument();
+  });
+
+  it("labels each source by what it can prove", () => {
+    render(<LineageView data={data()} selection={null} onSelect={() => {}} />);
+    expect(screen.getByText("Original source")).toBeInTheDocument();
+    expect(screen.getByText("Repeated citation")).toBeInTheDocument();
   });
 
   it("surfaces a memory-service failure", () => {
     render(<LineageView data={data({ lineage: null, errors: { memory: "memory offline" } })} selection={null} onSelect={() => {}} />);
     expect(screen.getByRole("alert")).toHaveTextContent("memory offline");
+  });
+});
+
+describe("TimelineView", () => {
+  it("merges graph history with this session's runs, newest first", () => {
+    const withChange: MemorySnapshot = { ...snap, changes: [{ id: "c1", verdict: "SUPERSEDED", reason: "Grid factor revised", observed_at: "2026-10-02T09:00:00Z" }] };
+    render(<TimelineView data={data({ snap: withChange })} runs={[{ at: "2026-10-03T10:00:00Z", kind: "investigation", text: "Investigated Packaging D" }]} onSelect={() => {}} />);
+    const items = screen.getAllByRole("listitem").map((li) => li.textContent ?? "");
+    expect(items[0]).toContain("Investigated Packaging D");
+    expect(items.some((t) => t.includes("SUPERSEDED: Grid factor revised"))).toBe(true);
+    expect(items.some((t) => t.includes("agent:gc recorded: Packaging D ranks first"))).toBe(true);
+  });
+
+  it("says when there is no history instead of inventing events", () => {
+    const empty: MemorySnapshot = { ...snap, memories: [], decisions: [], actions: [], approvals: [], changes: [] };
+    render(<TimelineView data={data({ snap: empty })} runs={[]} onSelect={() => {}} />);
+    expect(screen.getByText("No activity yet")).toBeInTheDocument();
   });
 });

@@ -31,9 +31,9 @@ export default function ResolveAIPage() {
   const selected = STEPS[step];
   return (
     <div className="mx-auto max-w-[1400px]">
-      <PageHeader title="ResolveAI Intelligence" lede="AIDTRACE owns the workflow and the decision. ResolveAI contributes investigative intelligence, connected evidence and specialist reasoning." actions={<ButtonLink href="/workspace">All Features</ButtonLink>} />
+      <PageHeader title="Resolve Intelligence" lede="AIDTRACE owns the workflow and the decision. Resolve contributes investigative intelligence, connected evidence and specialist reasoning on FALKOR DB." actions={<ButtonLink href="/workspace">All Features</ButtonLink>} />
 
-      <nav aria-label="ResolveAI sub-modules" className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
+      <nav aria-label="Resolve sub-modules" className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
         <Button
           variant={activeTab === "remedy" ? "primary" : "ghost"}
           onClick={() => setActiveTab("remedy")}
@@ -77,7 +77,7 @@ export default function ResolveAIPage() {
           <div className="grid gap-3 sm:grid-cols-3">
             {[
               ["AIDTRACE", "Experience & governance", "Workspaces, approval boundaries and accountable decisions."],
-              ["ResolveAI", "Investigation integration", "Specialist mapping is visible; agent runtime is not connected."],
+              ["Resolve", "Investigation integration", "Specialist mapping is visible; powered by FALKOR DB."],
               ["FalkorDB", "Reasoning infrastructure", "Connection status is reported below from the health endpoint."],
             ].map(([title, subtitle, description]) => <article key={title} className="border border-line bg-surface p-5"><p className="text-caption text-muted">{subtitle}</p><h2 className="mt-2 text-title font-semibold text-ink">{title}</h2><p className="mt-2 text-caption leading-relaxed text-muted">{description}</p></article>)}
           </div>

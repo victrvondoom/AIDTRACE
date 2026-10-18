@@ -58,12 +58,12 @@ from .scenario_editing import (
     edit_scenario_with_k2,
     normalize_edited_scenario,
 )
-from .transport import rescore_transport
 from .tools import (
     calculate_transport_emissions,
     lookup_emission_factor,
     score_certifications,
 )
+from .transport import rescore_transport
 
 logger = logging.getLogger(__name__)
 MIN_COMPONENT_ALTERNATIVES = 1
@@ -241,7 +241,7 @@ class SearchRequest(BaseModel):
     )
     quantity: int = Field(..., ge=1, description="Unit count")
     destination: str = Field(..., description="ISO country code of final destination")
-    components: list["ScenarioComponentRequest"] = Field(
+    components: list[ScenarioComponentRequest] = Field(
         default_factory=list,
         description=(
             "Optional component rows for a multi-component scenario search. "

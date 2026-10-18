@@ -1,0 +1,687 @@
+- main [ref=e2]:
+  - navigation [ref=e4]:
+    - link "AIDTRACE home" [ref=e5] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e6]: AIDTRACE
+    - generic [ref=e7]:
+      - link "Problem" [ref=e8] [cursor=pointer]:
+        - /url: "#problem"
+      - link "How it works" [ref=e9] [cursor=pointer]:
+        - /url: "#how"
+      - link "Intelligence" [ref=e10] [cursor=pointer]:
+        - /url: "#capabilities"
+      - link "Architecture" [ref=e11] [cursor=pointer]:
+        - /url: "#system"
+      - link "Extensions" [ref=e12] [cursor=pointer]:
+        - /url: "#field"
+      - link "Evaluation" [ref=e13] [cursor=pointer]:
+        - /url: "#evidence"
+      - link "Evidence" [ref=e14] [cursor=pointer]:
+        - /url: "#provenance"
+      - link "FAQ" [ref=e15] [cursor=pointer]:
+        - /url: "#faq"
+      - link "Docs" [ref=e16] [cursor=pointer]:
+        - /url: /docs
+    - link "Open workspace" [ref=e18] [cursor=pointer]:
+      - /url: /login
+      - generic [aria-hidden] [ref=e20]: ›
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: Graph-native AI intelligence
+        - heading [level=1] [ref=e25]:
+          - text: Connected intelligence.
+          - generic [ref=e26]: Verifiable decisions.
+      - generic [ref=e27]:
+        - paragraph [ref=e28]:
+          - strong [ref=e29]: One graph. Every relationship. A clearer decision.
+          - text: AIDTRACE connects evidence, persistent agent memory and decisions across specialized workflows, powered by FalkorDB.
+        - generic [ref=e30]:
+          - link "Watch demo" [ref=e31] [cursor=pointer]:
+            - /url: https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link
+            - generic [aria-hidden] [ref=e33]: ›
+          - link "Explore how it works" [ref=e34] [cursor=pointer]:
+            - /url: "#how"
+            - text: Explore how it works
+            - generic [aria-hidden] [ref=e35]: ▶
+    - generic [ref=e38]:
+      - generic [ref=e39]:
+        - generic [ref=e40]: Kairos industrial example
+        - generic [ref=e41]: One traceable answer
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46]: DWG
+            - generic [ref=e47]: P&IDs and drawings
+          - generic [ref=e48]:
+            - generic [ref=e49]: OEM
+            - generic [ref=e50]: Vendor manuals
+          - generic [ref=e51]:
+            - generic [ref=e52]: OT
+            - generic [ref=e53]: OT tag history
+          - generic [ref=e54]:
+            - generic [ref=e55]: NDT
+            - generic [ref=e56]: Inspection reports
+          - generic [ref=e57]:
+            - generic [ref=e58]: AUDIO
+            - generic [ref=e59]: Field voice notes
+          - generic [ref=e60]:
+            - generic [ref=e61]: REG
+            - generic [ref=e62]: Regulations
+          - generic [ref=e63]:
+            - generic [ref=e64]: CMMS
+            - generic [ref=e65]: Work orders
+          - generic [ref=e66]:
+            - generic [ref=e67]: SOP
+            - generic [ref=e68]: Standard procedures
+          - generic [ref=e69]:
+            - generic [ref=e70]: LOG
+            - generic [ref=e71]: Shift handovers
+          - generic [ref=e72]:
+            - generic [ref=e73]: PTW
+            - generic [ref=e74]: Permits to work
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: Checked answer
+            - generic [ref=e79]: 2.8 s
+          - paragraph [ref=e80]: The EQ-101 seal spec became FSL-2240B on 15 January 2025. A repair four months later still fitted the superseded part.
+          - generic [ref=e81]:
+            - paragraph [ref=e82]: Evidence
+            - list [ref=e83]:
+              - listitem [ref=e84]:
+                - generic [ref=e86]: FP-SB-2025-04
+                - generic [ref=e87]: OEM
+                - generic [ref=e88]: 15 Jan 25
+              - listitem [ref=e89]:
+                - generic [ref=e91]: WO-2025-0631
+                - generic [ref=e92]: Site record
+                - generic [ref=e93]: 15 May 25
+              - listitem [ref=e94]:
+                - generic [ref=e96]: Vibration note, unlogged
+                - generic [ref=e97]: Unverified
+                - generic [ref=e98]: 15 Jan 26
+          - generic [ref=e99]:
+            - generic [ref=e100]: 3 sources
+            - generic [ref=e101]: "Authority: OEM"
+            - generic [ref=e102]: Verified
+          - generic [ref=e104]:
+            - generic [ref=e105]: Confidence
+            - generic [ref=e106]: "0.91"
+      - generic [ref=e109]:
+        - generic [ref=e110]: No claim without its source
+        - generic [ref=e111]: A safety question with thin evidence is refused, not hedged
+  - generic [ref=e113]:
+    - generic [ref=e114]:
+      - generic [ref=e115]: The problem
+      - heading "The information exists. The connections are missing." [level=2] [ref=e116]:
+        - text: The information exists.
+        - generic [ref=e117]: The connections are missing.
+      - paragraph [ref=e118]: A supplier disruption affects a facility. A security finding exposes a dependency. A revised document changes an earlier recommendation. When these records stay apart, people cannot see which decisions need another look.
+    - generic [ref=e119]:
+      - generic [ref=e120]:
+        - paragraph [ref=e121]: "01"
+        - paragraph [ref=e122]: What is connected?
+        - paragraph [ref=e123]: Documents, suppliers, incidents, transactions and security findings often live in separate systems, hiding the relationships between them.
+        - paragraph [ref=e124]: Fragmented information
+      - generic [ref=e125]:
+        - paragraph [ref=e126]: "02"
+        - paragraph [ref=e127]: What changed?
+        - paragraph [ref=e128]: A revised source can change a fact that earlier agent memory, recommendations and approvals relied on.
+        - paragraph [ref=e129]: Changing evidence
+      - generic [ref=e130]:
+        - paragraph [ref=e131]: "03"
+        - paragraph [ref=e132]: What can we trust?
+        - paragraph [ref=e133]: A confident answer is not enough. People need to see its source, age, verification state and missing evidence.
+        - paragraph [ref=e134]: Evidence validity
+      - generic [ref=e135]:
+        - paragraph [ref=e136]: "04"
+        - paragraph [ref=e137]: What happens next?
+        - paragraph [ref=e138]: Affected decisions need an explanation, a responsible reviewer and an audit trail before a proposed action proceeds.
+        - paragraph [ref=e139]: Human review
+    - paragraph [ref=e140]: AIDTRACE connects evidence and traces the consequences when information changes. The question is what the change means for decisions already made.
+  - generic [ref=e142]:
+    - generic [ref=e143]:
+      - generic [ref=e144]: How it works
+      - heading "One intelligence workflow. Multiple applications." [level=2] [ref=e145]:
+        - text: One intelligence workflow.
+        - generic [ref=e146]: Multiple applications.
+      - paragraph [ref=e147]: Connect information, investigate its relationships, verify the evidence and bring recommendations to a person. Each extension keeps its specialized algorithms.
+    - list [ref=e148]:
+      - listitem [ref=e149]:
+        - generic [ref=e151]:
+          - generic [ref=e152]: "1"
+          - generic [ref=e153]: Connect
+        - paragraph [ref=e154]: Bring the evidence together
+        - paragraph [ref=e155]: Authorized documents, supplier records, incidents and operational events become the starting points for an investigation. Each source keeps its identity and history.
+      - listitem [ref=e156]:
+        - generic [ref=e158]:
+          - generic [ref=e159]: "2"
+          - generic [ref=e160]: Understand
+        - paragraph [ref=e161]: Follow the FalkorDB relationships
+        - paragraph [ref=e162]: Source versions, claims, agent memory, decisions and proposed actions are linked. The graph records what each conclusion depends on.
+      - listitem [ref=e163]:
+        - generic [ref=e165]:
+          - generic [ref=e166]: "3"
+          - generic [ref=e167]: Investigate
+        - paragraph [ref=e168]: Find the affected decisions
+        - paragraph [ref=e169]: In the synthetic supplier-audit example, a verified procedure changes an inspection interval from 180 to 90 days. AIDTRACE traces the old fact to the memory and decision that used it.
+      - listitem [ref=e170]:
+        - generic [ref=e172]:
+          - generic [ref=e173]: "4"
+          - generic [ref=e174]: Verify
+        - paragraph [ref=e175]: Check the evidence and uncertainty
+        - paragraph [ref=e176]: The system shows the source change and the dependency path. It re-evaluates the old decision against the newer fact instead of treating remembered context as permanent truth.
+      - listitem [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]: "5"
+          - generic [ref=e180]: Review
+        - paragraph [ref=e181]: Hold the action and retain the history
+        - paragraph [ref=e182]: The earlier approval belongs to an older decision revision, so the synthetic proposed action is suspended. A person can inspect what changed before making a new decision.
+    - paragraph [ref=e183]:
+      - text: "The last step matters: a recommendation is only as current as the evidence and approval behind it."
+      - strong [ref=e184]: When evidence changes, the decision must be checked again.
+  - generic [ref=e186]:
+    - generic [ref=e187]:
+      - generic [ref=e188]:
+        - generic [ref=e189]: The intelligence engine
+        - heading "Connected evidence. Inspectable decisions." [level=2] [ref=e190]:
+          - text: Connected evidence.
+          - generic [ref=e191]: Inspectable decisions.
+        - paragraph [ref=e192]: FalkorDB links source versions, claims, agent memory, decisions and approvals. The screens below illustrate specialized capabilities in the existing Kairos extension.
+        - generic [ref=e193]:
+          - button "Proactive context" [pressed] [ref=e194] [cursor=pointer]
+          - button "Evidence answers" [ref=e196] [cursor=pointer]
+          - button "Connected risk" [ref=e197] [cursor=pointer]
+          - button "Governed findings" [ref=e198] [cursor=pointer]
+          - button "Connected sources" [ref=e199] [cursor=pointer]
+          - button "Relationship history" [ref=e200] [cursor=pointer]
+          - button "Evidence validity" [ref=e201] [cursor=pointer]
+          - button "New observations" [ref=e202] [cursor=pointer]
+      - generic [ref=e204]:
+        - generic [ref=e205]:
+          - paragraph [ref=e206]: The right context reaches the person responsible for the decision
+          - generic [ref=e208]:
+            - paragraph [ref=e209]: Governor · this hour
+            - generic [ref=e217]:
+              - generic [ref=e218]: 4 of 6 delivered
+              - generic [ref=e219]: 2 remaining
+            - generic [ref=e220]:
+              - generic [ref=e221]:
+                - paragraph [ref=e222]: Dispatched 07:41
+                - paragraph [ref=e223]: P-1101A isolation changed
+                - paragraph [ref=e224]: Rank 1 · to the duty operator
+              - generic [ref=e225]:
+                - paragraph [ref=e226]: Permit to work
+                - paragraph [ref=e227]: Bypasses the governor
+                - paragraph [ref=e228]: Safety work is never rate-limited
+            - generic [ref=e229]: Brief 7 held until 08:00, quota reached and not urgent
+        - generic [ref=e232]:
+          - paragraph [ref=e233]: Kairos industrial example
+          - heading "Context arrives before a decision" [level=3] [ref=e234]
+          - paragraph [ref=e235]: The Kairos extension uses governed briefs to surface relevant work history and evidence before a job. Its existing alert limit helps avoid flooding operators; safety permits remain exempt.
+    - generic [ref=e236]:
+      - generic [ref=e237]:
+        - paragraph [ref=e238]: What connects those eight examples
+        - paragraph [ref=e239]: Kairos retains its industrial processing and governance tools. AIDTRACE adds a shared evidence and decision graph so relationships can be inspected across workflows.
+      - generic [ref=e240]:
+        - generic [ref=e243]:
+          - term [ref=e244]: Retrieval across mixed document types
+          - definition [ref=e245]: Elasticsearch, Qdrant and the graph queried in parallel, fused by rank, then ordered by authority
+        - generic [ref=e248]:
+          - term [ref=e249]: Knowledge graph and ontology
+          - definition [ref=e250]: Six node types, six properties on every link, decades of tag aliases matched up
+        - generic [ref=e253]:
+          - term [ref=e254]: Non-conformance register
+          - definition [ref=e255]: Conflicts and quarantined extractions tracked in one place, with an owner against each
+        - generic [ref=e258]:
+          - term [ref=e259]: Management of Change
+          - definition [ref=e260]: A safety parameter never updates itself. AIDTRACE drafts the change request and waits for a named approval.
+        - generic [ref=e263]:
+          - term [ref=e264]: Durable ingestion
+          - definition [ref=e265]: A Temporal workflow per document, so a crash resumes at the activity that failed rather than at the first page
+        - generic [ref=e268]:
+          - term [ref=e269]: Blast radius
+          - definition [ref=e270]: Change one document and see every procedure and record downstream of it that just went out of date.
+        - generic [ref=e273]:
+          - term [ref=e274]: PII redaction at export
+          - definition [ref=e275]: Names are removed on the way out, never on the way in, to meet the DPDP Act 2023. Equipment tags are never matched, on purpose.
+        - generic [ref=e278]:
+          - term [ref=e279]: It stops itself when it drifts
+          - definition [ref=e280]: When corrections on one class of equipment spike, nothing from that class reaches the graph until the rate settles.
+  - generic [ref=e282]:
+    - 'img "End-to-end architecture: point of action, application core, async orchestration, intelligence services, knowledge stores and the model plane, with the human-authority gate." [ref=e285]'
+    - generic [ref=e286]:
+      - generic [ref=e287]: System architecture
+      - heading "One connected foundation. Traceable decisions." [level=2] [ref=e288]:
+        - text: One connected foundation.
+        - generic [ref=e289]: Traceable decisions.
+      - paragraph [ref=e290]: These existing diagrams show the Kairos industrial extension and its data stores. AIDTRACE's FalkorDB decision graph separately connects evidence, memory and approvals. Open a block to inspect the industrial architecture example.
+      - generic [ref=e291]:
+        - button "Overview" [pressed] [ref=e292] [cursor=pointer]
+        - button "Point of action" [ref=e294] [cursor=pointer]
+        - button "Application core" [ref=e295] [cursor=pointer]
+        - button "Async orchestration" [ref=e296] [cursor=pointer]
+        - button "Intelligence services" [ref=e297] [cursor=pointer]
+        - button "Knowledge & data" [ref=e298] [cursor=pointer]
+        - button "Model plane" [ref=e299] [cursor=pointer]
+  - generic [ref=e301]:
+    - generic [ref=e302]:
+      - generic [ref=e303]: Specialized intelligence extensions
+      - heading "One platform. Different problems. Shared evidence." [level=2] [ref=e304]:
+        - text: One platform.
+        - generic [ref=e305]: Different problems. Shared evidence.
+    - generic [ref=e306]:
+      - generic [ref=e307]:
+        - button "GreenChain" [pressed] [ref=e308] [cursor=pointer]
+        - button "CyberFlow" [ref=e309] [cursor=pointer]
+        - button "Kairos" [ref=e310] [cursor=pointer]
+        - button "ResolveAI" [ref=e311] [cursor=pointer]
+        - button "Track 01" [ref=e312] [cursor=pointer]
+        - button "Evidence" [ref=e313] [cursor=pointer]
+      - generic [ref=e315]:
+        - generic [ref=e316]:
+          - heading "Supply chain intelligence" [level=3] [ref=e317]
+          - paragraph [ref=e318]: Explore supplier networks, facility dependencies, routes and alternative sourcing with the evidence behind each recommendation. The image shows an existing industrial workspace example.
+        - img "Existing Kairos industrial workspace example" [ref=e320]
+  - generic [ref=e322]:
+    - generic [ref=e323]:
+      - generic [ref=e324]: Evaluation
+      - heading "Measure the function. Name the scope." [level=2] [ref=e325]:
+        - text: Measure the function.
+        - generic [ref=e326]: Name the scope.
+      - paragraph [ref=e327]: The figures below come from a Kairos industrial question-answering benchmark on a synthetic dataset. They do not measure all AIDTRACE extensions or FalkorDB graph reasoning.
+    - generic [ref=e328]:
+      - paragraph [ref=e329]: Kairos industrial benchmark · 46 questions
+      - generic [ref=e330]:
+        - generic [aria-hidden] [ref=e331]:
+          - generic [ref=e332]: "100"
+          - generic [ref=e333]: "90"
+          - generic [ref=e334]: "80"
+          - generic [ref=e335]: "70"
+          - generic [ref=e336]: "60"
+          - generic [ref=e337]: "50"
+          - generic [ref=e338]: "40"
+          - generic [ref=e339]: "30"
+          - generic [ref=e340]: "20"
+          - generic [ref=e341]: "10"
+          - generic [ref=e342]: "0"
+        - list [ref=e345]:
+          - listitem [ref=e346]:
+            - generic [ref=e348]:
+              - generic [ref=e349]: 46/46
+              - paragraph [ref=e350]: 100%
+              - paragraph [ref=e351]: graded by fixed rules
+          - listitem [ref=e352]:
+            - generic [ref=e354]:
+              - generic [ref=e355]: 46/46
+              - paragraph [ref=e356]: 100%
+              - paragraph [ref=e357]: every answer cited
+          - listitem [ref=e358]:
+            - generic [ref=e360]:
+              - generic [ref=e361]: 40/46
+              - paragraph [ref=e362]: 87%
+              - paragraph [ref=e363]: "95% confidence: 74 to 94"
+      - generic [ref=e364]:
+        - generic [ref=e365]:
+          - paragraph [ref=e366]: Retrieval
+          - paragraph [ref=e367]: The fact reaches the model
+        - generic [ref=e368]:
+          - paragraph [ref=e369]: Provenance
+          - paragraph [ref=e370]: Sources cited
+        - generic [ref=e371]:
+          - paragraph [ref=e372]: Answer quality
+          - paragraph [ref=e373]: One valid run
+      - paragraph [ref=e374]: "One run: all 40 answers came from the pinned Nemotron 3 Super model on NVIDIA NIM, with no fallback provider. Six safety-critical questions were refused because no authoritative source covers them, and a correct refusal is graded as correct. All six misses retrieved the right evidence — the gap is in how the answer is written, not in what the system found."
+    - generic [ref=e375]:
+      - paragraph [ref=e376]: Other Kairos industrial checks
+      - generic [ref=e377]:
+        - generic [ref=e378]:
+          - paragraph [ref=e379]: Adversarial safety
+          - paragraph [ref=e380]: 0 unsafe
+          - paragraph [ref=e381]: 15 questions written to make it guess
+          - generic [ref=e382]:
+            - generic [ref=e383]:
+              - term [ref=e384]: Unsafe answers
+              - definition [ref=e385]: "0"
+            - generic [ref=e386]:
+              - term [ref=e387]: Refusals
+              - definition [ref=e388]: "12"
+            - generic [ref=e389]:
+              - term [ref=e390]: Answerable ones answered
+              - definition [ref=e391]: "yes"
+            - generic [ref=e392]:
+              - term [ref=e393]: Prompt injection held
+              - definition [ref=e394]: "yes"
+        - generic [ref=e395]:
+          - paragraph [ref=e396]: Knowledge graph linkage
+          - paragraph [ref=e397]: 18 / 20
+          - paragraph [ref=e398]: Active vault documents with a verified knowledge edge
+          - generic [ref=e399]:
+            - generic [ref=e400]:
+              - term [ref=e401]: Documents linked
+              - definition [ref=e402]: 90%
+            - generic [ref=e403]:
+              - term [ref=e404]: Dangling provenance
+              - definition [ref=e405]: "0"
+            - generic [ref=e406]:
+              - term [ref=e407]: Alias resolution
+              - definition [ref=e408]: 2/2
+            - generic [ref=e409]:
+              - term [ref=e410]: MDM identity
+              - definition [ref=e411]: 2/2
+        - generic [ref=e412]:
+          - paragraph [ref=e413]: Proactive briefs · Layer 8
+          - paragraph [ref=e414]: 6 / 6
+          - paragraph [ref=e415]: All graded checks pass. Soft targets are reported, not scored
+          - generic [ref=e416]:
+            - generic [ref=e417]:
+              - term [ref=e418]: Work order raised
+              - definition [ref=e419]: 2/2
+            - generic [ref=e420]:
+              - term [ref=e421]: Permit to work
+              - definition [ref=e422]: 2/2
+            - generic [ref=e423]:
+              - term [ref=e424]: Tag-out · inspection
+              - definition [ref=e425]: 1/1 · 1/1
+            - generic [ref=e426]:
+              - term [ref=e427]: Soft targets unmet
+              - definition [ref=e428]: 7, disclosed
+        - generic [ref=e429]:
+          - paragraph [ref=e430]: Compliance gap detection
+          - paragraph [ref=e431]: F1 0.912
+          - paragraph [ref=e432]: Zero false positives across 52 pairs
+          - generic [ref=e433]:
+            - generic [ref=e434]:
+              - term [ref=e435]: Precision
+              - definition [ref=e436]: "1.000"
+            - generic [ref=e437]:
+              - term [ref=e438]: Recall
+              - definition [ref=e439]: "0.838"
+            - generic [ref=e440]:
+              - term [ref=e441]: True / false positives
+              - definition [ref=e442]: 31 / 0
+            - generic [ref=e443]:
+              - term [ref=e444]: Full status agreement
+              - definition [ref=e445]: 46 / 52
+        - generic [ref=e446]:
+          - paragraph [ref=e447]: Entity extraction · Layer 0
+          - paragraph [ref=e448]: F1 0.805
+          - paragraph [ref=e449]: 40 labels, 15 extractions, no fallback model used
+          - generic [ref=e450]:
+            - generic [ref=e451]:
+              - term [ref=e452]: Precision
+              - definition [ref=e453]: "0.786"
+            - generic [ref=e454]:
+              - term [ref=e455]: Recall
+              - definition [ref=e456]: "0.825"
+            - generic [ref=e457]:
+              - term [ref=e458]: ASSET_TAG F1
+              - definition [ref=e459]: 0.889 (n=30)
+            - generic [ref=e460]:
+              - term [ref=e461]: PERSON F1
+              - definition [ref=e462]: 1.000 (n=7)
+        - generic [ref=e463]:
+          - paragraph [ref=e464]: Per-layer smoke
+          - paragraph [ref=e465]: 13 / 13
+          - paragraph [ref=e466]: Every layer answered on the live stack
+          - generic [ref=e467]:
+            - generic [ref=e468]:
+              - term [ref=e469]: Slowest read
+              - definition [ref=e470]: search 3.7 s
+            - generic [ref=e471]:
+              - term [ref=e472]: Assets
+              - definition [ref=e473]: 1.7 s
+            - generic [ref=e474]:
+              - term [ref=e475]: Graph / Vault
+              - definition [ref=e476]: 212 / 163 ms
+            - generic [ref=e477]:
+              - term [ref=e478]: Failures
+              - definition [ref=e479]: "0"
+        - generic [ref=e480]:
+          - paragraph [ref=e481]: Time to a trusted answer
+          - paragraph [ref=e482]: −19.9%
+          - paragraph [ref=e483]: Modelled, compared against BM25 keyword search
+          - generic [ref=e484]:
+            - generic [ref=e485]:
+              - term [ref=e486]: Traditional
+              - definition [ref=e487]: 124.0 min / 46 q
+            - generic [ref=e488]:
+              - term [ref=e489]: AIDTRACE
+              - definition [ref=e490]: 99.4 min / 46 q
+            - generic [ref=e491]:
+              - term [ref=e492]: Docs opened
+              - definition [ref=e493]: 1.00 vs 1.35
+            - generic [ref=e494]:
+              - term [ref=e495]: Raw machine time
+              - definition [ref=e496]: "loses: 9.6 s vs 28 ms"
+        - generic [ref=e497]:
+          - paragraph [ref=e498]: Concurrency sweep
+          - paragraph [ref=e499]: 0% errors
+          - paragraph [ref=e500]: 2275 requests across 9 read endpoints, up to 50 users
+          - generic [ref=e501]:
+            - generic [ref=e502]:
+              - term [ref=e503]: p50 · 1 → 50 VU
+              - definition [ref=e504]: 136 → 500 ms
+            - generic [ref=e505]:
+              - term [ref=e506]: p95 at 50 VU
+              - definition [ref=e507]: 1840 ms
+            - generic [ref=e508]:
+              - term [ref=e509]: Throughput
+              - definition [ref=e510]: 5.8 → 74.5 rps
+            - generic [ref=e511]:
+              - term [ref=e512]: Knee of the curve
+              - definition [ref=e513]: 50 users
+        - generic [ref=e514]:
+          - paragraph [ref=e515]: Soak · 60 minutes
+          - paragraph [ref=e516]: No leak signal
+          - paragraph [ref=e517]: Steady load against cloud stores, reads only
+          - generic [ref=e518]:
+            - generic [ref=e519]:
+              - term [ref=e520]: Memory slope
+              - definition [ref=e521]: +8.6 MB/h
+            - generic [ref=e522]:
+              - term [ref=e523]: Connections
+              - definition [ref=e524]: +4.2/h
+            - generic [ref=e525]:
+              - term [ref=e526]: Errors
+              - definition [ref=e527]: 0.11% of 37,842
+            - generic [ref=e528]:
+              - term [ref=e529]: Idle recovery
+              - definition [ref=e530]: 4 / 4 endpoints
+        - generic [ref=e531]:
+          - paragraph [ref=e532]: Synthesis latency
+          - paragraph [ref=e533]: p50 2.6 s
+          - paragraph [ref=e534]: Nemotron 3 Super on NVIDIA NIM at the 60 second cap, quoted with its slowest cases
+          - generic [ref=e535]:
+            - generic [ref=e536]:
+              - term [ref=e537]: p95
+              - definition [ref=e538]: 5.3 s
+            - generic [ref=e539]:
+              - term [ref=e540]: Mean
+              - definition [ref=e541]: 2.8 s
+            - generic [ref=e542]:
+              - term [ref=e543]: Graded questions
+              - definition [ref=e544]: "46"
+            - generic [ref=e545]:
+              - term [ref=e546]: Answered by
+              - definition [ref=e547]: nim 40 · refused 6
+        - generic [ref=e548]:
+          - paragraph [ref=e549]: How every one of these is graded
+          - paragraph [ref=e550]: Fixed rules, never another model.
+          - paragraph [ref=e551]: An answer has to contain the facts the question requires, avoid the ones it rules out, and cite a source. Miss any of the three and it counts as wrong. The same rules run every time, so two runs of the same question are always scored the same way.
+  - generic [ref=e553]:
+    - generic [ref=e554]:
+      - generic [ref=e555]: Trust and evidence
+      - heading "No important conclusion without a traceable source." [level=2] [ref=e556]:
+        - text: "No"
+        - generic [ref=e557]: important conclusion
+        - text: without a
+        - generic [ref=e558]: traceable source.
+      - paragraph [ref=e559]: AIDTRACE links claims, memory and decisions to the evidence they depend on. The existing industrial graph screenshot and record below show a Kairos provenance example; the FalkorDB decision graph tracks separate source and decision revisions.
+    - 'img "The AIDTRACE knowledge graph: assets and facts joined by time-aware edges, each carrying its source and authority." [ref=e562]'
+    - generic [ref=e563]:
+      - generic [ref=e564]:
+        - paragraph [ref=e565]: One Kairos industrial fact, and its provenance
+        - paragraph [ref=e566]: The EQ-101 seal specification was superseded on 15 January 2025.
+      - generic [ref=e567]:
+        - generic [ref=e568]:
+          - generic [ref=e569]:
+            - term [ref=e570]:
+              - code [ref=e571]: valid_from
+            - definition [ref=e572]: 2025-01-15
+          - definition [ref=e573]: When this fact started being true.
+        - generic [ref=e574]:
+          - generic [ref=e575]:
+            - term [ref=e576]:
+              - code [ref=e577]: valid_to
+            - definition [ref=e578]: 9999-12-31
+          - definition [ref=e579]: Still open. Closed when something replaces it, never deleted.
+        - generic [ref=e580]:
+          - generic [ref=e581]:
+            - term [ref=e582]:
+              - code [ref=e583]: authority_level
+            - definition [ref=e584]: 3 · OEM manual
+          - definition [ref=e585]: A regulation outranks a vendor manual, which outranks a local note.
+        - generic [ref=e586]:
+          - generic [ref=e587]:
+            - term [ref=e588]:
+              - code [ref=e589]: document_id
+            - definition [ref=e590]: FP-SB-2025-04
+          - definition [ref=e591]: The exact source it came from.
+        - generic [ref=e592]:
+          - generic [ref=e593]:
+            - term [ref=e594]:
+              - code [ref=e595]: confidence
+            - definition [ref=e596]: "0.91"
+          - definition [ref=e597]: Anything below 0.7 goes to quarantine instead.
+        - generic [ref=e598]:
+          - generic [ref=e599]:
+            - term [ref=e600]:
+              - code [ref=e601]: verification_status
+            - definition [ref=e602]: Verified
+          - definition [ref=e603]: A named engineer signed this one off.
+      - paragraph [ref=e604]: An illustrative industrial record. These fields describe Kairos asset links; FalkorDB decision records use their own provenance contract.
+  - generic [ref=e606]:
+    - generic [ref=e607]:
+      - generic [ref=e608]: FAQ
+      - heading "Your questions, answered." [level=2] [ref=e609]:
+        - text: Your questions,
+        - generic [ref=e610]: answered.
+      - paragraph [ref=e611]: How connected evidence, agent memory, human review and specialized extensions fit together. Read the documentation or explore the workspace for more detail.
+      - link "Read documentation" [ref=e612] [cursor=pointer]:
+        - /url: /docs
+        - text: Read documentation
+        - generic [aria-hidden] [ref=e613]: ›
+    - generic [ref=e614]:
+      - generic [ref=e615]:
+        - button "Basics" [pressed] [ref=e616] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e618]: ›
+        - button "Decisions" [ref=e619] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e621]: ›
+        - button "Evidence" [ref=e622] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e624]: ›
+        - button "Access" [ref=e625] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e627]: ›
+        - button "Evaluation" [ref=e628] [cursor=pointer]:
+          - generic [aria-hidden] [ref=e630]: ›
+      - generic [ref=e632]:
+        - group [ref=e633]:
+          - generic "What does AIDTRACE do?" [ref=e634] [cursor=pointer]:
+            - text: What does AIDTRACE do?
+            - generic [aria-hidden] [ref=e635]: +
+          - paragraph [ref=e636]: AIDTRACE connects evidence, relationships, agent memory and decisions across specialized workflows. It helps people inspect what changed, what is affected and which conclusions need review.
+        - group [ref=e637]:
+          - generic "Why use FalkorDB?" [ref=e638] [cursor=pointer]:
+            - text: Why use FalkorDB?
+            - generic [aria-hidden] [ref=e639]: +
+        - group [ref=e640]:
+          - generic "Is this one workflow or several products?" [ref=e641] [cursor=pointer]:
+            - text: Is this one workflow or several products?
+            - generic [aria-hidden] [ref=e642]: +
+  - generic [ref=e645]:
+    - generic [ref=e646]: Next.js
+    - generic [ref=e649]: React
+    - generic [ref=e652]: TypeScript
+    - generic [ref=e655]: Tailwind CSS
+    - generic [ref=e658]: Python
+    - generic [ref=e662]: FastAPI
+    - generic [ref=e665]: Go
+    - generic [ref=e668]: Celery
+    - generic [ref=e671]: Neo4j
+    - generic [ref=e674]: Elasticsearch
+    - generic [ref=e679]: Redis
+    - generic [ref=e682]: Supabase
+    - generic [ref=e685]: Docker
+    - generic [ref=e688]: NVIDIA
+    - generic [ref=e691]: OpenTelemetry
+    - generic [ref=e694]: Grafana
+    - generic [ref=e697]: GitHub
+    - generic [ref=e700]: Next.js
+    - generic [ref=e703]: React
+    - generic [ref=e706]: TypeScript
+    - generic [ref=e709]: Tailwind CSS
+    - generic [ref=e712]: Python
+    - generic [ref=e716]: FastAPI
+    - generic [ref=e719]: Go
+    - generic [ref=e722]: Celery
+    - generic [ref=e725]: Neo4j
+    - generic [ref=e728]: Elasticsearch
+    - generic [ref=e733]: Redis
+    - generic [ref=e736]: Supabase
+    - generic [ref=e739]: Docker
+    - generic [ref=e742]: NVIDIA
+    - generic [ref=e745]: OpenTelemetry
+    - generic [ref=e748]: Grafana
+    - generic [ref=e751]: GitHub
+  - paragraph [ref=e754]: Built with Next.js, React, TypeScript, Tailwind CSS, Python, FastAPI, Go, Celery, Neo4j, Elasticsearch, Redis, Supabase, Docker, NVIDIA, OpenTelemetry, Grafana, GitHub.
+  - generic [ref=e755]:
+    - generic [ref=e757]:
+      - generic [ref=e758]:
+        - generic [ref=e759]: AIDTRACE
+        - paragraph [ref=e761]: Understand the connections. Trust the evidence. Improve the decision.
+      - generic [ref=e762]:
+        - paragraph [ref=e763]: Product
+        - list [ref=e764]:
+          - listitem [ref=e765]:
+            - link "The problem" [ref=e766] [cursor=pointer]:
+              - /url: "#problem"
+          - listitem [ref=e767]:
+            - link "Intelligence engine" [ref=e768] [cursor=pointer]:
+              - /url: "#capabilities"
+          - listitem [ref=e769]:
+            - link "Extensions" [ref=e770] [cursor=pointer]:
+              - /url: "#field"
+      - generic [ref=e771]:
+        - paragraph [ref=e772]: How it works
+        - list [ref=e773]:
+          - listitem [ref=e774]:
+            - link "Shared workflow" [ref=e775] [cursor=pointer]:
+              - /url: "#how"
+          - listitem [ref=e776]:
+            - link "Architecture" [ref=e777] [cursor=pointer]:
+              - /url: "#system"
+          - listitem [ref=e778]:
+            - link "Evidence" [ref=e779] [cursor=pointer]:
+              - /url: "#provenance"
+          - listitem [ref=e780]:
+            - link "Evaluation" [ref=e781] [cursor=pointer]:
+              - /url: "#evidence"
+      - generic [ref=e782]:
+        - paragraph [ref=e783]: Resources
+        - list [ref=e784]:
+          - listitem [ref=e785]:
+            - link "Documentation" [ref=e786] [cursor=pointer]:
+              - /url: /docs
+          - listitem [ref=e787]:
+            - link "FAQ" [ref=e788] [cursor=pointer]:
+              - /url: "#faq"
+          - listitem [ref=e789]:
+            - link "Source code" [ref=e790] [cursor=pointer]:
+              - /url: https://github.com/kr7shnasomani/kairos
+    - generic [ref=e793]:
+      - paragraph [ref=e794]: © 2026 AIDTRACE Inc
+      - generic [ref=e795]:
+        - link "AIDTRACE on GitHub" [ref=e796] [cursor=pointer]:
+          - /url: https://github.com/kr7shnasomani/kairos
+        - link "Watch the AIDTRACE demo" [ref=e799] [cursor=pointer]:
+          - /url: https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link

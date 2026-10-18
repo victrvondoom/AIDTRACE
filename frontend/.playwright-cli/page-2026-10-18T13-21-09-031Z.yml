@@ -1,0 +1,578 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e20] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=e21]:
+      - banner "AIDTRACE" [ref=e22]:
+        - link "AIDTRACE home" [ref=e23] [cursor=pointer]:
+          - /url: /
+          - img "AIDTRACE" [ref=e24]
+          - generic [ref=e25]: AIDTRACE
+        - generic [ref=e26]: Supply Chain Intelligence
+        - generic [ref=e27]:
+          - generic "cardboard packaging → US" [ref=e28]
+          - status [ref=e29]: Graph connected
+        - button "Search" [ref=e31] [cursor=pointer]:
+          - text: Search
+          - generic [ref=e32]: Ctrl K
+        - switch "Nightlight theme" [ref=e33] [cursor=pointer]
+        - button "Open user menu" [ref=e36] [cursor=pointer]: AI
+      - main [ref=e37]:
+        - generic [ref=e39]:
+          - complementary "Investigate" [ref=e40]:
+            - generic [ref=e41]:
+              - button "Collapse investigate panel" [ref=e42] [cursor=pointer]: ‹
+              - generic [ref=e43]:
+                - generic [ref=e44]:
+                  - generic [ref=e45]:
+                    - heading "AIDTRACE" [level=1] [ref=e46]
+                    - button "About" [ref=e47] [cursor=pointer]
+                  - paragraph [ref=e48]: Powered by FalkorDB
+                  - paragraph [ref=e49]:
+                    - generic [ref=e51]: FalkorDB Memory
+                    - generic [ref=e52]: · GraphBLAS OpenCypher
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Ask about a supplier, risk, or decision
+                  - generic [ref=e55]:
+                    - textbox "Ask about a supplier, risk, or decision" [ref=e56]:
+                      - /placeholder: Ask about a supplier, risk, or decision…
+                    - button "Send question" [disabled]:
+                      - generic: Ask
+                - list "Primary actions" [ref=e57]:
+                  - listitem [ref=e58]:
+                    - button "1 · Investigate Risk CesiumJS 3D routes · cyber & ESG reach" [ref=e59] [cursor=pointer]:
+                      - generic [ref=e60]:
+                        - generic [ref=e61]: 1 · Investigate Risk
+                        - generic [ref=e62]: CesiumJS 3D routes · cyber & ESG reach
+                  - listitem [ref=e63]:
+                    - button "2 · Update Evidence Propagate grid/cyber drift into FalkorDB" [ref=e64] [cursor=pointer]:
+                      - generic [ref=e65]:
+                        - generic [ref=e66]: 2 · Update Evidence
+                        - generic [ref=e67]: Propagate grid/cyber drift into FalkorDB
+                  - listitem [ref=e68]:
+                    - button "3 · Review Decision Hold stale approval · review an alternative" [ref=e144] [cursor=pointer]:
+                      - generic [ref=e70]:
+                        - generic [ref=e71]: 3 · Review Decision
+                        - generic [ref=e72]: Hold stale approval · review an alternative
+                - generic [ref=e73]:
+                  - generic [ref=e74]: Evidence source
+                  - combobox "Evidence source" [ref=e75]:
+                    - option "Inspect a source…" [selected]
+                    - option "DEMO-DRIFT-SOP-V1"
+                    - option "DEMO-DRIFT-SOP-V2"
+                    - option "Ember electricity grid intensity"
+                    - option "Ember electricity grid intensity (Synthetic grid-intensity revision (demo))"
+                    - option "GLEC transport emission factors"
+                    - option "ND-GAIN climate vulnerability"
+                    - option "EPA USEEIO v1.3 supply-chain factors"
+                    - option "IRDAI Health Department FAQs and Guidelines"
+                    - option "Policy Wording"
+                    - option "IRDAI Policyholder Portal"
+                    - option "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance"
+                  - button "Extensions More tools" [ref=e76] [cursor=pointer]:
+                    - generic [ref=e77]: Extensions
+                    - generic [ref=e78]: More tools
+          - region "Intelligence workspace" [ref=e79]:
+            - tablist "Workspace view" [ref=e81]:
+              - tab "Globe" [ref=e82] [cursor=pointer]
+              - tab "Graph" [active] [selected] [ref=e83] [cursor=pointer]
+              - tab "Lineage" [ref=e84] [cursor=pointer]
+              - tab "Timeline" [ref=e85] [cursor=pointer]
+            - tabpanel "Graph" [ref=e145]:
+              - generic [ref=e146]:
+                - generic [ref=e147]:
+                  - generic [ref=e148]:
+                    - generic [ref=e149]:
+                      - generic [ref=e151]: "FalkorDB site graph: Current site"
+                      - generic [ref=e152]: Live site data
+                      - generic [ref=e154]: Graph traversal
+                    - generic [ref=e156]:
+                      - button "FalkorDB Live Graph" [pressed] [ref=e157] [cursor=pointer]
+                      - button "Scenario Sandbox" [ref=e159] [cursor=pointer]
+                      - button "⚡ Live Cypher Console" [ref=e161] [cursor=pointer]
+                  - generic [ref=e163]:
+                    - generic [ref=e164]:
+                      - generic [ref=e165]: "Entity Filters:"
+                      - button "All (76)" [ref=e166] [cursor=pointer]
+                      - button "Claim (12)" [ref=e167] [cursor=pointer]:
+                        - generic [ref=e168]: Claim
+                        - generic [ref=e169]: (12)
+                      - button "SourceVersion (11)" [ref=e170] [cursor=pointer]:
+                        - generic [ref=e171]: SourceVersion
+                        - generic [ref=e172]: (11)
+                      - button "Document (9)" [ref=e173] [cursor=pointer]:
+                        - generic [ref=e174]: Document
+                        - generic [ref=e175]: (9)
+                      - button "DecisionRevision (7)" [ref=e176] [cursor=pointer]:
+                        - generic [ref=e177]: DecisionRevision
+                        - generic [ref=e178]: (7)
+                      - button "AgentSession (7)" [ref=e179] [cursor=pointer]:
+                        - generic [ref=e180]: AgentSession
+                        - generic [ref=e181]: (7)
+                      - button "Memory (5)" [ref=e182] [cursor=pointer]:
+                        - generic [ref=e183]: Memory
+                        - generic [ref=e184]: (5)
+                      - button "ActionProposal (4)" [ref=e185] [cursor=pointer]:
+                        - generic [ref=e186]: ActionProposal
+                        - generic [ref=e187]: (4)
+                      - button "Agent (4)" [ref=e188] [cursor=pointer]:
+                        - generic [ref=e189]: Agent
+                        - generic [ref=e190]: (4)
+                      - button "Approval (4)" [ref=e191] [cursor=pointer]:
+                        - generic [ref=e192]: Approval
+                        - generic [ref=e193]: (4)
+                      - button "Decision (4)" [ref=e194] [cursor=pointer]:
+                        - generic [ref=e195]: Decision
+                        - generic [ref=e196]: (4)
+                      - button "Plan (4)" [ref=e197] [cursor=pointer]:
+                        - generic [ref=e198]: Plan
+                        - generic [ref=e199]: (4)
+                      - button "ChangeEvent (3)" [ref=e200] [cursor=pointer]:
+                        - generic [ref=e201]: ChangeEvent
+                        - generic [ref=e202]: (3)
+                      - button "AuditEvent (1)" [ref=e203] [cursor=pointer]:
+                        - generic [ref=e204]: AuditEvent
+                        - generic [ref=e205]: (1)
+                      - button "Asset (1)" [ref=e206] [cursor=pointer]:
+                        - generic [ref=e207]: Asset
+                        - generic [ref=e208]: (1)
+                    - generic [ref=e209]: 76 nodes · 136 edges
+                - generic [ref=e210]:
+                  - generic [ref=e211]:
+                    - group "Filters" [ref=e212]:
+                      - button "Network" [pressed] [ref=e213] [cursor=pointer]
+                      - button "Layered" [ref=e214] [cursor=pointer]
+                      - button "Radial" [ref=e215] [cursor=pointer]
+                      - button "Matrix" [ref=e216] [cursor=pointer]
+                      - button "Table" [ref=e217] [cursor=pointer]
+                    - generic [ref=e218]:
+                      - generic [ref=e219]:
+                        - checkbox "Show non-dependency links" [checked] [ref=e220]
+                        - text: Show non-dependency links
+                      - group "Zoom" [ref=e221]:
+                        - button "Zoom out" [ref=e222] [cursor=pointer]: −
+                        - button "Zoom in" [ref=e223] [cursor=pointer]: +
+                        - button "Fit" [ref=e224] [cursor=pointer]
+                      - generic [ref=e225]: 76 nodes · 136 links
+                  - region "network graph view" [ref=e226]:
+                    - img "Graph with 76 nodes and 136 links" [ref=e227]:
+                      - generic "DEMO-DRIFT-ACTION-001 —APPROVED_BY→ DEMO-DRIFT-APPROVAL-REV-001 · weight 1 · not a dependency" [ref=e228]
+                      - generic "DEMO-DRIFT-ACTION-001 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e229]
+                      - generic "DEMO-DRIFT-ACTION-001 —REQUIRES_APPROVAL→ DEMO-DRIFT-DECISION-001 · weight 1 · not a dependency" [ref=e230]
+                      - generic "DEMO-DRIFT-ACTION-001 —DEPENDS_ON→ DEMO-DRIFT-PLAN-001 · weight 1" [ref=e231]
+                      - generic "DEMO-DRIFT-AGENT-CURATOR —HAS_SESSION→ DEMO-DRIFT-SESSION-CURATOR · weight 1 · not a dependency" [ref=e232]
+                      - generic "DEMO-DRIFT-AGENT-INVESTIGATOR —HAS_SESSION→ DEMO-DRIFT-SESSION-INVESTIGATOR · weight 1 · not a dependency" [ref=e233]
+                      - generic "DEMO-DRIFT-APPROVAL-REV-001 —ON_REVISION→ DEMO-DRIFT-DECISION-REV-001 · weight 1 · not a dependency" [ref=e234]
+                      - generic "DEMO-DRIFT-CLAIM-V1 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e235]
+                      - generic "DEMO-DRIFT-CLAIM-V1 —SUPPORTED_BY→ DEMO-DRIFT-SOP-V1 · weight 1" [ref=e236]
+                      - generic "DEMO-DRIFT-CLAIM-V2 —SUPERSEDES→ DEMO-DRIFT-CLAIM-V1 · weight 1 · not a dependency" [ref=e237]
+                      - generic "DEMO-DRIFT-CLAIM-V2 —SUPPORTED_BY→ DEMO-DRIFT-SOP-V2 · weight 1" [ref=e238]
+                      - generic "DEMO-DRIFT-DECISION-001 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e239]
+                      - generic "DEMO-DRIFT-DECISION-001 —HAS_REVISION→ DEMO-DRIFT-DECISION-REV-001 · weight 1 · not a dependency" [ref=e240]
+                      - generic "DEMO-DRIFT-DECISION-001 —HAS_REVISION→ DEMO-DRIFT-DECISION-REV-002 · weight 1 · not a dependency" [ref=e241]
+                      - generic "DEMO-DRIFT-DECISION-001 —DEPENDS_ON→ DEMO-DRIFT-MEMORY-001 · weight 1" [ref=e242]
+                      - generic "DEMO-DRIFT-DECISION-REV-001 —DEPENDS_ON→ DEMO-DRIFT-MEMORY-001 · weight 1" [ref=e243]
+                      - generic "DEMO-DRIFT-DECISION-REV-002 —DEPENDS_ON→ DEMO-DRIFT-CLAIM-V2 · weight 1" [ref=e244]
+                      - generic "DEMO-DRIFT-DECISION-REV-002 —PREVIOUS→ DEMO-DRIFT-DECISION-REV-001 · weight 1 · not a dependency" [ref=e245]
+                      - generic "DEMO-DRIFT-MEMORY-001 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e246]
+                      - generic "DEMO-DRIFT-MEMORY-001 —DERIVED_FROM→ DEMO-DRIFT-CLAIM-V1 · weight 1" [ref=e247]
+                      - generic "DEMO-DRIFT-MEMORY-001 —RECALLED_IN→ DEMO-DRIFT-SESSION-INVESTIGATOR · weight 1 · not a dependency" [ref=e248]
+                      - generic "DEMO-DRIFT-PLAN-001 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e249]
+                      - generic "DEMO-DRIFT-PLAN-001 —DEPENDS_ON→ DEMO-DRIFT-DECISION-001 · weight 1" [ref=e250]
+                      - generic "DEMO-DRIFT-SESSION-CURATOR —PRODUCED→ DEMO-DRIFT-MEMORY-001 · weight 1 · not a dependency" [ref=e251]
+                      - generic "DEMO-DRIFT-SESSION-INVESTIGATOR —PRODUCED→ DEMO-DRIFT-DECISION-001 · weight 1 · not a dependency" [ref=e252]
+                      - generic "DEMO-DRIFT-SOP-V1 —INVALIDATED_BY→ DEMO-DRIFT-CHANGE-V2 · weight 1 · not a dependency" [ref=e253]
+                      - generic "DEMO-DRIFT-SOP-V1 —VERSION_OF→ DEMO-DRIFT-SOP-001 · weight 1 · not a dependency" [ref=e254]
+                      - generic "DEMO-DRIFT-SOP-V2 —VERSION_OF→ DEMO-DRIFT-SOP-001 · weight 1 · not a dependency" [ref=e255]
+                      - generic "DEMO-DRIFT-SOP-V2 —SUPERSEDES→ DEMO-DRIFT-SOP-V1 · weight 1 · not a dependency" [ref=e256]
+                      - generic "agent:greenchain-scorer —HAS_SESSION→ session:gc:sab0e0e:mem:06c65cbc · weight 1 · not a dependency" [ref=e257]
+                      - generic "agent:greenchain-scorer —HAS_SESSION→ session:gc:sab0e0e:mem:1 · weight 1 · not a dependency" [ref=e258]
+                      - generic "agent:greenchain-scorer —HAS_SESSION→ session:gc:sab0e0e:mem:ef2821c1 · weight 1 · not a dependency" [ref=e259]
+                      - generic "agent:resolveai-investigator —HAS_SESSION→ session:ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a · weight 1 · not a dependency" [ref=e260]
+                      - generic "approval:gc:sab0e0e:action:06c65cbc:1 —ON_REVISION→ gc:sab0e0e:decision:06c65cbc:rev:1 · weight 1 · not a dependency" [ref=e261]
+                      - generic "approval:gc:sab0e0e:action:1 —ON_REVISION→ gc:sab0e0e:decision:rev:1 · weight 1 · not a dependency" [ref=e262]
+                      - generic "approval:gc:sab0e0e:action:ef2821c1:1 —ON_REVISION→ gc:sab0e0e:decision:ef2821c1:rev:1 · weight 1 · not a dependency" [ref=e263]
+                      - generic "dataset:EMBER:sab0e0e:v1 —VERSION_OF→ dataset:EMBER · weight 1 · not a dependency" [ref=e264]
+                      - generic "dataset:EMBER:sab0e0e:v2 —VERSION_OF→ dataset:EMBER · weight 1 · not a dependency" [ref=e265]
+                      - generic "dataset:EMBER:sab0e0e:v2 —SUPERSEDES→ dataset:EMBER:sab0e0e:v1 · weight 1 · not a dependency" [ref=e266]
+                      - generic "dataset:GLEC:sab0e0e:v1 —VERSION_OF→ dataset:GLEC · weight 1 · not a dependency" [ref=e267]
+                      - generic "dataset:NDGAIN:sab0e0e:v1 —VERSION_OF→ dataset:NDGAIN · weight 1 · not a dependency" [ref=e268]
+                      - generic "dataset:USEEIO:sab0e0e:v1 —VERSION_OF→ dataset:USEEIO · weight 1 · not a dependency" [ref=e269]
+                      - generic "gc:sab0e0e:action —APPROVED_BY→ approval:gc:sab0e0e:action:1 · weight 1 · not a dependency" [ref=e270]
+                      - generic "gc:sab0e0e:action —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e271]
+                      - generic "gc:sab0e0e:action —REQUIRES_APPROVAL→ gc:sab0e0e:decision · weight 1 · not a dependency" [ref=e272]
+                      - generic "gc:sab0e0e:action —DEPENDS_ON→ gc:sab0e0e:plan · weight 1" [ref=e273]
+                      - generic "gc:sab0e0e:action:06c65cbc —APPROVED_BY→ approval:gc:sab0e0e:action:06c65cbc:1 · weight 1 · not a dependency" [ref=e274]
+                      - generic "gc:sab0e0e:action:06c65cbc —REQUIRES_APPROVAL→ gc:sab0e0e:decision:06c65cbc · weight 1 · not a dependency" [ref=e275]
+                      - generic "gc:sab0e0e:action:06c65cbc —DEPENDS_ON→ gc:sab0e0e:plan:06c65cbc · weight 1" [ref=e276]
+                      - generic "gc:sab0e0e:action:ef2821c1 —APPROVED_BY→ approval:gc:sab0e0e:action:ef2821c1:1 · weight 1 · not a dependency" [ref=e277]
+                      - generic "gc:sab0e0e:action:ef2821c1 —REQUIRES_APPROVAL→ gc:sab0e0e:decision:ef2821c1 · weight 1 · not a dependency" [ref=e278]
+                      - generic "gc:sab0e0e:action:ef2821c1 —DEPENDS_ON→ gc:sab0e0e:plan:ef2821c1 · weight 1" [ref=e279]
+                      - generic "gc:sab0e0e:decision —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e280]
+                      - generic "gc:sab0e0e:decision —HAS_REVISION→ gc:sab0e0e:decision:rev:1 · weight 1 · not a dependency" [ref=e281]
+                      - generic "gc:sab0e0e:decision —HAS_REVISION→ gc:sab0e0e:decision:rev:2 · weight 1 · not a dependency" [ref=e282]
+                      - generic "gc:sab0e0e:decision —HAS_REVISION→ gc:sab0e0e:decision:rev:3 · weight 1 · not a dependency" [ref=e283]
+                      - generic "gc:sab0e0e:decision —DEPENDS_ON→ gc:sab0e0e:mem:06c65cbc · weight 1" [ref=e284]
+                      - generic "gc:sab0e0e:decision —DEPENDS_ON→ gc:sab0e0e:top:v2:06c65cbc · weight 1" [ref=e285]
+                      - generic "gc:sab0e0e:decision:06c65cbc —HAS_REVISION→ gc:sab0e0e:decision:06c65cbc:rev:1 · weight 1 · not a dependency" [ref=e286]
+                      - generic "gc:sab0e0e:decision:06c65cbc —DEPENDS_ON→ gc:sab0e0e:mem:06c65cbc · weight 1" [ref=e287]
+                      - generic "gc:sab0e0e:decision:06c65cbc —DEPENDS_ON→ gc:sab0e0e:top:v2:06c65cbc · weight 1" [ref=e288]
+                      - generic "gc:sab0e0e:decision:06c65cbc:rev:1 —DEPENDS_ON→ gc:sab0e0e:mem:06c65cbc · weight 1" [ref=e289]
+                      - generic "gc:sab0e0e:decision:06c65cbc:rev:1 —DEPENDS_ON→ gc:sab0e0e:top:v2:06c65cbc · weight 1" [ref=e290]
+                      - generic "gc:sab0e0e:decision:ef2821c1 —HAS_REVISION→ gc:sab0e0e:decision:ef2821c1:rev:1 · weight 1 · not a dependency" [ref=e291]
+                      - generic "gc:sab0e0e:decision:ef2821c1 —DEPENDS_ON→ gc:sab0e0e:mem:ef2821c1 · weight 1" [ref=e292]
+                      - generic "gc:sab0e0e:decision:ef2821c1 —DEPENDS_ON→ gc:sab0e0e:top:v2:ef2821c1 · weight 1" [ref=e293]
+                      - generic "gc:sab0e0e:decision:ef2821c1:rev:1 —DEPENDS_ON→ gc:sab0e0e:mem:ef2821c1 · weight 1" [ref=e294]
+                      - generic "gc:sab0e0e:decision:ef2821c1:rev:1 —DEPENDS_ON→ gc:sab0e0e:top:v2:ef2821c1 · weight 1" [ref=e295]
+                      - generic "gc:sab0e0e:decision:rev:1 —DEPENDS_ON→ gc:sab0e0e:mem:1 · weight 1" [ref=e296]
+                      - generic "gc:sab0e0e:decision:rev:1 —DEPENDS_ON→ gc:sab0e0e:top:v1 · weight 1" [ref=e297]
+                      - generic "gc:sab0e0e:decision:rev:2 —PREVIOUS→ gc:sab0e0e:decision:rev:1 · weight 1 · not a dependency" [ref=e298]
+                      - generic "gc:sab0e0e:decision:rev:2 —DEPENDS_ON→ gc:sab0e0e:mem:ef2821c1 · weight 1" [ref=e299]
+                      - generic "gc:sab0e0e:decision:rev:2 —DEPENDS_ON→ gc:sab0e0e:top:v2:ef2821c1 · weight 1" [ref=e300]
+                      - generic "gc:sab0e0e:decision:rev:3 —PREVIOUS→ gc:sab0e0e:decision:rev:2 · weight 1 · not a dependency" [ref=e301]
+                      - generic "gc:sab0e0e:decision:rev:3 —DEPENDS_ON→ gc:sab0e0e:mem:06c65cbc · weight 1" [ref=e302]
+                      - generic "gc:sab0e0e:decision:rev:3 —DEPENDS_ON→ gc:sab0e0e:top:v2:06c65cbc · weight 1" [ref=e303]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v2 · weight 1" [ref=e304]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e305]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e306]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e307]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1 —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v2 · weight 1" [ref=e308]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1 —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e309]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1 —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e310]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1 —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e311]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v1 · weight 1" [ref=e312]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e313]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e314]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e315]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:06c65cbc · weight 1 · not a dependency" [ref=e316]
+                      - generic "gc:sab0e0e:est:Illustrative_Packaging_D:v1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e317]
+                      - generic "gc:sab0e0e:mem:06c65cbc —DERIVED_FROM→ gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc · weight 1" [ref=e318]
+                      - generic "gc:sab0e0e:mem:06c65cbc —DERIVED_FROM→ gc:sab0e0e:top:v2:06c65cbc · weight 1" [ref=e319]
+                      - generic "gc:sab0e0e:mem:1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:06c65cbc · weight 1 · not a dependency" [ref=e320]
+                      - generic "gc:sab0e0e:mem:1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e321]
+                      - generic "gc:sab0e0e:mem:1 —DERIVED_FROM→ gc:sab0e0e:est:Illustrative_Packaging_D:v1 · weight 1" [ref=e322]
+                      - generic "gc:sab0e0e:mem:1 —DERIVED_FROM→ gc:sab0e0e:top:v1 · weight 1" [ref=e323]
+                      - generic "gc:sab0e0e:mem:ef2821c1 —DERIVED_FROM→ gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1 · weight 1" [ref=e324]
+                      - generic "gc:sab0e0e:mem:ef2821c1 —DERIVED_FROM→ gc:sab0e0e:top:v2:ef2821c1 · weight 1" [ref=e325]
+                      - generic "gc:sab0e0e:mem:ef2821c1 —RECALLED_IN→ recall:agent:fraud-investigator:69ef2257c561 · weight 1 · not a dependency" [ref=e326]
+                      - generic "gc:sab0e0e:plan —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e327]
+                      - generic "gc:sab0e0e:plan —DEPENDS_ON→ gc:sab0e0e:decision · weight 1" [ref=e328]
+                      - generic "gc:sab0e0e:plan:06c65cbc —DEPENDS_ON→ gc:sab0e0e:decision:06c65cbc · weight 1" [ref=e329]
+                      - generic "gc:sab0e0e:plan:ef2821c1 —DEPENDS_ON→ gc:sab0e0e:decision:ef2821c1 · weight 1" [ref=e330]
+                      - generic "gc:sab0e0e:top:v1 —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v1 · weight 1" [ref=e331]
+                      - generic "gc:sab0e0e:top:v1 —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e332]
+                      - generic "gc:sab0e0e:top:v1 —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e333]
+                      - generic "gc:sab0e0e:top:v1 —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e334]
+                      - generic "gc:sab0e0e:top:v1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:06c65cbc · weight 1 · not a dependency" [ref=e335]
+                      - generic "gc:sab0e0e:top:v1 —INVALIDATED_BY→ gc:sab0e0e:change:EMBER:ef2821c1 · weight 1 · not a dependency" [ref=e336]
+                      - generic "gc:sab0e0e:top:v2:06c65cbc —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v2 · weight 1" [ref=e337]
+                      - generic "gc:sab0e0e:top:v2:06c65cbc —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e338]
+                      - generic "gc:sab0e0e:top:v2:06c65cbc —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e339]
+                      - generic "gc:sab0e0e:top:v2:06c65cbc —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e340]
+                      - generic "gc:sab0e0e:top:v2:06c65cbc —SUPERSEDES→ gc:sab0e0e:top:v1 · weight 1 · not a dependency" [ref=e341]
+                      - generic "gc:sab0e0e:top:v2:ef2821c1 —SUPPORTED_BY→ dataset:EMBER:sab0e0e:v2 · weight 1" [ref=e342]
+                      - generic "gc:sab0e0e:top:v2:ef2821c1 —SUPPORTED_BY→ dataset:GLEC:sab0e0e:v1 · weight 1" [ref=e343]
+                      - generic "gc:sab0e0e:top:v2:ef2821c1 —SUPPORTED_BY→ dataset:NDGAIN:sab0e0e:v1 · weight 1" [ref=e344]
+                      - generic "gc:sab0e0e:top:v2:ef2821c1 —SUPPORTED_BY→ dataset:USEEIO:sab0e0e:v1 · weight 1" [ref=e345]
+                      - generic "gc:sab0e0e:top:v2:ef2821c1 —SUPERSEDES→ gc:sab0e0e:top:v1 · weight 1 · not a dependency" [ref=e346]
+                      - generic "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:08fba6f61d13 —SUPPORTED_BY→ ra:src:08fba6f61d13cdf34a83 · weight 1" [ref=e347]
+                      - generic "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:3fe0ef70ba4e —SUPPORTED_BY→ ra:src:3fe0ef70ba4e1b8d5313 · weight 1" [ref=e348]
+                      - generic "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:524f6934c0e3 —SUPPORTED_BY→ ra:src:524f6934c0e341d04d74 · weight 1" [ref=e349]
+                      - generic "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:81de28131242 —SUPPORTED_BY→ ra:src:81de28131242bf3dd9d1 · weight 1" [ref=e350]
+                      - generic "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —DERIVED_FROM→ ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:08fba6f61d13 · weight 1" [ref=e351]
+                      - generic "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —DERIVED_FROM→ ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:3fe0ef70ba4e · weight 1" [ref=e352]
+                      - generic "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —DERIVED_FROM→ ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:524f6934c0e3 · weight 1" [ref=e353]
+                      - generic "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —DERIVED_FROM→ ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:81de28131242 · weight 1" [ref=e354]
+                      - generic "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —RECALLED_IN→ recall:agent:fraud-investigator:69ef2257c561 · weight 1 · not a dependency" [ref=e355]
+                      - generic "ra:src:08fba6f61d13cdf34a83 —VERSION_OF→ ra:doc:IRDAI_Health_Department_FAQs_and_Guidelines · weight 1 · not a dependency" [ref=e356]
+                      - generic "ra:src:3fe0ef70ba4e1b8d5313 —VERSION_OF→ ra:doc:Policy_Wording · weight 1 · not a dependency" [ref=e357]
+                      - generic "ra:src:524f6934c0e341d04d74 —VERSION_OF→ ra:doc:IRDAI_Policyholder_Portal · weight 1 · not a dependency" [ref=e358]
+                      - generic "ra:src:81de28131242bf3dd9d1 —VERSION_OF→ ra:doc:Master_Circular_on_IRDAI_Insurance_Products_Regulations_2024_-_Health_Insurance · weight 1 · not a dependency" [ref=e359]
+                      - generic "session:gc:sab0e0e:mem:06c65cbc —PRODUCED→ gc:sab0e0e:mem:06c65cbc · weight 1 · not a dependency" [ref=e360]
+                      - generic "session:gc:sab0e0e:mem:1 —PRODUCED→ gc:sab0e0e:mem:1 · weight 1 · not a dependency" [ref=e361]
+                      - generic "session:gc:sab0e0e:mem:ef2821c1 —PRODUCED→ gc:sab0e0e:mem:ef2821c1 · weight 1 · not a dependency" [ref=e362]
+                      - generic "session:ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a —PRODUCED→ ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a · weight 1 · not a dependency" [ref=e363]
+                      - button "DEMO-DRIFT-ACTION-001, ActionProposal, caution, SUSPENDED" [ref=e364] [cursor=pointer]:
+                        - generic: ACT
+                        - generic [ref=e367]: DEMO-DRIFT-ACTION-001
+                      - button "Evidence Curator, Agent, info" [ref=e368] [cursor=pointer]:
+                        - generic: AGT
+                        - generic [ref=e371]: Evidence Curator
+                      - button "ResolveAI Maintenance Specialist, Agent, info" [ref=e372] [cursor=pointer]:
+                        - generic: AGT
+                        - generic [ref=e375]: ResolveAI Maintenance…
+                      - button "DEMO-DRIFT-APPROVAL-REV-001, Approval, verified" [ref=e376] [cursor=pointer]:
+                        - generic: APP
+                        - generic [ref=e379]: DEMO-DRIFT-APPROVAL-R…
+                      - button "DEMO-DRIFT-AUDIT-V2, AuditEvent, muted" [ref=e380] [cursor=pointer]:
+                        - generic: LOG
+                        - generic [ref=e383]: DEMO-DRIFT-AUDIT-V2
+                      - button "DEMO-DRIFT-CHANGE-V2, ChangeEvent, danger" [ref=e384] [cursor=pointer]:
+                        - generic: EVT
+                        - generic [ref=e387]: DEMO-DRIFT-CHANGE-V2
+                      - button "DEMO-DRIFT-CLAIM-V1, Claim, caution, SUPERSEDED" [ref=e388] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e391]: DEMO-DRIFT-CLAIM-V1
+                      - button "DEMO-DRIFT-CLAIM-V2, Claim, verified, ACTIVE" [ref=e392] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e395]: DEMO-DRIFT-CLAIM-V2
+                      - button "DEMO-DRIFT-DECISION-001, Decision, danger, INVALIDATED" [ref=e396] [cursor=pointer]:
+                        - generic: DEC
+                        - generic [ref=e399]: DEMO-DRIFT-DECISION-0…
+                      - button "DEMO-DRIFT-DECISION-REV-001, DecisionRevision, verified, VALID" [ref=e400] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e403]: DEMO-DRIFT-DECISION-R…
+                      - button "DEMO-DRIFT-DECISION-REV-002, DecisionRevision, danger, INVALIDATED" [ref=e404] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e407]: DEMO-DRIFT-DECISION-R…
+                      - button "DEMO-DRIFT-MEMORY-001, Memory, caution, STALE" [ref=e408] [cursor=pointer]:
+                        - generic: MEM
+                        - generic [ref=e411]: DEMO-DRIFT-MEMORY-001
+                      - button "DEMO-DRIFT-PLAN-001, Plan, caution, STALE" [ref=e412] [cursor=pointer]:
+                        - generic: PLA
+                        - generic [ref=e415]: DEMO-DRIFT-PLAN-001
+                      - button "DEMO-DRIFT-SESSION-CURATOR, AgentSession, caution" [ref=e416] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e419]: DEMO-DRIFT-SESSION-CU…
+                      - button "DEMO-DRIFT-SESSION-INVESTIGATOR, AgentSession, caution" [ref=e420] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e423]: DEMO-DRIFT-SESSION-IN…
+                      - button "Synthetic pump inspection procedure, Document, accent" [ref=e424] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e427]: Synthetic pump inspec…
+                      - button "DEMO-DRIFT-SOP-V1, SourceVersion, caution, SUPERSEDED" [ref=e428] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e431]: DEMO-DRIFT-SOP-V1
+                      - button "DEMO-DRIFT-SOP-V2, SourceVersion, verified, ACTIVE" [ref=e432] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e435]: DEMO-DRIFT-SOP-V2
+                      - button "DEMO-HV-PUMP-001, Asset, caution" [ref=e436] [cursor=pointer]:
+                        - generic: AST
+                        - generic [ref=e439]: DEMO-HV-PUMP-001
+                      - button "GreenChain scorer, Agent, info" [ref=e440] [cursor=pointer]:
+                        - generic: AGT
+                        - generic [ref=e443]: GreenChain scorer
+                      - button "ResolveAI investigator, Agent, info" [ref=e444] [cursor=pointer]:
+                        - generic: AGT
+                        - generic [ref=e447]: ResolveAI investigator
+                      - button "approval:gc:sab0e0e:action:06c65cbc:1, Approval, verified" [ref=e448] [cursor=pointer]:
+                        - generic: APP
+                        - generic [ref=e451]: approval:gc:sab0e0e:a…
+                      - button "approval:gc:sab0e0e:action:1, Approval, verified" [ref=e452] [cursor=pointer]:
+                        - generic: APP
+                        - generic [ref=e455]: approval:gc:sab0e0e:a…
+                      - button "approval:gc:sab0e0e:action:ef2821c1:1, Approval, verified" [ref=e456] [cursor=pointer]:
+                        - generic: APP
+                        - generic [ref=e459]: approval:gc:sab0e0e:a…
+                      - button "Ember electricity grid intensity (Synthetic grid-intensity revision (demo)), Document, accent" [ref=e460] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e463]: Ember electricity gri…
+                      - button "Ember electricity grid intensity, SourceVersion, caution, SUPERSEDED" [ref=e464] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e467]: Ember electricity gri…
+                      - button "Ember electricity grid intensity (Synthetic grid-intensity revision (demo)), SourceVersion, verified, ACTIVE" [ref=e468] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e471]: Ember electricity gri…
+                      - button "GLEC transport emission factors, Document, accent" [ref=e472] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e475]: GLEC transport emissi…
+                      - button "GLEC transport emission factors, SourceVersion, verified, ACTIVE" [ref=e476] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e479]: GLEC transport emissi…
+                      - button "ND-GAIN climate vulnerability, Document, accent" [ref=e480] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e483]: ND-GAIN climate vulne…
+                      - button "ND-GAIN climate vulnerability, SourceVersion, verified, ACTIVE" [ref=e484] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e487]: ND-GAIN climate vulne…
+                      - button "EPA USEEIO v1.3 supply-chain factors, Document, accent" [ref=e488] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e491]: EPA USEEIO v1.3 suppl…
+                      - button "EPA USEEIO v1.3 supply-chain factors, SourceVersion, verified, ACTIVE" [ref=e492] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e495]: EPA USEEIO v1.3 suppl…
+                      - button "gc:sab0e0e:action, ActionProposal, caution, SUSPENDED" [ref=e496] [cursor=pointer]:
+                        - generic: ACT
+                        - generic [ref=e499]: gc:sab0e0e:action
+                      - button "gc:sab0e0e:action:06c65cbc, ActionProposal, caution, APPROVED" [ref=e500] [cursor=pointer]:
+                        - generic: ACT
+                        - generic [ref=e503]: gc:sab0e0e:action:06c…
+                      - button "gc:sab0e0e:action:ef2821c1, ActionProposal, caution, APPROVED" [ref=e504] [cursor=pointer]:
+                        - generic: ACT
+                        - generic [ref=e507]: gc:sab0e0e:action:ef2…
+                      - button "gc:sab0e0e:change:EMBER:06c65cbc, ChangeEvent, danger" [ref=e508] [cursor=pointer]:
+                        - generic: EVT
+                        - generic [ref=e511]: gc:sab0e0e:change:EMB…
+                      - button "gc:sab0e0e:change:EMBER:ef2821c1, ChangeEvent, danger" [ref=e512] [cursor=pointer]:
+                        - generic: EVT
+                        - generic [ref=e515]: gc:sab0e0e:change:EMB…
+                      - button "gc:sab0e0e:decision, Decision, danger, INVALIDATED" [ref=e516] [cursor=pointer]:
+                        - generic: DEC
+                        - generic [ref=e519]: gc:sab0e0e:decision
+                      - button "gc:sab0e0e:decision:06c65cbc, Decision, verified, VALID" [ref=e520] [cursor=pointer]:
+                        - generic: DEC
+                        - generic [ref=e523]: gc:sab0e0e:decision:0…
+                      - button "gc:sab0e0e:decision:06c65cbc:rev:1, DecisionRevision, verified, VALID" [ref=e524] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e527]: gc:sab0e0e:decision:0…
+                      - button "gc:sab0e0e:decision:ef2821c1, Decision, verified, VALID" [ref=e528] [cursor=pointer]:
+                        - generic: DEC
+                        - generic [ref=e531]: gc:sab0e0e:decision:e…
+                      - button "gc:sab0e0e:decision:ef2821c1:rev:1, DecisionRevision, verified, VALID" [ref=e532] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e535]: gc:sab0e0e:decision:e…
+                      - button "gc:sab0e0e:decision:rev:1, DecisionRevision, verified, VALID" [ref=e536] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e539]: gc:sab0e0e:decision:r…
+                      - button "gc:sab0e0e:decision:rev:2, DecisionRevision, danger, INVALIDATED" [ref=e540] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e543]: gc:sab0e0e:decision:r…
+                      - button "gc:sab0e0e:decision:rev:3, DecisionRevision, danger, INVALIDATED" [ref=e544] [cursor=pointer]:
+                        - generic: REV
+                        - generic [ref=e547]: gc:sab0e0e:decision:r…
+                      - button "gc:sab0e0e:est:Illustrative_Packaging_B:v2:06c65cbc, Claim, verified, ACTIVE" [ref=e548] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e551]: gc:sab0e0e:est:Illust…
+                      - button "gc:sab0e0e:est:Illustrative_Packaging_B:v2:ef2821c1, Claim, verified, ACTIVE" [ref=e552] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e555]: gc:sab0e0e:est:Illust…
+                      - button "gc:sab0e0e:est:Illustrative_Packaging_D:v1, Claim, caution, SUPERSEDED" [ref=e556] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e559]: gc:sab0e0e:est:Illust…
+                      - button "gc:sab0e0e:mem:06c65cbc, Memory, verified, VALID" [ref=e560] [cursor=pointer]:
+                        - generic: MEM
+                        - generic [ref=e563]: gc:sab0e0e:mem:06c65c…
+                      - button "gc:sab0e0e:mem:1, Memory, caution, STALE" [ref=e564] [cursor=pointer]:
+                        - generic: MEM
+                        - generic [ref=e567]: gc:sab0e0e:mem:1
+                      - button "gc:sab0e0e:mem:ef2821c1, Memory, verified, VALID" [ref=e568] [cursor=pointer]:
+                        - generic: MEM
+                        - generic [ref=e571]: gc:sab0e0e:mem:ef2821…
+                      - button "gc:sab0e0e:plan, Plan, danger, INVALIDATED" [ref=e572] [cursor=pointer]:
+                        - generic: PLA
+                        - generic [ref=e575]: gc:sab0e0e:plan
+                      - button "gc:sab0e0e:plan:06c65cbc, Plan, verified, VALID" [ref=e576] [cursor=pointer]:
+                        - generic: PLA
+                        - generic [ref=e579]: gc:sab0e0e:plan:06c65…
+                      - button "gc:sab0e0e:plan:ef2821c1, Plan, verified, VALID" [ref=e580] [cursor=pointer]:
+                        - generic: PLA
+                        - generic [ref=e583]: gc:sab0e0e:plan:ef282…
+                      - button "gc:sab0e0e:top:v1, Claim, caution, SUPERSEDED" [ref=e584] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e587]: gc:sab0e0e:top:v1
+                      - button "gc:sab0e0e:top:v2:06c65cbc, Claim, verified, ACTIVE" [ref=e588] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e591]: gc:sab0e0e:top:v2:06c…
+                      - button "gc:sab0e0e:top:v2:ef2821c1, Claim, verified, ACTIVE" [ref=e592] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e595]: gc:sab0e0e:top:v2:ef2…
+                      - button "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:08fba6f61d13, Claim, verified, ACTIVE" [ref=e596] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e599]: ra:claim:cff9e39f-109…
+                      - button "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:3fe0ef70ba4e, Claim, verified, ACTIVE" [ref=e600] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e603]: ra:claim:cff9e39f-109…
+                      - button "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:524f6934c0e3, Claim, verified, ACTIVE" [ref=e604] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e607]: ra:claim:cff9e39f-109…
+                      - button "ra:claim:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:81de28131242, Claim, verified, ACTIVE" [ref=e608] [cursor=pointer]:
+                        - generic: CLM
+                        - generic [ref=e611]: ra:claim:cff9e39f-109…
+                      - button "IRDAI Health Department FAQs and Guidelines, Document, accent" [ref=e612] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e615]: IRDAI Health Departme…
+                      - button "IRDAI Policyholder Portal, Document, accent" [ref=e616] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e619]: IRDAI Policyholder Po…
+                      - button "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance, Document, accent" [ref=e620] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e623]: Master Circular on IR…
+                      - button "Policy Wording, Document, accent" [ref=e624] [cursor=pointer]:
+                        - generic: DOC
+                        - generic [ref=e627]: Policy Wording
+                      - button "ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a, Memory, verified, VALID" [ref=e628] [cursor=pointer]:
+                        - generic: MEM
+                        - generic [ref=e631]: ra:mem:cff9e39f-1095-…
+                      - button "IRDAI Health Department FAQs and Guidelines, SourceVersion, verified, ACTIVE" [ref=e632] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e635]: IRDAI Health Departme…
+                      - button "Policy Wording, SourceVersion, verified, ACTIVE" [ref=e636] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e639]: Policy Wording
+                      - button "IRDAI Policyholder Portal, SourceVersion, verified, ACTIVE" [ref=e640] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e643]: IRDAI Policyholder Po…
+                      - button "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance, SourceVersion, verified, ACTIVE" [ref=e644] [cursor=pointer]:
+                        - generic: SRC
+                        - generic [ref=e647]: Master Circular on IR…
+                      - button "recall:agent:fraud-investigator:69ef2257c561, AgentSession, caution" [ref=e648] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e651]: recall:agent:fraud-in…
+                      - button "session:gc:sab0e0e:mem:06c65cbc, AgentSession, caution" [ref=e652] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e655]: session:gc:sab0e0e:me…
+                      - button "session:gc:sab0e0e:mem:1, AgentSession, caution" [ref=e656] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e659]: session:gc:sab0e0e:me…
+                      - button "session:gc:sab0e0e:mem:ef2821c1, AgentSession, caution" [ref=e660] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e663]: session:gc:sab0e0e:me…
+                      - button "session:ra:mem:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a:b1dca61a, AgentSession, caution" [ref=e664] [cursor=pointer]:
+                        - generic: SES
+                        - generic [ref=e667]: session:ra:mem:cff9e3…
+                  - list "Legend" [ref=e668]:
+                    - listitem [ref=e669]: ACT
+                    - listitem [ref=e671]: AGT
+                    - listitem [ref=e673]: APP
+                    - listitem [ref=e675]: AST
+                    - listitem [ref=e677]: CLM
+                    - listitem [ref=e679]: DEC
+                    - listitem [ref=e681]: DOC
+                    - listitem [ref=e683]: EVT
+                    - listitem [ref=e685]: LOG
+                    - listitem [ref=e687]: MEM
+                    - listitem [ref=e689]: PLA
+                    - listitem [ref=e691]: REV
+                    - listitem [ref=e693]: SES
+                    - listitem [ref=e695]: SRC
+                    - listitem [ref=e697]: accent
+                    - listitem [ref=e699]: caution
+                    - listitem [ref=e701]: danger
+                    - listitem [ref=e703]: info
+                    - listitem [ref=e705]: muted
+                    - listitem [ref=e707]: verified
+                    - listitem [ref=e709]: maybe / cut
+          - complementary "Inspector" [ref=e107]:
+            - generic [ref=e108]:
+              - button "Collapse inspector" [ref=e109] [cursor=pointer]: ›
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - paragraph [ref=e112]: Nothing selected
+                  - paragraph [ref=e113]: Select a supplier or connection to inspect its evidence and impact.
+                  - list "Status" [ref=e114]:
+                    - listitem [ref=e115]:
+                      - generic [ref=e116]: 2 decisions affected.
+                    - listitem [ref=e118]:
+                      - generic [ref=e119]: Memory stale.
+                - generic [ref=e121]:
+                  - region "Risk" [ref=e122]:
+                    - heading [level=2] [ref=e123]:
+                      - button "Risk" [expanded] [ref=e124] [cursor=pointer]:
+                        - generic [aria-hidden] [ref=e127]: −
+                    - paragraph [ref=e129]: No investigation yet.
+                  - region "Evidence" [ref=e130]:
+                    - heading [level=2] [ref=e131]:
+                      - button "Evidence 11 sources" [ref=e132] [cursor=pointer]:
+                        - generic [ref=e133]: Evidence
+                        - generic [ref=e134]:
+                          - text: 11 sources
+                          - generic [aria-hidden] [ref=e135]: +
+                  - region "Decision" [ref=e136]:
+                    - heading [level=2] [ref=e137]:
+                      - button "Decision 2 stale" [ref=e138] [cursor=pointer]:
+                        - generic [ref=e139]: Decision
+                        - generic [ref=e140]:
+                          - text: 2 stale
+                          - generic [aria-hidden] [ref=e141]: +
+                - paragraph [ref=e142]: FalkorDB · 5 memories · 4 decisions · 4 approvals
+  - alert [ref=e143]

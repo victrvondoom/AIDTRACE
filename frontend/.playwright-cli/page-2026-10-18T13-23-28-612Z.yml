@@ -1,0 +1,168 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e20] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=e21]:
+      - banner "AIDTRACE" [ref=e22]:
+        - link "AIDTRACE home" [ref=e23] [cursor=pointer]:
+          - /url: /
+          - img "AIDTRACE" [ref=e24]
+          - generic [ref=e25]: AIDTRACE
+        - generic [ref=e26]: Supply Chain Intelligence
+        - generic [ref=e27]:
+          - generic "cardboard packaging → US" [ref=e28]
+          - status [ref=e29]: Graph connected
+        - button "Search" [ref=e31] [cursor=pointer]:
+          - text: Search
+          - generic [ref=e32]: Ctrl K
+        - switch "Nightlight theme" [ref=e33] [cursor=pointer]
+        - button "Open user menu" [ref=e36] [cursor=pointer]: AI
+      - main [ref=e37]:
+        - generic [ref=e39]:
+          - complementary "Investigate" [ref=e40]:
+            - generic [ref=e41]:
+              - button "Collapse investigate panel" [ref=e42] [cursor=pointer]: ‹
+              - generic [ref=e43]:
+                - generic [ref=e44]:
+                  - generic [ref=e45]:
+                    - heading "AIDTRACE" [level=1] [ref=e46]
+                    - button "About" [ref=e47] [cursor=pointer]
+                  - paragraph [ref=e48]: Powered by FalkorDB
+                  - paragraph [ref=e49]:
+                    - generic [ref=e51]: FalkorDB Memory
+                    - generic [ref=e52]: · GraphBLAS OpenCypher
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Ask about a supplier, risk, or decision
+                  - generic [ref=e55]:
+                    - textbox "Ask about a supplier, risk, or decision" [ref=e56]:
+                      - /placeholder: Ask about a supplier, risk, or decision…
+                    - button "Send question" [disabled]:
+                      - generic: Ask
+                - list "Primary actions" [ref=e57]:
+                  - listitem [ref=e58]:
+                    - button "1 · Investigate Risk CesiumJS 3D routes · cyber & ESG reach" [ref=e59] [cursor=pointer]:
+                      - generic [ref=e60]:
+                        - generic [ref=e61]: 1 · Investigate Risk
+                        - generic [ref=e62]: CesiumJS 3D routes · cyber & ESG reach
+                  - listitem [ref=e63]:
+                    - button "2 · Update Evidence Propagate grid/cyber drift into FalkorDB" [ref=e64] [cursor=pointer]:
+                      - generic [ref=e65]:
+                        - generic [ref=e66]: 2 · Update Evidence
+                        - generic [ref=e67]: Propagate grid/cyber drift into FalkorDB
+                  - listitem [ref=e68]:
+                    - button "3 · Review Decision Hold stale approval · review an alternative" [ref=e144] [cursor=pointer]:
+                      - generic [ref=e70]:
+                        - generic [ref=e71]: 3 · Review Decision
+                        - generic [ref=e72]: Hold stale approval · review an alternative
+                - generic [ref=e73]:
+                  - generic [ref=e74]: Evidence source
+                  - combobox "Evidence source" [ref=e75]:
+                    - option "Inspect a source…" [selected]
+                    - option "DEMO-DRIFT-SOP-V1"
+                    - option "DEMO-DRIFT-SOP-V2"
+                    - option "Ember electricity grid intensity"
+                    - option "Ember electricity grid intensity (Synthetic grid-intensity revision (demo))"
+                    - option "GLEC transport emission factors"
+                    - option "ND-GAIN climate vulnerability"
+                    - option "EPA USEEIO v1.3 supply-chain factors"
+                    - option "IRDAI Health Department FAQs and Guidelines"
+                    - option "Policy Wording"
+                    - option "IRDAI Policyholder Portal"
+                    - option "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance"
+                  - button "Extensions More tools" [ref=e76] [cursor=pointer]:
+                    - generic [ref=e77]: Extensions
+                    - generic [ref=e78]: More tools
+          - region "Intelligence workspace" [ref=e79]:
+            - tablist "Workspace view" [ref=e81]:
+              - tab "Globe" [ref=e82] [cursor=pointer]
+              - tab "Graph" [ref=e83] [cursor=pointer]
+              - tab "Lineage" [ref=e84] [cursor=pointer]
+              - tab "Timeline" [active] [selected] [ref=e85] [cursor=pointer]
+            - tabpanel "Timeline" [ref=e929]:
+              - list "Activity timeline" [ref=e930]:
+                - listitem [ref=e931]:
+                  - time [ref=e932]: 2026-10-18 11:35
+                  - generic [ref=e933]: approval
+                  - generic [ref=e934]: dev-user approved gc:sab0e0e:decision:06c65cbc (valid)
+                - listitem [ref=e935]:
+                  - time [ref=e936]: 2026-10-18 11:19
+                  - generic [ref=e937]: memory
+                  - 'button "agent:greenchain-scorer recorded: After ''Synthetic grid-intensity revision (demo)'' (EMBER, PT x50.0), Illustrative Packaging B ranks first: modelled manufacturing 59.5 tCO2e." [ref=e938] [cursor=pointer]'
+                - listitem [ref=e939]:
+                  - time [ref=e940]: 2026-10-18 11:19
+                  - generic [ref=e941]: source change
+                  - generic [ref=e942]: "REPLACE: Synthetic grid-intensity revision (demo): modelled factor x50.0 for PT"
+                - listitem [ref=e943]:
+                  - time [ref=e944]: 2026-10-18 08:00
+                  - generic [ref=e945]: source change
+                  - generic [ref=e946]: Change recorded (DEMO-DRIFT-CHANGE-V2)
+                - listitem [ref=e947]:
+                  - time [ref=e948]: 2026-10-18 08:00
+                  - generic [ref=e949]: approval
+                  - generic [ref=e950]: synthetic maintenance reviewer approved DEMO-DRIFT-DECISION-001 (valid)
+                - listitem [ref=e951]:
+                  - time [ref=e952]: 2026-10-18 06:01
+                  - generic [ref=e953]: recall
+                  - generic [ref=e954]: agent:fraud-investigator recalled a memory by agent:greenchain-scorer — usable
+                - listitem [ref=e955]:
+                  - time [ref=e956]: 2026-10-18 06:01
+                  - generic [ref=e957]: recall
+                  - generic [ref=e958]: agent:fraud-investigator recalled a memory by agent:resolveai-investigator — usable
+                - listitem [ref=e959]:
+                  - time [ref=e960]: 2026-10-18 06:01
+                  - generic [ref=e961]: memory
+                  - 'button "agent:resolveai-investigator recorded: Retrieved 4 reference passage(s) for a health_insurance dispute with Acme Health Insurance: IRDAI Health Department FAQs and Guidelines, IRDAI Policyholder Portal, Master Circular on IRDAI Insurance Products Regula, Policy Wording. Reference material only; not a finding about the case." [ref=e962] [cursor=pointer]'
+                - listitem [ref=e963]:
+                  - time [ref=e964]: 2026-10-18 05:50
+                  - generic [ref=e965]: approval
+                  - generic [ref=e966]: dev-user approved gc:sab0e0e:decision:ef2821c1 (valid)
+                - listitem [ref=e967]:
+                  - time [ref=e968]: 2026-10-18 05:48
+                  - generic [ref=e969]: memory
+                  - 'button "agent:greenchain-scorer recorded: After ''Reference data revision (counterfactual)'' (EMBER, PT x50.0), Illustrative Packaging B ranks first: modelled manufacturing 59.5 tCO2e." [ref=e970] [cursor=pointer]'
+                - listitem [ref=e971]:
+                  - time [ref=e972]: 2026-10-18 05:48
+                  - generic [ref=e973]: source change
+                  - generic [ref=e974]: "REPLACE: Reference data revision (counterfactual): modelled factor x50.0 for PT"
+                - listitem [ref=e975]:
+                  - time [ref=e976]: 2026-10-18 05:48
+                  - generic [ref=e977]: approval
+                  - generic [ref=e978]: dev-user approved gc:sab0e0e:decision (void)
+                - listitem [ref=e979]:
+                  - time [ref=e980]: 2026-10-18 05:48
+                  - generic [ref=e981]: memory
+                  - 'button "agent:greenchain-scorer recorded: Illustrative Packaging D ranks first under sea transport: modelled manufacturing 5.0 tCO2e (80% interval 2.4 to 30.3); Illustrative Packaging B is second." [ref=e982] [cursor=pointer]'
+          - complementary "Inspector" [ref=e107]:
+            - generic [ref=e108]:
+              - button "Collapse inspector" [ref=e109] [cursor=pointer]: ›
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - paragraph [ref=e112]: Nothing selected
+                  - paragraph [ref=e113]: Select a supplier or connection to inspect its evidence and impact.
+                  - list "Status" [ref=e114]:
+                    - listitem [ref=e115]:
+                      - generic [ref=e116]: 2 decisions affected.
+                    - listitem [ref=e118]:
+                      - generic [ref=e119]: Memory stale.
+                - generic [ref=e121]:
+                  - region "Risk" [ref=e122]:
+                    - heading [level=2] [ref=e123]:
+                      - button "Risk" [expanded] [ref=e124] [cursor=pointer]:
+                        - generic [aria-hidden] [ref=e127]: −
+                    - paragraph [ref=e129]: No investigation yet.
+                  - region "Evidence" [ref=e130]:
+                    - heading [level=2] [ref=e131]:
+                      - button "Evidence 11 sources" [ref=e132] [cursor=pointer]:
+                        - generic [ref=e133]: Evidence
+                        - generic [ref=e134]:
+                          - text: 11 sources
+                          - generic [aria-hidden] [ref=e135]: +
+                  - region "Decision" [ref=e136]:
+                    - heading [level=2] [ref=e137]:
+                      - button "Decision 2 stale" [ref=e138] [cursor=pointer]:
+                        - generic [ref=e139]: Decision
+                        - generic [ref=e140]:
+                          - text: 2 stale
+                          - generic [aria-hidden] [ref=e141]: +
+                - paragraph [ref=e142]: FalkorDB · 5 memories · 4 decisions · 4 approvals
+  - alert [ref=e143]

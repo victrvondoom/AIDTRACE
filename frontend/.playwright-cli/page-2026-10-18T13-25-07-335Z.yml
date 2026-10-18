@@ -1,0 +1,354 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e20] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=e21]:
+      - banner "AIDTRACE" [ref=e22]:
+        - link "AIDTRACE home" [ref=e23] [cursor=pointer]:
+          - /url: /
+          - img "AIDTRACE" [ref=e24]
+          - generic [ref=e25]: AIDTRACE
+        - generic [ref=e26]: Supply Chain Intelligence
+        - generic [ref=e27]:
+          - generic "cardboard packaging → US" [ref=e28]
+          - status [ref=e29]: Graph connected
+        - button "Search" [ref=e31] [cursor=pointer]:
+          - text: Search
+          - generic [ref=e32]: Ctrl K
+        - switch "Nightlight theme" [ref=e33] [cursor=pointer]
+        - button "Open user menu" [ref=e36] [cursor=pointer]: AI
+      - main [ref=e37]:
+        - generic [ref=e39]:
+          - complementary "Investigate" [ref=e40]:
+            - generic [ref=e41]:
+              - button "Collapse investigate panel" [ref=e42] [cursor=pointer]: ‹
+              - generic [ref=e43]:
+                - generic [ref=e44]:
+                  - generic [ref=e45]:
+                    - heading "AIDTRACE" [level=1] [ref=e46]
+                    - button "About" [ref=e47] [cursor=pointer]
+                  - paragraph [ref=e48]: Powered by FalkorDB
+                  - paragraph [ref=e49]:
+                    - generic [ref=e51]: FalkorDB Memory
+                    - generic [ref=e52]: · GraphBLAS OpenCypher
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Ask about a supplier, risk, or decision
+                  - generic [ref=e55]:
+                    - textbox "Ask about a supplier, risk, or decision" [ref=e56]:
+                      - /placeholder: Ask about a supplier, risk, or decision…
+                    - button "Send question" [disabled]:
+                      - generic: Ask
+                - list "Primary actions" [ref=e57]:
+                  - listitem [ref=e58]:
+                    - button "1 · Investigate Risk CesiumJS 3D routes · cyber & ESG reach" [ref=e59] [cursor=pointer]:
+                      - generic [ref=e60]:
+                        - generic [ref=e61]: 1 · Investigate Risk
+                        - generic [ref=e62]: CesiumJS 3D routes · cyber & ESG reach
+                  - listitem [ref=e63]:
+                    - button "2 · Update Evidence Propagate grid/cyber drift into FalkorDB" [ref=e64] [cursor=pointer]:
+                      - generic [ref=e65]:
+                        - generic [ref=e66]: 2 · Update Evidence
+                        - generic [ref=e67]: Propagate grid/cyber drift into FalkorDB
+                  - listitem [ref=e68]:
+                    - button "3 · Review Decision Hold stale approval · review an alternative" [ref=e144] [cursor=pointer]:
+                      - generic [ref=e70]:
+                        - generic [ref=e71]: 3 · Review Decision
+                        - generic [ref=e72]: Hold stale approval · review an alternative
+                - region "Progress" [ref=e983]:
+                  - paragraph [ref=e984]: Investigating
+                  - list [ref=e985]:
+                    - listitem [ref=e986]:
+                      - generic [ref=e988]:
+                        - text: Identify supplier
+                        - generic [ref=e989]: Packaging B (DE)
+                        - generic [ref=e990]: (done)
+                    - listitem [ref=e991]:
+                      - generic [ref=e993]:
+                        - text: Record baseline decision in FalkorDB memory
+                        - generic [ref=e994]: Already in the graph
+                        - generic [ref=e995]: (skipped)
+                    - listitem [ref=e996]:
+                      - generic [ref=e998]:
+                        - text: Traverse connected records in FalkorDB
+                        - generic [ref=e999]: 15 depend on it · it depends on 4 (FalkorDB site graph)
+                        - generic [ref=e1000]: (done)
+                    - listitem [ref=e1001]:
+                      - generic [ref=e1003]:
+                        - text: Recall prior agent memory
+                        - generic [ref=e1004]: 3 memory record(s)
+                        - generic [ref=e1005]: (done)
+                    - listitem [ref=e1006]:
+                      - generic [ref=e1008]:
+                        - text: Collect source evidence
+                        - generic [ref=e1009]: 5 source(s), 5 with a content hash
+                        - generic [ref=e1010]: (done)
+                    - listitem [ref=e1011]:
+                      - generic [ref=e1013]:
+                        - text: Check security and disruption findings
+                        - generic [ref=e1014]: No live security feed is connected; reach is modelled from the graph only
+                        - generic [ref=e1015]: (skipped)
+                    - listitem [ref=e1016]:
+                      - generic [ref=e1018]:
+                        - text: Score emissions and logistics
+                        - generic [ref=e1019]: Eco score 18, 60 tCO2e manufacturing
+                        - generic [ref=e1020]: (done)
+                    - listitem [ref=e1021]:
+                      - generic [ref=e1023]:
+                        - text: Find dependent decisions
+                        - generic [ref=e1024]: 3 decision(s), 1 stale
+                        - generic [ref=e1025]: (done)
+                    - listitem [ref=e1026]:
+                      - generic [ref=e1028]:
+                        - text: Summarise with uncertainty
+                        - generic [ref=e1029]: (done)
+                - generic [ref=e73]:
+                  - generic [ref=e74]: Evidence source
+                  - combobox "Evidence source" [ref=e75]:
+                    - option "Inspect a source…" [selected]
+                    - option "DEMO-DRIFT-SOP-V1"
+                    - option "DEMO-DRIFT-SOP-V2"
+                    - option "Ember electricity grid intensity"
+                    - option "Ember electricity grid intensity (Synthetic grid-intensity revision (demo))"
+                    - option "GLEC transport emission factors"
+                    - option "ND-GAIN climate vulnerability"
+                    - option "EPA USEEIO v1.3 supply-chain factors"
+                    - option "IRDAI Health Department FAQs and Guidelines"
+                    - option "Policy Wording"
+                    - option "IRDAI Policyholder Portal"
+                    - option "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance"
+                  - button "Extensions More tools" [ref=e76] [cursor=pointer]:
+                    - generic [ref=e77]: Extensions
+                    - generic [ref=e78]: More tools
+          - region "Intelligence workspace" [ref=e79]:
+            - tablist "Workspace view" [ref=e81]:
+              - tab "Globe" [ref=e82] [cursor=pointer]
+              - tab "Graph" [selected] [ref=e83] [cursor=pointer]
+              - tab "Lineage" [ref=e84] [cursor=pointer]
+              - tab "Timeline" [ref=e85] [cursor=pointer]
+            - tabpanel "Graph" [ref=e1136]:
+              - generic [ref=e1137]:
+                - generic [ref=e1138]:
+                  - generic [ref=e1139]:
+                    - generic [ref=e1140]:
+                      - generic [ref=e1142]: "Scenario graph: Illustrative sandbox"
+                      - generic [ref=e1145]: Graph traversal
+                    - generic [ref=e1147]:
+                      - button "FalkorDB Live Graph" [ref=e1148] [cursor=pointer]
+                      - button "Scenario Sandbox" [active] [pressed] [ref=e1150] [cursor=pointer]
+                      - button "⚡ Live Cypher Console" [ref=e1152] [cursor=pointer]
+                  - generic [ref=e1154]:
+                    - generic [ref=e1155]:
+                      - generic [ref=e1156]: "Entity Filters:"
+                      - button "All (27)" [ref=e1748] [cursor=pointer]
+                      - button "Certification (6)" [ref=e1749] [cursor=pointer]:
+                        - generic [ref=e1750]: Certification
+                        - generic [ref=e1751]: (6)
+                      - button "Supplier (5)" [ref=e1752] [cursor=pointer]:
+                        - generic [ref=e1753]: Supplier
+                        - generic [ref=e1754]: (5)
+                      - button "Country (5)" [ref=e1755] [cursor=pointer]:
+                        - generic [ref=e1756]: Country
+                        - generic [ref=e1757]: (5)
+                      - button "Estimate (5)" [ref=e1758] [cursor=pointer]:
+                        - generic [ref=e1759]: Estimate
+                        - generic [ref=e1760]: (5)
+                      - button "Dataset (4)" [ref=e1761] [cursor=pointer]:
+                        - generic [ref=e1762]: Dataset
+                        - generic [ref=e1763]: (4)
+                      - button "Scenario (1)" [ref=e1764] [cursor=pointer]:
+                        - generic [ref=e1765]: Scenario
+                        - generic [ref=e1766]: (1)
+                      - button "Decision (1)" [ref=e1767] [cursor=pointer]:
+                        - generic [ref=e1186]: Decision
+                        - generic [ref=e1187]: (1)
+                    - generic [ref=e1200]: 27 nodes · 43 edges
+                - generic [ref=e1201]:
+                  - generic [ref=e1202]:
+                    - group "Filters" [ref=e1203]:
+                      - button "Network" [pressed] [ref=e1204] [cursor=pointer]
+                      - button "Layered" [ref=e1205] [cursor=pointer]
+                      - button "Radial" [ref=e1206] [cursor=pointer]
+                      - button "Matrix" [ref=e1207] [cursor=pointer]
+                      - button "Table" [ref=e1208] [cursor=pointer]
+                    - generic [ref=e1209]:
+                      - group "Zoom" [ref=e1212]:
+                        - button "Zoom out" [ref=e1213] [cursor=pointer]: −
+                        - button "Zoom in" [ref=e1214] [cursor=pointer]: +
+                        - button "Fit" [ref=e1215] [cursor=pointer]
+                      - generic [ref=e1216]: 27 nodes · 43 links
+                  - region "network graph view" [ref=e1217]:
+                    - img "Graph with 27 nodes and 43 links" [ref=e1768]:
+                      - generic "decision:greenchain-demo —DECIDES→ scenario:greenchain-demo · weight 1" [ref=e1769]
+                      - generic "supplier:Illustrative_Packaging_D —QUOTES_FOR→ scenario:greenchain-demo · weight 1" [ref=e1770]
+                      - generic "decision:greenchain-demo —RECOMMENDS→ supplier:Illustrative_Packaging_D · weight 1" [ref=e1771]
+                      - generic "supplier:Illustrative_Packaging_D —LOCATED_IN→ country:PT · weight 1" [ref=e1772]
+                      - generic "supplier:Illustrative_Packaging_D —HOLDS→ cert:Illustrative_Packaging_D-iso14001 · weight 1 · maybe" [ref=e1773]
+                      - generic "supplier:Illustrative_Packaging_D —HOLDS→ cert:Illustrative_Packaging_D-cdp_b · weight 1 · maybe" [ref=e1774]
+                      - generic "supplier:Illustrative_Packaging_D —ESTIMATED_BY→ estimate:Illustrative_Packaging_D · weight 1" [ref=e1775]
+                      - generic "estimate:Illustrative_Packaging_D —BASED_ON→ dataset:USEEIO · weight 1" [ref=e1776]
+                      - generic "estimate:Illustrative_Packaging_D —BASED_ON→ dataset:EMBER · weight 1" [ref=e1777]
+                      - generic "estimate:Illustrative_Packaging_D —BASED_ON→ dataset:GLEC · weight 1" [ref=e1778]
+                      - generic "estimate:Illustrative_Packaging_D —BASED_ON→ dataset:NDGAIN · weight 1" [ref=e1779]
+                      - generic "supplier:Illustrative_Packaging_B —QUOTES_FOR→ scenario:greenchain-demo · weight 1" [ref=e1780]
+                      - generic "supplier:Illustrative_Packaging_B —LOCATED_IN→ country:DE · weight 1" [ref=e1781]
+                      - generic "supplier:Illustrative_Packaging_B —HOLDS→ cert:Illustrative_Packaging_B-iso14001 · weight 1 · maybe" [ref=e1782]
+                      - generic "supplier:Illustrative_Packaging_B —HOLDS→ cert:Illustrative_Packaging_B-cdp_a · weight 1 · maybe" [ref=e1783]
+                      - generic "supplier:Illustrative_Packaging_B —ESTIMATED_BY→ estimate:Illustrative_Packaging_B · weight 1" [ref=e1784]
+                      - generic "estimate:Illustrative_Packaging_B —BASED_ON→ dataset:USEEIO · weight 1" [ref=e1785]
+                      - generic "estimate:Illustrative_Packaging_B —BASED_ON→ dataset:EMBER · weight 1" [ref=e1786]
+                      - generic "estimate:Illustrative_Packaging_B —BASED_ON→ dataset:GLEC · weight 1" [ref=e1787]
+                      - generic "estimate:Illustrative_Packaging_B —BASED_ON→ dataset:NDGAIN · weight 1" [ref=e1788]
+                      - generic "supplier:Illustrative_Packaging_C —QUOTES_FOR→ scenario:greenchain-demo · weight 1" [ref=e1789]
+                      - generic "supplier:Illustrative_Packaging_C —LOCATED_IN→ country:MX · weight 1" [ref=e1790]
+                      - generic "supplier:Illustrative_Packaging_C —HOLDS→ cert:Illustrative_Packaging_C-iso14001 · weight 1 · maybe" [ref=e1791]
+                      - generic "supplier:Illustrative_Packaging_C —ESTIMATED_BY→ estimate:Illustrative_Packaging_C · weight 1" [ref=e1792]
+                      - generic "estimate:Illustrative_Packaging_C —BASED_ON→ dataset:USEEIO · weight 1" [ref=e1793]
+                      - generic "estimate:Illustrative_Packaging_C —BASED_ON→ dataset:EMBER · weight 1" [ref=e1794]
+                      - generic "estimate:Illustrative_Packaging_C —BASED_ON→ dataset:GLEC · weight 1" [ref=e1795]
+                      - generic "estimate:Illustrative_Packaging_C —BASED_ON→ dataset:NDGAIN · weight 1" [ref=e1796]
+                      - generic "supplier:Illustrative_Packaging_A —QUOTES_FOR→ scenario:greenchain-demo · weight 1" [ref=e1797]
+                      - generic "supplier:Illustrative_Packaging_A —LOCATED_IN→ country:VN · weight 1" [ref=e1798]
+                      - generic "supplier:Illustrative_Packaging_A —HOLDS→ cert:Illustrative_Packaging_A-iso14001 · weight 1 · maybe" [ref=e1799]
+                      - generic "supplier:Illustrative_Packaging_A —ESTIMATED_BY→ estimate:Illustrative_Packaging_A · weight 1" [ref=e1800]
+                      - generic "estimate:Illustrative_Packaging_A —BASED_ON→ dataset:USEEIO · weight 1" [ref=e1801]
+                      - generic "estimate:Illustrative_Packaging_A —BASED_ON→ dataset:EMBER · weight 1" [ref=e1802]
+                      - generic "estimate:Illustrative_Packaging_A —BASED_ON→ dataset:GLEC · weight 1" [ref=e1803]
+                      - generic "estimate:Illustrative_Packaging_A —BASED_ON→ dataset:NDGAIN · weight 1" [ref=e1804]
+                      - generic "supplier:Illustrative_Packaging_E —QUOTES_FOR→ scenario:greenchain-demo · weight 1" [ref=e1805]
+                      - generic "supplier:Illustrative_Packaging_E —LOCATED_IN→ country:CN · weight 1" [ref=e1806]
+                      - generic "supplier:Illustrative_Packaging_E —ESTIMATED_BY→ estimate:Illustrative_Packaging_E · weight 1" [ref=e1807]
+                      - generic "estimate:Illustrative_Packaging_E —BASED_ON→ dataset:USEEIO · weight 1" [ref=e1808]
+                      - generic "estimate:Illustrative_Packaging_E —BASED_ON→ dataset:EMBER · weight 1" [ref=e1809]
+                      - generic "estimate:Illustrative_Packaging_E —BASED_ON→ dataset:GLEC · weight 1" [ref=e1810]
+                      - generic "estimate:Illustrative_Packaging_E —BASED_ON→ dataset:NDGAIN · weight 1" [ref=e1811]
+                      - 'button "Sourcing: cardboard packaging, Scenario, muted" [ref=e1812] [cursor=pointer]':
+                        - generic: SCE
+                        - generic [ref=e1815]: "Sourcing: cardboard p…"
+                      - button "EPA USEEIO v1.3 supply-chain factors, Dataset, muted, CURRENT" [ref=e1816] [cursor=pointer]:
+                        - generic: DAT
+                        - generic [ref=e1482]: EPA USEEIO v1.3 suppl…
+                      - button "Ember electricity grid intensity, Dataset, muted, CURRENT" [ref=e1817] [cursor=pointer]:
+                        - generic: DAT
+                        - generic [ref=e1454]: Ember electricity gri…
+                      - button "GLEC transport emission factors, Dataset, muted, CURRENT" [ref=e1818] [cursor=pointer]:
+                        - generic: DAT
+                        - generic [ref=e1466]: GLEC transport emissi…
+                      - button "ND-GAIN climate vulnerability, Dataset, muted, CURRENT" [ref=e1819] [cursor=pointer]:
+                        - generic: DAT
+                        - generic [ref=e1474]: ND-GAIN climate vulne…
+                      - button "Recommend Illustrative Packaging D, Decision, verified, PROPOSED" [ref=e1820] [cursor=pointer]:
+                        - generic: DEC
+                        - generic [ref=e1823]: Recommend Illustrativ…
+                      - button "Illustrative Packaging D, Supplier, accent" [ref=e1824] [cursor=pointer]:
+                        - generic: SUP
+                        - generic [ref=e1827]: Illustrative Packagin…
+                      - button "PT, Country, muted" [ref=e1828] [cursor=pointer]:
+                        - generic: COU
+                        - generic [ref=e1831]: PT
+                      - button "iso14001, Certification, muted, UNVERIFIED" [ref=e1832] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1835]: iso14001
+                      - button "cdp_b, Certification, muted, UNVERIFIED" [ref=e1836] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1839]: cdp_b
+                      - button "Illustrative Packaging D emissions, Estimate, muted" [ref=e1840] [cursor=pointer]:
+                        - generic: EST
+                        - generic [ref=e1843]: Illustrative Packagin…
+                      - button "Illustrative Packaging B, Supplier, accent" [ref=e1844] [cursor=pointer]:
+                        - generic: SUP
+                        - generic [ref=e1847]: Illustrative Packagin…
+                      - button "DE, Country, muted" [ref=e1848] [cursor=pointer]:
+                        - generic: COU
+                        - generic [ref=e1851]: DE
+                      - button "iso14001, Certification, muted, UNVERIFIED" [ref=e1852] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1855]: iso14001
+                      - button "cdp_a, Certification, muted, UNVERIFIED" [ref=e1856] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1859]: cdp_a
+                      - button "Illustrative Packaging B emissions, Estimate, muted" [ref=e1860] [cursor=pointer]:
+                        - generic: EST
+                        - generic [ref=e1863]: Illustrative Packagin…
+                      - button "Illustrative Packaging C, Supplier, accent" [ref=e1864] [cursor=pointer]:
+                        - generic: SUP
+                        - generic [ref=e1867]: Illustrative Packagin…
+                      - button "MX, Country, muted" [ref=e1868] [cursor=pointer]:
+                        - generic: COU
+                        - generic [ref=e1871]: MX
+                      - button "iso14001, Certification, muted, UNVERIFIED" [ref=e1872] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1875]: iso14001
+                      - button "Illustrative Packaging C emissions, Estimate, muted" [ref=e1876] [cursor=pointer]:
+                        - generic: EST
+                        - generic [ref=e1879]: Illustrative Packagin…
+                      - button "Illustrative Packaging A, Supplier, accent" [ref=e1880] [cursor=pointer]:
+                        - generic: SUP
+                        - generic [ref=e1883]: Illustrative Packagin…
+                      - button "VN, Country, muted" [ref=e1884] [cursor=pointer]:
+                        - generic: COU
+                        - generic [ref=e1887]: VN
+                      - button "iso14001, Certification, muted, UNVERIFIED" [ref=e1888] [cursor=pointer]:
+                        - generic: CER
+                        - generic [ref=e1891]: iso14001
+                      - button "Illustrative Packaging A emissions, Estimate, muted" [ref=e1892] [cursor=pointer]:
+                        - generic: EST
+                        - generic [ref=e1895]: Illustrative Packagin…
+                      - button "Illustrative Packaging E, Supplier, accent" [ref=e1896] [cursor=pointer]:
+                        - generic: SUP
+                        - generic [ref=e1899]: Illustrative Packagin…
+                      - button "CN, Country, muted" [ref=e1900] [cursor=pointer]:
+                        - generic: COU
+                        - generic [ref=e1903]: CN
+                      - button "Illustrative Packaging E emissions, Estimate, muted" [ref=e1904] [cursor=pointer]:
+                        - generic: EST
+                        - generic [ref=e1907]: Illustrative Packagin…
+                  - list "Legend" [ref=e1659]:
+                    - listitem [ref=e1908]: CER
+                    - listitem [ref=e1910]: COU
+                    - listitem [ref=e1912]: DAT
+                    - listitem [ref=e1670]: DEC
+                    - listitem [ref=e1914]: EST
+                    - listitem [ref=e1916]: SCE
+                    - listitem [ref=e1918]: SUP
+                    - listitem [ref=e1688]: accent
+                    - listitem [ref=e1696]: muted
+                    - listitem [ref=e1698]: verified
+                    - listitem [ref=e1700]: maybe / cut
+          - complementary "Inspector" [ref=e107]:
+            - generic [ref=e108]:
+              - button "Collapse inspector" [ref=e109] [cursor=pointer]: ›
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - paragraph [ref=e112]: DEMO-DRIFT-SOP-V1
+                  - list "Status" [ref=e114]:
+                    - listitem [ref=e1738]:
+                      - generic [ref=e1739]: FalkorDB · SourceVersion
+                    - listitem [ref=e1741]:
+                      - generic [ref=e1742]: SUPERSEDED
+                    - listitem [ref=e115]:
+                      - generic [ref=e116]: 2 decisions affected.
+                - generic [ref=e121]:
+                  - region "Risk" [ref=e122]:
+                    - heading [level=2] [ref=e1744]:
+                      - button "Risk SourceVersion" [expanded] [ref=e1745] [cursor=pointer]:
+                        - generic [ref=e125]: Risk
+                        - generic [ref=e126]:
+                          - text: SourceVersion
+                          - generic [aria-hidden] [ref=e127]: −
+                    - paragraph [ref=e1747]: source · version unknown · authority 4
+                  - region "Evidence" [ref=e130]:
+                    - heading [level=2] [ref=e131]:
+                      - button "Evidence 11 sources" [ref=e132] [cursor=pointer]:
+                        - generic [ref=e133]: Evidence
+                        - generic [ref=e134]:
+                          - text: 11 sources
+                          - generic [aria-hidden] [ref=e135]: +
+                  - region "Decision" [ref=e136]:
+                    - heading [level=2] [ref=e137]:
+                      - button "Decision 2 stale" [ref=e138] [cursor=pointer]:
+                        - generic [ref=e139]: Decision
+                        - generic [ref=e140]:
+                          - text: 2 stale
+                          - generic [aria-hidden] [ref=e141]: +
+                - paragraph [ref=e142]: FalkorDB · 5 memories · 4 decisions · 4 approvals
+  - alert [ref=e143]

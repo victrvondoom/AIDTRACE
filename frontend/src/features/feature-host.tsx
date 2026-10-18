@@ -34,8 +34,8 @@ export const FEATURES: Feature[] = [
   { id: "greenchain", name: "GreenChain", category: "Supply chain", backend: "/greenchain/*", status: "INTEGRATED_TESTED",
     summary: "Sustainable procurement: XGBoost quantile emissions scoring, a satellite globe of suppliers and routes, transport what-ifs, supplier graph and decision memory. Candidates are illustrative; live discovery needs provider keys.",
     render: () => <GreenChainWorkspace /> },
-  { id: "resolveai", name: "ResolveAI", category: "Investigation", backend: "/resolveai/platform/*", status: "INTEGRATED_TESTED",
-    summary: "Case investigations on the real ResolveAI worker: routing, retrieval over eight domain packs, evidence scoring, citations, agents, graph and reports.", render: () => <ResolveAIWorkspace /> },
+  { id: "resolveai", name: "Resolve", category: "Investigation", backend: "/resolveai/platform/*", status: "INTEGRATED_TESTED",
+    summary: "Case investigations on the real Resolve worker with FALKOR DB: routing, retrieval over eight domain packs, evidence scoring, citations, agents, graph and reports.", render: () => <ResolveAIWorkspace /> },
   { id: "consumer", name: "Consumer Intelligence", category: "Investigation", backend: "/resolveai/consumer/*", status: "INTEGRATED_TESTED",
     summary: "Cross-domain remedy investigation on a tenant-scoped FalkorDB case graph, with revision-bound human approval.", render: () => <ConsumerWorkspace /> },
   { id: "fraud", name: "Fraud Investigation", category: "Investigation", backend: "/fraud/* + /graphlab/analyze", status: "INTEGRATED_TESTED",
@@ -64,7 +64,7 @@ export const FEATURES: Feature[] = [
 /** Work that is NOT done. Listed here so the product never advertises it as operational. */
 const NOT_DONE = [
   ["Real sign-in", "Verified only with the development bypass: no Supabase project is configured here, so a real login has not been exercised."],
-  ["Live model reasoning in ResolveAI", "Without a model key its LLM agents return placeholders. Retrieval, scoring, citations and the graph run for real; nothing generated is shown as analysis."],
+  ["Live model reasoning in Resolve", "Without a model key its LLM agents return placeholders. Retrieval, scoring, citations and the FALKOR DB graph run for real; nothing generated is shown as analysis."],
   ["GreenChain live discovery and scenario prompts", "Need Dedalus, Brave and model keys. Candidates are illustrative, and certifications are unverified claims."],
   ["MCP transport for Track 01", "Cannot import beside AIDTRACE's pinned pydantic; it would need its own private process."],
   ["Production data feeds", "Fraud runs on a synthetic network and cybersecurity on a supplied graph; no live security or transaction feed is connected."],

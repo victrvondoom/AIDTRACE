@@ -24,7 +24,10 @@ export function contentSecurityPolicy(apiUrl: string | undefined, dev = false, i
   const tiles = [...SATELLITE_TILE_ORIGINS, ...(ionEnabled ? ["https://api.cesium.com", "https://*.cesium.com"] : [])].join(" ");
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+    // `blob:` is required by CesiumJS: its TaskProcessor starts each web worker from a blob wrapper that then imports a second blob URL, and
+    // script-src governs that nested import. Without it every worker fails silently, no Earth tile ever finishes loading and the globe renders
+    // as empty space (markers and routes still draw because they need no worker). Blob URLs can only be minted by same-origin script.
+    `script-src 'self' 'unsafe-inline' blob:${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${tiles}`,
     "font-src 'self' data:",
@@ -41,6 +44,10 @@ export function contentSecurityPolicy(apiUrl: string | undefined, dev = false, i
 }
 
 const nextConfig: NextConfig = {
+  // Development only: the dev server refuses hot-reload and client hydration from any host it does not list, so a page opened at
+  // 127.0.0.1 (instead of localhost) rendered as a permanent skeleton. Both loopback names now work against the same server.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+
   // Emit a self-contained production server (.next/standalone/server.js)
   // for a minimal, non-root Docker runtime image. Windows local builds avoid EBUSY lock on standalone.
   output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
@@ -52,14 +59,20 @@ const nextConfig: NextConfig = {
 
   // The overview used to live at /management; old bookmarks and links keep working.
   async redirects() {
-    return [{ source: "/management/:path*", destination: "/overview/:path*", permanent: true }];
+    return [
+      { source: "/management/:path*", destination: "/overview/:path*", permanent: true },
+      // The workspace absorbed these three pages (risk overview, feature catalogue, supply-chain globe); old links land in it.
+      { source: "/overview", destination: "/hub", permanent: false },
+      { source: "/workspace", destination: "/hub", permanent: false },
+      { source: "/supply-chain", destination: "/hub", permanent: false },
+    ];
   },
 
   // Same-origin API gateway: with NEXT_PUBLIC_API_URL=/api the browser only ever talks to this origin and
   // Next forwards /api/* to the private backend (API_INTERNAL_URL). Additive: an absolute NEXT_PUBLIC_API_URL
   // keeps working exactly as before.
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL ?? "http://localhost:8000"}/:path*` }];
+    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL ?? (process.env.API_HOSTPORT ? `http://${process.env.API_HOSTPORT}` : "http://localhost:8000")}/:path*` }];
   },
 
   async headers() {

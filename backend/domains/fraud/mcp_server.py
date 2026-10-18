@@ -7,8 +7,8 @@ so an external agent can propose an action but cannot carry it out.
 """
 from mcp.server.fastmcp import FastMCP
 
-from domains.fraud.tools import GraphTools
 from domains.fraud.store import GraphStore
+from domains.fraud.tools import GraphTools
 
 mcp = FastMCP("track1-fraud-graph")
 _tools: GraphTools | None = None

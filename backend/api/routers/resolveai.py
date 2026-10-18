@@ -10,8 +10,8 @@ from pydantic import BaseModel, Field
 from api.dependencies import (
     CurrentUserDep,
     FalkorDriftDep,
-    site_scope,
     require_role,
+    site_scope,
 )
 from api.services import tenant
 from api.services.drift.demo_workflow import run_evidence_supersession

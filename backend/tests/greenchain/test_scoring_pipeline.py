@@ -9,16 +9,24 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
+# `backend.ml_bridge` (imported above) puts backend/ml_runtime on sys.path.
+from ml.inference import EmissionsModel, certification_adjustment  # type: ignore
+from ml.reference_data import (  # type: ignore
+    EMBER_GRID_INTENSITY,
+    NAICS_DETAIL,
+    ND_GAIN_RISK,
+)
+
 from domains.greenchain import main
 from domains.greenchain.db import cache_get, cache_put, create_dataset_intake, init_db
 from domains.greenchain.ml_bridge import get_emissions_model
 from domains.greenchain.ml_scorer import compute_composite_scores
 from domains.greenchain.naics_classifier import _CURATED, classify_naics, lookup_naics
 from domains.greenchain.report_generation import (
+    ReportNarrativePayload,
     ScenarioScoringPayload,
     _build_latex_document,
     _build_report_context,
-    ReportNarrativePayload,
 )
 from domains.greenchain.scenario_editing import (
     SupplyScenarioPayload,
@@ -27,14 +35,6 @@ from domains.greenchain.scenario_editing import (
 )
 from domains.greenchain.tools import calculate_transport_emissions, score_certifications
 from domains.greenchain.transport import rescore_transport, transport_tco2e, transport_tco2e_by_mode
-
-# `backend.ml_bridge` (imported above) puts backend/ml_runtime on sys.path.
-from ml.inference import EmissionsModel, certification_adjustment  # type: ignore
-from ml.reference_data import (  # type: ignore
-    EMBER_GRID_INTENSITY,
-    NAICS_DETAIL,
-    ND_GAIN_RISK,
-)
 
 
 class TempDbTestCase(unittest.TestCase):

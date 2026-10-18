@@ -5,8 +5,8 @@ vi.mock("@/lib/auth", () => ({ getMe: vi.fn() }));
 import { ADMIN_VIEW_ROLES, PROMOTE_ROLES, roleHome, routeAllowed, visibleTo } from "./use-role";
 
 describe("demo role", () => {
-  it("is the demo identity and lands on the overview", () => {
-    expect(roleHome("demo")).toBe("/overview");
+  it("is the demo identity and lands on the AIDTRACE workspace", () => {
+    expect(roleHome("demo")).toBe("/hub");
   });
 
   it.each([

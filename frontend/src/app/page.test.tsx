@@ -16,33 +16,19 @@ describe("Home", () => {
   it("shows the public AIDTRACE landing page instead of redirecting visitors", () => {
     render(<Home />);
 
-    expect(screen.getByRole("heading", { level: 1, name: /the plant already knows/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /connected intelligence/i })).toBeInTheDocument();
 
-    // One way in: the header CTA. The duplicate "Sign in" and the footer button were
-    // removed, and the hero's primary action is the demo instead.
+    // One way in: the header CTA.
     const workspaceLinks = screen.getAllByRole("link", { name: /open workspace/i });
     expect(workspaceLinks).toHaveLength(1);
     for (const link of workspaceLinks) expect(link).toHaveAttribute("href", "/login");
     expect(screen.queryByRole("link", { name: /sign in/i })).not.toBeInTheDocument();
 
-    // The hero leads with the recording. Two valid shapes, and which one renders
-    // depends only on DEMO_YOUTUBE_URL: with a video configured the CTA scrolls to
-    // the in-page player; without one it leaves for the recording, and then it must
-    // say so to assistive tech and must not hand the opener a live window reference.
-    const demo = screen.getByRole("link", { name: /watch demo/i });
-    const href = demo.getAttribute("href") ?? "";
-    if (href.startsWith("#")) {
-      expect(href).toBe("#demo");
-      expect(document.getElementById("demo")).not.toBeNull();
-      expect(demo).not.toHaveAttribute("target");
-    } else {
-      expect(href).toContain("http");
-      expect(demo).toHaveAttribute("target", "_blank");
-      expect(demo).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
-    }
+    // The Watch Demo link has been removed from the landing page.
+    expect(screen.queryByRole("link", { name: /watch.*demo/i })).not.toBeInTheDocument();
 
     // …and the path into the page itself is still there, unchanged.
-    expect(screen.getByRole("link", { name: /see how it works/i })).toHaveAttribute("href", "#how");
+    expect(screen.getByRole("link", { name: /explore how it works/i })).toHaveAttribute("href", "#how");
   });
 
   // Readers who did not already know the domain could not tell what AIDTRACE was.
@@ -53,17 +39,17 @@ describe("Home", () => {
 
     const problem = document.getElementById("problem") as HTMLElement;
     expect(problem).toBeInTheDocument();
-    // The stakes, plus at least one attributed figure behind them.
-    expect(problem).toHaveTextContent(/it is a safety problem/i);
-    expect(within(problem).getByText("88%")).toBeInTheDocument();
-    expect(problem).toHaveTextContent(/mckinsey/i);
+    // The problem section explains fragmented information and changing evidence
+    expect(problem).toHaveTextContent(/the information exists/i);
+    expect(problem).toHaveTextContent(/fragmented information/i);
+    expect(problem).toHaveTextContent(/changing evidence/i);
 
     const how = document.getElementById("how") as HTMLElement;
     expect(how).toBeInTheDocument();
-    // Five numbered steps, ending on the refusal — the step people miss.
+    // Five numbered steps, ending on the review.
     expect(within(how).getAllByRole("listitem")).toHaveLength(5);
-    expect(how).toHaveTextContent(/a work order is raised on pump p-1101a/i);
-    expect(how).toHaveTextContent(/when the evidence is thin, it says so/i);
+    expect(how).toHaveTextContent(/follow the falkordb relationships/i);
+    expect(how).toHaveTextContent(/hold the action and retain the history/i);
 
     // Both must precede the first capability claim in document order.
     const capabilities = document.getElementById("capabilities") as HTMLElement;
@@ -71,51 +57,37 @@ describe("Home", () => {
     expect(how.compareDocumentPosition(capabilities)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
-  // The brief's five build targets are covered by the capability tabs, whose
-  // eyebrows already speak the brief's own vocabulary. A separate coverage
-  // section restated all of it, so it was removed — this guards the coverage
-  // itself rather than the section that used to duplicate it.
-  it("covers every build target the brief named, in the capabilities themselves", () => {
+  // The capability tabs carry the product copy, and the cross-cutting rows under
+  // them state the rest once. A separate coverage section restated all of it, so
+  // it was removed — this guards the coverage itself rather than that section.
+  it("covers each capability tab and the cross-cutting rows beneath them", () => {
     render(<Home />);
 
-    for (const tab of ["Ingestion", "Expert copilot", "Root cause", "Compliance", "Briefs"]) {
+    for (const tab of ["Connected sources", "Evidence answers", "Connected risk", "Governed findings", "Proactive context"]) {
       expect(screen.getByRole("button", { name: tab })).toBeInTheDocument();
     }
 
     const panel = document.getElementById("capability-panel") as HTMLElement;
 
-    fireEvent.click(screen.getByRole("button", { name: "Root cause" }));
-    expect(panel).toHaveTextContent(/maintenance intelligence/i);
+    fireEvent.click(screen.getByRole("button", { name: "Connected risk" }));
+    expect(panel).toHaveTextContent(/trace a risk back to the record/i);
 
-    // Computer vision and OCR are claimed here and nowhere else. They used to be
-    // restated in the capability list below, which is the duplication that list
-    // was trimmed to remove — so this is now the only guard on them.
-    fireEvent.click(screen.getByRole("button", { name: "Ingestion" }));
-    expect(panel).toHaveTextContent(/universal ingestion/i);
-    expect(panel).toHaveTextContent(/vision model/i);
+    // Scanned-document OCR is claimed here.
+    fireEvent.click(screen.getByRole("button", { name: "Connected sources" }));
+    expect(panel).toHaveTextContent(/start with the source record/i);
     expect(panel).toHaveTextContent(/OCR/);
 
-    // The regulatory frameworks, stated where they apply. Only the two the demo
-    // actually seeds are named as loaded (`backend/scripts/seed_regulations.py`);
-    // the rest are named as options, which is what `GET /compliance/frameworks`
-    // reports. "Factories Act" is deliberately absent: it appears in the dataset's
-    // clause-excerpt document, never as a framework the product can be set to.
-    fireEvent.click(screen.getByRole("button", { name: "Compliance" }));
-    expect(panel).toHaveTextContent(/quality and regulatory/i);
-    expect(panel).toHaveTextContent(/OISD-117/);
-    expect(panel).toHaveTextContent(/ISO 45001/);
-    expect(panel).toHaveTextContent(/PESO/);
-    expect(panel).not.toHaveTextContent(/Factories Act/i);
+    // The governance tab says what a finding rests on.
+    fireEvent.click(screen.getByRole("button", { name: "Governed findings" }));
+    expect(panel).toHaveTextContent(/see what supports a finding/i);
+    expect(panel).toHaveTextContent(/current decision revision/i);
 
     // The cross-cutting work that has no screen of its own is stated once, in the
-    // capability list under the tabs. Each row is pinned to something real:
-    // moc_items runs draft -> pending_approval -> approved; services/pii.py redacts
-    // at export only; circuit_breaker.check halts the graph write on a z-score.
+    // capability list under the tabs.
     const section = document.getElementById("capabilities") as HTMLElement;
-    expect(section).toHaveTextContent(/management of change/i);
-    expect(section).toHaveTextContent(/DPDP Act 2023/);
-    expect(section).toHaveTextContent(/non-conformance register/i);
-    expect(section).toHaveTextContent(/blast radius/i);
+    expect(section).toHaveTextContent(/impact analysis/i);
+    expect(section).toHaveTextContent(/evidence drift/i);
+    expect(section).toHaveTextContent(/persistent agent memory/i);
 
     // And it does not restate what a tab already says.
     expect(section).not.toHaveTextContent(/computer vision for p&ids/i);
@@ -143,7 +115,7 @@ describe("Home", () => {
     expect(screen.getByText("18 / 20")).toBeInTheDocument();
     expect(screen.getByText("6 / 6")).toBeInTheDocument();
     // Scoped to the <p>: a bare regex also matches every ancestor's textContent.
-    expect(screen.getByText(/forty-six domain-expert questions, written against a fixed answer key/i, { selector: "p" })).toBeInTheDocument();
+    expect(screen.getByText(/figures below come from an industrial question-answering benchmark/i, { selector: "p" })).toBeInTheDocument();
     // Said once on the chart's own sub-label, and explained once in the filled cell
     // at the foot of the section. It used to be in the section intro as well, which
     // made that cell a repeat rather than the explanation.
@@ -168,12 +140,11 @@ describe("Home", () => {
     expect(screen.queryByText("99.9%")).not.toBeInTheDocument();
   });
 
-  it("names all six knowledge-edge properties that make an answer checkable", () => {
+  it("names the six Evidence Drift checkpoints in the dependency path", () => {
     render(<Home />);
 
-    // Scoped to <code>: "confidence" also appears as a gate label in the
-    // architecture diagram, and this test is about the property list.
-    for (const property of ["valid_from", "valid_to", "authority_level", "document_id", "confidence", "verification_status"]) {
+    // Scoped to <code>: the same words can appear in the surrounding prose.
+    for (const property of ["source_version", "changed_claim", "dependent_memory", "decision_revision", "prior_approval", "action_state"]) {
       expect(screen.getByText(property, { selector: "code" })).toBeInTheDocument();
     }
   });
@@ -182,23 +153,36 @@ describe("Home", () => {
     render(<Home />);
 
     const panel = document.getElementById("capability-panel") as HTMLElement;
-    expect(within(panel).getByRole("heading", { name: /told before you ask, but never spammed/i })).toBeInTheDocument();
+    expect(within(panel).getByRole("heading", { name: /context arrives before a decision/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Field capture" }));
+    fireEvent.click(screen.getByRole("button", { name: "New observations" }));
 
-    expect(within(panel).getByRole("heading", { name: /capture that survives a dead zone/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Field capture" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(panel).getByRole("heading", { name: /capture what people observe/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "New observations" })).toHaveAttribute("aria-pressed", "true");
   });
 
   it("swaps the audience panel when another audience is selected", () => {
     render(<Home />);
 
     const panel = document.getElementById("audience-panel") as HTMLElement;
-    expect(panel).toHaveTextContent(/the plant on one screen/i);
+    expect(panel).toHaveTextContent(/supply chain intelligence/i);
 
-    fireEvent.click(screen.getByRole("button", { name: "Compliance officers" }));
+    fireEvent.click(screen.getByRole("button", { name: "CyberFlow" }));
 
-    expect(panel).toHaveTextContent(/coverage you can export/i);
+    expect(panel).toHaveTextContent(/cybersecurity intelligence/i);
+  });
+
+  // The Graph Hacks banner names the event and track this build was made for. Its
+  // link must land on a real section, and its label must not be the header's
+  // "Open workspace", which the first test counts as the only one.
+  it("names the Graph Hacks track in a banner that links to the Track 01 extension", () => {
+    render(<Home />);
+
+    const banner = screen.getByRole("region", { name: /built for graph hacks/i });
+    expect(banner).toHaveTextContent(/graph hacks · track 01/i);
+    expect(banner).toHaveTextContent(/agents that act on connected data/i);
+    expect(within(banner).getByRole("link", { name: /see the track 01 extension/i })).toHaveAttribute("href", "#field");
+    expect(document.getElementById("field")).toBeInTheDocument();
   });
 
   it("renders the FAQ as native disclosure elements so it works without JS", () => {
@@ -207,7 +191,7 @@ describe("Home", () => {
     // One category's questions at a time; the first answer starts open.
     const disclosures = container.querySelectorAll("details");
     expect(disclosures).toHaveLength(3);
-    expect(disclosures[0].querySelector("summary")).toHaveTextContent(/what does aidtrace actually do/i);
+    expect(disclosures[0].querySelector("summary")).toHaveTextContent(/what does aidtrace do/i);
     expect(disclosures[0]).toHaveAttribute("open");
   });
 
@@ -215,12 +199,13 @@ describe("Home", () => {
     render(<Home />);
 
     const answers = document.getElementById("faq-answers") as HTMLElement;
-    expect(answers).toHaveTextContent(/what does aidtrace actually do/i);
+    expect(answers).toHaveTextContent(/what does aidtrace do/i);
 
-    fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
+    const faqSection = document.getElementById("faq") as HTMLElement;
+    fireEvent.click(within(faqSection).getByRole("button", { name: "Evidence" }));
 
-    expect(answers).toHaveTextContent(/how was it evaluated/i);
-    expect(answers).not.toHaveTextContent(/what does aidtrace actually do/i);
+    expect(answers).toHaveTextContent(/can i trace a conclusion/i);
+    expect(answers).not.toHaveTextContent(/what does aidtrace do/i);
   });
 
   it("keeps every footer link pointed at a real destination", () => {
@@ -233,7 +218,7 @@ describe("Home", () => {
       "https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link",
     ];
     for (const href of hrefs) {
-      const ok = href === "/login" || href === "/docs" || href === "/" || href?.startsWith("#") || allowedExternal.includes(href ?? "");
+      const ok = href === "/login" || href === "/docs" || href === "/" || href === "/hub" || href?.startsWith("#") || allowedExternal.includes(href ?? "");
       expect(ok, `unexpected footer href: ${href}`).toBe(true);
     }
     // Every external link opens safely.

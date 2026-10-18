@@ -9,8 +9,8 @@ No unsafe action execution: actions are suspended, not executed, when evidence d
 """
 from __future__ import annotations
 
-import asyncio
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated, Any
 
@@ -18,10 +18,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from ..dependencies import CurrentUserDep, SettingsDep, require_role, site_scope
-from ..services.drift import model
-from ..services.drift.engine import DependencyEdge, ImpactPath, find_impacted_dependents
-from ..services.drift.store import FalkorDriftStore, TraversalLimitExceeded
 from ..services import tenant
+from ..services.drift import model
+from ..services.drift.engine import find_impacted_dependents
+from ..services.drift.store import FalkorDriftStore, TraversalLimitExceeded
 
 log = logging.getLogger(__name__)
 
@@ -272,7 +272,7 @@ async def pure_impact(
 ) -> list[dict]:
     """
     Compute impact from a list of edges you supply, not from the database.
-    
+
     Used for:
     - Unit testing the deterministic algorithm
     - Demonstrating the cascade logic without a running FalkorDB

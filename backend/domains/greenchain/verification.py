@@ -18,7 +18,7 @@ Produces a `verification` block per manufacturer:
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlparse
 
@@ -73,7 +73,7 @@ def domain_age_days(url: str | None) -> int | None:
         for ev in events:
             if ev.get("eventAction") == "registration":
                 created = datetime.fromisoformat(ev["eventDate"].replace("Z", "+00:00"))
-                return (datetime.now(timezone.utc) - created).days
+                return (datetime.now(UTC) - created).days
     except Exception:
         return None
     return None

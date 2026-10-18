@@ -42,6 +42,7 @@ from api.services.drift.model import (
 from api.services.drift.store import FalkorDriftStore
 
 _STALE_ON_CHANGE = {"Memory": DerivedStatus.STALE.value, "Decision": DerivedStatus.STALE.value, "Plan": DerivedStatus.STALE.value}
+MAX_RECALL_MEMORIES = 200
 
 
 def _slug(value: str) -> str:
@@ -56,6 +57,9 @@ class AgentMemory:
     def record_source(self, *, document_id: str, source_id: str, title: str, authority_level: int = 3, confidence: float = 0.9,
                       verification: str = Verification.VERIFIED.value, content_sha256: str | None = None, version_label: str = "v1",
                       observed_at: str | None = None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+        existing = self.store.read_node(self.site, source_id)
+        if existing and existing["properties"].get("status") != SourceStatus.ACTIVE.value:
+            raise ContractError(f"source {source_id} is no longer ACTIVE; record a new source version")
         at = observed_at or now_iso()
         self.store.upsert_node(self.site, Label.DOCUMENT, document_id, {"title": title})
         self.store.upsert_node(self.site, Label.SOURCE_VERSION, source_id, {
@@ -68,6 +72,12 @@ class AgentMemory:
 
     def record_claim(self, *, claim_id: str, source_id: str, fact_key: str, fact_value: Any, authority_level: int = 3,
                      confidence: float = 0.9, verification: str = Verification.VERIFIED.value) -> dict[str, Any]:
+        existing = self.store.read_node(self.site, claim_id)
+        if existing and existing["properties"].get("status") != "ACTIVE":
+            raise ContractError(f"claim {claim_id} is no longer ACTIVE; record a new claim")
+        source = self._need(Label.SOURCE_VERSION, source_id)
+        if source["props"].get("status") != SourceStatus.ACTIVE.value:
+            raise ContractError(f"source {source_id} is no longer ACTIVE; record a new claim against an active source")
         self.store.upsert_node(self.site, Label.CLAIM, claim_id, {
             "fact_key": fact_key, "fact_value": fact_value, "status": "ACTIVE", "authority_level": authority_level,
             "confidence": confidence, "verification_status": verification, "source_id": source_id,
@@ -83,14 +93,26 @@ class AgentMemory:
                  from_memories: Sequence[str] = (), investigation_ref: str | None = None, details: dict[str, Any] | None = None) -> dict[str, Any]:
         """Store what an agent concluded, tied to the evidence behind it. Refuses to remember from a non-ACTIVE claim."""
         MemoryKind(kind)
+        existing = self.store.read_node(self.site, memory_id)
+        if existing and existing["properties"].get("status") != DerivedStatus.VALID.value:
+            raise ContractError(f"memory {memory_id} is no longer VALID; record a new memory")
         claims = [self._need(Label.CLAIM, c) for c in claim_ids]
         inactive = [c["id"] for c in claims if c["props"].get("status") != "ACTIVE"]
         if inactive:
             raise ContractError(f"cannot remember from claims that are not ACTIVE: {inactive}")
         sources = {c["props"]["source_id"] for c in claims if c["props"].get("source_id")}
+        source_props = {s: self._need(Label.SOURCE_VERSION, s)["props"] for s in sources}
+        inactive_sources = [s for s, props in source_props.items() if props.get("status") != SourceStatus.ACTIVE.value]
+        if inactive_sources:
+            raise ContractError(f"cannot remember from sources that are not ACTIVE: {sorted(inactive_sources)}")
+        inactive_memories = [m for m in from_memories if self._need(Label.MEMORY, m)["props"].get("status") != DerivedStatus.VALID.value]
+        if inactive_memories:
+            raise ContractError(f"cannot remember from memories that are not VALID: {sorted(inactive_memories)}")
         # Independent support: copies of one source (same content hash) count once.
-        independent = len({(self.store.read_node(self.site, s) or {"properties": {}})["properties"].get("content_sha256") or s for s in sources})
-        verified = bool(claims) and all(c["props"].get("verification_status") == Verification.VERIFIED.value for c in claims)
+        independent = len({props.get("content_sha256") or s for s, props in source_props.items()})
+        verified = bool(claims) and all(c["props"].get("verification_status") == Verification.VERIFIED.value for c in claims) and all(
+            props.get("verification_status") == Verification.VERIFIED.value for props in source_props.values()
+        )
         at = now_iso()
         session_id = f"session:{_slug(memory_id)}"
         self.store.upsert_node(self.site, Label.AGENT_SESSION, session_id, {"agent_id": agent_id, "investigation_ref": investigation_ref or "", "started_at": at})
@@ -110,11 +132,14 @@ class AgentMemory:
             self.store.link(self.site, Label.MEMORY, memory_id, Rel.DERIVED_FROM, Label.MEMORY, m)
         return {"memory_id": memory_id, "status": DerivedStatus.VALID.value, "independent_sources": independent, "verified": verified}
 
-    def recall(self, *, agent_id: str, fact_key: str | None = None, memory_ids: Sequence[str] | None = None, limit: int = 10) -> dict[str, Any]:
+    def recall(self, *, agent_id: str, fact_key: str | None = None, memory_ids: Sequence[str] | None = None,
+               limit: int = 10, verified_only: bool = False) -> dict[str, Any]:
         """Memories another agent may use now. STALE/INVALIDATED ones are returned as `blocked` with the reason, never as usable."""
         if not 1 <= limit <= 50:
             raise ContractError("limit must be between 1 and 50")
-        rows = self.store.memory_lineage(self.site, limit=200)
+        rows = self.store.memory_lineage(self.site, limit=MAX_RECALL_MEMORIES + 1)
+        if len(rows) > MAX_RECALL_MEMORIES:
+            raise ContractError("memory recall exceeds the 200-memory safety bound; narrow the site memory set")
         if memory_ids is not None:
             rows = [r for r in rows if r["id"] in set(memory_ids)]
         if fact_key is not None:
@@ -123,6 +148,8 @@ class AgentMemory:
         usable, blocked = [], []
         for row in rows:
             reason = self._block_reason(row)
+            if verified_only and reason is None and row.get("verification_status") != Verification.VERIFIED.value:
+                reason = f"memory verification is {row.get('verification_status') or 'UNKNOWN'}"
             (blocked if reason else usable).append({**row, "blocked_reason": reason} if reason else row)
         usable = usable[:limit]
         session_id = f"recall:{_slug(agent_id)}:{stable_hash([u['id'] for u in usable] + [fact_key or ''])[:12]}"

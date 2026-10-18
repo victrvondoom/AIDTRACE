@@ -1,4 +1,4 @@
-﻿"""RESOLVE AI consumer engine: intake, parallel specialists, graph reconciliation, verification, planning.
+"""RESOLVE consumer engine with FalkorDB: intake, parallel specialists, graph reconciliation, verification, planning.
 
 Order of work
   1. Intake: which institutions and domains the case involves, read from the graph

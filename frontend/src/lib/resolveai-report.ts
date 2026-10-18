@@ -1,4 +1,4 @@
-// Builds the exportable case report for a ResolveAI investigation. Pure: it states only what the worker returned and says
+// Builds the exportable case report for a Resolve investigation with FALKOR DB. Pure: it states only what the worker returned and says
 // plainly when a stage did not run, so an exported report can never imply model reasoning that did not happen.
 import type { PlatformCase, PlatformInvestigation, PlatformRun } from "@/lib/lab-api";
 

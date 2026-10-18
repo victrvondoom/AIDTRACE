@@ -106,6 +106,6 @@ export function routeAllowed(path: string, role: Role): boolean {
 export function roleHome(role: Role): string {
   if (role === "field_worker") return "/briefs";
   if (role === "compliance") return "/compliance";
-  if (role === "demo") return "/overview";
-  return "/overview";
+  if (role === "demo") return "/hub";
+  return "/hub";
 }

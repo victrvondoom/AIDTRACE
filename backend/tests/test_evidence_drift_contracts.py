@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 
 from api.services.drift.model import (
-    ContractError,
     AgentFocusLevel,
+    ContractError,
     EvidenceStrength,
     InputModality,
     Verdict,

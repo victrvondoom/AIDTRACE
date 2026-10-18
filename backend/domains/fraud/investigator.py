@@ -7,7 +7,7 @@ In both cases a freeze is only ever proposed through GraphTools.propose_freeze, 
 policy in code. The model cannot bypass the rule that IP-only links never justify action.
 """
 import json
-from typing import Callable
+from collections.abc import Callable
 
 from domains.fraud import config
 from domains.fraud.tools import GraphTools

@@ -28,13 +28,54 @@ const ROLE_TONE: Record<string, Tone> = {
   changed: "accent", source: "accent", claim: "accent", hub: "accent", target: "info",
 };
 
+export const TYPE_TONES: Record<string, Tone> = {
+  Document: "accent",
+  SourceVersion: "accent",
+  Claim: "accent",
+  Decision: "verified",
+  DecisionRevision: "accent",
+  Memory: "verified",
+  Agent: "info",
+  AgentSession: "caution",
+  Approval: "verified",
+  ActionProposal: "caution",
+  ChangeEvent: "danger",
+  Asset: "caution",
+  Supplier: "accent",
+  AuditEvent: "muted",
+  Transaction: "danger",
+  Account: "accent",
+  Device: "info",
+  CitizenCase: "caution",
+};
+
+export const TYPE_GLYPHS: Record<string, string> = {
+  Document: "DOC",
+  SourceVersion: "SRC",
+  Claim: "CLM",
+  Decision: "DEC",
+  DecisionRevision: "REV",
+  Memory: "MEM",
+  Agent: "AGT",
+  AgentSession: "SES",
+  Approval: "APP",
+  ActionProposal: "ACT",
+  ChangeEvent: "EVT",
+  Asset: "AST",
+  Supplier: "SUP",
+  AuditEvent: "LOG",
+  Transaction: "TX",
+  Account: "ACC",
+  Device: "DEV",
+};
+
 export function toneFor(role?: string): Tone | null {
   if (!role || role === "hidden") return null;
   if (role.startsWith("community:")) return COMMUNITY[Number(role.slice(10)) % COMMUNITY.length] ?? "muted";
   return ROLE_TONE[role] ?? null;
 }
 
-const short = (s: string, n = 20) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+const short = (s: string, n = 22) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 const fmtDate = (s: string | null) => (s ? s.slice(0, 10) : "—");
 
 export function GraphViews({ graph, marks, selected, onSelect }: {
@@ -67,7 +108,7 @@ export function GraphViews({ graph, marks, selected, onSelect }: {
   ];
   const px = (id: string) => PAD + (pos[id]?.x ?? 0.5) * (W - 2 * PAD);
   const py = (id: string) => PAD + (pos[id]?.y ?? 0.5) * (H - 2 * PAD);
-  const labelAll = graph.nodes.length <= 40;
+  const labelAll = graph.nodes.length <= 150;
   const sel = selected ? byId.get(selected) : undefined;
 
   function edgePath(e: LabEdge) {
@@ -82,24 +123,29 @@ export function GraphViews({ graph, marks, selected, onSelect }: {
 
   function nodeEl(n: LabNode) {
     const role = nodeMarks[n.id];
-    const tone = toneFor(role);
+    const status = String(n.props?.status ?? "");
+    const isUnsafeStatus = status === "INVALIDATED" || status === "STALE" || status === "SUPERSEDED" || status === "DISRUPTED";
+    const tone = toneFor(role) ?? (isUnsafeStatus ? "danger" : TYPE_TONES[n.type] ?? null);
     const hidden = role === "hidden";
-    const r = 11 + 14 * Math.sqrt((marks?.node_metric?.[n.id] ?? 0) / metricMax);
+    const baseR = n.type === "Document" || n.type === "Decision" || n.type === "Agent" ? 14 : 12;
+    const r = baseR + 12 * Math.sqrt((marks?.node_metric?.[n.id] ?? 0) / metricMax);
     const dim = hidden || (hover !== null && hover !== n.id && !neighbours.has(n.id));
     const isSel = selected === n.id;
-    const badge = marks?.node_badges?.[n.id];
+    const badge = marks?.node_badges?.[n.id] ?? (status || undefined);
+    const glyph = TYPE_GLYPHS[n.type] ?? n.type.slice(0, 3).toUpperCase();
     return (
       <g key={n.id} transform={`translate(${px(n.id)} ${py(n.id)})`} opacity={dim ? 0.28 : 1} role="button" tabIndex={0} style={{ cursor: "pointer" }}
-        aria-label={`${n.label}, ${n.type}${role ? `, ${role}` : ""}`} aria-pressed={isSel}
+        aria-label={`${n.label}, ${n.type}${role ? `, ${role}` : ""}${status ? `, ${status}` : ""}`} aria-pressed={isSel}
         onClick={() => onSelect?.(n.id)} onKeyDown={(ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onSelect?.(n.id); } }}
         onMouseEnter={() => setHover(n.id)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(n.id)} onBlur={() => setHover(null)}>
-        {isSel && <circle r={r + 7} style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 2, strokeDasharray: "3 3" }} />}
+        {isSel && <circle r={r + 7} style={{ fill: "none", stroke: "var(--ink)", strokeWidth: 2.5, strokeDasharray: "4 3" }} />}
         <circle r={r} style={{ fill: tone ? VAR[tone] : "var(--surface)", fillOpacity: tone ? 0.22 : 1, stroke: tone ? VAR[tone] : "var(--muted)", strokeWidth: tone ? 2.5 : 1.5 }} />
-        {badge && <circle r={r + 4} style={{ fill: "none", stroke: VAR[toneFor(badge) ?? "accent"], strokeWidth: 1.5, strokeDasharray: "2 2" }} />}
+        {badge && <circle r={r + 3.5} style={{ fill: "none", stroke: VAR[toneFor(badge) ?? tone ?? "accent"], strokeWidth: 1.5, strokeDasharray: "2 2" }} />}
+        <text textAnchor="middle" dominantBaseline="central" fontSize={r >= 14 ? 9.5 : 8} fontWeight="700" style={{ fill: tone ? VAR[tone] : "var(--ink)", pointerEvents: "none", userSelect: "none" }}>{glyph}</text>
         {(labelAll || tone || isSel || hover === n.id) && (
-          <text y={r + 14} textAnchor="middle" fontSize={11.5} style={{ fill: "var(--ink)", stroke: "var(--surface)", strokeWidth: 3, paintOrder: "stroke" }}>{short(n.label)}</text>
+          <text y={r + 14} textAnchor="middle" fontSize={11} fontWeight={isSel ? "700" : "500"} style={{ fill: "var(--ink)", stroke: "var(--surface)", strokeWidth: 3, paintOrder: "stroke" }}>{short(n.label)}</text>
         )}
-        <title>{`${n.label} (${n.type})${role ? ` · ${role}` : ""}${badge ? ` · ${badge}` : ""}`}</title>
+        <title>{`${n.label} (${n.type}) · ID: ${n.id}${role ? ` · ${role}` : ""}${status ? ` · Status: ${status}` : ""}`}</title>
       </g>
     );
   }

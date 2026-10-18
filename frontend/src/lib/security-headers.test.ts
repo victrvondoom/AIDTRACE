@@ -19,6 +19,8 @@ describe("security headers", () => {
     expect(csp).toContain("img-src 'self' data: blob: https://services.arcgisonline.com https://gibs.earthdata.nasa.gov;");
     expect(csp).not.toContain("cesium.com");
     expect(csp).toContain("worker-src 'self' blob:;");
+    // CesiumJS starts its workers from nested blob URLs; without blob: in script-src the globe renders no Earth surface.
+    expect(csp).toMatch(/script-src [^;]*blob:/);
     expect(csp).toContain("frame-src https://www.youtube-nocookie.com;");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
@@ -39,5 +41,16 @@ describe("security headers", () => {
   it("allows eval only in development and survives a bad API url", () => {
     expect(contentSecurityPolicy("::nope", true)).toContain("'unsafe-eval'");
     expect(contentSecurityPolicy(undefined, false)).toContain("http://localhost:8000");
+  });
+
+  it("sends the retired overview, catalogue and supply-chain pages into the workspace", async () => {
+    const redirects = await nextConfig.redirects!();
+    for (const source of ["/overview", "/workspace", "/supply-chain"]) {
+      expect(redirects).toContainEqual(expect.objectContaining({ source, destination: "/hub" }));
+    }
+  });
+
+  it("lets the dev server hydrate from either loopback name", () => {
+    expect(nextConfig.allowedDevOrigins).toEqual(expect.arrayContaining(["127.0.0.1", "localhost"]));
   });
 });

@@ -16,7 +16,7 @@ const SAMPLE =
 const VERDICT_TONE = { VERIFIED: "verified", REJECTED: "danger", INSUFFICIENT_EVIDENCE: "caution" } as const;
 const EMPTY: LabGraph = { nodes: [], edges: [] };
 
-/** ResolveAI consumer-remedy investigation, native to AIDTRACE: shared session, tenant-scoped FalkorDB graph,
+/** Resolve consumer-remedy investigation, native to AIDTRACE: shared session, tenant-scoped FalkorDB graph,
  *  verdicts computed by the graph (never by a language model), approvals bound to the reviewed revision. */
 export function ConsumerWorkspace() {
   const [analysis, setAnalysis] = useState<ConsumerAnalysis | null>(null);
@@ -88,7 +88,7 @@ export function ConsumerWorkspace() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-title font-semibold">ResolveAI · cross-domain remedy investigation</h2>
+          <h2 className="text-title font-semibold">Resolve · cross-domain remedy investigation on FALKOR DB</h2>
           <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">One complaint, several institutions. The graph decides, not the language model. Approvals are bound to the evidence revision they reviewed; nothing is submitted externally.</p>
         </div>
         <div className="flex flex-wrap gap-2">

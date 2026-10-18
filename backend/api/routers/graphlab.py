@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from collections.abc import Callable
 from typing import Annotated, Any
@@ -89,7 +90,85 @@ async def site_graph(current_user: CurrentUserDep, make_store: StoreFactory, _st
         log.warning("graphlab.site_graph_failed", error=repr(exc), site_id=site_id)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="FalkorDB is unavailable.") from exc
     graph = alg.normalize_graph(exported).public()
-    return {"graph": graph, "truncated": exported["truncated"], "empty": not graph["nodes"]}
+    node_dist: dict[str, int] = {}
+    for n in graph["nodes"]:
+        t = n.get("type") or "Unknown"
+        node_dist[t] = node_dist.get(t, 0) + 1
+    rel_dist: dict[str, int] = {}
+    for e in graph["edges"]:
+        r = e.get("rel") or "RELATED_TO"
+        rel_dist[r] = rel_dist.get(r, 0) + 1
+
+    sorted_node_dist = [{"type": k, "count": v} for k, v in sorted(node_dist.items(), key=lambda x: -x[1])]
+    sorted_rel_dist = [{"relationship": k, "count": v} for k, v in sorted(rel_dist.items(), key=lambda x: -x[1])]
+
+    return {
+        "graph": graph,
+        "truncated": exported["truncated"],
+        "empty": not graph["nodes"],
+        "falkordb": {
+            "status": "connected",
+            "graph_name": make_store().graph_name(site_id),
+            "engine": "FalkorDB",
+            "host": "configured connection",
+            "site_id": site_id,
+            "node_count": len(graph["nodes"]),
+            "edge_count": len(graph["edges"]),
+            "node_distribution": sorted_node_dist,
+            "relationship_distribution": sorted_rel_dist,
+        },
+    }
+
+
+class CypherQueryRequest(BaseModel):
+    query: str = Field(min_length=3, max_length=1500)
+    params: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/site-cypher", summary="Execute a read-only Cypher query against the user's FalkorDB graph")
+async def site_cypher(
+    body: CypherQueryRequest,
+    current_user: CurrentUserDep,
+    make_store: StoreFactory,
+    _staff: dict = Depends(require_role(*STAFF)),
+) -> dict:
+    site_id = _site_for_user(current_user, write=False)
+    q = body.query.strip()
+    if ";" in q or "//" in q or "/*" in q or not q.upper().startswith(("MATCH ", "RETURN ", "WITH ")):
+        raise HTTPException(status_code=422, detail="Provide one read-only Cypher query.")
+    explicit_limit = re.search(r"\bLIMIT\s+(\d+)\s*$", q, re.IGNORECASE)
+    if (re.search(r"\bLIMIT\b", q, re.IGNORECASE) and explicit_limit is None) or (explicit_limit and int(explicit_limit.group(1)) > 100):
+        raise HTTPException(status_code=422, detail="The result limit must be a literal integer of at most 100.")
+    if explicit_limit is None:
+        q += " LIMIT 100"
+    try:
+        def run() -> dict:
+            store = make_store()
+            graph_name = store.graph_name(site_id)
+            if graph_name not in store._client.list_graphs():
+                raise LookupError("This site has no graph yet.")
+            g = store._graph(site_id)
+            # GRAPH.RO_QUERY enforces read-only behavior even if Cypher parsing evolves.
+            res = g.ro_query(q, body.params, timeout=store._query_timeout_ms)
+            headers = [col[1] for col in res.header] if hasattr(res, "header") and res.header else []
+            rows = res.result_set[:100] if hasattr(res, "result_set") else []
+            runtime = getattr(res, "run_time_ms", 0.0)
+            return {
+                "graph_name": graph_name,
+                "query": q,
+                "run_time_ms": round(float(runtime), 2) if runtime else 0.0,
+                "header": headers,
+                "rows": rows,
+                "row_count": len(rows),
+                "engine": "FalkorDB GraphBLAS OpenCypher",
+            }
+        return await asyncio.to_thread(run)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        log.warning("graphlab.site_cypher_failed", error=repr(exc), site_id=site_id)
+        raise HTTPException(status_code=503, detail="FalkorDB query failed or is unavailable.") from exc
+
 
 
 @router.post("/analyze", summary="Run one engine; the result is a pure function of the graph and parameters")

@@ -20,7 +20,6 @@ from dotenv import load_dotenv
 from . import ml_bridge  # noqa: F401
 from .tools import DEDALUS_TOOLS, infer_naics
 
-
 load_dotenv(Path(__file__).parent / ".env")
 
 

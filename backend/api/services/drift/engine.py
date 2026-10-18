@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass
 
-from .model import ContractError, EdgeKind, PROPAGATING_KINDS, check_id
+from .model import PROPAGATING_KINDS, ContractError, EdgeKind, check_id
 
 
 @dataclass(frozen=True)

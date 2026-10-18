@@ -12,7 +12,6 @@ from fastapi import UploadFile
 
 from .db import create_dataset_intake
 
-
 SCHEMA_VERSION = "scenario_csv_v1"
 VALID_TRANSPORT_MODES = {"sea", "air", "rail", "road"}
 REQUIRED_HEADERS = {

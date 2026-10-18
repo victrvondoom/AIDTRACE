@@ -17,7 +17,7 @@ import os
 import threading
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -37,9 +37,9 @@ _UA = (
 )
 
 _lock = threading.Lock()
-_client: Optional[httpx.Client] = None
-_machine_id: Optional[str] = None
-_machine_revision: Optional[str] = None
+_client: httpx.Client | None = None
+_machine_id: str | None = None
+_machine_revision: str | None = None
 _init_failed: bool = False
 
 

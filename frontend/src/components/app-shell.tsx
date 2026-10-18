@@ -18,7 +18,6 @@ import { PageSkeleton } from "./skeleton";
 import { Icon as SharedIcon, isIconName, type IconName as SharedIconName } from "./icon";
 import { getSearchShortcut } from "@/lib/search-shortcut";
 import { SpatialInteraction } from "./spatial-interaction";
-import { CAPABILITIES } from "@/lib/capabilities";
 
 // Staff surfaces (Assure group + RCA) are hidden from field workers. Dev-bypass (no session)
 // defaults to engineer, so an unauthenticated demo still sees everything.
@@ -45,42 +44,26 @@ function Icon({ name, className, active = false }: { name: IconName; className?:
   return <SharedIcon name={active && isIconName(filled) ? filled : base} className={className} />;
 }
 
-type NavItem = { href: string; label: string; icon: IconName; roles?: Role[] };
+type NavItem = { href: string; label: string; icon: IconName; roles?: Role[]; /** Shown to exactly these roles, including never to the demo account. */ only?: Role[] };
 
 /** The demo account sees every nav item an admin sees. */
-const navAllowed = (it: NavItem, role: Role) => !it.roles || role === "demo" || it.roles.includes(role);
+const navAllowed = (it: NavItem, role: Role) => (it.only ? it.only.includes(role) : !it.roles || role === "demo" || it.roles.includes(role));
 
 // group: "" renders ungrouped at the top (no header, no collapse).
+// AIDTRACE has one primary page, the workspace. The older per-feature pages still exist as routes, but they are not navigation: their
+// functionality lives inside the workspace. Only the role-specific entries below remain, because those roles cannot open the workspace.
 const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: "",
     items: [
-      // The AIDTRACE workspace is the one primary experience; every other page is a legacy route kept for compatibility.
       { href: "/hub", label: "Workspace", icon: "graph", roles: STAFF },
-    ],
-  },
-  {
-    group: "Legacy pages",
-    items: [
-      { href: "/overview", label: "Risk Overview", icon: "management", roles: STAFF },
-      { href: "/supply-chain", label: "Supply Chain", icon: "supply", roles: STAFF },
-      { href: "/briefs", label: "Briefs", icon: "briefs" },
-      { href: "/copilot", label: "Copilot", icon: "copilot" },
-      { href: "/assets", label: "Suppliers & Assets", icon: "assets" },
-      { href: "/events", label: "Events", icon: "events", roles: STAFF },
-      { href: "/field/voice", label: "Voice", icon: "voice", roles: ["field_worker", "admin"] },
-      { href: "/field/deviation", label: "Deviation", icon: "alert", roles: ["field_worker", "admin"] },
-      { href: "/rca", label: "RCA", icon: "rca", roles: STAFF },
-      { href: "/graph", label: "Graph", icon: "graph", roles: STAFF },
-      { href: "/overview/coverage", label: "Coverage", icon: "coverage", roles: STAFF },
+      { href: "/briefs", label: "Briefs", icon: "briefs", only: ["field_worker"] },
+      { href: "/field/voice", label: "Voice note", icon: "voice", only: ["field_worker"] },
+      { href: "/field/deviation", label: "Deviation flag", icon: "alert", only: ["field_worker"] },
       // The compliance auditor sees exactly these two and nothing else in the sidebar —
       // matching `read_compliance` / `read_audit` in kairos.rego and ROUTE_ACCESS.
-      { href: "/compliance", label: "Compliance", icon: "compliance", roles: STAFF_AND_COMPLIANCE },
-      { href: "/governance", label: "Governance", icon: "governance", roles: STAFF },
-      { href: "/audit", label: "Audit Trail", icon: "audit", roles: STAFF_AND_COMPLIANCE },
-      { href: "/documents", label: "Documents", icon: "documents", roles: STAFF },
-      { href: "/projects", label: "Projects", icon: "projects", roles: STAFF },
-      { href: "/offboarding", label: "Off-Boarding", icon: "offboarding", roles: STAFF },
+      { href: "/compliance", label: "Compliance", icon: "compliance", only: ["compliance"] },
+      { href: "/audit", label: "Audit Trail", icon: "audit", only: ["compliance"] },
     ],
   },
 ];
@@ -265,6 +248,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
+  // The AIDTRACE workspace owns the whole viewport: no rail, a compact top bar instead.
+  const isHub = pathname === "/hub";
 
 
   // Central role guard: no staff/admin page is reachable by URL without the right role.
@@ -392,8 +377,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
     return [
       ...nav,
-      ...CAPABILITIES.filter((item) => routeAllowed(item.href.split("#")[0], role) && !nav.some((entry) => entry.href === item.href))
-        .map((item) => ({ group: "Features", label: item.title, href: item.href })),
       {
         group: "Actions",
         label: "Toggle dark mode",
@@ -485,7 +468,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Desktop sidebar — all roles; sidebar-scope remaps tokens to the dark rail palette.
           There is no desktop top bar: search, Ingest and the account live in the rail. */}
-      <aside data-rail className="sidebar-scope hidden w-[var(--rail-w)] shrink-0 border-r border-line lg:block print:hidden">
+      <aside data-rail className={`sidebar-scope hidden w-[var(--rail-w)] shrink-0 border-r border-line print:hidden ${isHub ? "" : "lg:block"}`}>
         <div className="sticky top-0 h-dvh">
           <SidebarContent role={role} user={user} actions={railActions} />
         </div>
@@ -526,8 +509,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* inert while the sheet dialog is open so screen readers can't wander behind it */}
       <div
         inert={moreOpen || mobileDrawerOpen || undefined}
-        className="flex min-w-0 flex-1 flex-col pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0 print:pb-0"
+        className={`flex min-w-0 flex-1 flex-col pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0 print:pb-0 ${isHub ? "lg:h-dvh lg:overflow-hidden" : ""}`}
       >
+        {isHub && (
+          <header className="hidden h-11 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 lg:flex" aria-label="AIDTRACE">
+            <BrandLink size={22} href="/" />
+            <span className="hidden text-micro text-muted xl:inline">Supply Chain Intelligence</span>
+            <div id="aidtrace-topbar-slot" className="flex min-w-0 flex-1 items-center gap-3 pl-3" />
+            <button type="button" onClick={() => setPalette(true)} aria-label="Search" className="flex h-8 items-center gap-2 border border-line px-2.5 text-micro text-muted hover:bg-surface-2">Search<kbd className="text-micro">Ctrl K</kbd></button>
+            <ThemeToggle />
+            <button type="button" onClick={() => setAccountOpen((open) => !open)} aria-label="Open user menu" className="grid size-8 place-items-center rounded-full bg-surface-2 text-label font-bold text-ink">{getUserInitials(user?.email)}</button>
+          </header>
+        )}
         <MobileAppHeader
           onOpenMenu={() => setMobileDrawerOpen(true)}
           onOpenSearch={() => setPalette(true)}
@@ -555,10 +548,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Shell owns page padding; /copilot opts out (full-bleed sticky composer).
             Every other route sits in the landing's frame: hairline rails either side
             of a centred column, visible once the viewport is wider than the column. */}
-        <main id="main" className="kairos-spatial flex min-w-0 flex-1 flex-col overflow-x-clip">
+        <main id="main" className={`kairos-spatial flex min-w-0 flex-1 flex-col overflow-x-clip ${isHub ? "min-h-0 lg:overflow-hidden" : ""}`}>
           <SpatialInteraction />
           {pathname === "/copilot" || pathname === "/hub" ? (
-            <div key={pathname} className="app-route flex-1">{children}</div>
+            <div key={pathname} className={`app-route flex-1 ${isHub ? "min-h-0" : ""}`}>{children}</div>
           ) : (
             <div className="relative mx-auto flex w-full max-w-[1464px] flex-1 flex-col xl:border-x print:border-0">
               <div key={pathname} className="app-route flex-1 px-5 py-8 sm:px-8 sm:py-10 print:p-0">{children}</div>

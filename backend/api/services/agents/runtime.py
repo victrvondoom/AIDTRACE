@@ -89,6 +89,7 @@ MEMORY = Adapter(
     interfaces={"task_execution": NONE, "tool_invocation": NATIVE, "evidence_retrieval": NATIVE, "graph_queries": NATIVE, "memory": NATIVE, "handoffs": NATIVE,
                 "approval": NATIVE, "result_persistence": NATIVE, "execution_trace": NATIVE},
     tools=(Tool("recall", "memory", "Memories an agent may rely on now (stale ones are blocked)", read_only=False, invokable=True),
+           Tool("context", "memory", "Verified memory context with source and claim provenance for LLM agents", read_only=False, invokable=True),
            Tool("supersede_source", "evidence_retrieval", "Mark dependants stale when a source is superseded", read_only=False),
            Tool("approve_action", "approval", "Approve the current revision of a decision (refused if stale)", read_only=False)),
     limits=("It stores and gates what other agents conclude; it does not reason on its own.",),

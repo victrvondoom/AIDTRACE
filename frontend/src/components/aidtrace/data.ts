@@ -11,11 +11,11 @@ import type { SupplyScenario } from "@/lib/greenchain/supply-chain-scenario";
 import type { LabGraph } from "@/lib/graph-layout";
 import { buildLineage, isUnsafe, type Lineage } from "@/lib/aidtrace-lineage";
 import {
-  analyzeLab, greenchainDemo, greenchainHealth, greenchainWhatIf, memoryHandoffs, memorySnapshot,
+  analyzeLab, getSiteGraph, greenchainDemo, greenchainHealth, greenchainWhatIf, memoryHandoffs, memorySnapshot,
   type GreenchainDemo, type GreenchainHealth, type Handoff, type MemorySnapshot,
 } from "@/lib/lab-api";
 
-export type ViewId = "globe" | "graph" | "lineage" | "workflow" | "memory";
+export type ViewId = "globe" | "graph" | "lineage" | "timeline";
 export type Selection = { kind: "supplier" | "node" | "source" | "claim" | "memory" | "decision" | "action"; id: string; label: string } | null;
 
 const COMPONENT = "Corrugated packaging";
@@ -40,12 +40,19 @@ export function normalizeSnapshot(raw: MemorySnapshot): MemorySnapshot {
 }
 const message = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
+import type { FalkorDBInfo } from "@/lib/lab-api";
+
+export interface SiteGraph { graph: LabGraph; empty: boolean; truncated: boolean; falkordb?: FalkorDBInfo }
+
 export interface AidtraceData {
   demo: GreenchainDemo | null; health: GreenchainHealth | null; snap: MemorySnapshot | null; handoffs: Handoff[];
+  /** The persisted FalkorDB graph itself, read back through Graph Lab. */
+  site: SiteGraph | null;
   scenario: SupplyScenario | null; lineage: Lineage | null;
   errors: { supply?: string; memory?: string };
   loading: boolean;
-  refreshMemory: () => Promise<void>;
+  /** Re-read agent memory and the FalkorDB graph; resolves with what it read so a workflow can continue from fresh state. */
+  refreshMemory: () => Promise<{ snap: MemorySnapshot | null; site: SiteGraph | null }>;
 }
 
 export function useAidtraceData(): AidtraceData {
@@ -53,23 +60,38 @@ export function useAidtraceData(): AidtraceData {
   const [health, setHealth] = useState<GreenchainHealth | null>(null);
   const [snap, setSnap] = useState<MemorySnapshot | null>(null);
   const [handoffs, setHandoffs] = useState<Handoff[]>([]);
+  const [site, setSite] = useState<SiteGraph | null>(null);
   const [errors, setErrors] = useState<AidtraceData["errors"]>({});
   const [loading, setLoading] = useState(true);
 
   const refreshMemory = useCallback(async () => {
     try {
-      const [s, h] = await Promise.all([memorySnapshot(), memoryHandoffs()]);
-      setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setErrors((e) => ({ ...e, memory: undefined }));
-    } catch (e) { setErrors((x) => ({ ...x, memory: message(e, "Agent memory could not be read.") })); }
+      const [s, h, g] = await Promise.all([memorySnapshot(), memoryHandoffs(), getSiteGraph().then((r) => r.data).catch(() => null)]);
+      const next = normalizeSnapshot(s);
+      setSnap(next); setHandoffs(h.handoffs ?? []); setSite(g); setErrors((e) => ({ ...e, memory: undefined }));
+      return { snap: next, site: g };
+    } catch (e) {
+      setErrors((x) => ({ ...x, memory: message(e, "Agent memory could not be read.") }));
+      return { snap: null, site: null };
+    }
   }, []);
 
   useEffect(() => {
     let live = true;
-    const supply = Promise.all([greenchainDemo("sea"), greenchainHealth()])
+    // The first request after a backend restart can fail while the ML models load, so retry twice before reporting the service down.
+    const withRetry = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      for (let attempt = 0; ; attempt++) {
+        try { return await fn(); } catch (e) {
+          if (attempt >= 2 || !live) throw e;
+          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+        }
+      }
+    };
+    const supply = Promise.all([withRetry(() => greenchainDemo("sea")), withRetry(() => greenchainHealth())])
       .then(([d, h]) => { if (live) { setDemo(d); setHealth(h); } })
       .catch((e: unknown) => { if (live) setErrors((x) => ({ ...x, supply: message(e, "GreenChain could not load.") })); });
-    const memory = Promise.all([memorySnapshot(), memoryHandoffs()])
-      .then(([s, h]) => { if (live) { setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); } })
+    const memory = Promise.all([memorySnapshot(), memoryHandoffs(), getSiteGraph().then((r) => r.data).catch(() => null)])
+      .then(([s, h, g]) => { if (live) { setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setSite(g); } })
       .catch((e: unknown) => { if (live) setErrors((x) => ({ ...x, memory: message(e, "Agent memory could not be read.") })); });
     void Promise.all([supply, memory]).then(() => { if (live) setLoading(false); });
     return () => { live = false; };
@@ -89,7 +111,7 @@ export function useAidtraceData(): AidtraceData {
   }, [demo]);
 
   const lineage = useMemo(() => (snap ? buildLineage(snap) : null), [snap]);
-  return { demo, health, snap, handoffs, scenario, lineage, errors, loading, refreshMemory };
+  return { demo, health, snap, handoffs, site, scenario, lineage, errors, loading, refreshMemory };
 }
 
 // ---- Connected-risk propagation (Graph Lab blast_radius on the supplier graph) -------------------------------------------------------------
@@ -106,6 +128,24 @@ export async function propagate(graph: LabGraph, nodeId: string): Promise<Propag
   };
   const [dependents, dependencies] = await Promise.all([run("reverse"), run("forward")]);
   return { changed: nodeId, dependents, dependencies };
+}
+
+/** Which records depend on a supplier's evidence, traversed by Graph Lab directly over the persisted FalkorDB graph. The anchors are the supplier's own
+ *  estimate claims (gc:<scenario>:est:<Supplier>:v1); when the supplier has not been recorded yet there are none and the caller falls back to the scenario graph. */
+export function supplierAnchors(site: SiteGraph | null, supplierName: string): string[] {
+  const token = `:est:${supplierName.replace(/ /g, "_")}:`;
+  return (site?.graph.nodes ?? []).filter((n) => n.type === "Claim" && n.id.includes(token)).map((n) => n.id);
+}
+
+export async function propagateSite(site: SiteGraph, anchors: string[]): Promise<Propagation> {
+  const byId = new Map(site.graph.nodes.map((n) => [n.id, n]));
+  const run = async (direction: "reverse" | "forward") => {
+    const r = await analyzeLab("blast_radius", { site_graph: true }, { changed: anchors, direction, max_depth: 8 });
+    return Object.entries(r.result.node_marks).filter(([id]) => !anchors.includes(id))
+      .map(([id, mark]) => ({ id, label: byId.get(id)?.label ?? id, type: byId.get(id)?.type ?? "Record", mark }));
+  };
+  const [dependents, dependencies] = await Promise.all([run("reverse"), run("forward")]);
+  return { changed: anchors.join(","), dependents, dependencies };
 }
 
 // ---- Question routing ------------------------------------------------------------------------------------------------------------------

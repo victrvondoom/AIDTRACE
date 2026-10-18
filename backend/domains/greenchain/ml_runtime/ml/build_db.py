@@ -24,9 +24,13 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from ml.reference_data import (
-    EMBER_GRID_INTENSITY, ND_GAIN_RISK, GLEC_FACTORS,
-    PORT_COORDINATES, COUNTRY_DEFAULT_PORT, USEEIO_FACTORS,
-    get_port_distance
+    COUNTRY_DEFAULT_PORT,
+    EMBER_GRID_INTENSITY,
+    GLEC_FACTORS,
+    ND_GAIN_RISK,
+    PORT_COORDINATES,
+    USEEIO_FACTORS,
+    get_port_distance,
 )
 
 DB_PATH = "db/greenchain.db"

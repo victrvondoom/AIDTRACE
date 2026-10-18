@@ -42,7 +42,9 @@ rng           = np.random.default_rng(SEED)
 sys.path.insert(0, _PROJECT_ROOT)
 from ml.load_real_data import resolve_data_dir  # noqa: E402  (needs the sys.path entry above)
 from ml.reference_data import (  # noqa: E402
-    EMBER_GRID_INTENSITY, USEEIO_FACTORS, NAICS_DETAIL,
+    EMBER_GRID_INTENSITY,
+    NAICS_DETAIL,
+    USEEIO_FACTORS,
 )
 
 # find_real_data.py downloads into the same new_data2/ folder the app loads from.

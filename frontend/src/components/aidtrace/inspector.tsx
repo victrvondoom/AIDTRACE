@@ -1,180 +1,277 @@
 "use client";
 
-// Right-hand contextual inspector. It shows only what the current selection (supplier, graph node, evidence, memory, decision or action) has in
-// the graph, one tab at a time, in collapsed cards.
+// Right-hand contextual inspector: three sections (Risk, Evidence, Decision), one open at a time. Every label is derived from backend data; when nothing is
+// selected it says so instead of filling the panel with explanation.
 import { Fragment, useMemo, useState } from "react";
 import { Button, StatusBadge } from "@/components/ui";
-import { chainOf, isUnsafe, type LineageNode } from "@/lib/aidtrace-lineage";
-import { memoryGreenchainReport } from "@/lib/lab-api";
-import { propagate, type AidtraceData, type Propagation, type Selection } from "./data";
-import { toneOf } from "./views";
+import { chainOf, decisionState, isUnsafe, type LineageNode } from "@/lib/aidtrace-lineage";
+import { memoryApprove, memoryGreenchainReport } from "@/lib/lab-api";
+import type { AidtraceData, Selection } from "./data";
+import type { EvidenceResult, InvestigationResult } from "./automation";
+import { latestScenarioId } from "./automation";
 
-export const INSPECTOR_TABS = ["Overview", "Evidence", "Lineage", "Cyber Risk", "Memory", "Decisions", "Reports"] as const;
-export type InspectorTab = (typeof INSPECTOR_TABS)[number];
-
+export type Section = "risk" | "evidence" | "decision";
 const plain = (name: string) => name.replace("Illustrative ", "");
 const when = (iso: string | undefined) => (iso ? iso.slice(0, 16).replace("T", " ") : "—");
 const message = (e: unknown) => (e instanceof Error ? e.message : "The request failed.");
 
-function Card({ title, badge, children, open }: { title: string; badge?: React.ReactNode; children: React.ReactNode; open?: boolean }) {
+function Fold({ title, count, children, open }: { title: string; count?: number; children: React.ReactNode; open?: boolean }) {
   return (
-    <details open={open} className="border border-line bg-surface">
-      <summary className="flex cursor-pointer items-center justify-between gap-2 p-3 text-caption font-medium text-ink">{title}{badge}</summary>
-      <div className="border-t border-line p-3 text-caption">{children}</div>
+    <details open={open} className="border-t border-line first:border-t-0">
+      <summary className="flex cursor-pointer items-center justify-between py-1.5 text-micro font-medium uppercase tracking-wide text-muted">{title}{count !== undefined && <span>{count}</span>}</summary>
+      <div className="pb-2 text-caption">{children}</div>
     </details>
   );
 }
-const Hint = ({ children }: { children: React.ReactNode }) => <p className="p-3 text-caption leading-relaxed text-muted">{children}</p>;
 
-interface Props { data: AidtraceData; selection: Selection; onSelect: (s: Selection) => void; tab: InspectorTab; onTab: (t: InspectorTab) => void }
+function Panel({ id, title, open, onOpen, summary, children }: { id: Section; title: string; open: boolean; onOpen: (s: Section) => void; summary?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section aria-label={title} className="border-b border-line">
+      <h2>
+        <button type="button" aria-expanded={open} onClick={() => onOpen(id)} className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-body font-semibold text-ink hover:bg-surface-2">
+          <span>{title}</span><span className="flex items-center gap-2 text-micro font-normal text-muted">{summary}<span aria-hidden="true">{open ? "−" : "+"}</span></span>
+        </button>
+      </h2>
+      {open && <div className="space-y-2 px-3 pb-3 text-caption">{children}</div>}
+    </section>
+  );
+}
 
-export function Inspector({ data, selection, onSelect, tab, onTab }: Props) {
-  const { scenario, demo, snap, lineage } = data;
+interface Props {
+  data: AidtraceData; selection: Selection; onSelect: (s: Selection) => void;
+  open: Section; onOpen: (s: Section) => void;
+  investigation: InvestigationResult | null; evidence: EvidenceResult | null;
+  onInvestigate: () => void; busy: boolean;
+}
+
+export function Inspector({ data, selection, onSelect, open, onOpen, investigation, evidence, onInvestigate, busy }: Props) {
+  const { scenario, snap, lineage, site, demo } = data;
   const supplier = selection?.kind === "supplier" ? scenario?.manufacturers.find((m) => m.id === selection.id) : undefined;
-  const graphNode = useMemo(() => {
-    if (!demo || !selection) return undefined;
-    if (selection.kind === "node") return demo.graph.nodes.find((n) => n.id === selection.id);
-    if (supplier) return demo.graph.nodes.find((n) => n.type === "Supplier" && n.label === supplier.name);
-    return undefined;
-  }, [demo, selection, supplier]);
   const lineageNode: LineageNode | undefined = selection ? lineage?.nodes.find((n) => n.id === selection.id) : undefined;
+  const allNodes = site?.graph.nodes ?? demo?.graph.nodes ?? [];
+  const allEdges = site?.graph.edges ?? demo?.graph.edges ?? [];
+  const graphNode = selection?.kind === "node" ? allNodes.find((n) => n.id === selection.id) : undefined;
+  const nodeMap = useMemo(() => new Map(allNodes.map((n) => [n.id, n])), [allNodes]);
+  const outgoingEdges = useMemo(() => (graphNode ? allEdges.filter((e) => e.source === graphNode.id) : []), [graphNode, allEdges]);
+  const incomingEdges = useMemo(() => (graphNode ? allEdges.filter((e) => e.target === graphNode.id) : []), [graphNode, allEdges]);
+
   const chain = lineage && lineageNode ? chainOf(lineage, lineageNode.id) : null;
   const byId = useMemo(() => new Map((lineage?.nodes ?? []).map((n) => [n.id, n])), [lineage]);
   const needle = supplier ? plain(supplier.name).toLowerCase() : null;
-  const relatedMemories = (snap?.memories ?? []).filter((m) => (lineageNode?.kind === "memory" ? m.id === lineageNode.id : needle ? m.summary.toLowerCase().includes(needle) : false));
+  const memories = (snap?.memories ?? []).filter((m) => (lineageNode?.kind === "memory" ? m.id === lineageNode.id : needle ? m.summary.toLowerCase().includes(needle) : false));
+  const mine = investigation && supplier && investigation.supplierId === supplier.id ? investigation : null;
 
-  const [prop, setProp] = useState<Propagation | null>(null);
-  const [propBusy, setPropBusy] = useState(false);
-  const [propFailure, setPropFailure] = useState<{ id: string; message: string } | null>(null);
+  const decisions = snap?.decisions ?? [];
+  const latest = snap ? latestScenarioId(snap.decisions) : null;
+  const current = decisions.filter((d) => latest && d.id.startsWith(`gc:${latest}:`));
+  const earlier = decisions.filter((d) => !current.includes(d));
+  const actionFor = (id: string) => snap?.actions.find((a) => a.eligibility.decision_id === id);
+  const staleCount = decisions.filter((d) => isUnsafe(d.status)).length;
+  const reviewCount = current.filter((d) => { const s = decisionState(d, actionFor(d.id)); return s.label === "Needs review" || s.label === "Re-evaluated"; }).length;
+
+  // Short, data-derived headline labels.
+  const chips: { text: string; tone: "danger" | "caution" | "verified" }[] = [];
+  if (graphNode) {
+    chips.push({ text: `FalkorDB · ${graphNode.type}`, tone: "verified" });
+    const st = String(graphNode.props?.status ?? graphNode.props?.verification_status ?? "");
+    if (st) chips.push({ text: st, tone: isUnsafe(st) ? "danger" : "verified" });
+  }
+  if (evidence && !evidence.alreadyApplied) chips.push({ text: "Evidence changed.", tone: "caution" });
+  if (staleCount) chips.push({ text: `${staleCount} decision${staleCount === 1 ? "" : "s"} affected.`, tone: "danger" });
+  if (memories.some((m) => isUnsafe(m.status)) || (!selection && snap?.memories.some((m) => isUnsafe(m.status)))) chips.push({ text: "Memory stale.", tone: "danger" });
+  if (evidence?.recommendationChanged && evidence.topAfter) chips.push({ text: `Alternative available: ${plain(evidence.topAfter)}.`, tone: "verified" });
+  if (reviewCount) chips.push({ text: "Review required.", tone: "caution" });
+
+  const [note, setNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [working, setWorking] = useState<string | null>(null);
   const [report, setReport] = useState<string | null>(null);
-  const [reportError, setReportError] = useState<string | null>(null);
-  const graphNodeId = graphNode?.id;
-  // Results belong to the node they were traced for; selecting another node simply stops showing them.
-  const shownProp = prop?.changed === graphNodeId ? prop : null;
-  const propError = propFailure && propFailure.id === graphNodeId ? propFailure.message : null;
 
-  async function trace() {
-    if (!demo || !graphNode) return;
-    setPropBusy(true); setPropFailure(null);
-    try { setProp(await propagate(demo.graph, graphNode.id)); } catch (e) { setPropFailure({ id: graphNode.id, message: message(e) }); } finally { setPropBusy(false); }
+  async function approve(actionId: string) {
+    setWorking(actionId); setError(null); setNote(null);
+    try {
+      const r = await memoryApprove(actionId, "Approved in the AIDTRACE workspace");
+      setNote(`Approved by ${r.reviewer} against graph revision ${r.graph_revision.slice(0, 12)}.`);
+      await data.refreshMemory();
+    } catch (e) { setError(message(e)); } finally { setWorking(null); }
   }
-  const scenarioId = useMemo(() => {
-    const ids = (snap?.decisions ?? []).map((d) => /^gc:([^:]+):/.exec(d.id)?.[1]).filter((x): x is string => Boolean(x));
-    return ids[ids.length - 1] ?? null;
-  }, [snap]);
   async function makeReport() {
-    if (!scenarioId) return;
-    setReportError(null);
-    try { setReport((await memoryGreenchainReport(scenarioId)).markdown); } catch (e) { setReportError(message(e)); }
+    if (!latest) return;
+    setError(null);
+    try { setReport((await memoryGreenchainReport(latest)).markdown); } catch (e) { setError(message(e)); }
   }
-
   const link = (id: string) => {
     const n = byId.get(id);
     return n ? <button type="button" key={id} onClick={() => onSelect({ kind: n.kind, id: n.id, label: n.label })} className="block w-full truncate text-left underline-offset-2 hover:underline">{n.kind} · {n.label} <span className={isUnsafe(n.status) ? "text-danger" : "text-muted"}>({n.status.toLowerCase()})</span></button> : null;
   };
 
-  let body: React.ReactNode;
-  if (tab === "Overview") {
-    body = supplier ? (
-      <div className="space-y-2">
-        <Card open title={plain(supplier.name)} badge={supplier.isCurrent ? <StatusBadge tone="neutral">incumbent</StatusBadge> : undefined}>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-            <dt className="text-muted">Country</dt><dd>{supplier.location.country} ({supplier.location.countryCode})</dd>
-            <dt className="text-muted">Eco score</dt><dd>{supplier.ecoScore.toFixed(0)} <span className="text-muted">(lower is better)</span></dd>
-            <dt className="text-muted">Manufacturing</dt><dd className="font-mono text-micro">{supplier.manufacturingEmissionsTco2e.q10.toFixed(0)} – {supplier.manufacturingEmissionsTco2e.q50.toFixed(0)} – {supplier.manufacturingEmissionsTco2e.q90.toFixed(0)} tCO2e</dd>
-            <dt className="text-muted">Transport</dt><dd>{supplier.transportEmissionsTco2e.toFixed(2)} tCO2e</dd>
-            <dt className="text-muted">Certifications</dt><dd>{supplier.certifications.join(", ") || "none"} <span className="text-muted">(claimed, unverified)</span></dd>
-          </dl>
-        </Card>
-        <p className="text-micro text-muted">Illustrative candidate. Position is country-level.</p>
-      </div>
-    ) : graphNode ? (
-      <Card open title={graphNode.label} badge={<StatusBadge tone="neutral">{graphNode.type}</StatusBadge>}>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">{Object.entries(graphNode.props).slice(0, 10).map(([k, v]) => <Fragment key={k}><dt className="text-muted">{k}</dt><dd className="break-words">{String(v)}</dd></Fragment>)}</dl>
-      </Card>
-    ) : lineageNode ? (
-      <Card open title={lineageNode.label} badge={<StatusBadge tone={toneOf(lineageNode.status)}>{lineageNode.status.toLowerCase()}</StatusBadge>}>
-        <p className="text-muted">{lineageNode.kind} · {lineageNode.detail}</p>
-        <p className="mt-2 text-micro text-muted">{chain ? `${chain.upstream.size} record(s) upstream · ${chain.downstream.size} downstream` : ""}</p>
-      </Card>
-    ) : (
-      <Hint>Select a supplier on the globe, a node in the graph, or a record in the lineage. This panel then shows what the graph holds about it.
-        {snap && <> {snap.memories.length} memor{snap.memories.length === 1 ? "y" : "ies"}, {snap.decisions.length} decision(s), {snap.decisions.filter((d) => isUnsafe(d.status)).length} stale.</>}</Hint>
-    );
-  } else if (tab === "Evidence") {
-    const sources = chain ? [...chain.upstream, ...(lineageNode?.kind === "source" ? [lineageNode.id] : [])].map((id) => byId.get(id)).filter((n): n is LineageNode => n?.kind === "source")
-      : relatedMemories.flatMap((m) => m.sources.map((s) => byId.get(s.id))).filter((n): n is LineageNode => Boolean(n));
-    const origins = new Set(sources.map((s) => s.origin ?? s.id));
-    body = !selection ? <Hint>Select something to see the evidence it rests on.</Hint> : sources.length ? (
-      <div className="space-y-2">
-        <p className="text-micro text-muted"><strong className="text-ink">{sources.length} source{sources.length === 1 ? "" : "s"} → {origins.size} origin{origins.size === 1 ? "" : "s"}.</strong> Copies with an identical content hash count once; sources without a hash are assumed distinct.</p>
-        {sources.map((s) => <Card key={s.id} title={s.label} badge={<StatusBadge tone={toneOf(s.status)}>{s.status.toLowerCase()}</StatusBadge>}><p className="text-muted">{s.detail}</p><p className="mt-1 break-all font-mono text-micro text-muted">{s.origin ? `content ${s.origin.slice(0, 16)}…` : "no content hash recorded"}</p></Card>)}
-      </div>
-    ) : <Hint>No sources are linked to this selection in the graph. A supplier has evidence only after its decision is recorded to memory.</Hint>;
-  } else if (tab === "Lineage") {
-    body = !lineageNode ? <Hint>Pick a source, claim, memory, decision or action in the Lineage view to inspect its chain.{supplier && relatedMemories.length > 0 ? " This supplier appears in agent memory; open one below." : ""}{relatedMemories.map((m) => <button key={m.id} type="button" className="mt-2 block text-left underline" onClick={() => onSelect({ kind: "memory", id: m.id, label: m.summary })}>{m.summary}</button>)}</Hint> : (
-      <div className="space-y-2">
-        <Card open title={`Rests on (${chain!.upstream.size})`}><div className="space-y-1">{[...chain!.upstream].map(link)}{chain!.upstream.size === 0 && <span className="text-muted">Nothing: this is an origin.</span>}</div></Card>
-        <Card open title={`Supports (${chain!.downstream.size})`}><div className="space-y-1">{[...chain!.downstream].map(link)}{chain!.downstream.size === 0 && <span className="text-muted">Nothing depends on this.</span>}</div></Card>
-        {[...chain!.downstream].some((id) => { const n = byId.get(id); return n && (n.kind === "action" || n.kind === "decision") && isUnsafe(n.status); }) && <p role="status" className="border-l-2 border-danger bg-surface p-2 text-micro text-danger">A dependent decision or action is stale or blocked.</p>}
-      </div>
-    );
-  } else if (tab === "Cyber Risk") {
-    body = !graphNode ? <Hint>Select a supplier or a graph node to trace what depends on it.</Hint> : (
-      <div className="space-y-2">
-        <p className="text-micro leading-relaxed text-muted">Traces dependency reach through the supplier graph. It is a model of exposure: no live security feed is connected, so it does not show an observed compromise.</p>
-        <Button variant="primary" disabled={propBusy} onClick={() => void trace()}>{propBusy ? "Tracing…" : `Trace ${plain(graphNode.label)}`}</Button>
-        {propError && <p role="alert" className="text-danger">{propError}</p>}
-        {shownProp && <>
-          <Card open title={`Depend on this (${shownProp.dependents.length})`}>{shownProp.dependents.length ? <ul className="space-y-0.5">{shownProp.dependents.map((x) => <li key={x.id}>{x.label} <span className="text-muted">{x.type} · {x.mark}</span></li>)}</ul> : <span className="text-muted">Nothing depends on it.</span>}</Card>
-          <Card open title={`This depends on (${shownProp.dependencies.length})`}>{shownProp.dependencies.length ? <ul className="space-y-0.5">{shownProp.dependencies.map((x) => <li key={x.id}>{x.label} <span className="text-muted">{x.type} · {x.mark}</span></li>)}</ul> : <span className="text-muted">No upstream dependencies.</span>}</Card>
-        </>}
-      </div>
-    );
-  } else if (tab === "Memory") {
-    body = !relatedMemories.length ? <Hint>{selection ? "No agent memory mentions this selection." : "Select a supplier or a memory."} Memories come from the FalkorDB agent-memory graph.</Hint> : (
-      <div className="space-y-2">{relatedMemories.map((m) => (
-        <Card key={m.id} open title={m.summary} badge={<StatusBadge tone={toneOf(m.status)}>{m.status.toLowerCase()}</StatusBadge>}>
-          <p className="text-muted">{m.agent_id} · recorded {when(m.recorded_at)} · verified {when(m.last_verified_at)}</p>
-          <p className="mt-1 text-muted">{m.independent_sources} independent source(s) · {m.verification_status.toLowerCase()} · {m.verification_status === "UNKNOWN" ? "unrated" : `confidence ${m.confidence.toFixed(2)}`}</p>
-          {m.blocked_reason && <p className="mt-1 text-danger">Blocked: {m.blocked_reason}</p>}
-          <ul className="mt-2 space-y-0.5 font-mono text-micro text-muted">{m.claims.map((c) => <li key={c.id}>{c.fact_key} = {String(c.fact_value)} [{c.status.toLowerCase()}]</li>)}</ul>
-        </Card>))}</div>
-    );
-  } else if (tab === "Decisions") {
-    body = !snap?.decisions.length ? <Hint>No decisions are recorded yet. Record one from the Workflow view.</Hint> : (
-      <div className="space-y-2">{snap.decisions.map((d) => {
-        const action = snap.actions.find((a) => a.eligibility.decision_id === d.id);
-        return (
-          <Card key={d.id} open={selection?.id === d.id} title={d.summary} badge={<StatusBadge tone={toneOf(d.status)}>{d.status.toLowerCase()}</StatusBadge>}>
-            <p className="text-muted">Revision {d.revision_n} · rests on {d.dependency_ids.length} record(s)</p>
-            {action && <p className={`mt-1 ${action.eligibility.eligible ? "" : "text-danger"}`}>{action.summary}: {action.eligibility.eligible ? "may be approved" : `blocked — ${action.eligibility.reasons[0] ?? "not eligible"}`}</p>}
-            <Button className="mt-2" variant="ghost" onClick={() => onSelect({ kind: "decision", id: d.id, label: d.summary })}>Show in lineage</Button>
-          </Card>);
-      })}</div>
-    );
-  } else {
-    body = (
-      <div className="space-y-2">
-        <p className="text-micro leading-relaxed text-muted">A procurement memo written only from what is in the graph: decisions, revisions and approvals.</p>
-        <Button variant="primary" disabled={!scenarioId} onClick={() => void makeReport()}>Generate memo</Button>
-        {!scenarioId && <p className="text-micro text-muted">Record a decision first.</p>}
-        {reportError && <p role="alert" className="text-danger">{reportError}</p>}
-        {report && <pre className="max-h-[50vh] overflow-auto whitespace-pre-wrap border border-line bg-surface p-3 text-micro leading-relaxed">{report}</pre>}
-      </div>
-    );
-  }
-
   return (
-    <div className="flex size-full min-h-0 flex-col">
-      <div role="tablist" aria-label="Inspector" className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-line py-2 pl-2 pr-9">
-        {INSPECTOR_TABS.map((t) => (
-          <button key={t} role="tab" type="button" aria-selected={tab === t} onClick={() => onTab(t)}
-            className={`shrink-0 border-b-2 px-2 py-2 text-caption ${tab === t ? "border-accent font-semibold text-ink" : "border-transparent text-muted hover:text-ink"}`}>{t}</button>
-        ))}
+    <div className="flex size-full min-h-0 flex-col" data-testid="aidtrace-inspector">
+      <div className="border-b border-line px-3 py-2.5 pr-10">
+        <p className="truncate text-body font-semibold text-ink" title={selection?.label}>{selection ? plain(selection.label) : "Nothing selected"}</p>
+        {!selection && <p className="mt-0.5 text-micro text-muted">Select a supplier or connection to inspect its evidence and impact.</p>}
+        {chips.length > 0 && <ul className="mt-1.5 flex flex-wrap gap-1.5" aria-label="Status">{chips.map((c) => <li key={c.text}><StatusBadge tone={c.tone}>{c.text}</StatusBadge></li>)}</ul>}
       </div>
-      {selection && <p className="truncate border-b border-line px-3 py-1.5 text-micro text-muted" title={selection.label}>{selection.kind}: {plain(selection.label)}</p>}
-      <div role="tabpanel" className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3">{body}</div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <Panel id="risk" title="Risk" open={open === "risk"} onOpen={onOpen} summary={mine ? `${mine.dependents.length} dependants` : graphNode ? `${graphNode.type}` : undefined}>
+          {supplier ? (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+              <dt className="text-muted">Country</dt><dd>{supplier.location.country}{supplier.isCurrent ? " · incumbent" : ""}</dd>
+              <dt className="text-muted">Eco score</dt><dd>{supplier.ecoScore.toFixed(0)} <span className="text-muted">lower is better</span></dd>
+              <dt className="text-muted">Manufacturing</dt><dd className="font-mono text-micro">{supplier.manufacturingEmissionsTco2e.q10.toFixed(0)}–{supplier.manufacturingEmissionsTco2e.q50.toFixed(0)}–{supplier.manufacturingEmissionsTco2e.q90.toFixed(0)} tCO2e</dd>
+              <dt className="text-muted">Certifications</dt><dd>{supplier.certifications.join(", ") || "none"} <span className="text-muted">claimed</span></dd>
+            </dl>
+          ) : lineageNode ? (
+            <p className="text-muted">{lineageNode.kind} · {lineageNode.detail}</p>
+          ) : graphNode ? (
+            <div className="space-y-2">
+              <div className="rounded border border-line bg-surface p-2">
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="font-mono text-[10px] text-muted truncate max-w-[170px]" title={graphNode.id}>{graphNode.id}</span>
+                  <StatusBadge tone="info">{graphNode.type}</StatusBadge>
+                </div>
+                <p className="font-medium text-ink text-caption">{graphNode.label}</p>
+              </div>
+              <Fold open title="FalkorDB Node Attributes">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-micro">
+                  {Object.entries(graphNode.props ?? {}).map(([k, v]) => (
+                    <Fragment key={k}>
+                      <dt className="font-mono text-muted">{k}</dt>
+                      <dd className="font-mono text-ink truncate" title={String(v)}>{String(v)}</dd>
+                    </Fragment>
+                  ))}
+                  {!Object.keys(graphNode.props ?? {}).length && (
+                    <p className="text-muted">No additional attributes.</p>
+                  )}
+                </dl>
+              </Fold>
+            </div>
+          ) : null}
+          {mine ? (
+            <>
+              <ul className="list-disc space-y-0.5 pl-4">{mine.findings.map((f) => <li key={f}>{f}</li>)}</ul>
+              <Fold title="Connected records" count={mine.dependents.length + mine.dependencies.length}>
+                <p className="mb-1 text-micro text-muted">Traversed over the {mine.traversal}.</p>
+                {mine.dependents.length > 0 && <><p className="font-medium">Depend on it</p><ul className="mb-1 space-y-0.5">{mine.dependents.slice(0, 12).map((x) => <li key={x.id}>{x.label} <span className="text-muted">{x.type}</span></li>)}</ul></>}
+                {mine.dependencies.length > 0 && <><p className="font-medium">It depends on</p><ul className="space-y-0.5">{mine.dependencies.slice(0, 12).map((x) => <li key={x.id}>{x.label} <span className="text-muted">{x.type}</span></li>)}</ul></>}
+              </Fold>
+              {mine.alternative && <Fold title="Alternative"><p>{plain(mine.alternative.name)} — eco score {mine.alternative.ecoScore.toFixed(0)}.{mine.whatIf && <> Without {plain(mine.supplierName)}, the top choice {mine.whatIf.recommendation_changes ? `becomes ${plain(mine.whatIf.top_after ?? "another supplier")}` : `stays ${plain(mine.whatIf.top_after ?? "unchanged")}`}.</>}</p></Fold>}
+              <Fold title="Uncertainty" count={mine.uncertainty.length}><ul className="list-disc space-y-0.5 pl-4 text-muted">{mine.uncertainty.map((u) => <li key={u}>{u}</li>)}</ul></Fold>
+            </>
+          ) : supplier ? (
+            <Button variant="primary" disabled={busy} onClick={onInvestigate}>Investigate {plain(supplier.name)}</Button>
+          ) : !lineageNode && !graphNode ? <p className="text-muted">No investigation yet.</p> : null}
+        </Panel>
+
+        <Panel id="evidence" title="Evidence" open={open === "evidence"} onOpen={onOpen} summary={lineage ? `${lineage.sourceCount} sources` : undefined}>
+          {chain ? (
+            <>
+              <Fold open title="Rests on" count={chain.upstream.size}><div className="space-y-0.5">{[...chain.upstream].map(link)}{chain.upstream.size === 0 && <span className="text-muted">Nothing: this is an origin.</span>}</div></Fold>
+              <Fold open title="Supports" count={chain.downstream.size}><div className="space-y-0.5">{[...chain.downstream].map(link)}{chain.downstream.size === 0 && <span className="text-muted">Nothing depends on this.</span>}</div></Fold>
+            </>
+          ) : graphNode ? (
+            <div className="space-y-2">
+              <Fold open title="FalkorDB OpenCypher">
+                <div className="rounded border border-line bg-surface p-2">
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-medium mb-1">Generated Query</p>
+                  <pre className="font-mono text-[11px] text-accent overflow-x-auto whitespace-pre-wrap leading-tight bg-canvas p-1.5 rounded">
+{`MATCH (n:${graphNode.type} {id: "${graphNode.id}"})-[r]-(target)\nRETURN n, type(r), target`}
+                  </pre>
+                </div>
+              </Fold>
+              <Fold open title="Connected GraphBLAS Links" count={incomingEdges.length + outgoingEdges.length}>
+                {outgoingEdges.length > 0 && (
+                  <div className="mb-2">
+                    <p className="text-micro font-medium text-muted uppercase tracking-wider mb-1">Outgoing ({outgoingEdges.length})</p>
+                    <ul className="space-y-1">
+                      {outgoingEdges.map((e, idx) => {
+                        const target = nodeMap.get(e.target);
+                        return (
+                          <li key={idx}>
+                            <button
+                              type="button"
+                              onClick={() => onSelect({ kind: "node", id: e.target, label: target?.label ?? e.target })}
+                              className="flex w-full items-center justify-between gap-1 text-left rounded p-1 hover:bg-surface-2 transition-colors border border-line/60"
+                            >
+                              <span className="font-mono text-[10px] text-accent">-[{e.rel}]-&gt;</span>
+                              <span className="truncate text-micro text-ink font-medium">{target?.label ?? e.target}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+                {incomingEdges.length > 0 && (
+                  <div>
+                    <p className="text-micro font-medium text-muted uppercase tracking-wider mb-1">Incoming ({incomingEdges.length})</p>
+                    <ul className="space-y-1">
+                      {incomingEdges.map((e, idx) => {
+                        const src = nodeMap.get(e.source);
+                        return (
+                          <li key={idx}>
+                            <button
+                              type="button"
+                              onClick={() => onSelect({ kind: "node", id: e.source, label: src?.label ?? e.source })}
+                              className="flex w-full items-center justify-between gap-1 text-left rounded p-1 hover:bg-surface-2 transition-colors border border-line/60"
+                            >
+                              <span className="truncate text-micro text-ink font-medium">{src?.label ?? e.source}</span>
+                              <span className="font-mono text-[10px] text-muted">&lt;-[{e.rel}]-</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+                {!incomingEdges.length && !outgoingEdges.length && (
+                  <p className="text-muted text-micro">No connected edges on this node.</p>
+                )}
+              </Fold>
+            </div>
+          ) : memories.length ? null : <p className="text-muted">{selection ? "No evidence is linked to this selection in the graph yet." : "Evidence appears here for the selected supplier or record."}</p>}
+          {memories.map((m) => (
+            <Fold key={m.id} open title={`Memory · ${m.status.toLowerCase()}`}>
+              <p>{m.summary}</p>
+              <p className="mt-0.5 text-micro text-muted">{m.agent_id} · recorded {when(m.recorded_at)} · {m.independent_sources} independent · {m.verification_status === "UNKNOWN" ? "unrated" : `${m.verification_status.toLowerCase()}, confidence ${m.confidence.toFixed(2)}`}</p>
+              {m.blocked_reason && <p className="mt-0.5 text-danger">Blocked: {m.blocked_reason}</p>}
+              <ul className="mt-1 space-y-0.5">{m.sources.map((s) => { const n = byId.get(s.id); return <li key={s.id} className="text-micro text-muted">{n?.trust ?? "Unverified"} · {n?.label ?? s.id}</li>; })}</ul>
+            </Fold>
+          ))}
+        </Panel>
+
+        <Panel id="decision" title="Decision" open={open === "decision"} onOpen={onOpen} summary={reviewCount ? `${reviewCount} to review` : staleCount ? `${staleCount} stale` : undefined}>
+          {!decisions.length && <p className="text-muted">No decision is recorded yet. Choose Investigate Risk.</p>}
+          {evidence && (
+            <p className="border-l-2 border-line pl-2">{evidence.alreadyApplied ? "This evidence update was already applied." : evidence.recommendationChanged ? `Re-evaluated: ${plain(evidence.topBefore ?? "")} → ${plain(evidence.topAfter ?? "")}.` : `Re-evaluated: still ${plain(evidence.topAfter ?? "")}.`} {evidence.invalidated.length > 0 && `${evidence.invalidated.length} record(s) invalidated.`}</p>
+          )}
+          {current.map((d) => {
+            const action = actionFor(d.id);
+            const st = decisionState(d, action);
+            return (
+              <div key={d.id} className="border border-line p-2">
+                <div className="flex items-start justify-between gap-2"><span className="font-medium">{d.summary}</span><StatusBadge tone={st.tone}>{st.label}</StatusBadge></div>
+                {st.reason && <p className="mt-0.5 text-micro text-muted">{st.reason}</p>}
+                {action && <p className="mt-1 text-micro">{action.summary}</p>}
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <Button variant="ghost" onClick={() => onSelect({ kind: "decision", id: d.id, label: d.summary })}>Trace evidence</Button>
+                  {action && <Button variant="primary" disabled={working !== null || !action.eligibility.eligible || action.eligibility.approval_current} onClick={() => void approve(action.id)} title={action.eligibility.eligible ? undefined : action.eligibility.reasons[0]}>{!action.eligibility.eligible ? "Approval blocked" : action.eligibility.approval_current ? "Approved" : "Approve"}</Button>}
+                </div>
+              </div>
+            );
+          })}
+          {earlier.length > 0 && (
+            <Fold title="Earlier decisions" count={earlier.length}>
+              <ul className="space-y-1">{earlier.map((d) => { const st = decisionState(d, actionFor(d.id)); return <li key={d.id} className="flex items-start justify-between gap-2"><button type="button" onClick={() => onSelect({ kind: "decision", id: d.id, label: d.summary })} className="text-left underline-offset-2 hover:underline">{d.summary}</button><StatusBadge tone={st.tone}>{st.label}</StatusBadge></li>; })}</ul>
+            </Fold>
+          )}
+          {error && <p role="alert" className="border-l-2 border-danger pl-2 text-danger">{error}</p>}
+          {note && <p role="status" className="border-l-2 border-line pl-2">{note}</p>}
+          {latest && <Fold title="Report"><Button variant="ghost" onClick={() => void makeReport()}>Generate memo</Button>{report && <pre className="mt-2 max-h-60 overflow-auto whitespace-pre-wrap border border-line bg-surface p-2 text-micro leading-relaxed">{report}</pre>}</Fold>}
+        </Panel>
+      </div>
+      {snap && <p className="truncate border-t border-line px-3 py-1.5 text-micro text-muted">FalkorDB · {snap.memories.length} memories · {decisions.length} decisions · {snap.approvals.length} approvals</p>}
     </div>
   );
 }

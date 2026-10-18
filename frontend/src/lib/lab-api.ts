@@ -58,7 +58,37 @@ export const getLabAlgorithms = () => live<{ algorithms: LabAlgorithm[] }>("/gra
 export const getLabScenarios = () => live<{ scenarios: LabScenario[] }>("/graphlab/scenarios");
 export const getLabScenario = (id: string) =>
   live<{ id: string; title: string; description: string; graph: LabGraph; recommended: LabPreset[] }>(`/graphlab/scenario?scenario_id=${encodeURIComponent(id)}`);
-export const getSiteGraph = () => live<{ graph: LabGraph; truncated: boolean; empty: boolean }>("/graphlab/site-graph");
+
+export interface FalkorDBInfo {
+  status: string;
+  graph_name: string;
+  engine: string;
+  host: string;
+  site_id: string;
+  node_count: number;
+  edge_count: number;
+  node_distribution?: { type: string; count: number }[];
+  relationship_distribution?: { relationship: string; count: number }[];
+}
+
+export interface CypherQueryResult {
+  graph_name: string;
+  query: string;
+  run_time_ms: number;
+  header: string[];
+  rows: unknown[][];
+  row_count: number;
+  engine: string;
+}
+
+export const getSiteGraph = () => live<{ graph: LabGraph; truncated: boolean; empty: boolean; falkordb?: FalkorDBInfo }>("/graphlab/site-graph");
+export function runSiteCypher(query: string, params?: Record<string, unknown>): Promise<CypherQueryResult> {
+  return call<CypherQueryResult>("/graphlab/site-cypher", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, params: params ?? {} }),
+  }, 10000);
+}
 export function analyzeLab(algorithm: string, source: LabSource, params: Record<string, unknown>, signal?: AbortSignal): Promise<LabAnalysis> {
   return call<LabAnalysis>("/graphlab/analyze", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ algorithm, params, ...source }),
@@ -72,7 +102,7 @@ export function getSourceRepos(filter: { family?: string; stage?: string; engine
   for (const [k, v] of Object.entries(filter)) if (v) q.set(k, v);
   return live<{ total: number; items: SourceRepo[] }>(`/sources/repos?${q}`);
 }
-// ---- ResolveAI consumer-remedy workspace (/resolveai/consumer/*), tenant-scoped on the server ----
+// ---- Resolve consumer-remedy workspace (/resolveai/consumer/*), tenant-scoped on the server with FALKOR DB ----
 export interface ConsumerCondition { id: string; text: string; status: string; reasons: string[]; paths: string[] }
 export interface ConsumerVerdict {
   strategy_id: string; title: string; remedy_title: string; domains: string[]; verdict: "VERIFIED" | "REJECTED" | "INSUFFICIENT_EVIDENCE";
@@ -144,7 +174,7 @@ export const fraudApprove = (id: string) => post<{ status: string; frozen_accoun
 export const fraudReject = (id: string) => post<{ status: string }>(`${F}/actions/reject?action_id=${encodeURIComponent(id)}`);
 export const fraudRing = (account_id: string) => call<{ members: { account_id: string; hops: number }[]; graph: LabGraph }>(`${F}/ring?account_id=${encodeURIComponent(account_id)}`);
 
-// ---- ResolveAI platform gateway (/resolveai/platform/*): the private RESOLVE-AI-main worker behind AIDTRACE ----
+// ---- Resolve platform gateway (/resolveai/platform/*): the private RESOLVE worker behind AIDTRACE with FALKOR DB ----
 export interface PlatformDomain { id: string; label: string; active: boolean }
 export interface PlatformRuntime { model_provider: string; model_provider_name: string | null; vector_backend: string | null; indexed_points: number | null; collections: number | null; graph_backend: string | null; case_store: string }
 export interface PlatformStatus { connected: boolean; domains?: PlatformDomain[]; runtime?: PlatformRuntime | null; status?: string; message?: string; setup?: string }

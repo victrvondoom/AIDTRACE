@@ -19,7 +19,7 @@ const HAS_DEMO_CREDENTIALS = Boolean(DEMO_EMAIL && DEMO_PASSWORD);
 
 function workspacePath(role?: string) {
   if (role === "demo") return roleHome("demo");
-  return role === "field_worker" ? "/briefs" : "/overview";
+  return role === "field_worker" ? "/briefs" : "/hub";
 }
 
 export default function LoginPage() {
@@ -62,7 +62,7 @@ export default function LoginPage() {
       void doLogin(DEMO_EMAIL, DEMO_PASSWORD);
     } else {
       setBusy(true);
-      router.push("/overview");
+      router.push("/hub");
     }
   }
 
@@ -88,13 +88,13 @@ export default function LoginPage() {
         >
           <div>
             <p className="inline-flex bg-accent px-2.5 py-1 text-label font-semibold uppercase tracking-[0.08em] text-on-accent">
-              Evidence-linked operations
+              Supply chain risk intelligence
             </p>
             <h2 className="display mt-5 max-w-lg text-display text-balance text-ink">
               Enter the workspace with the context your role needs.
             </h2>
             <p className="mt-5 max-w-md text-body leading-relaxed text-muted text-pretty">
-              Every answer carries its source document, its authority level and the date it was
+              Every finding carries its source, its independent support and the date it was
               last verified. Sign-in decides where you land and what you can open.
             </p>
           </div>
@@ -103,9 +103,9 @@ export default function LoginPage() {
               each role actually gets, which is also what `routeAllowed` enforces. */}
           <div className="mesh stagger mt-10">
             {[
-              { icon: "squares-four", title: "Supervisors", desc: "Plant overview: conflicts, quarantine backlog, overdue decisions." },
-              { icon: "scales", title: "Engineers", desc: "Evidence and governance: trace any claim back to its document." },
-              { icon: "waveform", title: "Field teams", desc: "Briefs and voice capture, sized for a phone at the asset." },
+              { icon: "squares-four", title: "Procurement leads", desc: "See which sourcing decisions no longer stand on current evidence." },
+              { icon: "scales", title: "Risk investigators", desc: "Trace any claim from a supplier to its source and the decisions that rest on it." },
+              { icon: "waveform", title: "Field teams", desc: "Voice notes and deviation flags, sized for a phone on site." },
             ].map((row) => (
               <div key={row.title} className="flex items-start gap-3 bg-surface px-4 py-3.5">
                 <Icon name={row.icon as "squares-four"} className="mt-0.5 size-[18px] shrink-0 text-accent" />
@@ -122,7 +122,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm">
             <Image src="/logo.png" alt="AIDTRACE" width={40} height={40} priority className="size-10 object-cover" />
             <h1 className="display mt-6 text-display text-ink sm:text-hero">Sign in to AIDTRACE</h1>
-            <p className="mt-2 text-body text-muted">The right knowledge, at the moment of action.</p>
+            <p className="mt-2 text-body text-muted">Know when a supplier decision is no longer safe.</p>
 
             <form onSubmit={signIn} className="mt-8 flex flex-col gap-4">
               <label className="flex flex-col gap-1.5">
@@ -134,7 +134,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="engineer@kairos.local"
+                  placeholder="you@company.com"
                   className="min-h-11 border border-line bg-canvas px-3.5 text-sm text-ink outline-none transition-colors placeholder:text-muted/60 hover:border-[color-mix(in_srgb,var(--accent)_40%,var(--line))] focus-visible:border-accent focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent"
                 />
               </label>

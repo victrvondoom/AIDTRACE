@@ -6,6 +6,7 @@ Provides shared clients as FastAPI dependencies (injected per-request or applica
 import asyncio
 import hashlib
 import hmac
+import threading
 import time
 import uuid
 from typing import Annotated
@@ -21,8 +22,8 @@ from supabase import Client, create_client
 from temporalio.client import Client as TemporalClient
 
 from api.config import Settings, get_settings
-from api.services.drift.store import FalkorDriftStore
 from api.services import tenant
+from api.services.drift.store import FalkorDriftStore
 
 log = structlog.get_logger(__name__)
 
@@ -62,19 +63,22 @@ Neo4jDep = Annotated[AsyncDriver, Depends(get_neo4j_driver)]
 # =============================================================================
 
 _falkor_drift_store: FalkorDriftStore | None = None
+_falkor_drift_lock = threading.Lock()
 
 
 def get_falkor_drift_store(settings: SettingsDep) -> FalkorDriftStore:
     """Lazily create the shared drift store; graph selection remains per token-derived site."""
     global _falkor_drift_store
     if _falkor_drift_store is None:
-        _falkor_drift_store = FalkorDriftStore(
-            settings.FALKORDB_URL,
-            graph_prefix=settings.FALKORDB_GRAPH_PREFIX,
-            query_timeout_ms=settings.FALKORDB_QUERY_TIMEOUT_MS,
-            max_depth=settings.DRIFT_MAX_DEPTH,
-            max_edges=settings.DRIFT_MAX_EDGES,
-        )
+        with _falkor_drift_lock:
+            if _falkor_drift_store is None:
+                _falkor_drift_store = FalkorDriftStore(
+                    settings.FALKORDB_URL,
+                    graph_prefix=settings.FALKORDB_GRAPH_PREFIX,
+                    query_timeout_ms=settings.FALKORDB_QUERY_TIMEOUT_MS,
+                    max_depth=settings.DRIFT_MAX_DEPTH,
+                    max_edges=settings.DRIFT_MAX_EDGES,
+                )
     return _falkor_drift_store
 
 
@@ -84,9 +88,10 @@ FalkorDriftDep = Annotated[FalkorDriftStore, Depends(get_falkor_drift_store)]
 def close_falkor_drift_store() -> None:
     """Release the shared FalkorDB connection pool at application shutdown."""
     global _falkor_drift_store
-    if _falkor_drift_store is not None:
-        _falkor_drift_store.close()
-        _falkor_drift_store = None
+    with _falkor_drift_lock:
+        if _falkor_drift_store is not None:
+            _falkor_drift_store.close()
+            _falkor_drift_store = None
 
 
 # =============================================================================
@@ -182,13 +187,10 @@ TemporalDep = Annotated[TemporalClient, Depends(get_temporal_client)]
 _supabase_client: Client | None = None
 
 
-def get_supabase(settings: SettingsDep) -> Client:
+def get_optional_supabase(settings: SettingsDep) -> Client | None:
     global _supabase_client
     if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Data service is not configured. Configure Supabase URL and service credentials.",
-        )
+        return None
     if _supabase_client is None:
         _supabase_client = create_client(
             settings.SUPABASE_URL,
@@ -197,7 +199,19 @@ def get_supabase(settings: SettingsDep) -> Client:
     return _supabase_client
 
 
+def get_supabase(settings: SettingsDep) -> Client:
+    client = get_optional_supabase(settings)
+    if client is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Data service is not configured. Configure Supabase URL and service credentials.",
+        )
+    return client
+
+
 SupabaseDep = Annotated[Client, Depends(get_supabase)]
+OptionalSupabaseDep = Annotated[Client | None, Depends(get_optional_supabase)]
+
 
 
 # =============================================================================
@@ -361,7 +375,7 @@ async def demo_write_fence(request: Request, settings: SettingsDep) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=tenant.DEMO_DENIED)
 
 
-async def showcase_read_fence(request: Request, settings: SettingsDep, supabase: SupabaseDep) -> None:
+async def showcase_read_fence(request: Request, settings: SettingsDep, supabase: OptionalSupabaseDep) -> None:
     """Answer 404 when a real account reads a showcase record by its id.
 
     The lists, counts and searches are scoped in their queries; this closes the same door for a request
@@ -369,6 +383,8 @@ async def showcase_read_fence(request: Request, settings: SettingsDep, supabase:
     and so is a request with no path parameter (nothing to look up).
     """
     if request.method not in ("GET", "HEAD") or not request.path_params:
+        return
+    if supabase is None:
         return
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):

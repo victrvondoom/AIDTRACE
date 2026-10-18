@@ -1,6 +1,6 @@
 "use client";
 
-// ResolveAI investigations, native to the AIDTRACE hub. Every number and sentence here comes from the private RESOLVE-AI-main
+// Resolve investigations, native to the AIDTRACE hub, powered by FALKOR DB. Every number and sentence here comes from the private RESOLVE
 // worker through /resolveai/platform/*. When the worker has no model provider, the UI says so on every surface that would
 // otherwise have shown generated text, and never renders the worker's offline placeholders as analysis.
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -65,7 +65,7 @@ export function ResolveAIWorkspace() {
         if (!live) return;
         setStatus(s);
         if (s.connected) await refresh();
-      } catch (e) { if (live) setError(e instanceof Error ? e.message : "The ResolveAI gateway is unavailable."); }
+      } catch (e) { if (live) setError(e instanceof Error ? e.message : "The Resolve gateway is unavailable."); }
     })();
     return () => { live = false; };
   }, [refresh]);
@@ -130,11 +130,11 @@ export function ResolveAIWorkspace() {
 
   const offlineRun = run ? isOfflineFallback(run.research_summary) : false;
   return (
-    <section className="space-y-4" aria-labelledby="resolveai-heading">
+    <section className="space-y-4" aria-labelledby="resolve-heading">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 id="resolveai-heading" className="text-title font-semibold">ResolveAI investigations</h2>
-          <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Open a case, retrieve and score the regulations and policy wording that bear on it, inspect the evidence and the agent steps, and export a report. Runs on the private ResolveAI worker through your AIDTRACE session.</p>
+          <h2 id="resolve-heading" className="text-title font-semibold">Resolve investigations (FALKOR DB)</h2>
+          <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Open a case, retrieve and score the regulations and policy wording that bear on it, inspect the evidence and the agent steps, and export a report. Powered by FALKOR DB and the private Resolve worker through your AIDTRACE session.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <StatusBadge tone={connected ? "verified" : status ? "danger" : "neutral"}>{status ? (connected ? "worker connected" : "worker not connected") : "checking"}</StatusBadge>
@@ -145,7 +145,7 @@ export function ResolveAIWorkspace() {
       {error && <p role="alert" className="border-l-2 border-danger bg-surface p-3 text-caption text-danger">{error}</p>}
       {status && !connected && (
         <div className="border-l-2 border-caution bg-surface p-4 text-caption">
-          <p className="font-medium">The private ResolveAI worker is not connected, so no investigations can run.</p>
+          <p className="font-medium">The private Resolve worker is not connected, so no investigations can run.</p>
           <p className="mt-1 text-muted">{status.message} {status.setup}</p>
         </div>
       )}
@@ -239,7 +239,7 @@ export function ResolveAIWorkspace() {
                       <ul className="list-disc space-y-1 pl-5 text-micro text-muted">{investigation.limitations.map((l) => <li key={l}>{l}</li>)}</ul>
                     </div>))}
 
-                  {tab === "agents" && (!run ? <p className="border border-line bg-surface p-4 text-caption text-muted">The full workflow runs ResolveAI&apos;s research, evidence, graph, strategy, negotiation, review and report agents. It needs a model provider to write anything.</p> : (
+                  {tab === "agents" && (!run ? <p className="border border-line bg-surface p-4 text-caption text-muted">The full workflow runs Resolve&apos;s research, evidence, FALKOR DB graph, strategy, negotiation, review and report agents. It needs a model provider to write anything.</p> : (
                     <div className="space-y-3 border border-line bg-surface p-4 text-caption">
                       {offlineRun && <p role="status" className="border-l-2 border-caution bg-surface-2 p-3"><strong>These agents had no model provider, so they produced placeholders, not analysis.</strong> The workflow itself executed ({run.agent_trace?.length ?? 0} recorded steps), but no strategy, review or drafts exist. Use the Evidence tab for the retrieved material.</p>}
                       <p className="text-micro text-muted">Status {run.status} · {run.llm_call_count ?? 0} model call(s) counted</p>

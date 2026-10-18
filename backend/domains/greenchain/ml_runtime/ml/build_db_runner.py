@@ -11,9 +11,13 @@ if _PROJECT_ROOT not in sys.path:
     sys.path.insert(0, _PROJECT_ROOT)
 
 from ml.reference_data import (  # noqa: E402  (needs the sys.path entry above)
-    EMBER_GRID_INTENSITY, ND_GAIN_RISK, GLEC_FACTORS,
-    PORT_COORDINATES, COUNTRY_DEFAULT_PORT, USEEIO_FACTORS,
-    get_port_distance
+    COUNTRY_DEFAULT_PORT,
+    EMBER_GRID_INTENSITY,
+    GLEC_FACTORS,
+    ND_GAIN_RISK,
+    PORT_COORDINATES,
+    USEEIO_FACTORS,
+    get_port_distance,
 )
 
 db_path = '/tmp/greenchain.db'

@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import time
-from typing import Literal, TypeVar
+from typing import Literal
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
@@ -16,6 +16,7 @@ from .db import (
     get_baseline_scenario_revision,
     get_scenario_revision,
 )
+
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -159,7 +160,7 @@ class SupplyScenarioStatsPayload(StrictModel):
 class SupplyScenarioPayload(StrictModel):
     components: list[SupplyScenarioComponentNodePayload]
     destination: SupplyScenarioDestinationPayload
-    graph: "SupplyScenarioGraphPayload"
+    graph: SupplyScenarioGraphPayload
     id: str
     manufacturers: list[SupplyScenarioManufacturerNodePayload]
     product: SupplyScenarioProductNodePayload
@@ -208,11 +209,6 @@ class ScenarioEditResponsePayload(StrictModel):
     message: str
     scenario: SupplyScenarioPayload | None = None
     status: Literal["applied", "rejected"]
-
-
-_K2ResponseT = TypeVar(
-    "_K2ResponseT", ScenarioEditIntentPayload, ScenarioEditNodeDecisionPayload
-)
 
 
 class ScenarioEditConfigError(RuntimeError):
@@ -720,16 +716,16 @@ def _extract_json_object_text(raw_content: str) -> str:
     raise ValueError("K2 Think response contained an unterminated JSON object.")
 
 
-async def _call_k2_json(
+async def _call_k2_json[T: (ScenarioEditIntentPayload, ScenarioEditNodeDecisionPayload)](
     *,
     client: httpx.AsyncClient,
     headers: dict[str, str],
     model: str,
     base_url: str,
     messages: list[dict[str, str]],
-    response_model: type[_K2ResponseT],
+    response_model: type[T],
     temperature: float = 0.1,
-) -> _K2ResponseT:
+) -> T:
     parse_error: str | None = None
     conversation = list(messages)
 

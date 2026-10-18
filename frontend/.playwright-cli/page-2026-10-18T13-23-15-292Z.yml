@@ -1,0 +1,302 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e20] [cursor=pointer]:
+      - /url: "#main"
+    - generic [ref=e21]:
+      - banner "AIDTRACE" [ref=e22]:
+        - link "AIDTRACE home" [ref=e23] [cursor=pointer]:
+          - /url: /
+          - img "AIDTRACE" [ref=e24]
+          - generic [ref=e25]: AIDTRACE
+        - generic [ref=e26]: Supply Chain Intelligence
+        - generic [ref=e27]:
+          - generic "cardboard packaging → US" [ref=e28]
+          - status [ref=e29]: Graph connected
+        - button "Search" [ref=e31] [cursor=pointer]:
+          - text: Search
+          - generic [ref=e32]: Ctrl K
+        - switch "Nightlight theme" [ref=e33] [cursor=pointer]
+        - button "Open user menu" [ref=e36] [cursor=pointer]: AI
+      - main [ref=e37]:
+        - generic [ref=e39]:
+          - complementary "Investigate" [ref=e40]:
+            - generic [ref=e41]:
+              - button "Collapse investigate panel" [ref=e42] [cursor=pointer]: ‹
+              - generic [ref=e43]:
+                - generic [ref=e44]:
+                  - generic [ref=e45]:
+                    - heading "AIDTRACE" [level=1] [ref=e46]
+                    - button "About" [ref=e47] [cursor=pointer]
+                  - paragraph [ref=e48]: Powered by FalkorDB
+                  - paragraph [ref=e49]:
+                    - generic [ref=e51]: FalkorDB Memory
+                    - generic [ref=e52]: · GraphBLAS OpenCypher
+                - generic [ref=e53]:
+                  - generic [ref=e54]: Ask about a supplier, risk, or decision
+                  - generic [ref=e55]:
+                    - textbox "Ask about a supplier, risk, or decision" [ref=e56]:
+                      - /placeholder: Ask about a supplier, risk, or decision…
+                    - button "Send question" [disabled]:
+                      - generic: Ask
+                - list "Primary actions" [ref=e57]:
+                  - listitem [ref=e58]:
+                    - button "1 · Investigate Risk CesiumJS 3D routes · cyber & ESG reach" [ref=e59] [cursor=pointer]:
+                      - generic [ref=e60]:
+                        - generic [ref=e61]: 1 · Investigate Risk
+                        - generic [ref=e62]: CesiumJS 3D routes · cyber & ESG reach
+                  - listitem [ref=e63]:
+                    - button "2 · Update Evidence Propagate grid/cyber drift into FalkorDB" [ref=e64] [cursor=pointer]:
+                      - generic [ref=e65]:
+                        - generic [ref=e66]: 2 · Update Evidence
+                        - generic [ref=e67]: Propagate grid/cyber drift into FalkorDB
+                  - listitem [ref=e68]:
+                    - button "3 · Review Decision Hold stale approval · review an alternative" [ref=e144] [cursor=pointer]:
+                      - generic [ref=e70]:
+                        - generic [ref=e71]: 3 · Review Decision
+                        - generic [ref=e72]: Hold stale approval · review an alternative
+                - generic [ref=e73]:
+                  - generic [ref=e74]: Evidence source
+                  - combobox "Evidence source" [ref=e75]:
+                    - option "Inspect a source…" [selected]
+                    - option "DEMO-DRIFT-SOP-V1"
+                    - option "DEMO-DRIFT-SOP-V2"
+                    - option "Ember electricity grid intensity"
+                    - option "Ember electricity grid intensity (Synthetic grid-intensity revision (demo))"
+                    - option "GLEC transport emission factors"
+                    - option "ND-GAIN climate vulnerability"
+                    - option "EPA USEEIO v1.3 supply-chain factors"
+                    - option "IRDAI Health Department FAQs and Guidelines"
+                    - option "Policy Wording"
+                    - option "IRDAI Policyholder Portal"
+                    - option "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance"
+                  - button "Extensions More tools" [ref=e76] [cursor=pointer]:
+                    - generic [ref=e77]: Extensions
+                    - generic [ref=e78]: More tools
+          - region "Intelligence workspace" [ref=e79]:
+            - tablist "Workspace view" [ref=e81]:
+              - tab "Globe" [ref=e82] [cursor=pointer]
+              - tab "Graph" [ref=e83] [cursor=pointer]
+              - tab "Lineage" [active] [selected] [ref=e84] [cursor=pointer]
+              - tab "Timeline" [ref=e85] [cursor=pointer]
+            - tabpanel "Lineage" [ref=e711]:
+              - generic [ref=e712]:
+                - generic [ref=e713]:
+                  - strong [ref=e715]: 11 sources → 11 origins
+                  - generic [ref=e716]: 35 records · 38 dependencies read from FalkorDB
+                  - generic [ref=e717]: 11 stale or blocked
+                  - generic [ref=e719]: 9 of 11 sources carry a content hash; the rest are unverified. Paraphrased copies are not detected (experimental).
+                - generic [ref=e721]:
+                  - paragraph [ref=e749]: Sources · 11
+                  - paragraph [ref=e750]: Claims · 11
+                  - paragraph [ref=e751]: Agent memory · 5
+                  - paragraph [ref=e752]: Decisions · 4
+                  - paragraph [ref=e753]: Actions · 4
+                  - button "DEMO-DRIFT-SOP-V1 superseded Superseded" [ref=e754] [cursor=pointer]:
+                    - generic [ref=e755]:
+                      - generic [ref=e756]: DEMO-DRIFT-SOP-V1
+                      - generic [ref=e757]: superseded
+                    - generic [ref=e758]: Superseded
+                  - button "DEMO-DRIFT-SOP-V2 active Unverified" [ref=e759] [cursor=pointer]:
+                    - generic [ref=e760]:
+                      - generic [ref=e761]: DEMO-DRIFT-SOP-V2
+                      - generic [ref=e762]: active
+                    - generic [ref=e763]: Unverified
+                  - button "Ember electricity grid intensity superseded Superseded" [ref=e764] [cursor=pointer]:
+                    - generic [ref=e765]:
+                      - generic [ref=e766]: Ember electricity grid intensity
+                      - generic [ref=e767]: superseded
+                    - generic [ref=e768]: Superseded
+                  - button "Ember electricity grid intensity (Synthetic grid-intensity revision (demo)) active Independent support" [ref=e769] [cursor=pointer]:
+                    - generic [ref=e770]:
+                      - generic [ref=e771]: Ember electricity grid intensity (Synthetic grid-intensity revision (demo))
+                      - generic [ref=e772]: active
+                    - generic [ref=e773]: Independent support
+                  - button "GLEC transport emission factors active Independent support" [ref=e774] [cursor=pointer]:
+                    - generic [ref=e775]:
+                      - generic [ref=e776]: GLEC transport emission factors
+                      - generic [ref=e777]: active
+                    - generic [ref=e778]: Independent support
+                  - button "ND-GAIN climate vulnerability active Independent support" [ref=e779] [cursor=pointer]:
+                    - generic [ref=e780]:
+                      - generic [ref=e781]: ND-GAIN climate vulnerability
+                      - generic [ref=e782]: active
+                    - generic [ref=e783]: Independent support
+                  - button "EPA USEEIO v1.3 supply-chain factors active Independent support" [ref=e784] [cursor=pointer]:
+                    - generic [ref=e785]:
+                      - generic [ref=e786]: EPA USEEIO v1.3 supply-chain factors
+                      - generic [ref=e787]: active
+                    - generic [ref=e788]: Independent support
+                  - button "IRDAI Health Department FAQs and Guidelines active Independent support" [ref=e789] [cursor=pointer]:
+                    - generic [ref=e790]:
+                      - generic [ref=e791]: IRDAI Health Department FAQs and Guidelines
+                      - generic [ref=e792]: active
+                    - generic [ref=e793]: Independent support
+                  - button "Policy Wording active Independent support" [ref=e794] [cursor=pointer]:
+                    - generic [ref=e795]:
+                      - generic [ref=e796]: Policy Wording
+                      - generic [ref=e797]: active
+                    - generic [ref=e798]: Independent support
+                  - button "IRDAI Policyholder Portal active Independent support" [ref=e799] [cursor=pointer]:
+                    - generic [ref=e800]:
+                      - generic [ref=e801]: IRDAI Policyholder Portal
+                      - generic [ref=e802]: active
+                    - generic [ref=e803]: Independent support
+                  - button "Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance active Independent support" [ref=e804] [cursor=pointer]:
+                    - generic [ref=e805]:
+                      - generic [ref=e806]: Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance
+                      - generic [ref=e807]: active
+                    - generic [ref=e808]: Independent support
+                  - button "inspection_interval_days = 180 superseded claim supporting a memory" [ref=e809] [cursor=pointer]:
+                    - generic [ref=e810]:
+                      - generic [ref=e811]: inspection_interval_days = 180
+                      - generic [ref=e812]: superseded
+                    - generic [ref=e813]: claim supporting a memory
+                  - button "Prior inspection interval recalled by a second specialist agent. stale DEMO-DRIFT-AGENT-INVESTIGATOR · 1 independent source(s) · unknown" [ref=e814] [cursor=pointer]:
+                    - generic [ref=e815]:
+                      - generic [ref=e816]: Prior inspection interval recalled by a second specialist agent.
+                      - generic [ref=e817]: stale
+                    - generic [ref=e818]: DEMO-DRIFT-AGENT-INVESTIGATOR · 1 independent source(s) · unknown
+                  - button "emissions_q50:sab0e0e:Illustrative Packaging B = 59.5 active claim supporting a memory" [ref=e819] [cursor=pointer]:
+                    - generic [ref=e820]:
+                      - generic [ref=e821]: emissions_q50:sab0e0e:Illustrative Packaging B = 59.5
+                      - generic [ref=e822]: active
+                    - generic [ref=e823]: claim supporting a memory
+                  - button "top_supplier:sab0e0e = Illustrative Packaging B active claim supporting a memory" [ref=e824] [cursor=pointer]:
+                    - generic [ref=e825]:
+                      - generic [ref=e826]: top_supplier:sab0e0e = Illustrative Packaging B
+                      - generic [ref=e827]: active
+                    - generic [ref=e828]: claim supporting a memory
+                  - button "After 'Synthetic grid-intensity revision (demo)' (EMBER, PT x50… valid agent:greenchain-scorer · 1 independent source(s) · verified" [ref=e829] [cursor=pointer]:
+                    - generic [ref=e830]:
+                      - generic [ref=e831]: After 'Synthetic grid-intensity revision (demo)' (EMBER, PT x50…
+                      - generic [ref=e832]: valid
+                    - generic [ref=e833]: agent:greenchain-scorer · 1 independent source(s) · verified
+                  - button "emissions_q50:sab0e0e:Illustrative Packaging D = 5 superseded claim supporting a memory" [ref=e834] [cursor=pointer]:
+                    - generic [ref=e835]:
+                      - generic [ref=e836]: emissions_q50:sab0e0e:Illustrative Packaging D = 5
+                      - generic [ref=e837]: superseded
+                    - generic [ref=e838]: claim supporting a memory
+                  - button "top_supplier:sab0e0e = Illustrative Packaging D superseded claim supporting a memory" [ref=e839] [cursor=pointer]:
+                    - generic [ref=e840]:
+                      - generic [ref=e841]: top_supplier:sab0e0e = Illustrative Packaging D
+                      - generic [ref=e842]: superseded
+                    - generic [ref=e843]: claim supporting a memory
+                  - 'button "Illustrative Packaging D ranks first under sea transport: model… stale agent:greenchain-scorer · 1 independent source(s) · verified" [ref=e844] [cursor=pointer]':
+                    - generic [ref=e845]:
+                      - generic [ref=e846]: "Illustrative Packaging D ranks first under sea transport: model…"
+                      - generic [ref=e847]: stale
+                    - generic [ref=e848]: agent:greenchain-scorer · 1 independent source(s) · verified
+                  - button "top_supplier:sab0e0e = Illustrative Packaging B active claim supporting a memory" [ref=e849] [cursor=pointer]:
+                    - generic [ref=e850]:
+                      - generic [ref=e851]: top_supplier:sab0e0e = Illustrative Packaging B
+                      - generic [ref=e852]: active
+                    - generic [ref=e853]: claim supporting a memory
+                  - button "emissions_q50:sab0e0e:Illustrative Packaging B = 59.5 active claim supporting a memory" [ref=e854] [cursor=pointer]:
+                    - generic [ref=e855]:
+                      - generic [ref=e856]: emissions_q50:sab0e0e:Illustrative Packaging B = 59.5
+                      - generic [ref=e857]: active
+                    - generic [ref=e858]: claim supporting a memory
+                  - button "After 'Reference data revision (counterfactual)' (EMBER, PT x50… valid agent:greenchain-scorer · 1 independent source(s) · verified" [ref=e859] [cursor=pointer]:
+                    - generic [ref=e860]:
+                      - generic [ref=e861]: After 'Reference data revision (counterfactual)' (EMBER, PT x50…
+                      - generic [ref=e862]: valid
+                    - generic [ref=e863]: agent:greenchain-scorer · 1 independent source(s) · verified
+                  - button "evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = Policy Wording active claim supporting a memory" [ref=e864] [cursor=pointer]:
+                    - generic [ref=e865]:
+                      - generic [ref=e866]: evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = Policy Wording
+                      - generic [ref=e867]: active
+                    - generic [ref=e868]: claim supporting a memory
+                  - button "evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = IRDAI Policyholder Portal active claim supporting a memory" [ref=e869] [cursor=pointer]:
+                    - generic [ref=e870]:
+                      - generic [ref=e871]: evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = IRDAI Policyholder Portal
+                      - generic [ref=e872]: active
+                    - generic [ref=e873]: claim supporting a memory
+                  - button "evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = IRDAI Health Department FAQs and Guidelines active claim supporting a memory" [ref=e874] [cursor=pointer]:
+                    - generic [ref=e875]:
+                      - generic [ref=e876]: evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = IRDAI Health Department FAQs and Guidelines
+                      - generic [ref=e877]: active
+                    - generic [ref=e878]: claim supporting a memory
+                  - button "evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance active claim supporting a memory" [ref=e879] [cursor=pointer]:
+                    - generic [ref=e880]:
+                      - generic [ref=e881]: evidence_for_case:cff9e39f-1095-4bbd-b4c4-6cf00bc90b3a = Master Circular on IRDAI Insurance Products Regulations 2024 - Health Insurance
+                      - generic [ref=e882]: active
+                    - generic [ref=e883]: claim supporting a memory
+                  - button "Retrieved 4 reference passage(s) for a health_insurance dispute… valid agent:resolveai-investigator · 4 independent source(s) · unverified" [ref=e884] [cursor=pointer]:
+                    - generic [ref=e885]:
+                      - generic [ref=e886]: Retrieved 4 reference passage(s) for a health_insurance dispute…
+                      - generic [ref=e887]: valid
+                    - generic [ref=e888]: agent:resolveai-investigator · 4 independent source(s) · unverified
+                  - button "Schedule the inspection using the prior approved procedure. invalidated revision 2" [ref=e889] [cursor=pointer]:
+                    - generic [ref=e890]:
+                      - generic [ref=e891]: Schedule the inspection using the prior approved procedure.
+                      - generic [ref=e892]: invalidated
+                    - generic [ref=e893]: revision 2
+                  - button "Recommend Illustrative Packaging D for the corrugated packaging… invalidated revision 3" [ref=e894] [cursor=pointer]:
+                    - generic [ref=e895]:
+                      - generic [ref=e896]: Recommend Illustrative Packaging D for the corrugated packaging…
+                      - generic [ref=e897]: invalidated
+                    - generic [ref=e898]: revision 3
+                  - button "Recommend Illustrative Packaging B for the corrugated packaging… valid revision 1" [ref=e899] [cursor=pointer]:
+                    - generic [ref=e900]:
+                      - generic [ref=e901]: Recommend Illustrative Packaging B for the corrugated packaging…
+                      - generic [ref=e902]: valid
+                    - generic [ref=e903]: revision 1
+                  - button "Recommend Illustrative Packaging B for the corrugated packaging… valid revision 1" [ref=e904] [cursor=pointer]:
+                    - generic [ref=e905]:
+                      - generic [ref=e906]: Recommend Illustrative Packaging B for the corrugated packaging…
+                      - generic [ref=e907]: valid
+                    - generic [ref=e908]: revision 1
+                  - 'button "DEMO-DRIFT-ACTION-001 suspended blocked: decision DEMO-DRIFT-DECISION-001 is INVALIDATED" [ref=e909] [cursor=pointer]':
+                    - generic [ref=e910]:
+                      - generic [ref=e911]: DEMO-DRIFT-ACTION-001
+                      - generic [ref=e912]: suspended
+                    - generic [ref=e913]: "blocked: decision DEMO-DRIFT-DECISION-001 is INVALIDATED"
+                  - 'button "Place a trial order with Illustrative Packaging D (requires hum… suspended blocked: decision gc:sab0e0e:decision is INVALIDATED" [ref=e914] [cursor=pointer]':
+                    - generic [ref=e915]:
+                      - generic [ref=e916]: Place a trial order with Illustrative Packaging D (requires hum…
+                      - generic [ref=e917]: suspended
+                    - generic [ref=e918]: "blocked: decision gc:sab0e0e:decision is INVALIDATED"
+                  - button "Place a trial order with Illustrative Packaging B (requires hum… approved eligible for approval" [ref=e919] [cursor=pointer]:
+                    - generic [ref=e920]:
+                      - generic [ref=e921]: Place a trial order with Illustrative Packaging B (requires hum…
+                      - generic [ref=e922]: approved
+                    - generic [ref=e923]: eligible for approval
+                  - button "Place a trial order with Illustrative Packaging B (requires hum… approved eligible for approval" [ref=e924] [cursor=pointer]:
+                    - generic [ref=e925]:
+                      - generic [ref=e926]: Place a trial order with Illustrative Packaging B (requires hum…
+                      - generic [ref=e927]: approved
+                    - generic [ref=e928]: eligible for approval
+          - complementary "Inspector" [ref=e107]:
+            - generic [ref=e108]:
+              - button "Collapse inspector" [ref=e109] [cursor=pointer]: ›
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - paragraph [ref=e112]: Nothing selected
+                  - paragraph [ref=e113]: Select a supplier or connection to inspect its evidence and impact.
+                  - list "Status" [ref=e114]:
+                    - listitem [ref=e115]:
+                      - generic [ref=e116]: 2 decisions affected.
+                    - listitem [ref=e118]:
+                      - generic [ref=e119]: Memory stale.
+                - generic [ref=e121]:
+                  - region "Risk" [ref=e122]:
+                    - heading [level=2] [ref=e123]:
+                      - button "Risk" [expanded] [ref=e124] [cursor=pointer]:
+                        - generic [aria-hidden] [ref=e127]: −
+                    - paragraph [ref=e129]: No investigation yet.
+                  - region "Evidence" [ref=e130]:
+                    - heading [level=2] [ref=e131]:
+                      - button "Evidence 11 sources" [ref=e132] [cursor=pointer]:
+                        - generic [ref=e133]: Evidence
+                        - generic [ref=e134]:
+                          - text: 11 sources
+                          - generic [aria-hidden] [ref=e135]: +
+                  - region "Decision" [ref=e136]:
+                    - heading [level=2] [ref=e137]:
+                      - button "Decision 2 stale" [ref=e138] [cursor=pointer]:
+                        - generic [ref=e139]: Decision
+                        - generic [ref=e140]:
+                          - text: 2 stale
+                          - generic [aria-hidden] [ref=e141]: +
+                - paragraph [ref=e142]: FalkorDB · 5 memories · 4 decisions · 4 approvals
+  - alert [ref=e143]

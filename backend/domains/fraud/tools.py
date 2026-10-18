@@ -7,11 +7,10 @@ Action node; it never freezes anything. Execution happens later, after a human a
 import json
 import time
 import uuid
-from datetime import datetime, timezone
-from typing import Callable
+from collections.abc import Callable
+from datetime import UTC, datetime
 
-from domains.fraud import config
-from domains.fraud import policy
+from domains.fraud import config, policy
 from domains.fraud.store import GraphStore
 
 Recorder = Callable[[dict], None]
@@ -21,7 +20,7 @@ STRONG_RELS = "USED_DEVICE|OWNS_CARD"
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class GraphTools:
@@ -78,7 +77,7 @@ class GraphTools:
                 best[member_id] = {
                     "account_id": member_id,
                     "hops": hops,
-                    "path": [{"label": l, "id": i} for l, i in zip(labels, ids)],
+                    "path": [{"label": node_label, "id": node_id} for node_label, node_id in zip(labels, ids)],
                     "rels": rels,
                 }
         return sorted(best.values(), key=lambda m: (m["hops"], m["account_id"]))

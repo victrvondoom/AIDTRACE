@@ -200,6 +200,8 @@ export function CesiumGlobe({
           },
         }
         viewerRef.current = viewer
+        // Development and test builds only: lets browser checks read the live camera, globe and imagery state.
+        if (process.env.NODE_ENV !== "production") (window as unknown as { __aidtraceGlobe?: GlobeViewer }).__aidtraceGlobe = viewer
         const scene = viewer.scene
         scene.globe.baseColor = C.Color.fromCssColorString("#0b1220")
         scene.globe.showGroundAtmosphere = true

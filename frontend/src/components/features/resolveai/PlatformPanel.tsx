@@ -9,7 +9,7 @@ import {
 
 const EMPTY = { domain: "health_insurance", title: "", institution_name: "", summary: "" };
 
-/** ResolveAI multi-agent platform (RESOLVE-AI-main) behind the AIDTRACE gateway. Shows exactly what the private worker
+/** Resolve multi-agent platform behind the AIDTRACE gateway with FALKOR DB. Shows exactly what the private worker
  *  returns; when the worker is not connected it says so and offers no simulated output. */
 export function PlatformPanel() {
   const [status, setStatus] = useState<PlatformStatus | null>(null);
@@ -50,15 +50,15 @@ export function PlatformPanel() {
     <section className="space-y-3 border-t border-line pt-6" aria-labelledby="platform-heading">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 id="platform-heading" className="text-title font-semibold">ResolveAI agent platform</h2>
-          <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Multi-agent case investigation with retrieval and eight domain packs, run by the migrated RESOLVE-AI-main worker. It authenticates through your AIDTRACE session and keeps cases separate per site.</p>
+          <h2 id="platform-heading" className="text-title font-semibold">Resolve agent platform (FALKOR DB)</h2>
+          <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Multi-agent case investigation with retrieval and eight domain packs powered by FALKOR DB, run by the migrated RESOLVE worker. It authenticates through your AIDTRACE session and keeps cases separate per site.</p>
         </div>
         <StatusBadge tone={connected ? "verified" : "caution"}>{status ? (connected ? "worker connected" : "not connected") : "checking"}</StatusBadge>
       </div>
       {error && <p role="alert" className="border-l-2 border-danger bg-surface p-3 text-caption text-danger">{error}</p>}
       {status && !connected && (
         <div className="border-l-2 border-caution bg-surface p-4 text-caption">
-          <p className="font-medium">The private ResolveAI worker is not connected, so no agent runs are available.</p>
+          <p className="font-medium">The private Resolve worker is not connected, so no agent runs are available.</p>
           <p className="mt-1 text-muted">{status.message}</p>
           <p className="mt-1 text-muted">{status.setup} It needs Supabase, Qdrant, Neo4j, Redis and a model key (Gemini or NVIDIA), none of which are configured on this machine.</p>
         </div>

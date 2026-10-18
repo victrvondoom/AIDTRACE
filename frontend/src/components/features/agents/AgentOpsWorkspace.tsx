@@ -90,7 +90,7 @@ export function AgentOpsWorkspace() {
           </div>
           <div className="space-y-3 border border-line bg-surface p-4">
             <h3 className="text-body font-semibold">Recent runs across runtimes</h3>
-            {runs.length === 0 ? <p className="text-caption text-muted">Nothing has run yet. Create a ResolveAI case, record a GreenChain decision or start a fraud investigation.</p> :
+            {runs.length === 0 ? <p className="text-caption text-muted">Nothing has run yet. Create a Resolve case, record a GreenChain decision or start a fraud investigation with FALKOR DB.</p> :
               <ul className="space-y-1 text-caption">{runs.map((r) => <li key={`${r.system}-${r.run_id}`} className="border-b border-line pb-1"><span className="font-medium">{r.system}</span> · {label(r.kind)} · <span className="text-muted">{r.status ?? "recorded"}</span><span className="block text-micro text-muted">{r.at?.slice(0, 19).replace("T", " ")} · {r.summary}</span></li>)}</ul>}
             <h4 className="pt-2 text-caption font-semibold">Handoffs</h4>
             {handoffs.length === 0 ? <p className="text-caption text-muted">No agent has recalled another agent&apos;s memory yet.</p> :

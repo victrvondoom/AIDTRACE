@@ -1,0 +1,61 @@
+# Render Blueprint — AIDTRACE / Kairos demo deployment.
+#   kairos-api       FastAPI backend (Docker, ./backend), started via render_start.py
+#   kairos-web       Next.js frontend (Docker, ./frontend); browser calls /api, Next proxies to kairos-api
+#   kairos-falkordb  FalkorDB graph store on the private network
+# Secrets (ANTHROPIC_API_KEY) are sync:false: entered in the Render dashboard, never committed.
+services:
+  - type: pserv
+    name: kairos-falkordb
+    runtime: image
+    image:
+      url: docker.io/falkordb/falkordb:latest
+    plan: starter
+    region: oregon
+
+  - type: web
+    name: kairos-api
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python render_start.py
+    plan: starter
+    region: oregon
+    healthCheckPath: /docs
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
+        value: claude-opus-5-5
+      - key: APP_ENV
+        value: development
+      - key: OTEL_SDK_DISABLED
+        value: "true"
+      - key: GREENCHAIN_DATA_DIR
+        value: /app/domains/greenchain/data
+      - key: FALKORDB_HOSTPORT
+        fromService:
+          type: pserv
+          name: kairos-falkordb
+          property: hostport
+      - key: CORS_ORIGINS
+        value: '["*"]'
+
+  - type: web
+    name: kairos-web
+    runtime: docker
+    rootDir: frontend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: /api
+      - key: BUILD_STANDALONE
+        value: "true"
+      - key: API_HOSTPORT
+        fromService:
+          type: web
+          name: kairos-api
+          property: hostport

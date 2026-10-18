@@ -44,9 +44,14 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from ml.reference_data import (  # noqa: E402  (needs the sys.path entry above)
-    EMBER_GRID_INTENSITY, COUNTRY_EMISSION_MULTIPLIER, ND_GAIN_RISK,
-    GLEC_FACTORS, COUNTRY_DEFAULT_PORT, get_port_distance, NAICS_DETAIL,
+    COUNTRY_DEFAULT_PORT,
+    COUNTRY_EMISSION_MULTIPLIER,
+    EMBER_GRID_INTENSITY,
+    GLEC_FACTORS,
+    NAICS_DETAIL,
+    ND_GAIN_RISK,
     get_grid_intensity,
+    get_port_distance,
 )
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")

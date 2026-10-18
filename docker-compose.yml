@@ -43,7 +43,9 @@ x-backend-env: &backend-env
   NEO4J_USERNAME: ${NEO4J_USERNAME:-neo4j}
   NEO4J_PASSWORD: ${NEO4J_PASSWORD:-kairos_dev_password}
   NEO4J_DATABASE: ${NEO4J_DATABASE:-neo4j}
-  FALKORDB_URL: ${FALKORDB_URL:-redis://kairos-falkordb:6379}
+  # A host-run API uses localhost:6380, but containers must use the Compose service name.
+  # An explicit container URL wins; existing cloud-only FALKORDB_URL deployments still work.
+  FALKORDB_URL: ${FALKORDB_CONTAINER_URL:-${FALKORDB_URL:-redis://kairos-falkordb:6379}}
   FALKORDB_GRAPH_PREFIX: ${FALKORDB_GRAPH_PREFIX:-kairos_drift}
   FALKORDB_QUERY_TIMEOUT_MS: ${FALKORDB_QUERY_TIMEOUT_MS:-5000}
   DRIFT_MAX_DEPTH: ${DRIFT_MAX_DEPTH:-12}
@@ -283,13 +285,16 @@ services:
           memory: 2g
 
   # ===========================================================================
-  # Decision dependency graph — FalkorDB (local development only for this slice)
+  # Decision dependency graph — FalkorDB (local-stores profile only)
   # The immutable image digest is the same server exercised by the drift store tests.
   # ===========================================================================
   kairos-falkordb:
     <<: *svc
     profiles: ["local-stores"]
     image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
+    environment:
+      # The named volume holds RDB snapshots and the append-only log. Do not remove it during upgrades.
+      REDIS_ARGS: "--appendonly yes --appendfsync everysec"
     volumes:
       - kairos-falkordb_data:/var/lib/falkordb/data
     healthcheck:

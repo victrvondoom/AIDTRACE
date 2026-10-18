@@ -42,7 +42,7 @@ describe("LoginPage", () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "password" } });
     fireEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
 
-    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/overview"));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/hub"));
   });
 
   it("provides a back link to the public landing page", () => {
@@ -55,7 +55,7 @@ describe("LoginPage", () => {
     render(<LoginPage />);
 
     expect(screen.getByTestId("login-workspace")).toHaveClass("lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]");
-    expect(screen.getByTestId("login-context")).toHaveTextContent("Evidence-linked operations");
+    expect(screen.getByTestId("login-context")).toHaveTextContent("Supply chain risk intelligence");
     expect(screen.getByTestId("login-form-panel")).toHaveTextContent("Sign in to AIDTRACE");
     expect(screen.getByLabelText(/email/i)).toHaveClass("min-h-11");
   });
@@ -70,7 +70,7 @@ describe("LoginPage", () => {
     expect(demoBtn).toBeTruthy();
 
     fireEvent.click(demoBtn);
-    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/overview"));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/hub"));
   });
 
   it("signs the demo button in with the configured read-only credentials and lands on the Copilot", async () => {
@@ -83,6 +83,6 @@ describe("LoginPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /live demo/i }));
 
     await waitFor(() => expect(mocks.login).toHaveBeenCalledWith("demo@kairos.local", "public-demo-pw"));
-    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/overview"));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/hub"));
   });
 });

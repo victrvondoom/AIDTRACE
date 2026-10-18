@@ -37,7 +37,6 @@ from .ml_bridge import get_score_assembler
 from .transport import transport_tco2e_by_mode
 from .verification import verify_all
 
-
 DEFAULT_WEIGHTS = {
     "manufacturing":  0.40,
     "transport":      0.25,

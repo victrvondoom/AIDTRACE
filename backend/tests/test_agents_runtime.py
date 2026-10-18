@@ -111,6 +111,28 @@ def test_resolveai_evidence_is_remembered_then_recalled_by_another_agent_until_t
     assert client(other_site).get("/agent-memory/handoffs").json()["handoffs"] == []
 
 
+def test_verified_context_is_site_scoped_and_keeps_claim_and_source_provenance(env) -> None:
+    client, (site, other_site), _ = env
+    c = client(site)
+    remembered = c.post("/agent-memory/resolveai/remember", json={"case_id": "case-9"}).json()
+    request = {"agent_id": "agent:reviewer", "fact_key": "evidence_for_case:case-9", "limit": 5}
+    context = c.post("/agent-memory/context", json=request)
+    assert context.status_code == 200, context.text
+    result = context.json()
+    assert result["context_type"] == "untrusted_graph_memory"
+    assert result["influenced_by"] == [remembered["memory_id"]]
+    assert result["entries"][0]["verification_status"] == "VERIFIED"
+    assert result["entries"][0]["claims"][0]["fact_key"] == request["fact_key"]
+    assert result["entries"][0]["source_versions"][0]["document_id"]
+    assert client(other_site).post("/agent-memory/context", json=request).json()["entries"] == []
+
+    tool = c.post("/agents/tools/invoke", json={"runtime": "memory", "tool": "context", "args": request})
+    assert tool.status_code == 200, tool.text
+    assert tool.json()["result"]["influenced_by"] == [remembered["memory_id"]]
+    assert c.post("/agent-memory/context", json={**request, "fact_key": "bad key"}).status_code == 422
+    assert c.post("/agents/tools/invoke", json={"runtime": "memory", "tool": "context", "args": {}}).status_code == 422
+
+
 def test_remembering_requires_a_prior_investigation(env, monkeypatch) -> None:
     client, (site, _), _ = env
 

@@ -16,7 +16,7 @@ import { youTubeId } from "@/lib/youtube";
  * page is exactly as it is today. Nothing else needs editing either way.
  */
 const DEMO_YOUTUBE_URL = "";
-const DEMO_FALLBACK_URL = "https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link";
+const DEMO_FALLBACK_URL = "/hub";
 
 const demoVideoId = youTubeId(DEMO_YOUTUBE_URL);
 
@@ -27,77 +27,73 @@ const navLinks = [
   ...(demoVideoId ? ([["Demo", "#demo"]] as const) : []),
   ["Problem", "#problem"],
   ["How it works", "#how"],
-  ["Capabilities", "#capabilities"],
-  ["System", "#system"],
-  ["Use cases", "#field"],
-  ["Evals", "#evidence"],
-  ["Provenance", "#provenance"],
+  ["Intelligence", "#capabilities"],
+  ["Architecture", "#system"],
+  ["Extensions", "#field"],
+  ["Evaluation", "#evidence"],
+  ["Evidence", "#provenance"],
   ["FAQ", "#faq"],
-  ["Docs", "/docs"],
 ] as const;
 
 /**
- * The problem, in figures the industry already publishes. Every number is
- * attributed in-copy so a reader can go and check it rather than take it on
- * trust, which is the same standard the product itself is held to.
+ * Four questions that frame the shared evidence and decision workflow.
  */
 const problemStats: { figure: string; label: string; body: string; source: string }[] = [
   {
-    figure: "~20%",
-    label: "of the working week",
-    body: "Time the average interaction worker spends looking for internal information or tracking down a colleague who can help. A searchable record of knowledge can cut that search time by as much as 35%.",
-    source: "McKinsey Global Institute, 2012",
+    figure: "01",
+    label: "What is connected?",
+    body: "Documents, suppliers, incidents, transactions and security findings often live in separate systems, hiding the relationships between them.",
+    source: "Fragmented information",
   },
   {
-    figure: "88%",
-    label: "of Indian industrial businesses",
-    body: "Have an unplanned outage at least once a month, against 69% globally.",
-    source: "ABB Value of Reliability survey, 2023",
+    figure: "02",
+    label: "What changed?",
+    body: "A revised source can change a fact that earlier agent memory, recommendations and approvals relied on.",
+    source: "Changing evidence",
   },
   {
-    figure: "~₹70 lakh",
-    label: "per hour of unplanned downtime",
-    body: "Roughly what an hour of unplanned downtime costs the typical Indian industrial business, against ₹1.03 crore globally.",
-    source: "ABB Value of Reliability survey, 2023",
+    figure: "03",
+    label: "What can we trust?",
+    body: "A confident answer is not enough. People need to see its source, age, verification state and missing evidence.",
+    source: "Evidence validity",
   },
   {
-    figure: "2 in 3",
-    label: "new energy-sector hires to 2035",
-    body: "Will be needed just to replace workers who retire. Whatever they never wrote down leaves with them.",
-    source: "IEA, World Energy Employment 2025",
+    figure: "04",
+    label: "What happens next?",
+    body: "Affected decisions need an explanation, a responsible reviewer and an audit trail before a proposed action proceeds.",
+    source: "Human review",
   },
 ];
 
 /**
- * One story, followed end to end. This is the highest-leverage explainer on the
- * page: a reader who skims everything else still leaves knowing what AIDTRACE
- * does, because they watched it do one thing.
+ * The five shared workflow stages, illustrated with the synthetic supplier
+ * evidence-change case where a source revision affects a prior decision.
  */
 const scenario: { tag: string; title: string; body: string }[] = [
   {
-    tag: "The trigger",
-    title: "A work order is raised on pump P-1101A",
-    body: "A technician is assigned to a seal failure. Nobody searches for anything. AIDTRACE sees the work order the moment it is created, and starts gathering what the person doing this job needs to know.",
+    tag: "Connect",
+    title: "Bring the evidence together",
+    body: "The workflow starts with authorized source records. Each extension connects the document, supplier, incident or event data it supports while preserving source identity and history.",
   },
   {
-    tag: "What it finds",
-    title: "Four failures, a raised flow limit, an unlogged warning",
-    body: "P-1101A has failed with a seal fault four times in 84 days. A vendor bulletin raised its minimum flow from 120 to 150 m³/h, and the flow before each failure was below both. A technician's voice note says the minimum-flow valve is not opening fully, and nobody has acted on it.",
+    tag: "Understand",
+    title: "Follow the FalkorDB relationships",
+    body: "Source versions, claims, agent memory, decisions and proposed actions are linked. The graph records what each conclusion depends on.",
   },
   {
-    tag: "The check",
-    title: "Each fact is ranked by who said it",
-    body: "A regulation outranks a vendor manual, and a vendor manual outranks a local note. Nobody has verified the voice note, so AIDTRACE labels it as unverified instead of mixing it in with established fact.",
+    tag: "Investigate",
+    title: "Find the affected decisions",
+    body: "In the synthetic supplier-audit example, a verified procedure changes an inspection interval from 180 to 90 days. AIDTRACE traces the old fact to the memory and decision that used it.",
   },
   {
-    tag: "The delivery",
-    title: "A brief reaches the technician before they walk out",
-    body: "One screen on a phone shows the history, the flow limit that changed, the unverified warning, and a link to every source document behind it. They read it before they touch the pump, not after.",
+    tag: "Verify",
+    title: "Check the evidence and uncertainty",
+    body: "The system shows the source change and the dependency path. It re-evaluates the old decision against the newer fact instead of treating remembered context as permanent truth.",
   },
   {
-    tag: "The refusal",
-    title: "When the evidence is thin, it says so",
-    body: "Ask a safety-critical question, such as a pressure limit or a torque value. If no authoritative source supports an answer, AIDTRACE refuses and hands you the documents instead. A confident guess at that moment is more dangerous than no answer at all.",
+    tag: "Review",
+    title: "Hold the action and retain the history",
+    body: "The earlier approval belongs to an older decision revision, so the synthetic proposed action is suspended. A person can inspect what changed before making a new decision.",
   },
 ];
 
@@ -117,75 +113,75 @@ const capabilities: {
 }[] = [
   {
     id: "briefs",
-    name: "Briefs",
-    banner: "Six briefs an operator per hour, because an ignored brief is worse than no brief",
+    name: "Proactive context",
+    banner: "The right context reaches the person responsible for the decision",
     Mock: BriefsMock,
-    eyebrow: "Briefs",
-    title: "Told before you ask, but never spammed",
-    body: "AIDTRACE sends you what you need to know before a job starts, and caps it at six an hour. Flood someone with notifications and they stop reading all of them. That is why plant alarm systems have a cap by standard (EEMUA-191). Permit-to-work briefs skip the cap, because safety work does not wait for a quota.",
+    eyebrow: "AIDTRACE review queue",
+    title: "Context arrives before a decision",
+    body: "AIDTRACE brings the source change, affected claims and previous review together before someone decides what to do next.",
   },
   {
     id: "copilot",
-    name: "Expert copilot",
-    banner: "Every answer arrives with its sources, its authority and its confidence",
+    name: "Evidence answers",
+    banner: "Answers show supporting sources, authority and uncertainty",
     Mock: CopilotMock,
-    eyebrow: "Expert copilot",
-    title: "Answers that carry their evidence",
-    body: "Ask in plain language and get back an answer with its sources attached, its authority ranked, and its confidence stated. If a safety-critical question has weak evidence behind it, you get an honest refusal instead of a vague answer.",
+    eyebrow: "Evidence-aware answers",
+    title: "An answer you can check",
+    body: "Questions about a supplier or decision are answered with the linked records in view. Missing or conflicting evidence stays visible instead of becoming a confident guess.",
   },
   {
     id: "rca",
-    name: "Root cause",
-    banner: "Likely causes ranked by how much evidence backs them, each one traceable",
+    name: "Connected risk",
+    banner: "Investigate causes and dependencies with their evidence in view",
     Mock: RcaMock,
-    eyebrow: "Maintenance intelligence",
-    title: "Root cause, assembled from the record",
-    body: "AIDTRACE combines work order history, failure records, vendor manuals, inspection findings and live operating conditions into a ranked list of likely root causes. Each one comes with the documents behind it and a timeline of what actually happened, so it connects facts that no single person on the team holds.",
+    eyebrow: "Connected investigation",
+    title: "Trace a risk back to the record",
+    body: "Specialist investigations follow dependencies across suppliers, incidents and decisions. Each extension contributes its own analysis while the graph retains the supporting path.",
   },
   {
     id: "compliance",
-    name: "Compliance",
-    banner: "Precision 1.000 across 52 clause-and-asset pairs, zero false positives",
+    name: "Governed findings",
+    banner: "A finding is useful when its scope and supporting evidence are visible",
     Mock: ComplianceMock,
-    eyebrow: "Quality and regulatory",
-    title: "Gaps found before the auditor finds them",
-    body: "The demo loads twelve clauses from OISD-117 and ISO 45001, and seven more are named in the framework catalogue and need their clauses loaded, among them PESO, CEA, IEC 62443 and FDA 21 CFR Part 11. AIDTRACE checks them continuously against current procedures, equipment state and inspection records. Every finding is tied to one clause: a gap means no document of the type that clause requires is linked to that asset. You can export an audit evidence pack at any time.",
+    eyebrow: "Decision governance",
+    title: "See what supports a finding",
+    body: "A recommendation can be reviewed against its sources, policy checks and current decision revision. An older approval does not silently authorize a changed conclusion.",
   },
   {
     id: "ingestion",
-    name: "Ingestion",
-    banner: "A drawing is read for its layout, not flattened into plain text",
+    name: "Connected sources",
+    banner: "Different source formats retain their identity and context",
     Mock: IngestionMock,
-    eyebrow: "Universal ingestion",
-    title: "Every format a plant actually has",
-    body: "Native PDFs, scanned forms, handwritten margin notes, spreadsheets, P&ID drawings and voice notes all go through one pipeline. Drawings are read by a vision model rather than OCR, because OCR throws away the layout, and the layout is the real content of a drawing. It is what tells you which valve isolates which pump.",
+    eyebrow: "Source lineage",
+    title: "Start with the source record",
+    body: "AIDTRACE keeps source versions distinct and links claims to the exact version that supports them. The Evidence Drift case uses synthetic source records; real uploaded-evidence adapters remain integration work.",
   },
   {
     id: "assets",
-    name: "Assets",
-    banner: "Ask what was true then, not only what is true now",
+    name: "Relationship history",
+    banner: "Ask what a relationship meant at the time of a decision",
     Mock: AssetsMock,
-    eyebrow: "Assets",
-    title: "Every asset, and what was true when",
-    body: "One place for an asset's documents, failure history and drawing connections, and all of it is dated. When a fact stops being true, AIDTRACE closes it rather than deleting it. An investigation months later can still ask what the plant knew back in March.",
+    eyebrow: "Temporal relationships",
+    title: "Preserve what was known then",
+    body: "The FalkorDB graph retains source revisions and the memories, decisions and approvals that depended on them. A later change can be compared with what was previously reviewed.",
   },
   {
     id: "governance",
-    name: "Governance",
-    banner: "The quarantine gate opens one way, and only a person opens it",
+    name: "Evidence validity",
+    banner: "Uncertain information remains visible without becoming verified fact",
     Mock: GovernanceMock,
-    eyebrow: "Governance",
-    title: "Nothing uncertain reaches the graph",
-    body: "Anything AIDTRACE extracts with less than 0.7 confidence goes to quarantine and stays there. Only a person can release it. Nothing is released automatically, and contradictions show up before the job starts, not after.",
+    eyebrow: "Evidence validity",
+    title: "Uncertainty stays explicit",
+    body: "AIDTRACE distinguishes verified sources, stale memory, contested claims and missing information. A change can trigger review without treating uncertain context as proof.",
   },
   {
     id: "field",
-    name: "Field capture",
-    banner: "Capture at the point of work, send it when the radio comes back",
+    name: "New observations",
+    banner: "A new observation can start a review of connected evidence",
     Mock: FieldMock,
-    eyebrow: "Field capture",
-    title: "Capture that survives a dead zone",
-    body: "Voice notes are transcribed, tagged to an asset or work order, and held on the device until there is signal. A technician never loses a finding to a dead zone.",
+    eyebrow: "New observations",
+    title: "Capture what people observe",
+    body: "New records can prompt another investigation. The connected decision workflow compares them with prior evidence before a reviewer approves a revised action.",
   },
 ];
 
@@ -272,12 +268,12 @@ const systemDesign: {
 ];
 
 const audiences = [
-  { name: "Supervisors", title: "The plant on one screen", shot: "workspace", body: "Live service state, open conflicts and the size of the quarantine queue, with the decisions that need a person ranked first." },
-  { name: "Reliability", title: "Evidence, not recollection", shot: "reliability", body: "Blast radius and root-cause packs built from the recorded history in the graph, not from memory." },
-  { name: "Field techs", title: "Works when the signal doesn't", shot: "field", body: "Briefs, asset context and voice capture built for a phone. They wait on the device and sync when the radio comes back." },
-  { name: "Compliance officers", title: "Coverage you can export", shot: "compliance", body: "Regulation coverage and gap severity, sorted by how critical the asset is, with audit packs you can generate at any time." },
-  { name: "Turnaround", title: "Short windows, no rate limit", shot: "turnaround", body: "Permit-to-work briefs skip the alarm cap, because an outage window does not wait for an hourly quota." },
-  { name: "Off-boarding", title: "Before the knowledge walks", shot: "offboarding", body: "Guided interviews that capture what someone knows before they leave, while they are still there to ask." },
+  { name: "GreenChain", title: "Supply chain intelligence", shot: "workspace", body: "Explore supplier networks, facility dependencies, routes and alternative sourcing with the evidence behind each recommendation. The AIDTRACE globe shows connected entities in one workspace." },
+  { name: "CyberFlow", title: "Cybersecurity intelligence", shot: "reliability", body: "Investigate connected findings, vulnerabilities and potential operational consequences. A graph relationship is a lead for review, not proof of compromise." },
+  { name: "Operations", title: "Industrial intelligence", shot: "field", body: "Connect equipment, maintenance records, procedures, events and observations to support governed operational decisions. Inspect their lineage in the shared workspace." },
+  { name: "Resolve", title: "Investigation intelligence with FALKOR DB", shot: "compliance", body: "Compare explanations, inspect evidence lineage and prepare recommendations for human review on FALKOR DB. The shared timeline makes changes visible across investigations." },
+  { name: "Track 01", title: "Connected risk agents", shot: "turnaround", body: "Trace multi-hop relationships and preserve investigation steps before proposing a controlled action. The shared workspace exposes affected entities and dependencies." },
+  { name: "Evidence", title: "Evidence and decision intelligence", shot: "offboarding", body: "Inspect source history, stale memory and decision dependencies when supporting information changes. Review the evidence before approving a revised action." },
 ] as const;
 
 // Measured 2026-08-24 on the live stack, per benchmark/RESULTS.md.
@@ -349,7 +345,7 @@ const evalSuites: {
     name: "Time to a trusted answer",
     headline: "−19.9%",
     headlineNote: "Modelled, compared against BM25 keyword search",
-    rows: [["Traditional", "124.0 min / 46 q"], ["AIDTRACE", "99.4 min / 46 q"], ["Docs opened", "1.00 vs 1.35"], ["Raw machine time", "loses: 9.6 s vs 28 ms"]],
+    rows: [["Traditional", "124.0 min / 46 q"], ["Industrial extension", "99.4 min / 46 q"], ["Docs opened", "1.00 vs 1.35"], ["Raw machine time", "loses: 9.6 s vs 28 ms"]],
   },
   {
     name: "Concurrency sweep",
@@ -393,99 +389,88 @@ const capabilityList: [string, string][] = [
   // search_service.hybrid_search: ES + Qdrant always, the graph too once the
   // question names an asset; _fuse does reciprocal-rank fusion, then orders by
   // authority_level ASC before relevance.
-  ["Retrieval across mixed document types", "Elasticsearch, Qdrant and the graph queried in parallel, fused by rank, then ordered by authority"],
+  ["Connect authorized information", "Documents, suppliers, incidents, transactions and findings enter the shared investigation workflow."],
   // 6 labels in db/neo4j/init_schema.cypher; the 6 edge properties are the
   // non-negotiable write contract in CLAUDE.md.
-  ["Knowledge graph and ontology", "Six node types, six properties on every link, decades of tag aliases matched up"],
+  ["FalkorDB relationship graph", "Source versions, claims, memories, decisions and approvals form inspectable dependency paths."],
   // /compliance/nonconformance reads conflicts + quarantine; moc_items runs
   // draft → pending_approval → approved, with approved_by and approved_at.
-  ["Non-conformance register", "Conflicts and quarantined extractions tracked in one place, with an owner against each"],
-  ["Management of Change", "A safety parameter never updates itself. AIDTRACE drafts the change request and waits for a named approval."],
+  ["Evidence verification", "Conflicts, missing support and uncertain claims stay visible for review."],
+  ["Decision governance", "A changed recommendation waits for a current human approval before action."],
   // document_pipeline.py: every activity carries DEFAULT_RETRY, maximum_attempts 5.
-  ["Durable ingestion", "A Temporal workflow per document, so a crash resumes at the activity that failed rather than at the first page"],
+  ["Persistent agent memory", "Agents can retrieve previous findings with the source evidence and validity state that supports them."],
   // GraphService.get_blast_radius, surfaced by /governance.
-  ["Blast radius", "Change one document and see every procedure and record downstream of it that just went out of date."],
+  ["Impact analysis", "Follow a changed source through dependent claims, memories, decisions and proposed actions."],
   // services/pii.py — export boundary only, and the patterns are bounded so
   // equipment tags and part numbers never match.
-  ["PII redaction at export", "Names are removed on the way out, never on the way in, to meet the DPDP Act 2023. Equipment tags are never matched, on purpose."],
+  ["Source lineage", "Each important conclusion points back to its source version, with uncertainty kept explicit."],
   // circuit_breaker.check: z > 2.0 on 7-day overrides vs the prior three weeks;
   // link_to_graph then writes zero edges and raises review_required.
-  ["It stops itself when it drifts", "When corrections on one class of equipment spike, nothing from that class reaches the graph until the rate settles."],
+  ["Evidence Drift", "When support changes, affected memory and decisions are marked for re-evaluation and stale approvals are blocked."],
 ];
 
 
-/**
- * The six properties, shown against one worked example rather than described in
- * the abstract. The example values are the same fact the hero card states, so the
- * page tells one story twice rather than two stories once. It is illustrative, and
- * the block says so in the copy above it.
- *
- * `9999-12-31` is not a placeholder: it is the real sentinel this project writes
- * into `valid_to`, because a NULL there would make every "what was true then"
- * query special-case the open row.
- */
+/** Six illustrated checkpoints in the synthetic Evidence Drift dependency path. */
 const edgeProperties: { name: string; value: string; note: string }[] = [
-  { name: "valid_from", value: "2025-01-15", note: "When this fact started being true." },
-  { name: "valid_to", value: "9999-12-31", note: "Still open. Closed when something replaces it, never deleted." },
-  { name: "authority_level", value: "3 · OEM manual", note: "A regulation outranks a vendor manual, which outranks a local note." },
-  { name: "document_id", value: "FP-SB-2025-04", note: "The exact source it came from." },
-  { name: "confidence", value: "0.91", note: "Anything below 0.7 goes to quarantine instead." },
-  { name: "verification_status", value: "Verified", note: "A named engineer signed this one off." },
+  { name: "source_version", value: "version 2", note: "The revised audit procedure is recorded as a new source version." },
+  { name: "changed_claim", value: "90 days", note: "The newer evidence changes the supplier audit interval from 180 days." },
+  { name: "dependent_memory", value: "stale", note: "An agent memory based on the previous interval needs re-evaluation." },
+  { name: "decision_revision", value: "revision 2", note: "The decision records which evidence revision it evaluated." },
+  { name: "prior_approval", value: "revision 1", note: "Approval for an older decision revision cannot authorize a revised action." },
+  { name: "action_state", value: "suspended", note: "The proposed action waits for a current human review." },
 ];
 
 const faqGroups = [
   {
     name: "Basics",
     items: [
-      ["What does AIDTRACE actually do?", "It turns the documents, drawings, asset history and field notes a plant already owns into answers people can act on. Every answer shows the source it came from, how authoritative that source is, and how confident the system is."],
-      ["How is this different from a chatbot over our documents?", "A chatbot gives you text. AIDTRACE gives you text plus proof of where it came from, and refuses to answer when a safety-critical question has weak evidence behind it. We grade retrieval and citations with fixed rules, not with another model."],
-      ["What does it need to get started?", "The documents you already have. Drawings, procedures, vendor manuals and maintenance history all go through the ingestion pipeline. Nothing has to be rewritten first."],
+      ["What does AIDTRACE do?", "AIDTRACE connects evidence, relationships, agent memory and decisions across specialized workflows. It helps people inspect what changed, what is affected and which conclusions need review."],
+      ["Why use FalkorDB?", "FalkorDB stores connected source versions, claims, memories, decisions and approvals. Following those links makes a dependency path inspectable when evidence changes."],
+      ["Is this one workflow or several products?", "The shared process connects, investigates, verifies and reviews evidence. GreenChain, CyberFlow, Operations, Resolve and Track 01 contribute specialized algorithms and interfaces with FALKOR DB."],
     ],
   },
   {
-    name: "Governance",
+    name: "Decisions",
     items: [
-      ["What happens when the system is not sure?", "Anything extracted with less than 0.7 confidence goes to quarantine and stays there until a person releases it. Nothing uncertain reaches the knowledge graph on its own."],
-      ["Can it refuse to answer?", "Yes, and it does. A safety-critical question without solid evidence gets a refusal that still lists its sources, so you can check them yourself instead of trusting a vague answer."],
-      ["Why limit how many briefs someone gets?", "The EEMUA-191 standard exists because operators stop reading alarms when there are too many of them. The same happens with knowledge. So the limit is six an hour, and permit-to-work briefs are always exempt."],
-      ["Who gets told when AIDTRACE finds something?", "Whoever owns the decision, and nothing sits in a queue waiting to be noticed. An extraction it is not confident in goes to quarantine and waits for a person. Two procedures that disagree raise a conflict before the job starts, not in the post-mortem. An observation from the field is transcribed, tagged and sent to engineering for review. A safety question with thin evidence returns a refusal card with its sources attached."],
-    ],
-  },
-  {
-    name: "Data",
-    items: [
-      ["Is anything ever deleted?", "No. The vault is permanent and stored files are never changed. When a fact stops being true, AIDTRACE closes it instead of removing it, so the record of what you knew, and when you knew it, survives."],
-      ["Can we see where an answer came from?", "Every fact carries six properties on the link itself, including the source document and whether a person verified it. Every answer lists its sources."],
-      ["Does it work without connectivity?", "Field capture does. Notes are held on the device and sent once there is signal again."],
-    ],
-  },
-  {
-    name: "Access",
-    items: [
-      ["Who can see what?", "Access follows the role. Field workers get briefs, copilot, assets and capture. Engineering and reliability get the evidence and governance screens. System health is admin only. The check happens in one central place, not page by page."],
-      ["What happens if the permission service goes down?", "Access is refused. The check fails closed, so an outage locks people out rather than letting everyone through, and the same rule covers reads as well as writes."],
-      ["Can we try it without a rollout?", "Yes. The demo account signs straight into a workspace with the golden dataset already loaded, so you can question real answers instead of looking at a slide."],
+      ["What happens when evidence changes?", "The Evidence Drift workflow follows the recorded dependency links, re-evaluates affected conclusions and can suspend a proposed action whose approval belongs to an earlier decision revision."],
+      ["What if the evidence is uncertain?", "AIDTRACE keeps missing, conflicting or unverified evidence explicit. Low-confidence extractions are held for human review rather than silently promoted."],
+      ["Does AI make the final decision?", "Recommendations support human judgment. A proposed action that requires approval remains subject to the relevant review and authorization checks."],
+      ["Can I see why a recommendation changed?", "The evidence path shows the source version and the claims, memories or decisions that depended on it. The synthetic drift demonstration also records the previous and current decision revisions."],
     ],
   },
   {
     name: "Evidence",
     items: [
-      ["How was it evaluated?", "Forty-six domain-expert questions, written against a fixed answer key, across fifteen categories and graded by fixed rules. Retrieval, answer quality and sourcing are scored separately, and a refusal counts as correct when refusing was the right call."],
-      ["Why quote a confidence interval for answer quality?", "Because 40 out of 46 is a sample, not a fixed rate. The interval says the honest thing a single percentage hides: on this set of questions the true rate sits somewhere around 74 to 94 percent. Retrieval and sourcing are graded by fixed rules and stay at 46 out of 46. Every run is also checked for validity, and we never quote a run in which more than a tenth of the answers came from a fallback model."],
-      ["What do these numbers not cover?", "Four things, and we would rather name them. The soak test ran for one hour, so it says nothing about days. The validation set is small: 40 labels in total and only 3 for ORGANIZATION, so quote a per-type score with the number of labels behind it. Fifty virtual users against a demo-sized dataset is not evidence that the system handles a 10,000-asset plant. And hybrid retrieval reaches 35 of 37, which is exactly what semantic search alone reaches, so we report it as matching the best single method rather than beating it."],
-      ["Is any of this running against a real plant?", "No. Every figure is measured against a golden dataset we wrote ourselves, and AIDTRACE is not connected to any live plant. That is the intended limit of this MVP. We would rather say so than let a number imply otherwise."],
-      ["Can we see the failures too?", "Yes. The test harness, the question set and every raw run are in the repository, including the runs where the answer was wrong."],
+      ["Can I trace a conclusion to its source?", "The decision graph links claims to source versions and links derived memories and decisions to the claims they used. The available lineage view exposes those relationships."],
+      ["What is persistent agent memory?", "It is a stored finding with a source and a validity state that can be recalled later. A stale or unverified memory should not silently become current evidence."],
+      ["Is every source connected today?", "No. The current Evidence Drift case uses synthetic source records. Real uploaded-evidence ingestion and adapters for other channels remain separate integration work."],
+    ],
+  },
+  {
+    name: "Access",
+    items: [
+      ["Who can see a site's graph?", "Graph routes derive site scope from the authenticated user and apply role checks. A site's evidence is queried within its own graph."],
+      ["Who can approve an action?", "Approval is a human-governed decision. In the synthetic drift flow, an approval is tied to the exact decision revision it reviewed."],
+      ["Can I explore the workspace?", "Open the workspace to inspect the connected views and specialist entry points. The Evidence Drift run is marked as a synthetic demonstration."],
+    ],
+  },
+  {
+    name: "Evaluation",
+    items: [
+      ["What do the figures on this page measure?", "The displayed numeric benchmark belongs to the industrial question-answering extension. It does not measure the full AIDTRACE platform or every FalkorDB workflow."],
+      ["How should graph intelligence be evaluated?", "Use reproducible tests for dependency paths, source lineage, memory persistence, stale-information detection, decision consistency, authorization and site isolation."],
+      ["Are the examples real-world deployment evidence?", "No. The supplier-audit Evidence Drift case is deterministic and synthetic. Local tests show the bounded mechanism; they do not establish production performance or real-world decision quality."],
+      ["Does the demo execute an external action?", "No. It can suspend a synthetic proposed action when the approval no longer matches the current revision, but it does not carry out procurement or operational changes."],
+      ["Where can I check the implementation?", "The repository includes the graph contracts, tests, implementation reports and known limits. The workspace exposes the connected views and labels synthetic scenarios."],
     ],
   },
 ] as const;
 
-const GITHUB_URL = "https://github.com/kr7shnasomani/kairos";
-
-// Footer links point only at real destinations: page anchors, /docs, /login and the repository.
+// Footer links point only at real destinations: page anchors.
 const footerColumns: { heading: string; links: [string, string][] }[] = [
-  { heading: "Product", links: [["The problem", "#problem"], ["Capabilities", "#capabilities"], ["Use cases", "#field"]] },
-  { heading: "How it works", links: [["The pipeline", "#how"], ["System design", "#system"], ["Provenance", "#provenance"], ["Evals", "#evidence"]] },
-  { heading: "Resources", links: [["Documentation", "/docs"], ["FAQ", "#faq"], ["Source code", GITHUB_URL]] },
+  { heading: "Product", links: [["The problem", "#problem"], ["Intelligence engine", "#capabilities"], ["Extensions", "#field"]] },
+  { heading: "How it works", links: [["Shared workflow", "#how"], ["Architecture", "#system"], ["Evidence", "#provenance"], ["Evaluation", "#evidence"]] },
+  { heading: "Resources", links: [["FAQ", "#faq"]] },
 ];
 /* ── Capability mocks, one bespoke composition each ─────────────────────
    Shared atoms only; the layouts deliberately differ so the tab list reveals a
@@ -496,7 +481,7 @@ function Slab({ children, className = "" }: { children: React.ReactNode; classNa
   return <div className={`lp-mock-sm bg-white px-3 py-2 text-[12px] text-(--lp-ink) ${className}`}>{children}</div>;
 }
 
-/** Briefs: a governor meter: six slots an hour, with PTW bypassing the gate. */
+/** Briefs: an illustrative alert queue alongside the approval review gate. */
 function BriefsMock() {
   return (
     <div>
@@ -514,19 +499,19 @@ function BriefsMock() {
       <div className="mt-6 grid gap-2 sm:grid-cols-2">
         <Slab>
           <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-(--lp-accent-text)">Dispatched 07:41</p>
-          <p className="mt-1 font-semibold">P-1101A isolation changed</p>
-          <p className="mt-1 text-[11px] text-(--lp-muted)">Rank 1 · to the duty operator</p>
+          <p className="mt-1 font-semibold">Supplier audit rule changed</p>
+          <p className="mt-1 text-[11px] text-(--lp-muted)">Priority 1 · to the decision owner</p>
         </Slab>
         <Slab className="border-l-4 border-(--lp-accent)">
-          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-(--lp-accent-text)">Permit to work</p>
-          <p className="mt-1 font-semibold">Bypasses the governor</p>
-          <p className="mt-1 text-[11px] text-(--lp-muted)">Safety work is never rate-limited</p>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.08em] text-(--lp-accent-text)">Approval gate</p>
+          <p className="mt-1 font-semibold">Requires fresh review</p>
+          <p className="mt-1 text-[11px] text-(--lp-muted)">Stale approval cannot authorize action</p>
         </Slab>
       </div>
 
       <div className="mt-4 flex items-center gap-2 bg-black/45 px-3 py-2">
         <span aria-hidden="true" className="size-2 shrink-0 bg-(--lp-accent)" />
-        <span className="text-[11px] text-white/85">Brief 7 held until 08:00, quota reached and not urgent</span>
+        <span className="text-[11px] text-white/85">Next routine alert held; decision review remains visible</span>
       </div>
     </div>
   );
@@ -537,7 +522,7 @@ function CopilotMock() {
   return (
     <div>
       <div className="ml-auto w-fit max-w-[85%] bg-black/55 px-3 py-2 text-[12px] text-white">
-        What changed on P-1101A since the last turnaround?
+        What changed in the supplier audit evidence?
       </div>
 
       <div className="mt-3 max-w-[92%] border-l-2 border-(--lp-accent) bg-white p-3">
@@ -548,11 +533,11 @@ function CopilotMock() {
           <span className="block h-1.5 w-2/3 bg-(--lp-band)" />
         </div>
         <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
-          <span className="bg-(--lp-accent-strong) px-2 py-1 font-medium text-white">3 sources</span>
-          <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Authority: regulation</span>
+          <span className="bg-(--lp-accent-strong) px-2 py-1 font-medium text-white">Source path</span>
+          <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Version: current</span>
         </div>
         <div className="mt-3">
-          <div className="flex justify-between text-[10px] text-(--lp-muted)"><span>Confidence</span><span className="font-semibold text-(--lp-ink)">0.91</span></div>
+          <div className="flex justify-between text-[10px] text-(--lp-muted)"><span>Decision state</span><span className="font-semibold text-(--lp-ink)">Review</span></div>
           <div className="mt-1 h-1.5 bg-(--lp-band)"><span className="block h-full w-[91%] bg-(--lp-accent)" /></div>
         </div>
       </div>
@@ -560,19 +545,14 @@ function CopilotMock() {
       <div className="mt-3 flex items-start gap-2 border border-dashed border-white/50 px-3 py-2">
         <span aria-hidden="true" className="mt-0.5 size-2 shrink-0 bg-white" />
         <span className="text-[11px] leading-4 text-white/85">
-          Thin evidence on a safety question returns a <strong className="font-semibold text-white">refusal card</strong>, with its sources, never a hedge.
+          Missing or conflicting support returns an <strong className="font-semibold text-white">uncertainty notice</strong> with the available sources.
         </span>
       </div>
     </div>
   );
 }
 
-/**
- * Assets: a time slider over a small graph, with one edge superseded. Both edges
- * are real: V-247's isolation boundary is engineer-verified P&ID topology, and
- * FSL-2240A → FSL-2240B is the seal supersession the golden dataset is built
- * around (`FP-SB-2025-04`, 15 Jan 2025).
- */
+/** An illustrative time slider over the source-version change and dependent claim. */
 function AssetsMock() {
   return (
     <div>
@@ -585,31 +565,31 @@ function AssetsMock() {
         <span aria-hidden="true" className="absolute left-[62%] top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 bg-(--lp-accent)" />
       </div>
       <div className="mt-1.5 flex justify-between text-[10px] uppercase tracking-[0.06em] text-white/70">
-        <span>Commissioned</span><span>Now</span>
+        <span>Earlier source</span><span>Current source</span>
       </div>
 
       <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-        <Slab className="text-center font-semibold">V-247</Slab>
+        <Slab className="text-center font-semibold">Source v2</Slab>
         <div className="text-center">
-          <p className="text-[9px] uppercase tracking-[0.06em] text-white/80">isolated by</p>
+          <p className="text-[9px] uppercase tracking-[0.06em] text-white/80">supports</p>
           <div aria-hidden="true" className="my-1 h-px bg-(--lp-accent)" />
           <p className="text-[9px] text-white/70">verified</p>
         </div>
-        <Slab className="text-center font-semibold">XV-203</Slab>
+        <Slab className="text-center font-semibold">Claim</Slab>
       </div>
 
       <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2 opacity-55">
-        <Slab className="text-center line-through">FSL-2240A</Slab>
+        <Slab className="text-center line-through">180-day rule</Slab>
         <div className="text-center">
           <p className="text-[9px] uppercase tracking-[0.06em] text-white/80">superseded</p>
           <div aria-hidden="true" className="my-1 h-px border-t border-dashed border-white/70" />
           <p className="text-[9px] text-white/70">valid_to closed</p>
         </div>
-        <Slab className="text-center font-semibold">FSL-2240B</Slab>
+        <Slab className="text-center font-semibold">90-day rule</Slab>
       </div>
 
       <p className="mt-4 bg-black/45 px-3 py-2 text-[11px] text-white/85">
-        Nothing was deleted. The old part number still answers questions about the May 2025 repair.
+        The prior version remains in the history so the earlier decision can be traced and re-evaluated.
       </p>
     </div>
   );
@@ -618,13 +598,13 @@ function AssetsMock() {
 /** Governance: a one-way gate splitting the stream by confidence. */
 function GovernanceMock() {
   const rows = [
-    ["Pump seal plan", "0.94", true],
-    ["Vendor torque spec", "0.61", false],
-    ["Scanned margin note", "0.42", false],
+    ["Current audit procedure", "0.94", true],
+    ["Supplier risk note", "0.61", false],
+    ["Unattributed attachment", "0.42", false],
   ] as const;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Extraction · confidence gate at 0.70</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Illustrative evidence review gate</p>
       <div className="mt-3 space-y-1.5">
         {rows.map(([name, score, promoted]) => (
           <div key={name} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 bg-white px-3 py-2">
@@ -658,9 +638,9 @@ function GovernanceMock() {
 /** Field capture: a device with a mic and an offline write queue. */
 function FieldMock() {
   const queue = [
-    ["Seal weep on P-1101A", "Sent"],
-    ["Gasket weep, WO-4471", "Queued"],
-    ["Photo · gauge reading", "Queued"],
+    ["Supplier incident note", "Sent"],
+    ["Audit document update", "Queued"],
+    ["Photo · source evidence", "Queued"],
   ] as const;
   return (
     <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
@@ -704,7 +684,7 @@ function IngestionMock() {
   const inputs = [
     ["Native PDF", "Parsed direct · no API cost"],
     ["Scanned form", "OCR, multi-script"],
-    ["P&ID drawing", "Computer vision"],
+    ["Security finding", "Connected record"],
     ["Spreadsheet", "xlsx · xls · ods"],
     ["Email archive", "eml · mbox + attachments"],
     ["Voice note", "Speech to text"],
@@ -728,7 +708,7 @@ function IngestionMock() {
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-1.5 text-center">
-        {[["Neo4j", "graph"], ["Qdrant", "meaning"], ["Elastic", "exact"]].map(([store, role]) => (
+        {[["FalkorDB", "relationships"], ["Sources", "provenance"], ["Memory", "context"]].map(([store, role]) => (
           <div key={store} className="border border-white/40 px-2 py-2.5">
             <p className="text-[12px] font-semibold text-white">{store}</p>
             <p className="mt-0.5 text-[10px] text-white/70">{role}</p>
@@ -737,7 +717,7 @@ function IngestionMock() {
       </div>
 
       <p className="mt-4 bg-black/45 px-3 py-2 text-[11px] text-white/85">
-        Six formats, one path. A voice note and a P&amp;ID land in the same three stores, so either can answer the same question.
+        Different records enter one connected workflow. Relationships and source history explain what each claim depends on.
       </p>
     </div>
   );
@@ -746,13 +726,13 @@ function IngestionMock() {
 /** RCA: hypotheses ranked by evidence weight, with the timeline behind them. */
 function RcaMock() {
   const hypotheses = [
-    ["Thermal cycling fatigue", 82, "3 prior failures · telemetry"],
-    ["Superseded seal variant", 61, "OEM bulletin FP-SB-2025-04"],
-    ["Bearing housing clearance", 28, "1 unverified field note"],
+    ["Audit interval revised", 82, "Current procedure · source version 2"],
+    ["Earlier decision affected", 61, "Linked claim · memory · approval"],
+    ["Unverified supplier note", 28, "Source still requires review"],
   ] as const;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Ranked by evidence weight, not by guess</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Illustrative evidence comparison</p>
       <div className="mt-3 space-y-2">
         {hypotheses.map(([name, weight, basis]) => (
           <div key={name} className="bg-white px-3 py-2">
@@ -768,27 +748,22 @@ function RcaMock() {
         ))}
       </div>
       <p className="mt-4 bg-black/45 px-3 py-2 text-[11px] text-white/85">
-        Every hypothesis carries the documents behind it. Thin evidence ranks low rather than disappearing.
+        Each explanation carries its supporting source. Unverified evidence stays visible for review.
       </p>
     </div>
   );
 }
 
-/**
- * Compliance: clause-scoped coverage in the three states the API actually
- * returns. Every row is a real finding from `GET /compliance/gaps` on the golden
- * dataset, and the clause numbers belong to the framework they are labelled
- * with: 4.x is OISD-117, 8.x to 10.x is ISO 45001 (`seed_regulations.py`).
- */
+/** Illustrative evidence and approval states for a decision review. */
 function ComplianceMock() {
   const clauses = [
-    ["OISD-117 · 4.1.1", "EQ-101", "Covered"],
-    ["ISO 45001 · 9.1.1", "EQ-102", "Gap"],
-    ["OISD-117 · 4.1.2", "EQ-101", "Unverified"],
+    ["Source lineage", "Claim", "Covered"],
+    ["Decision approval", "Action", "Gap"],
+    ["Supplier note", "Memory", "Unverified"],
   ] as const;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Clause × asset · continuously mapped</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-white/75">Evidence × decision · review state</p>
       <div className="mt-3 space-y-1.5">
         {clauses.map(([clause, asset, state]) => (
           <div key={clause} className="grid grid-cols-[1fr_auto_auto] items-center gap-2 bg-white px-3 py-2">
@@ -810,15 +785,15 @@ function ComplianceMock() {
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <div className="bg-white px-3 py-2.5 text-center">
-          <p className="lp-display text-[24px] text-(--lp-ink)">1.000</p>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.06em] text-(--lp-muted)">Precision, 52 pairs</p>
+          <p className="lp-display text-[24px] text-(--lp-ink)">1</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.06em] text-(--lp-muted)">Approval gap shown</p>
         </div>
         <div className="border border-white/40 px-3 py-2.5 text-center">
           <p className="lp-display text-[24px] text-white">0</p>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.06em] text-white/75">False positives</p>
+          <p className="mt-1 text-[10px] uppercase tracking-[0.06em] text-white/75">Actions executed</p>
         </div>
       </div>
-      <p className="mt-3 text-center text-[11px] text-white/85">A gap means no document of that clause&apos;s required type is linked to that asset. Evidence nobody has verified is called out, never counted as covered.</p>
+      <p className="mt-3 text-center text-[11px] text-white/85">A missing approval blocks a proposed action. Unverified evidence stays visible and cannot be counted as confirmed support.</p>
     </div>
   );
 }
@@ -869,18 +844,40 @@ function TechLogo({ tech }: { tech: Tech }) {
   );
 }
 
-function GithubIcon() {
+function GraphHacksIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+    <svg className="size-7 shrink-0 text-[#38bdf8]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="6" cy="6" r="3" fill="#38bdf8" fillOpacity="0.25" />
+      <circle cx="18" cy="6" r="3" fill="#38bdf8" fillOpacity="0.25" />
+      <circle cx="18" cy="18" r="3" fill="#38bdf8" fillOpacity="0.25" />
+      <circle cx="6" cy="18" r="3" fill="#38bdf8" fillOpacity="0.25" />
+      <circle cx="12" cy="12" r="2.5" fill="#38bdf8" />
+      <line x1="8.5" y1="7.5" x2="10" y2="10.5" />
+      <line x1="15.5" y1="7.5" x2="14" y2="10.5" />
+      <line x1="14" y1="13.5" x2="15.5" y2="16.5" />
+      <line x1="10" y1="13.5" x2="8.5" y2="16.5" />
+      <line x1="9" y1="6" x2="15" y2="6" />
+      <line x1="6" y1="9" x2="6" y2="15" />
     </svg>
   );
 }
 
-function YoutubeIcon() {
+function WeMakeDevsIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M21.58 7.19a2.51 2.51 0 0 0-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42a2.51 2.51 0 0 0-1.77 1.77A26.2 26.2 0 0 0 2 12a26.2 26.2 0 0 0 .42 4.81 2.51 2.51 0 0 0 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42a2.51 2.51 0 0 0 1.77-1.77A26.2 26.2 0 0 0 22 12a26.2 26.2 0 0 0-.42-4.81ZM10 15V9l5.2 3-5.2 3Z" />
+    <svg className="size-7 shrink-0 text-[#34d399]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+      <path d="M12 4v16" strokeDasharray="2 2" />
+      <circle cx="12" cy="12" r="2" fill="#34d399" />
+    </svg>
+  );
+}
+
+function FalkorDBIcon() {
+  return (
+    <svg className="size-7 shrink-0 text-[#ff6b4a]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2C6.48 2 2 4.02 2 6.5v11C2 19.98 6.48 22 12 22s10-2.02 10-4.5v-11C22 4.02 17.52 2 12 2zm0 2.2c4.85 0 7.8 1.63 7.8 2.3 0 .67-2.95 2.3-7.8 2.3S4.2 7.17 4.2 6.5c0-.67 2.95-2.3 7.8-2.3zm8 6.8c-.61.76-2.6 1.84-5.8 2.16v2.06c4.68-.43 7.8-1.92 7.8-2.72v-1.5zm-16 0v1.5c0 .8 3.12 2.29 7.8 2.72v-2.06C8.6 12.84 6.61 11.76 6 11zm0 5.5v1.5c0 .67 2.95 2.3 7.8 2.3s7.8-1.63 7.8-2.3v-1.5c-.61.76-2.6 1.84-5.8 2.16v2.06c4.68-.43 7.8-1.92 7.8-2.72z" />
+      <path d="M12 11.5l2.5 2.5-2.5 2.5-2.5-2.5 2.5-2.5z" fill="#ffb74d" />
     </svg>
   );
 }
@@ -1090,31 +1087,23 @@ function orbitWire(deg: number): string {
  * where the ring collapses to a wrapped row.
  */
 const heroSources: { tag: string; label: string; deg: number; cited?: boolean }[] = [
-  { tag: "DWG", label: "P&IDs and drawings", deg: 120 },
-  { tag: "OEM", label: "Vendor manuals", deg: 150, cited: true },
-  { tag: "OT", label: "OT tag history", deg: 180 },
-  { tag: "NDT", label: "Inspection reports", deg: 210 },
-  { tag: "AUDIO", label: "Field voice notes", deg: 240, cited: true },
-  { tag: "REG", label: "Regulations", deg: 60, cited: true },
-  { tag: "CMMS", label: "Work orders", deg: 30 },
-  { tag: "SOP", label: "Standard procedures", deg: 0 },
-  { tag: "LOG", label: "Shift handovers", deg: -30 },
-  { tag: "PTW", label: "Permits to work", deg: -60 },
+  { tag: "DOC", label: "Documents", deg: 120 },
+  { tag: "SRC", label: "Source versions", deg: 150, cited: true },
+  { tag: "SUP", label: "Suppliers", deg: 180 },
+  { tag: "INC", label: "Incidents", deg: 210 },
+  { tag: "MEM", label: "Agent memory", deg: 240, cited: true },
+  { tag: "CLM", label: "Evidence claims", deg: 60, cited: true },
+  { tag: "SEC", label: "Security findings", deg: 30 },
+  { tag: "TXN", label: "Transactions", deg: 0 },
+  { tag: "DEC", label: "Decisions", deg: -30 },
+  { tag: "REV", label: "Human review", deg: -60 },
 ];
 
-/**
- * The three sources behind the answer on the card. Every one is a real record in
- * the golden dataset (`dataset/00_Reference/00_KAIROS_CANON.md` § Master
- * Timeline), and FP-SB-2025-04 is retrievable from the running system, so a
- * reader who asks the product this question gets this citation back. The third is
- * deliberately unverified: disclosing weak evidence rather than blending it into
- * the rest is the whole product argument, so the hero states it instead of
- * hiding it.
- */
+/** Synthetic Evidence Drift records: two source versions and an approval requiring review. */
 const heroEvidence: { doc: string; tier: string; date: string; unverified?: boolean }[] = [
-  { doc: "FP-SB-2025-04", tier: "OEM", date: "15 Jan 25" },
-  { doc: "WO-2025-0631", tier: "Site record", date: "15 May 25" },
-  { doc: "Vibration note, unlogged", tier: "Unverified", date: "15 Jan 26", unverified: true },
+  { doc: "Audit procedure · version 1", tier: "Superseded", date: "180 days" },
+  { doc: "Audit procedure · version 2", tier: "Current", date: "90 days" },
+  { doc: "Prior approval · revision 1", tier: "Review", date: "Stale", unverified: true },
 ];
 
 /* Ring radii as multiples of the orbit. 1 is the chip ring itself; the wider one
@@ -1137,10 +1126,10 @@ function HeroVisual() {
     <div>
       {/* Reads as an instrument panel legend: what goes in, what comes out. */}
       <div className="flex items-center justify-between gap-3 text-[9px] font-semibold uppercase tracking-[0.1em] text-white/60 lg:text-[10px] lg:tracking-[0.14em]">
-        <span className="whitespace-nowrap">Ten source systems</span>
+        <span className="whitespace-nowrap">AIDTRACE · synthetic</span>
         <span className="flex items-center gap-2 whitespace-nowrap">
           <span aria-hidden="true" className="size-1.5 bg-(--lp-accent)" />
-          One governed answer
+          Decision trace
         </span>
       </div>
 
@@ -1252,13 +1241,13 @@ function HeroVisual() {
           <div className="lp-mock border border-white/15 bg-(--lp-surface) p-4 sm:p-5">
             <div className="flex items-center justify-between border-b border-(--lp-line) pb-3">
               <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-(--lp-accent-text)">
-                Checked answer
+                Evidence change detected
               </span>
-              <span className="text-[11px] tabular-nums text-(--lp-muted)">2.8 s</span>
+              <span className="text-[11px] tabular-nums text-(--lp-muted)">Review required</span>
             </div>
 
             <p className="lp-display mt-3 text-[17px] leading-tight text-pretty text-(--lp-ink) sm:text-[19px]">
-              The EQ-101 seal spec became FSL-2240B on 15 January 2025. A repair four months later still fitted the superseded part.
+              A supplier audit interval changed from 180 to 90 days. The earlier decision and its approval need another review.
             </p>
 
             <div className="mt-4 border-t border-(--lp-line) pt-3">
@@ -1283,15 +1272,15 @@ function HeroVisual() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-1.5 text-[11px]">
-              <span className="bg-(--lp-accent-strong) px-2 py-1 font-medium text-white">3 sources</span>
-              <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Authority: OEM</span>
-              <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Verified</span>
+              <span className="bg-(--lp-accent-strong) px-2 py-1 font-medium text-white">3 linked records</span>
+              <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Source version changed</span>
+              <span className="border border-(--lp-line) px-2 py-1 text-(--lp-muted)">Approval stale</span>
             </div>
 
             <div className="mt-4">
               <div className="flex justify-between text-[11px] text-(--lp-muted)">
-                <span>Confidence</span>
-                <span className="font-semibold tabular-nums text-(--lp-ink)">0.91</span>
+                <span>Evidence path</span>
+                <span className="font-semibold tabular-nums text-(--lp-ink)">Review before action</span>
               </div>
               <div className="mt-1.5 h-1.5 bg-(--lp-band)">
                 <span className="block h-full w-[91%] bg-(--lp-accent)" />
@@ -1303,7 +1292,7 @@ function HeroVisual() {
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-[11px] text-white/70 lg:mt-6">
         <span>No claim without its source</span>
-        <span>A safety question with thin evidence is refused, not hedged</span>
+        <span>Changed evidence triggers human review before action</span>
       </div>
     </div>
   );
@@ -1317,10 +1306,11 @@ function HeroVisual() {
 function Shot({ src, alt }: { src: string; alt: string }) {
   return (
     <Image
-      src={`/shots/${src}.png`}
+      src={`/shots/${src}.png?rev=aidtrace-workspace-v2`}
       alt={alt}
       width={2880}
       height={1620}
+      unoptimized
       sizes="(max-width: 1024px) 100vw, 900px"
       className="lp-mock h-auto w-full"
     />
@@ -1381,20 +1371,20 @@ export default function Home() {
               whitespace, so without it the accessible name runs the lines
               together ("Plant knowledge,at the moment…"). Same pattern below. */}
           <div>
-            <Eyebrow>Industrial knowledge intelligence</Eyebrow>
+            <Eyebrow>Graph-native AI intelligence</Eyebrow>
             <h1 className="mt-6 text-[40px] text-(--lp-ink) sm:text-[54px] lg:text-[64px]">
-              The plant{" "}<br />
-              already knows.{" "}<br />
-              <span className="text-(--lp-accent)">Nobody can find it{" "}<br />
-                in time.</span>
+              Connected{" "}<br />
+              intelligence.{" "}<br />
+              <span className="text-(--lp-accent)">Verifiable{" "}<br />
+                decisions.</span>
             </h1>
           </div>
 
           <div className="lg:pt-4">
             <p className="max-w-md text-[18px] leading-7 text-(--lp-muted)">
-              <strong className="font-semibold text-(--lp-ink)">AIDTRACE reads a plant&apos;s drawings,
-                procedures and maintenance history into one system</strong> that answers in plain
-              language, with the source behind every answer.
+              <strong className="font-semibold text-(--lp-ink)">One graph. Every relationship. A clearer decision.</strong>{" "}
+              AIDTRACE connects evidence, persistent agent memory and decisions across specialized
+              workflows, powered by FalkorDB.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a
@@ -1404,14 +1394,14 @@ export default function Home() {
                 className="group relative inline-flex min-h-11 min-w-[207px] items-center justify-center gap-2 overflow-hidden bg-(--lp-accent-strong) px-3 py-[15px] text-[14px] font-medium text-white transition-transform duration-150 ease-out active:scale-[0.98]"
               >
                 <PixelFill />
-                <span className="relative z-10">Watch demo</span>
+                <span className="relative z-10">{demoVideoId ? "Watch AIDTRACE demo" : "Open AIDTRACE workspace"}</span>
                 <span aria-hidden="true" className="relative z-10">›</span>
               </a>
               <a
                 href="#how"
                 className="inline-flex min-h-11 min-w-[207px] items-center justify-center gap-2 bg-(--lp-ink) px-3 py-[15px] text-[14px] font-medium text-white transition-[background-color,transform] duration-150 ease-out hover:bg-(--lp-accent-strong) active:scale-[0.98]"
               >
-                See how it works <span aria-hidden="true" className="text-(--lp-accent)">▶</span>
+                Explore how it works <span aria-hidden="true" className="text-(--lp-accent)">▶</span>
               </a>
             </div>
           </div>
@@ -1420,6 +1410,34 @@ export default function Home() {
         <div data-reveal className="lp-card lp-media lp-dither relative mt-12 border border-transparent p-3 sm:p-6">
           <div className="relative border border-white/20 p-4 sm:p-8">
             <HeroVisual />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Graph Hacks banner: the event this build was made for. Same card as the
+          provenance section's header, and its link goes to the Track 01 tab below. ── */}
+      <section aria-label="Built for Graph Hacks" className="lp-frame relative px-4 pb-14 sm:px-6">
+        <div data-reveal className="lp-card border border-(--lp-line) bg-(--lp-surface)">
+          <div className="border-b border-(--lp-line) bg-(--lp-accent-strong) px-5 py-4 sm:px-7">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
+              Built for Graph Hacks · Track 01
+            </p>
+            <p className="lp-display mt-2 text-[19px] leading-tight text-white sm:text-[22px]">
+              Agents that act on connected data.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-6 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:gap-10 sm:px-7">
+            <p className="max-w-2xl text-[15px] leading-6 text-(--lp-muted)">
+              The Track 01 extension traces multi-hop relationships and preserves each investigation step before
+              a controlled action is proposed. Affected entities and dependencies stay visible in the shared workspace.
+            </p>
+            <a
+              href="#field"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 bg-(--lp-ink) px-5 py-[11px] text-[14px] font-medium text-white transition-[background-color,transform] duration-150 ease-out hover:bg-(--lp-accent-strong) active:scale-[0.98]"
+            >
+              See the Track 01 extension <span aria-hidden="true" className="text-(--lp-accent)">▶</span>
+            </a>
           </div>
         </div>
       </section>
@@ -1434,11 +1452,11 @@ export default function Home() {
             <Ticks />
             <Eyebrow>Demo</Eyebrow>
             <h2 className="mt-5 max-w-3xl text-[36px] sm:text-[48px]">
-              The product, running.
+              The connected workflow, in action.
             </h2>
             <p className="mt-5 max-w-xl text-[16px] leading-6 text-(--lp-muted)">
-              One pass through AIDTRACE: a document goes into the vault, a question comes back with
-              its source, and a safety-critical question is refused rather than guessed.
+              See the connected AIDTRACE workflow with source-backed answers and governed
+              decisions. The FalkorDB Evidence Drift case is labeled synthetic in the workspace.
             </p>
             <DemoPlayer videoId={demoVideoId} />
           </div>
@@ -1451,14 +1469,13 @@ export default function Home() {
           <div data-reveal>
             <Eyebrow>The problem</Eyebrow>
             <h2 className="mt-6 max-w-3xl text-[30px] sm:text-[44px]">
-              This is not a filing problem.{" "}<br />
-              <Box fill>It is a safety problem.</Box>
+              The information exists.{" "}<br />
+              <Box fill>The connections are missing.</Box>
             </h2>
             <p className="mt-6 max-w-2xl text-[16px] leading-6 text-(--lp-dark-muted)">
-              A large plant runs on documents written over forty years by people who have mostly
-              left. When a technician cannot find the right one in the ten minutes they have, they
-              do the job from memory, either their own or someone else&apos;s. That is where incidents
-              start.
+              A supplier disruption affects a facility. A security finding exposes a dependency.
+              A revised document changes an earlier recommendation. When these records stay apart,
+              people cannot see which decisions need another look.
             </p>
           </div>
 
@@ -1476,10 +1493,8 @@ export default function Home() {
           </div>
 
           <p data-reveal className="mt-12 max-w-3xl text-[16px] leading-6 text-white">
-            Search alone cannot fix this, because the most dangerous gaps are the ones nobody knows
-            to search for. A technician who has never heard that this pump failed this way before
-            does not think to go looking.{" "}
-            <span className="text-(--lp-accent)">So AIDTRACE does not wait to be asked.</span>
+            AIDTRACE connects evidence and traces the consequences when information changes.{" "}
+            <span className="text-(--lp-accent)">The question is what the change means for decisions already made.</span>
           </p>
         </div>
       </section>
@@ -1491,12 +1506,12 @@ export default function Home() {
           <div data-reveal>
             <Eyebrow>How it works</Eyebrow>
             <h2 className="mt-6 max-w-3xl text-[30px] text-(--lp-ink) sm:text-[44px]">
-              One pump, one work order,{" "}<br />
-              <Box>start to finish.</Box>
+              One intelligence workflow.{" "}<br />
+              <Box>Multiple applications.</Box>
             </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-6 text-(--lp-muted)">
-              Everything below happens without anyone typing a search. Follow it once and the rest
-              of this page explains itself.
+              Connect information, investigate its relationships, verify the evidence and bring
+              recommendations to a person. Each extension keeps its specialized algorithms.
             </p>
           </div>
 
@@ -1533,10 +1548,10 @@ export default function Home() {
           </ol>
 
           <p data-reveal className="mt-10 max-w-3xl text-[15px] leading-6 text-(--lp-muted)">
-            That last step is the one people miss. A system that always answers is easy to build and
-            impossible to trust in a plant.{" "}
-            <strong className="font-semibold text-(--lp-ink)">Knowing when to stay quiet is the
-              harder half</strong>, and it is why everything below exists.
+            The last step matters: a recommendation is only as current as the evidence and approval
+            behind it.{" "}
+            <strong className="font-semibold text-(--lp-ink)">When evidence changes, the decision
+              must be checked again.</strong>
           </p>
         </div>
       </section>
@@ -1547,13 +1562,14 @@ export default function Home() {
           <Ticks />
           <div className="grid gap-10 sm:gap-14 lg:grid-cols-[1fr_1.35fr]">
             <div data-reveal>
-              <Eyebrow>Capabilities</Eyebrow>
+              <Eyebrow>The intelligence engine</Eyebrow>
               <h2 className="mt-6 text-[30px] text-(--lp-ink) sm:text-[44px]">
-                Answers paired with{" "}<br />their <Box>evidence.</Box>
+                Connected evidence.{" "}<br /><Box>Inspectable decisions.</Box>
               </h2>
               <p className="mt-6 max-w-md text-[16px] leading-6 text-(--lp-muted)">
-                AIDTRACE already knows the plant&apos;s documents, assets and history. Every screen works
-                the same way, so nothing is claimed without a way to check it.
+                FalkorDB links source versions, claims, agent memory, decisions and approvals. The
+                workspace offers Globe, Graph, Lineage and Timeline views; the screens below illustrate
+                specialized capabilities in the AIDTRACE workspace.
               </p>
 
               <div className="mt-10">
@@ -1634,15 +1650,15 @@ export default function Home() {
           <div data-reveal className="mt-16">
             <div className="border-b border-(--lp-line) pb-4">
               <p className="lp-display text-[20px] text-(--lp-ink) sm:text-[24px]">
-                What sits under those eight screens
+                What connects those eight examples
               </p>
               {/* The counts differ because the axes differ, and a reader who is not
                   told that reads "ten" as the complete set and the eight tabs as a
                   subset of it. The tabs are screens; these are the technology beneath
                   them plus the work that never gets a screen of its own. */}
               <p className="mt-2 max-w-2xl text-[14px] leading-5 text-(--lp-muted)">
-                The eight above are screens. These are the machinery underneath them, and the
-                cross-cutting work that has no screen of its own.
+                AIDTRACE connects specialized analysis to a shared evidence and decision graph,
+                so relationships can be inspected across workflows.
               </p>
             </div>
             <dl className="grid border-l border-(--lp-line) sm:grid-cols-2">
@@ -1699,13 +1715,14 @@ export default function Home() {
           {/* order-first below lg so the heading still introduces the card on a
               phone, rather than arriving underneath it. */}
           <div data-reveal className="order-first flex flex-col items-end text-right lg:order-last">
-            <Eyebrow>System design</Eyebrow>
+            <Eyebrow>System architecture</Eyebrow>
             <h2 className="mt-6 text-[30px] text-white sm:text-[44px]">
-              Thirteen layers,{" "}<br />one <Box fill>path through.</Box>
+              One connected foundation.{" "}<br /><Box fill>Traceable decisions.</Box>
             </h2>
             <p className="mt-6 max-w-md text-[16px] leading-6 text-(--lp-dark-muted)">
-              A document goes in at one end and comes out as an answer someone can act on. Open a
-              block to see what it is made of, and the rule it has to follow.
+              These diagrams show the existing application services and specialist data stores.
+              The shared FalkorDB graph connects evidence, memory, decisions and approvals across them.
+              Open a block to inspect each layer.
             </p>
 
             <div className="mt-10 w-full">
@@ -1746,9 +1763,9 @@ export default function Home() {
         <div className="lp-frame relative px-4 py-16 sm:px-6 sm:py-24">
           <Ticks />
           <div data-reveal>
-            <Eyebrow>Use cases</Eyebrow>
+            <Eyebrow>Specialized intelligence extensions</Eyebrow>
             <h2 className="mt-6 text-[30px] text-(--lp-ink) sm:text-[44px]">
-              Built for the <Box>way plants <span className="text-(--lp-accent)">actually run.</span></Box>
+              One platform.{" "}<Box>Different problems. <span className="text-(--lp-accent)">Shared evidence.</span></Box>
             </h2>
           </div>
 
@@ -1778,7 +1795,7 @@ export default function Home() {
                   <p className="mt-3 text-[15px] leading-6 text-white/85">{audiences[audience].body}</p>
                 </div>
                 <div className="mt-6 border border-white/20 p-2 sm:p-3">
-                  <Shot src={audiences[audience].shot} alt={`AIDTRACE workspace: ${audiences[audience].title.toLowerCase()}`} />
+                  <Shot src={audiences[audience].shot} alt="AIDTRACE workspace showing connected evidence and decisions" />
                 </div>
               </div>
             </div>
@@ -1790,19 +1807,19 @@ export default function Home() {
       <section id="evidence" className="bg-(--lp-dark) text-white">
         <div className="lp-frame lp-frame--dark px-4 py-16 sm:px-6 sm:py-24">
           <div data-reveal>
-            <Eyebrow>Evals</Eyebrow>
+            <Eyebrow>Evaluation</Eyebrow>
             <h2 className="mt-6 max-w-3xl text-[30px] sm:text-[44px]">
-              No empty promises.{" "}<br />
-              <Box fill>Provenance at 100%.</Box>
+              Measure the function.{" "}<br />
+              <Box fill>Name the scope.</Box>
             </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-6 text-(--lp-dark-muted)">
-              Forty-six domain-expert questions, written against a fixed answer key, across
-              fifteen categories and run against the live stack. Higher is better.
+              The figures below come from an industrial question-answering benchmark on a
+              synthetic dataset. They do not measure all AIDTRACE extensions or FalkorDB graph reasoning.
             </p>
           </div>
 
           <div data-reveal className="mt-14">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-(--lp-dark-muted)">Graded outcomes, 46 questions</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-(--lp-dark-muted)">Industrial extension benchmark · 46 questions</p>
 
             {/* pt-24 reserves room for the badge, value and sub-line stacked
                 above each bar; a 100% bar would otherwise push them off. */}
@@ -1876,7 +1893,7 @@ export default function Home() {
               colour into whatever cells the last row leaves over, leaving a grey block
               where a card should be. Per-cell borders leave that space as section ground. */}
           <div data-reveal className="mt-16">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-(--lp-dark-muted)">The rest of the harness</p>
+            <p className="text-[11px] uppercase tracking-[0.12em] text-(--lp-dark-muted)">Other industrial extension checks</p>
             <div className="mt-6 grid border-t border-l border-(--lp-dark-line) sm:grid-cols-2 lg:grid-cols-3">
               {evalSuites.map((suite) => (
                 <div key={suite.name} data-stagger className="lp-cell lp-cell--dark border-b border-r border-(--lp-dark-line) bg-(--lp-dark) p-5">
@@ -1930,20 +1947,20 @@ export default function Home() {
         <div className="lp-frame relative px-4 py-16 sm:px-6 sm:py-24">
           <Ticks />
           <div data-reveal>
-            <Eyebrow>Provenance</Eyebrow>
+            <Eyebrow>Trust and evidence</Eyebrow>
             <h2 className="mt-6 max-w-4xl text-[30px] text-(--lp-ink) sm:text-[44px]">
-              No <Box>claim</Box> without its <Box fill>source.</Box>
+              No <Box>important conclusion</Box> without a <Box fill>traceable source.</Box>
             </h2>
             <p className="mt-6 max-w-xl text-[16px] leading-6 text-(--lp-muted)">
-              Every fact in the graph carries six properties on the link itself. That is what lets you
-              check an answer, undo a replacement, and tell an uncertain guess apart from a verified
-              fact.
+              AIDTRACE links claims, memory and decisions to the evidence they depend on. The
+              graph screenshot and record below show the evidence path through source versions,
+              claims, memory, decisions and approval revisions.
             </p>
           </div>
 
           <div data-reveal className="lp-media lp-dither relative mt-12 p-3 sm:p-6">
             <div className="border border-white/20 p-2 sm:p-3">
-              <Shot src="graph" alt="The AIDTRACE knowledge graph: assets and facts joined by time-aware edges, each carrying its source and authority." />
+              <Shot src="graph" alt="AIDTRACE scenario graph showing suppliers, evidence estimates and a connected sourcing decision." />
             </div>
           </div>
 
@@ -1960,10 +1977,10 @@ export default function Home() {
                   --lp-accent-strong lands at 3.7:1 where it needs 4.5. The hierarchy
                   against the line below comes from size and weight instead. */}
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white">
-                One fact, and everything it carries
+                One changed source, and its decision impact
               </p>
               <p className="lp-display mt-2 text-[19px] leading-tight text-white sm:text-[22px]">
-                The EQ-101 seal specification was superseded on 15 January 2025.
+                A supplier audit interval changed from 180 to 90 days; the earlier approval is stale.
               </p>
             </div>
 
@@ -1978,7 +1995,7 @@ export default function Home() {
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <dt>
-                      {/* <code>: these are literal property names on the edge, not prose. */}
+                      {/* The code style distinguishes workflow field names from their example values. */}
                       <code className="text-[13px] font-semibold tracking-tight text-(--lp-accent-text)">{name}</code>
                     </dt>
                     {/* tabular-nums so the dates and scores line up down the column. */}
@@ -1990,7 +2007,7 @@ export default function Home() {
             </dl>
 
             <p className="bg-(--lp-band) px-5 py-3 text-[12px] text-(--lp-muted) sm:px-7">
-              An illustrative fact. Every real one in the graph carries the same six.
+              A synthetic Evidence Drift example. Source versions and decision revisions keep the change traceable for human review.
             </p>
           </div>
         </div>
@@ -2004,16 +2021,9 @@ export default function Home() {
               Your questions,{" "}<br /><Box fill>answered.</Box>
             </h2>
             <p className="mt-6 max-w-md text-[15px] leading-6 text-(--lp-dark-muted)">
-              The things people ask before they trust a system with a safety case. Still curious?
-              Read the documentation, or open the workspace and try it yourself.
+              How connected evidence, agent memory, human review and specialized extensions fit
+              together. Explore the workspace for more detail.
             </p>
-            <Link
-              href="/docs"
-              className="mt-6 inline-flex items-center gap-2.5 border border-(--lp-dark-line) px-4 py-2.5 text-[14px] text-white transition-colors duration-150 hover:border-(--lp-accent)"
-            >
-              Read documentation
-              <span aria-hidden="true" className="text-(--lp-accent)">›</span>
-            </Link>
           </div>
 
           <div data-reveal className="mt-12 grid gap-10 lg:grid-cols-[0.8fr_1.4fr]">
@@ -2055,29 +2065,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tech stack band, directly above the footer as on the reference: one
-          continuous full-bleed strip, no framed label floating over a
-          full-bleed row. Hovering pauses the scroll. */}
-      {/* Tech roller, built the way the reference builds its marquee band:
-          a light outer band whose padding is what separates the strip from the
-          dark section above and the footer below, wrapping a dark inner strip.
-          No borders; the light band does that job. Items are mx-9 / gap-9 at
-          32px, and the track translates exactly -50%. */}
+      {/* Scrolling pad: Built for Graph Hacks · Backed by We Make Devs · Memory is FALKOR DB */}
       <div aria-hidden="true" className="overflow-hidden bg-(--lp-band) py-2">
-        <div className="overflow-hidden bg-(--lp-dark) py-2.5">
+        <div className="overflow-hidden bg-(--lp-dark) py-3">
           {/* Each half must be at least as wide as the viewport or the -50%
               slide opens a gap at the right edge. */}
-          <div className="lp-marquee-track flex w-max whitespace-nowrap">
-            {[...techStack, ...techStack].map((tech, i) => (
-              <span key={`${tech.name}-${i}`} className="mx-9 flex items-center gap-9 text-[32px] text-white">
-                <TechLogo tech={tech} />
-                {tech.name}
+          <div className="lp-marquee-track flex w-max whitespace-nowrap items-center">
+            {Array.from({ length: 8 }, () => [
+              { title: "Built for Graph Hacks", icon: GraphHacksIcon, pill: "Track 01", pillCls: "bg-[#38bdf8]/15 text-[#38bdf8] border-[#38bdf8]/40" },
+              { title: "Backed by We Make Devs", icon: WeMakeDevsIcon, pill: "Community", pillCls: "bg-[#34d399]/15 text-[#34d399] border-[#34d399]/40" },
+              { title: "Memory is FALKOR DB", icon: FalkorDBIcon, pill: "GraphBLAS", pillCls: "bg-[#ff6b4a]/15 text-[#ff6b4a] border-[#ff6b4a]/40" },
+            ]).flat().map((item, i) => (
+              <span key={`${item.title}-${i}`} className="mx-8 flex items-center gap-4 text-[22px] font-semibold tracking-wide text-white sm:text-[28px]">
+                <item.icon />
+                <span className="tracking-tight">{item.title}</span>
+                <span className={`rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-medium uppercase tracking-widest ${item.pillCls}`}>
+                  {item.pill}
+                </span>
+                <span aria-hidden="true" className="ml-4 text-white/20 select-none text-lg">✦</span>
               </span>
             ))}
           </div>
         </div>
       </div>
-      <p className="sr-only">Built with {techStack.map((t) => t.name).join(", ")}.</p>
+      <p className="sr-only">Built for Graph Hacks, backed by We Make Devs, memory is FALKOR DB.</p>
 
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <footer className="bg-(--lp-bg)">
@@ -2090,7 +2101,7 @@ export default function Home() {
                 <span className="lp-display text-[22px] text-(--lp-ink)">AIDTRACE</span>
               </div>
               <p className="mt-4 max-w-xs text-[14px] leading-5 text-(--lp-muted)">
-                The right knowledge to the right person at the moment of action.
+                Understand the connections. Trust the evidence. Improve the decision.
               </p>
             </div>
 
@@ -2126,28 +2137,8 @@ export default function Home() {
         <div className="lp-frame px-4 pb-8 pt-6 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-[12px] uppercase tracking-[0.08em] text-(--lp-muted)">
-              © 2026 AIDTRACE Inc
+              © 2026 AIDTRACE
             </p>
-            <div className="flex items-center gap-2">
-              <a
-                href={GITHUB_URL}
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="AIDTRACE on GitHub"
-                className="grid size-9 place-items-center bg-(--lp-ink) text-white transition-colors hover:bg-(--lp-accent-strong)"
-              >
-                <GithubIcon />
-              </a>
-              <a
-                href={demoVideoId ? `https://www.youtube.com/watch?v=${demoVideoId}` : DEMO_FALLBACK_URL}
-                target="_blank"
-                rel="noreferrer noopener"
-                aria-label="Watch the AIDTRACE demo"
-                className="grid size-9 place-items-center bg-[#ff0000] text-white transition-opacity hover:opacity-80"
-              >
-                <YoutubeIcon />
-              </a>
-            </div>
           </div>
         </div>
       </footer>

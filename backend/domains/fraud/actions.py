@@ -1,13 +1,13 @@
 """Human-approved execution of PROPOSED actions. Mutations here only touch the synthetic graph."""
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from domains.fraud.store import GraphStore
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def approve(store: GraphStore, action_id: str) -> dict:

@@ -1,4 +1,4 @@
-﻿"""Synthetic consumer case for RESOLVE AI remedy investigation (Graph Hacks, Track 01).
+"""Synthetic consumer case for RESOLVE remedy investigation (Graph Hacks, Track 01, FalkorDB).
 
 Everything here is invented for testing: people, institutions, policy clauses, amounts and dates.
 Policy and terms excerpts are SYNTHETIC FIXTURES that stand in for documents the user would supply.

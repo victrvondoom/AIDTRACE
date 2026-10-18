@@ -11,7 +11,7 @@ Planted structure
 """
 import json
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from domains.fraud import config
 from domains.fraud.store import GraphStore
@@ -22,7 +22,7 @@ SEED = 42
 def build_dataset(rng: random.Random) -> dict:
     accounts, devices, cards, ips, links, txns = [], [], [], [], [], []
     truth = {"rings": {}, "decoy": [], "flagged_transactions": []}
-    start = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    start = datetime(2026, 10, 1, tzinfo=UTC)
 
     def add_account(acc_id: str, name: str):
         accounts.append({"id": acc_id, "name": name, "status": "ACTIVE"})
@@ -114,7 +114,7 @@ def load(store: GraphStore, data: dict) -> dict:
         ("OWNS_CARD", "Card", "id"),
         ("LOGGED_FROM", "IP", "addr"),
     ]:
-        rows = [l for l in data["links"] if l["rel"] == rel]
+        rows = [link for link in data["links"] if link["rel"] == rel]
         store.query(
             f"UNWIND $rows AS r MATCH (a:Account {{id: r.a}}) MATCH (t:{label} {{{key}: r.t}}) "
             f"CREATE (a)-[:{rel}]->(t)",

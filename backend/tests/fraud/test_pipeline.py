@@ -2,16 +2,16 @@
 
 Each assertion compares what the agent finds with the planted ground truth from graph/seed.py.
 """
+import os
 import random
 
 import pytest
 
-from domains.fraud import actions
+from domains.fraud import actions, seed
 from domains.fraud.investigator import Investigator
-from domains.fraud.tools import GraphTools
-from domains.fraud import seed
 from domains.fraud.store import GraphStore
-import os
+from domains.fraud.tools import GraphTools
+
 requires_falkordb = pytest.mark.skipif(not os.getenv("FALKORDB_TEST_URL"), reason="set FALKORDB_TEST_URL")
 
 pytestmark = requires_falkordb

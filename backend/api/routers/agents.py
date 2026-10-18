@@ -11,6 +11,7 @@ runs; nothing is substituted.
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any
 
 import structlog
@@ -24,6 +25,7 @@ from api.services import tenant
 from api.services.agents.runtime import ADAPTERS, Context, support_matrix
 from api.services.consumer.store import GraphStore
 from api.services.memory.agent_memory import AgentMemory
+from api.services.memory.context import build_llm_context
 
 log = structlog.get_logger(__name__)
 router = APIRouter()
@@ -179,6 +181,17 @@ async def invoke(body: InvokeBody, user: CurrentUserDep, settings: SettingsDep, 
         agent = str(body.args.get("agent_id", "agent:operator"))
         mem = AgentMemory(store, ctx.site_id)
         output = await asyncio.to_thread(lambda: mem.recall(agent_id=agent, fact_key=body.args.get("fact_key"), limit=10))
+    elif (body.runtime, body.tool) == ("memory", "context"):
+        agent = body.args.get("agent_id")
+        fact_key = body.args.get("fact_key")
+        limit = body.args.get("limit", 5)
+        if (not isinstance(agent, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:\-]{0,127}", agent)
+                or not isinstance(fact_key, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/\-]{0,199}", fact_key)
+                or not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 10):
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "context needs a valid agent_id, exact fact_key and limit of 1 to 10.")
+        mem = AgentMemory(store, ctx.site_id)
+        output = await asyncio.to_thread(lambda: build_llm_context(
+            mem.recall(agent_id=agent, fact_key=fact_key, limit=limit, verified_only=True), fact_key=fact_key))
     else:  # pragma: no cover - guarded by the invokable flag above
         raise HTTPException(status.HTTP_404_NOT_FOUND, "That tool is not available through the shared interface.")
     log.info("agents.tool_invoked", runtime=body.runtime, tool=body.tool, site=ctx.site_id, user=user.get("user_id"))

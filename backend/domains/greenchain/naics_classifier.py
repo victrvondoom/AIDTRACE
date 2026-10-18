@@ -24,7 +24,6 @@ from functools import lru_cache
 
 from . import ml_bridge  # noqa: F401  (side-effect: configures sys.path for ml.*)
 
-
 GENERIC_NAICS_CODE = "33"
 GENERIC_NAICS_TITLE = "Manufacturing (generic, sector median)"
 

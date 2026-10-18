@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -114,5 +114,5 @@ async def capabilities(user: CurrentUserDep, settings: SettingsDep, drift_store:
     rep_limits = [] if runtime is not None else ["ResolveAI case reports need the worker."]
     caps.append(_cap("reports", "Reports", "OPERATIONAL" if not rep_limits else "LIMITED", "Case, procurement and approval reports built from real runs.", limits=rep_limits))
 
-    return {"generated_at": datetime.now(timezone.utc).isoformat(), "site_id": site_id, "capabilities": caps,
+    return {"generated_at": datetime.now(UTC).isoformat(), "site_id": site_id, "capabilities": caps,
             "edges": [{"source": s, "target": t, "rel": r} for s, t, r in EDGES]}

@@ -1,6 +1,6 @@
 "use client";
 
-// Reports, built only from what the integrated runtimes actually produced: ResolveAI case reports, GreenChain procurement memos and
+// Reports, built only from what the integrated runtimes actually produced: Resolve case reports (FALKOR DB), GreenChain procurement memos and
 // approval receipts. Each report states what ran and what did not; exports are the same text the preview shows.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, FilterTabs, StatusBadge } from "@/components/ui";
@@ -68,8 +68,8 @@ export function ReportsWorkspace() {
 
       <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-2 border border-line bg-surface p-4">
-          {tab === "cases" && (workerUp === false ? <p className="text-caption text-muted">The ResolveAI worker is not connected, so there are no case reports.</p> :
-            cases.length === 0 ? <p className="text-caption text-muted">No cases yet. Create one in ResolveAI and run its evidence investigation.</p> :
+          {tab === "cases" && (workerUp === false ? <p className="text-caption text-muted">The Resolve worker is not connected, so there are no case reports.</p> :
+            cases.length === 0 ? <p className="text-caption text-muted">No cases yet. Create one in Resolve and run its evidence investigation with FALKOR DB.</p> :
               <ul className="space-y-1">{cases.map((c) => <li key={c.id}><Button variant="ghost" className="w-full justify-start" disabled={busy} onClick={() => void caseReport(c)}>{c.title}</Button></li>)}</ul>)}
           {tab === "procurement" && (scenarios.length === 0 ? <p className="text-caption text-muted">No GreenChain decision is recorded. Record one in Agent Memory.</p> :
             <ul className="space-y-1">{scenarios.map((s) => <li key={s}><Button variant="ghost" className="w-full justify-start" disabled={busy} onClick={() => void memo(s)}>Scenario {s}</Button></li>)}</ul>)}

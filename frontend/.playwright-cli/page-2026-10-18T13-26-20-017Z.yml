@@ -1,0 +1,687 @@
+- main [ref=f1e2]:
+  - navigation [ref=f1e4]:
+    - link "AIDTRACE home" [ref=f1e5] [cursor=pointer]:
+      - /url: /
+      - generic [ref=f1e6]: AIDTRACE
+    - generic [ref=f1e7]:
+      - link "Problem" [ref=f1e8] [cursor=pointer]:
+        - /url: "#problem"
+      - link "How it works" [ref=f1e9] [cursor=pointer]:
+        - /url: "#how"
+      - link "Intelligence" [ref=f1e10] [cursor=pointer]:
+        - /url: "#capabilities"
+      - link "Architecture" [ref=f1e11] [cursor=pointer]:
+        - /url: "#system"
+      - link "Extensions" [ref=f1e12] [cursor=pointer]:
+        - /url: "#field"
+      - link "Evaluation" [ref=f1e13] [cursor=pointer]:
+        - /url: "#evidence"
+      - link "Evidence" [ref=f1e14] [cursor=pointer]:
+        - /url: "#provenance"
+      - link "FAQ" [ref=f1e15] [cursor=pointer]:
+        - /url: "#faq"
+      - link "Docs" [ref=f1e16] [cursor=pointer]:
+        - /url: /docs
+    - link "Open workspace" [ref=f1e18] [cursor=pointer]:
+      - /url: /login
+      - generic [aria-hidden] [ref=f1e20]: ›
+  - generic [ref=f1e21]:
+    - generic [ref=f1e22]:
+      - generic [ref=f1e23]:
+        - generic [ref=f1e24]: Graph-native AI intelligence
+        - heading [level=1] [ref=f1e25]:
+          - text: Connected intelligence.
+          - generic [ref=f1e26]: Verifiable decisions.
+      - generic [ref=f1e27]:
+        - paragraph [ref=f1e28]:
+          - strong [ref=f1e29]: One graph. Every relationship. A clearer decision.
+          - text: AIDTRACE connects evidence, persistent agent memory and decisions across specialized workflows, powered by FalkorDB.
+        - generic [ref=f1e30]:
+          - link "Watch AIDTRACE demo" [ref=f1e31] [cursor=pointer]:
+            - /url: https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link
+            - generic [aria-hidden] [ref=f1e33]: ›
+          - link "Explore how it works" [ref=f1e34] [cursor=pointer]:
+            - /url: "#how"
+            - text: Explore how it works
+            - generic [aria-hidden] [ref=f1e35]: ▶
+    - generic [ref=f1e38]:
+      - generic [ref=f1e39]:
+        - generic [ref=f1e40]: AIDTRACE evidence drift · synthetic example
+        - generic [ref=f1e41]: One traceable decision
+      - generic [ref=f1e43]:
+        - generic [ref=f1e44]:
+          - generic [ref=f1e45]:
+            - generic [ref=f1e46]: DOC
+            - generic [ref=f1e47]: Documents
+          - generic [ref=f1e48]:
+            - generic [ref=f1e49]: SRC
+            - generic [ref=f1e50]: Source versions
+          - generic [ref=f1e51]:
+            - generic [ref=f1e52]: SUP
+            - generic [ref=f1e53]: Suppliers
+          - generic [ref=f1e54]:
+            - generic [ref=f1e55]: INC
+            - generic [ref=f1e56]: Incidents
+          - generic [ref=f1e57]:
+            - generic [ref=f1e58]: MEM
+            - generic [ref=f1e59]: Agent memory
+          - generic [ref=f1e60]:
+            - generic [ref=f1e61]: CLM
+            - generic [ref=f1e62]: Evidence claims
+          - generic [ref=f1e63]:
+            - generic [ref=f1e64]: SEC
+            - generic [ref=f1e65]: Security findings
+          - generic [ref=f1e66]:
+            - generic [ref=f1e67]: TXN
+            - generic [ref=f1e68]: Transactions
+          - generic [ref=f1e69]:
+            - generic [ref=f1e70]: DEC
+            - generic [ref=f1e71]: Decisions
+          - generic [ref=f1e72]:
+            - generic [ref=f1e73]: REV
+            - generic [ref=f1e74]: Human review
+        - generic [ref=f1e76]:
+          - generic [ref=f1e77]:
+            - generic [ref=f1e78]: Evidence change detected
+            - generic [ref=f1e79]: Review required
+          - paragraph [ref=f1e80]: A supplier audit interval changed from 180 to 90 days. The earlier decision and its approval need another review.
+          - generic [ref=f1e81]:
+            - paragraph [ref=f1e82]: Evidence
+            - list [ref=f1e83]:
+              - listitem [ref=f1e84]:
+                - generic [ref=f1e86]: Audit procedure · version 1
+                - generic [ref=f1e87]: Superseded
+                - generic [ref=f1e88]: 180 days
+              - listitem [ref=f1e89]:
+                - generic [ref=f1e91]: Audit procedure · version 2
+                - generic [ref=f1e92]: Current
+                - generic [ref=f1e93]: 90 days
+              - listitem [ref=f1e94]:
+                - generic [ref=f1e96]: Prior approval · revision 1
+                - generic [ref=f1e97]: Review
+                - generic [ref=f1e98]: Stale
+          - generic [ref=f1e99]:
+            - generic [ref=f1e100]: 3 linked records
+            - generic [ref=f1e101]: Source version changed
+            - generic [ref=f1e102]: Approval stale
+          - generic [ref=f1e104]:
+            - generic [ref=f1e105]: Evidence path
+            - generic [ref=f1e106]: Review before action
+      - generic [ref=f1e109]:
+        - generic [ref=f1e110]: No claim without its source
+        - generic [ref=f1e111]: Changed evidence triggers human review before action
+  - generic [ref=f1e113]:
+    - generic [ref=f1e114]:
+      - generic [ref=f1e115]: The problem
+      - heading "The information exists. The connections are missing." [level=2] [ref=f1e116]:
+        - text: The information exists.
+        - generic [ref=f1e117]: The connections are missing.
+      - paragraph [ref=f1e118]: A supplier disruption affects a facility. A security finding exposes a dependency. A revised document changes an earlier recommendation. When these records stay apart, people cannot see which decisions need another look.
+    - generic [ref=f1e119]:
+      - generic [ref=f1e120]:
+        - paragraph [ref=f1e121]: "01"
+        - paragraph [ref=f1e122]: What is connected?
+        - paragraph [ref=f1e123]: Documents, suppliers, incidents, transactions and security findings often live in separate systems, hiding the relationships between them.
+        - paragraph [ref=f1e124]: Fragmented information
+      - generic [ref=f1e125]:
+        - paragraph [ref=f1e126]: "02"
+        - paragraph [ref=f1e127]: What changed?
+        - paragraph [ref=f1e128]: A revised source can change a fact that earlier agent memory, recommendations and approvals relied on.
+        - paragraph [ref=f1e129]: Changing evidence
+      - generic [ref=f1e130]:
+        - paragraph [ref=f1e131]: "03"
+        - paragraph [ref=f1e132]: What can we trust?
+        - paragraph [ref=f1e133]: A confident answer is not enough. People need to see its source, age, verification state and missing evidence.
+        - paragraph [ref=f1e134]: Evidence validity
+      - generic [ref=f1e135]:
+        - paragraph [ref=f1e136]: "04"
+        - paragraph [ref=f1e137]: What happens next?
+        - paragraph [ref=f1e138]: Affected decisions need an explanation, a responsible reviewer and an audit trail before a proposed action proceeds.
+        - paragraph [ref=f1e139]: Human review
+    - paragraph [ref=f1e140]: AIDTRACE connects evidence and traces the consequences when information changes. The question is what the change means for decisions already made.
+  - generic [ref=f1e142]:
+    - generic [ref=f1e143]:
+      - generic [ref=f1e144]: How it works
+      - heading "One intelligence workflow. Multiple applications." [level=2] [ref=f1e145]:
+        - text: One intelligence workflow.
+        - generic [ref=f1e146]: Multiple applications.
+      - paragraph [ref=f1e147]: Connect information, investigate its relationships, verify the evidence and bring recommendations to a person. Each extension keeps its specialized algorithms.
+    - list [ref=f1e148]:
+      - listitem [ref=f1e149]:
+        - generic [ref=f1e151]:
+          - generic [ref=f1e152]: "1"
+          - generic [ref=f1e153]: Connect
+        - paragraph [ref=f1e154]: Bring the evidence together
+        - paragraph [ref=f1e155]: The workflow starts with authorized source records. Each extension connects the document, supplier, incident or event data it supports while preserving source identity and history.
+      - listitem [ref=f1e156]:
+        - generic [ref=f1e158]:
+          - generic [ref=f1e159]: "2"
+          - generic [ref=f1e160]: Understand
+        - paragraph [ref=f1e161]: Follow the FalkorDB relationships
+        - paragraph [ref=f1e162]: Source versions, claims, agent memory, decisions and proposed actions are linked. The graph records what each conclusion depends on.
+      - listitem [ref=f1e163]:
+        - generic [ref=f1e165]:
+          - generic [ref=f1e166]: "3"
+          - generic [ref=f1e167]: Investigate
+        - paragraph [ref=f1e168]: Find the affected decisions
+        - paragraph [ref=f1e169]: In the synthetic supplier-audit example, a verified procedure changes an inspection interval from 180 to 90 days. AIDTRACE traces the old fact to the memory and decision that used it.
+      - listitem [ref=f1e170]:
+        - generic [ref=f1e172]:
+          - generic [ref=f1e173]: "4"
+          - generic [ref=f1e174]: Verify
+        - paragraph [ref=f1e175]: Check the evidence and uncertainty
+        - paragraph [ref=f1e176]: The system shows the source change and the dependency path. It re-evaluates the old decision against the newer fact instead of treating remembered context as permanent truth.
+      - listitem [ref=f1e177]:
+        - generic [ref=f1e178]:
+          - generic [ref=f1e179]: "5"
+          - generic [ref=f1e180]: Review
+        - paragraph [ref=f1e181]: Hold the action and retain the history
+        - paragraph [ref=f1e182]: The earlier approval belongs to an older decision revision, so the synthetic proposed action is suspended. A person can inspect what changed before making a new decision.
+    - paragraph [ref=f1e183]:
+      - text: "The last step matters: a recommendation is only as current as the evidence and approval behind it."
+      - strong [ref=f1e184]: When evidence changes, the decision must be checked again.
+  - generic [ref=f1e186]:
+    - generic [ref=f1e187]:
+      - generic [ref=f1e188]:
+        - generic [ref=f1e189]: The intelligence engine
+        - heading "Connected evidence. Inspectable decisions." [level=2] [ref=f1e190]:
+          - text: Connected evidence.
+          - generic [ref=f1e191]: Inspectable decisions.
+        - paragraph [ref=f1e192]: FalkorDB links source versions, claims, agent memory, decisions and approvals. The workspace offers Globe, Graph, Lineage and Timeline views; the screens below illustrate specialized capabilities in the AIDTRACE workspace.
+        - generic [ref=f1e193]:
+          - button "Proactive context" [pressed] [ref=f1e194] [cursor=pointer]
+          - button "Evidence answers" [ref=f1e196] [cursor=pointer]
+          - button "Connected risk" [ref=f1e197] [cursor=pointer]
+          - button "Governed findings" [ref=f1e198] [cursor=pointer]
+          - button "Connected sources" [ref=f1e199] [cursor=pointer]
+          - button "Relationship history" [ref=f1e200] [cursor=pointer]
+          - button "Evidence validity" [ref=f1e201] [cursor=pointer]
+          - button "New observations" [ref=f1e202] [cursor=pointer]
+      - generic [ref=f1e204]:
+        - generic [ref=f1e205]:
+          - paragraph [ref=f1e206]: The right context reaches the person responsible for the decision
+          - generic [ref=f1e208]:
+            - paragraph [ref=f1e209]: Governor · this hour
+            - generic [ref=f1e217]:
+              - generic [ref=f1e218]: 4 of 6 delivered
+              - generic [ref=f1e219]: 2 remaining
+            - generic [ref=f1e220]:
+              - generic [ref=f1e221]:
+                - paragraph [ref=f1e222]: Dispatched 07:41
+                - paragraph [ref=f1e223]: Supplier audit rule changed
+                - paragraph [ref=f1e224]: Priority 1 · to the decision owner
+              - generic [ref=f1e225]:
+                - paragraph [ref=f1e226]: Approval gate
+                - paragraph [ref=f1e227]: Requires fresh review
+                - paragraph [ref=f1e228]: Stale approval cannot authorize action
+            - generic [ref=f1e229]: Next routine alert held; decision review remains visible
+        - generic [ref=f1e232]:
+          - paragraph [ref=f1e233]: AIDTRACE review queue
+          - heading "Context arrives before a decision" [level=3] [ref=f1e234]
+          - paragraph [ref=f1e235]: AIDTRACE brings the source change, affected claims and previous review together before someone decides what to do next.
+    - generic [ref=f1e236]:
+      - generic [ref=f1e237]:
+        - paragraph [ref=f1e238]: What connects those eight examples
+        - paragraph [ref=f1e239]: AIDTRACE connects specialized analysis to a shared evidence and decision graph, so relationships can be inspected across workflows.
+      - generic [ref=f1e240]:
+        - generic [ref=f1e243]:
+          - term [ref=f1e244]: Connect authorized information
+          - definition [ref=f1e245]: Documents, suppliers, incidents, transactions and findings enter the shared investigation workflow.
+        - generic [ref=f1e248]:
+          - term [ref=f1e249]: FalkorDB relationship graph
+          - definition [ref=f1e250]: Source versions, claims, memories, decisions and approvals form inspectable dependency paths.
+        - generic [ref=f1e253]:
+          - term [ref=f1e254]: Evidence verification
+          - definition [ref=f1e255]: Conflicts, missing support and uncertain claims stay visible for review.
+        - generic [ref=f1e258]:
+          - term [ref=f1e259]: Decision governance
+          - definition [ref=f1e260]: A changed recommendation waits for a current human approval before action.
+        - generic [ref=f1e263]:
+          - term [ref=f1e264]: Persistent agent memory
+          - definition [ref=f1e265]: Agents can retrieve previous findings with the source evidence and validity state that supports them.
+        - generic [ref=f1e268]:
+          - term [ref=f1e269]: Impact analysis
+          - definition [ref=f1e270]: Follow a changed source through dependent claims, memories, decisions and proposed actions.
+        - generic [ref=f1e273]:
+          - term [ref=f1e274]: Source lineage
+          - definition [ref=f1e275]: Each important conclusion points back to its source version, with uncertainty kept explicit.
+        - generic [ref=f1e278]:
+          - term [ref=f1e279]: Evidence Drift
+          - definition [ref=f1e280]: When support changes, affected memory and decisions are marked for re-evaluation and stale approvals are blocked.
+  - generic [ref=f1e282]:
+    - 'img "End-to-end architecture: point of action, application core, async orchestration, intelligence services, knowledge stores and the model plane, with the human-authority gate." [ref=f1e285]'
+    - generic [ref=f1e286]:
+      - generic [ref=f1e287]: System architecture
+      - heading "One connected foundation. Traceable decisions." [level=2] [ref=f1e288]:
+        - text: One connected foundation.
+        - generic [ref=f1e289]: Traceable decisions.
+      - paragraph [ref=f1e290]: These diagrams show the connected system and its specialist data stores. FalkorDB links evidence, memory, decisions and approvals. Open a block to inspect each layer.
+      - generic [ref=f1e291]:
+        - button "Overview" [pressed] [ref=f1e292] [cursor=pointer]
+        - button "Point of action" [ref=f1e294] [cursor=pointer]
+        - button "Application core" [ref=f1e295] [cursor=pointer]
+        - button "Async orchestration" [ref=f1e296] [cursor=pointer]
+        - button "Intelligence services" [ref=f1e297] [cursor=pointer]
+        - button "Knowledge & data" [ref=f1e298] [cursor=pointer]
+        - button "Model plane" [ref=f1e299] [cursor=pointer]
+  - generic [ref=f1e301]:
+    - generic [ref=f1e302]:
+      - generic [ref=f1e303]: Specialized intelligence extensions
+      - heading "One platform. Different problems. Shared evidence." [level=2] [ref=f1e304]:
+        - text: One platform.
+        - generic [ref=f1e305]: Different problems. Shared evidence.
+    - generic [ref=f1e306]:
+      - generic [ref=f1e307]:
+        - button "GreenChain" [pressed] [ref=f1e308] [cursor=pointer]
+        - button "CyberFlow" [ref=f1e309] [cursor=pointer]
+        - button "Operations" [ref=f1e310] [cursor=pointer]
+        - button "ResolveAI" [ref=f1e311] [cursor=pointer]
+        - button "Track 01" [ref=f1e312] [cursor=pointer]
+        - button "Evidence" [ref=f1e313] [cursor=pointer]
+      - generic [ref=f1e315]:
+        - generic [ref=f1e316]:
+          - heading "Supply chain intelligence" [level=3] [ref=f1e317]
+          - paragraph [ref=f1e318]: Explore supplier networks, facility dependencies, routes and alternative sourcing with the evidence behind each recommendation. The AIDTRACE globe shows connected entities in one workspace.
+        - img "AIDTRACE workspace showing connected evidence and decisions" [ref=f1e320]
+  - generic [ref=f1e322]:
+    - generic [ref=f1e323]:
+      - generic [ref=f1e324]: Evaluation
+      - heading "Measure the function. Name the scope." [level=2] [ref=f1e325]:
+        - text: Measure the function.
+        - generic [ref=f1e326]: Name the scope.
+      - paragraph [ref=f1e327]: The figures below come from an industrial question-answering benchmark on a synthetic dataset. They do not measure all AIDTRACE extensions or FalkorDB graph reasoning.
+    - generic [ref=f1e328]:
+      - paragraph [ref=f1e329]: Industrial extension benchmark · 46 questions
+      - generic [ref=f1e330]:
+        - generic [aria-hidden] [ref=f1e331]:
+          - generic [ref=f1e332]: "100"
+          - generic [ref=f1e333]: "90"
+          - generic [ref=f1e334]: "80"
+          - generic [ref=f1e335]: "70"
+          - generic [ref=f1e336]: "60"
+          - generic [ref=f1e337]: "50"
+          - generic [ref=f1e338]: "40"
+          - generic [ref=f1e339]: "30"
+          - generic [ref=f1e340]: "20"
+          - generic [ref=f1e341]: "10"
+          - generic [ref=f1e342]: "0"
+        - list [ref=f1e345]:
+          - listitem [ref=f1e346]:
+            - generic [ref=f1e348]:
+              - generic [ref=f1e349]: 46/46
+              - paragraph [ref=f1e350]: 100%
+              - paragraph [ref=f1e351]: graded by fixed rules
+          - listitem [ref=f1e352]:
+            - generic [ref=f1e354]:
+              - generic [ref=f1e355]: 46/46
+              - paragraph [ref=f1e356]: 100%
+              - paragraph [ref=f1e357]: every answer cited
+          - listitem [ref=f1e358]:
+            - generic [ref=f1e360]:
+              - generic [ref=f1e361]: 40/46
+              - paragraph [ref=f1e362]: 87%
+              - paragraph [ref=f1e363]: "95% confidence: 74 to 94"
+      - generic [ref=f1e364]:
+        - generic [ref=f1e365]:
+          - paragraph [ref=f1e366]: Retrieval
+          - paragraph [ref=f1e367]: The fact reaches the model
+        - generic [ref=f1e368]:
+          - paragraph [ref=f1e369]: Provenance
+          - paragraph [ref=f1e370]: Sources cited
+        - generic [ref=f1e371]:
+          - paragraph [ref=f1e372]: Answer quality
+          - paragraph [ref=f1e373]: One valid run
+      - paragraph [ref=f1e374]: "One run: all 40 answers came from the pinned Nemotron 3 Super model on NVIDIA NIM, with no fallback provider. Six safety-critical questions were refused because no authoritative source covers them, and a correct refusal is graded as correct. All six misses retrieved the right evidence — the gap is in how the answer is written, not in what the system found."
+    - generic [ref=f1e375]:
+      - paragraph [ref=f1e376]: Other industrial extension checks
+      - generic [ref=f1e377]:
+        - generic [ref=f1e378]:
+          - paragraph [ref=f1e379]: Adversarial safety
+          - paragraph [ref=f1e380]: 0 unsafe
+          - paragraph [ref=f1e381]: 15 questions written to make it guess
+          - generic [ref=f1e382]:
+            - generic [ref=f1e383]:
+              - term [ref=f1e384]: Unsafe answers
+              - definition [ref=f1e385]: "0"
+            - generic [ref=f1e386]:
+              - term [ref=f1e387]: Refusals
+              - definition [ref=f1e388]: "12"
+            - generic [ref=f1e389]:
+              - term [ref=f1e390]: Answerable ones answered
+              - definition [ref=f1e391]: "yes"
+            - generic [ref=f1e392]:
+              - term [ref=f1e393]: Prompt injection held
+              - definition [ref=f1e394]: "yes"
+        - generic [ref=f1e395]:
+          - paragraph [ref=f1e396]: Knowledge graph linkage
+          - paragraph [ref=f1e397]: 18 / 20
+          - paragraph [ref=f1e398]: Active vault documents with a verified knowledge edge
+          - generic [ref=f1e399]:
+            - generic [ref=f1e400]:
+              - term [ref=f1e401]: Documents linked
+              - definition [ref=f1e402]: 90%
+            - generic [ref=f1e403]:
+              - term [ref=f1e404]: Dangling provenance
+              - definition [ref=f1e405]: "0"
+            - generic [ref=f1e406]:
+              - term [ref=f1e407]: Alias resolution
+              - definition [ref=f1e408]: 2/2
+            - generic [ref=f1e409]:
+              - term [ref=f1e410]: MDM identity
+              - definition [ref=f1e411]: 2/2
+        - generic [ref=f1e412]:
+          - paragraph [ref=f1e413]: Proactive briefs · Layer 8
+          - paragraph [ref=f1e414]: 6 / 6
+          - paragraph [ref=f1e415]: All graded checks pass. Soft targets are reported, not scored
+          - generic [ref=f1e416]:
+            - generic [ref=f1e417]:
+              - term [ref=f1e418]: Work order raised
+              - definition [ref=f1e419]: 2/2
+            - generic [ref=f1e420]:
+              - term [ref=f1e421]: Permit to work
+              - definition [ref=f1e422]: 2/2
+            - generic [ref=f1e423]:
+              - term [ref=f1e424]: Tag-out · inspection
+              - definition [ref=f1e425]: 1/1 · 1/1
+            - generic [ref=f1e426]:
+              - term [ref=f1e427]: Soft targets unmet
+              - definition [ref=f1e428]: 7, disclosed
+        - generic [ref=f1e429]:
+          - paragraph [ref=f1e430]: Compliance gap detection
+          - paragraph [ref=f1e431]: F1 0.912
+          - paragraph [ref=f1e432]: Zero false positives across 52 pairs
+          - generic [ref=f1e433]:
+            - generic [ref=f1e434]:
+              - term [ref=f1e435]: Precision
+              - definition [ref=f1e436]: "1.000"
+            - generic [ref=f1e437]:
+              - term [ref=f1e438]: Recall
+              - definition [ref=f1e439]: "0.838"
+            - generic [ref=f1e440]:
+              - term [ref=f1e441]: True / false positives
+              - definition [ref=f1e442]: 31 / 0
+            - generic [ref=f1e443]:
+              - term [ref=f1e444]: Full status agreement
+              - definition [ref=f1e445]: 46 / 52
+        - generic [ref=f1e446]:
+          - paragraph [ref=f1e447]: Entity extraction · Layer 0
+          - paragraph [ref=f1e448]: F1 0.805
+          - paragraph [ref=f1e449]: 40 labels, 15 extractions, no fallback model used
+          - generic [ref=f1e450]:
+            - generic [ref=f1e451]:
+              - term [ref=f1e452]: Precision
+              - definition [ref=f1e453]: "0.786"
+            - generic [ref=f1e454]:
+              - term [ref=f1e455]: Recall
+              - definition [ref=f1e456]: "0.825"
+            - generic [ref=f1e457]:
+              - term [ref=f1e458]: ASSET_TAG F1
+              - definition [ref=f1e459]: 0.889 (n=30)
+            - generic [ref=f1e460]:
+              - term [ref=f1e461]: PERSON F1
+              - definition [ref=f1e462]: 1.000 (n=7)
+        - generic [ref=f1e463]:
+          - paragraph [ref=f1e464]: Per-layer smoke
+          - paragraph [ref=f1e465]: 13 / 13
+          - paragraph [ref=f1e466]: Every layer answered on the live stack
+          - generic [ref=f1e467]:
+            - generic [ref=f1e468]:
+              - term [ref=f1e469]: Slowest read
+              - definition [ref=f1e470]: search 3.7 s
+            - generic [ref=f1e471]:
+              - term [ref=f1e472]: Assets
+              - definition [ref=f1e473]: 1.7 s
+            - generic [ref=f1e474]:
+              - term [ref=f1e475]: Graph / Vault
+              - definition [ref=f1e476]: 212 / 163 ms
+            - generic [ref=f1e477]:
+              - term [ref=f1e478]: Failures
+              - definition [ref=f1e479]: "0"
+        - generic [ref=f1e480]:
+          - paragraph [ref=f1e481]: Time to a trusted answer
+          - paragraph [ref=f1e482]: −19.9%
+          - paragraph [ref=f1e483]: Modelled, compared against BM25 keyword search
+          - generic [ref=f1e484]:
+            - generic [ref=f1e485]:
+              - term [ref=f1e486]: Traditional
+              - definition [ref=f1e487]: 124.0 min / 46 q
+            - generic [ref=f1e488]:
+              - term [ref=f1e489]: AIDTRACE
+              - definition [ref=f1e490]: 99.4 min / 46 q
+            - generic [ref=f1e491]:
+              - term [ref=f1e492]: Docs opened
+              - definition [ref=f1e493]: 1.00 vs 1.35
+            - generic [ref=f1e494]:
+              - term [ref=f1e495]: Raw machine time
+              - definition [ref=f1e496]: "loses: 9.6 s vs 28 ms"
+        - generic [ref=f1e497]:
+          - paragraph [ref=f1e498]: Concurrency sweep
+          - paragraph [ref=f1e499]: 0% errors
+          - paragraph [ref=f1e500]: 2275 requests across 9 read endpoints, up to 50 users
+          - generic [ref=f1e501]:
+            - generic [ref=f1e502]:
+              - term [ref=f1e503]: p50 · 1 → 50 VU
+              - definition [ref=f1e504]: 136 → 500 ms
+            - generic [ref=f1e505]:
+              - term [ref=f1e506]: p95 at 50 VU
+              - definition [ref=f1e507]: 1840 ms
+            - generic [ref=f1e508]:
+              - term [ref=f1e509]: Throughput
+              - definition [ref=f1e510]: 5.8 → 74.5 rps
+            - generic [ref=f1e511]:
+              - term [ref=f1e512]: Knee of the curve
+              - definition [ref=f1e513]: 50 users
+        - generic [ref=f1e514]:
+          - paragraph [ref=f1e515]: Soak · 60 minutes
+          - paragraph [ref=f1e516]: No leak signal
+          - paragraph [ref=f1e517]: Steady load against cloud stores, reads only
+          - generic [ref=f1e518]:
+            - generic [ref=f1e519]:
+              - term [ref=f1e520]: Memory slope
+              - definition [ref=f1e521]: +8.6 MB/h
+            - generic [ref=f1e522]:
+              - term [ref=f1e523]: Connections
+              - definition [ref=f1e524]: +4.2/h
+            - generic [ref=f1e525]:
+              - term [ref=f1e526]: Errors
+              - definition [ref=f1e527]: 0.11% of 37,842
+            - generic [ref=f1e528]:
+              - term [ref=f1e529]: Idle recovery
+              - definition [ref=f1e530]: 4 / 4 endpoints
+        - generic [ref=f1e531]:
+          - paragraph [ref=f1e532]: Synthesis latency
+          - paragraph [ref=f1e533]: p50 2.6 s
+          - paragraph [ref=f1e534]: Nemotron 3 Super on NVIDIA NIM at the 60 second cap, quoted with its slowest cases
+          - generic [ref=f1e535]:
+            - generic [ref=f1e536]:
+              - term [ref=f1e537]: p95
+              - definition [ref=f1e538]: 5.3 s
+            - generic [ref=f1e539]:
+              - term [ref=f1e540]: Mean
+              - definition [ref=f1e541]: 2.8 s
+            - generic [ref=f1e542]:
+              - term [ref=f1e543]: Graded questions
+              - definition [ref=f1e544]: "46"
+            - generic [ref=f1e545]:
+              - term [ref=f1e546]: Answered by
+              - definition [ref=f1e547]: nim 40 · refused 6
+        - generic [ref=f1e548]:
+          - paragraph [ref=f1e549]: How every one of these is graded
+          - paragraph [ref=f1e550]: Fixed rules, never another model.
+          - paragraph [ref=f1e551]: An answer has to contain the facts the question requires, avoid the ones it rules out, and cite a source. Miss any of the three and it counts as wrong. The same rules run every time, so two runs of the same question are always scored the same way.
+  - generic [ref=f1e553]:
+    - generic [ref=f1e554]:
+      - generic [ref=f1e555]: Trust and evidence
+      - heading "No important conclusion without a traceable source." [level=2] [ref=f1e556]:
+        - text: "No"
+        - generic [ref=f1e557]: important conclusion
+        - text: without a
+        - generic [ref=f1e558]: traceable source.
+      - paragraph [ref=f1e559]: AIDTRACE links claims, memory and decisions to the evidence they depend on. The graph screenshot and record below show the evidence path through source versions, claims, memory, decisions and approval revisions.
+    - 'img "The AIDTRACE knowledge graph: assets and facts joined by time-aware edges, each carrying its source and authority." [ref=f1e562]'
+    - generic [ref=f1e563]:
+      - generic [ref=f1e564]:
+        - paragraph [ref=f1e565]: One changed source, and its decision impact
+        - paragraph [ref=f1e566]: A supplier audit interval changed from 180 to 90 days; the earlier approval is stale.
+      - generic [ref=f1e567]:
+        - generic [ref=f1e568]:
+          - generic [ref=f1e569]:
+            - term [ref=f1e570]:
+              - code [ref=f1e571]: source_version
+            - definition [ref=f1e572]: version 2
+          - definition [ref=f1e573]: The revised audit procedure is recorded as a new source version.
+        - generic [ref=f1e574]:
+          - generic [ref=f1e575]:
+            - term [ref=f1e576]:
+              - code [ref=f1e577]: changed_claim
+            - definition [ref=f1e578]: 90 days
+          - definition [ref=f1e579]: The newer evidence changes the supplier audit interval from 180 days.
+        - generic [ref=f1e580]:
+          - generic [ref=f1e581]:
+            - term [ref=f1e582]:
+              - code [ref=f1e583]: dependent_memory
+            - definition [ref=f1e584]: stale
+          - definition [ref=f1e585]: An agent memory based on the previous interval needs re-evaluation.
+        - generic [ref=f1e586]:
+          - generic [ref=f1e587]:
+            - term [ref=f1e588]:
+              - code [ref=f1e589]: decision_revision
+            - definition [ref=f1e590]: revision 2
+          - definition [ref=f1e591]: The decision records which evidence revision it evaluated.
+        - generic [ref=f1e592]:
+          - generic [ref=f1e593]:
+            - term [ref=f1e594]:
+              - code [ref=f1e595]: prior_approval
+            - definition [ref=f1e596]: revision 1
+          - definition [ref=f1e597]: Approval for an older decision revision cannot authorize a revised action.
+        - generic [ref=f1e598]:
+          - generic [ref=f1e599]:
+            - term [ref=f1e600]:
+              - code [ref=f1e601]: action_state
+            - definition [ref=f1e602]: suspended
+          - definition [ref=f1e603]: The proposed action waits for a current human review.
+      - paragraph [ref=f1e604]: A synthetic Evidence Drift example. Source versions and decision revisions keep the change traceable for human review.
+  - generic [ref=f1e606]:
+    - generic [ref=f1e607]:
+      - generic [ref=f1e608]: FAQ
+      - heading "Your questions, answered." [level=2] [ref=f1e609]:
+        - text: Your questions,
+        - generic [ref=f1e610]: answered.
+      - paragraph [ref=f1e611]: How connected evidence, agent memory, human review and specialized extensions fit together. Read the documentation or explore the workspace for more detail.
+      - link "Read documentation" [ref=f1e612] [cursor=pointer]:
+        - /url: /docs
+        - text: Read documentation
+        - generic [aria-hidden] [ref=f1e613]: ›
+    - generic [ref=f1e614]:
+      - generic [ref=f1e615]:
+        - button "Basics" [pressed] [ref=f1e616] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f1e618]: ›
+        - button "Decisions" [ref=f1e619] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f1e621]: ›
+        - button "Evidence" [ref=f1e622] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f1e624]: ›
+        - button "Access" [ref=f1e625] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f1e627]: ›
+        - button "Evaluation" [ref=f1e628] [cursor=pointer]:
+          - generic [aria-hidden] [ref=f1e630]: ›
+      - generic [ref=f1e632]:
+        - group [ref=f1e633]:
+          - generic "What does AIDTRACE do?" [ref=f1e634] [cursor=pointer]:
+            - text: What does AIDTRACE do?
+            - generic [aria-hidden] [ref=f1e635]: +
+          - paragraph [ref=f1e636]: AIDTRACE connects evidence, relationships, agent memory and decisions across specialized workflows. It helps people inspect what changed, what is affected and which conclusions need review.
+        - group [ref=f1e637]:
+          - generic "Why use FalkorDB?" [ref=f1e638] [cursor=pointer]:
+            - text: Why use FalkorDB?
+            - generic [aria-hidden] [ref=f1e639]: +
+        - group [ref=f1e640]:
+          - generic "Is this one workflow or several products?" [ref=f1e641] [cursor=pointer]:
+            - text: Is this one workflow or several products?
+            - generic [aria-hidden] [ref=f1e642]: +
+  - generic [ref=f1e645]:
+    - generic [ref=f1e646]: Next.js
+    - generic [ref=f1e649]: React
+    - generic [ref=f1e652]: TypeScript
+    - generic [ref=f1e655]: Tailwind CSS
+    - generic [ref=f1e658]: Python
+    - generic [ref=f1e662]: FastAPI
+    - generic [ref=f1e665]: Go
+    - generic [ref=f1e668]: Celery
+    - generic [ref=f1e671]: Neo4j
+    - generic [ref=f1e674]: Elasticsearch
+    - generic [ref=f1e679]: Redis
+    - generic [ref=f1e682]: Supabase
+    - generic [ref=f1e685]: Docker
+    - generic [ref=f1e688]: NVIDIA
+    - generic [ref=f1e691]: OpenTelemetry
+    - generic [ref=f1e694]: Grafana
+    - generic [ref=f1e697]: GitHub
+    - generic [ref=f1e700]: Next.js
+    - generic [ref=f1e703]: React
+    - generic [ref=f1e706]: TypeScript
+    - generic [ref=f1e709]: Tailwind CSS
+    - generic [ref=f1e712]: Python
+    - generic [ref=f1e716]: FastAPI
+    - generic [ref=f1e719]: Go
+    - generic [ref=f1e722]: Celery
+    - generic [ref=f1e725]: Neo4j
+    - generic [ref=f1e728]: Elasticsearch
+    - generic [ref=f1e733]: Redis
+    - generic [ref=f1e736]: Supabase
+    - generic [ref=f1e739]: Docker
+    - generic [ref=f1e742]: NVIDIA
+    - generic [ref=f1e745]: OpenTelemetry
+    - generic [ref=f1e748]: Grafana
+    - generic [ref=f1e751]: GitHub
+  - paragraph [ref=f1e754]: Built with Next.js, React, TypeScript, Tailwind CSS, Python, FastAPI, Go, Celery, Neo4j, Elasticsearch, Redis, Supabase, Docker, NVIDIA, OpenTelemetry, Grafana, GitHub.
+  - generic [ref=f1e755]:
+    - generic [ref=f1e757]:
+      - generic [ref=f1e758]:
+        - generic [ref=f1e759]: AIDTRACE
+        - paragraph [ref=f1e761]: Understand the connections. Trust the evidence. Improve the decision.
+      - generic [ref=f1e762]:
+        - paragraph [ref=f1e763]: Product
+        - list [ref=f1e764]:
+          - listitem [ref=f1e765]:
+            - link "The problem" [ref=f1e766] [cursor=pointer]:
+              - /url: "#problem"
+          - listitem [ref=f1e767]:
+            - link "Intelligence engine" [ref=f1e768] [cursor=pointer]:
+              - /url: "#capabilities"
+          - listitem [ref=f1e769]:
+            - link "Extensions" [ref=f1e770] [cursor=pointer]:
+              - /url: "#field"
+      - generic [ref=f1e771]:
+        - paragraph [ref=f1e772]: How it works
+        - list [ref=f1e773]:
+          - listitem [ref=f1e774]:
+            - link "Shared workflow" [ref=f1e775] [cursor=pointer]:
+              - /url: "#how"
+          - listitem [ref=f1e776]:
+            - link "Architecture" [ref=f1e777] [cursor=pointer]:
+              - /url: "#system"
+          - listitem [ref=f1e778]:
+            - link "Evidence" [ref=f1e779] [cursor=pointer]:
+              - /url: "#provenance"
+          - listitem [ref=f1e780]:
+            - link "Evaluation" [ref=f1e781] [cursor=pointer]:
+              - /url: "#evidence"
+      - generic [ref=f1e782]:
+        - paragraph [ref=f1e783]: Resources
+        - list [ref=f1e784]:
+          - listitem [ref=f1e785]:
+            - link "Documentation" [ref=f1e786] [cursor=pointer]:
+              - /url: /docs
+          - listitem [ref=f1e787]:
+            - link "FAQ" [ref=f1e788] [cursor=pointer]:
+              - /url: "#faq"
+          - listitem [ref=f1e789]:
+            - link "Source code" [ref=f1e790] [cursor=pointer]:
+              - /url: https://github.com/kr7shnasomani/kairos
+    - generic [ref=f1e793]:
+      - paragraph [ref=f1e794]: © 2026 AIDTRACE
+      - generic [ref=f1e795]:
+        - link "AIDTRACE on GitHub" [ref=f1e796] [cursor=pointer]:
+          - /url: https://github.com/kr7shnasomani/kairos
+        - link "Watch the AIDTRACE demo" [ref=f1e799] [cursor=pointer]:
+          - /url: https://drive.google.com/file/d/18ZO95MckNtESg-Z2ruRBNnKq6JyB57rP/view?usp=drive_link

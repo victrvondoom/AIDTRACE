@@ -137,6 +137,15 @@ def test_site_graph_blast_radius_matches_the_drift_store_on_real_falkordb(live_s
 
     exported = client.get("/graphlab/site-graph").json()
     assert not exported["empty"] and {n["id"] for n in exported["graph"]["nodes"]} >= {"DEMO-DRIFT-ACTION-001", "DEMO-DRIFT-CLAIM-V1"}
+    assert exported["falkordb"]["graph_name"] == store.graph_name(site)
+    assert any(item["relationship"] == "SUPPORTED_BY" for item in exported["falkordb"]["relationship_distribution"])
+    read = client.post("/graphlab/site-cypher", json={"query": "MATCH (n) RETURN count(n) AS total"})
+    assert read.status_code == 200, read.text
+    assert read.json()["rows"][0][0] > 0
+    assert client.post("/graphlab/site-cypher", json={"query": "MATCH (n) RETURN n LIMIT 100000"}).status_code == 422
+    mutation = client.post("/graphlab/site-cypher", json={"query": "MATCH (n) SET n.unauthorized = true RETURN n LIMIT 1"})
+    assert mutation.status_code != 200
+    assert store.read_node(site, "DEMO-DRIFT-CLAIM-V1")["properties"].get("unauthorized") is None
     result = client.post("/graphlab/analyze", json={"algorithm": "blast_radius", "site_graph": True,
                                                     "params": {"changed": ["DEMO-DRIFT-SOP-V1"], "direction": "reverse"}})
     assert result.status_code == 200, result.text

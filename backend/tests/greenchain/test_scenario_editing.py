@@ -19,15 +19,15 @@ from domains.greenchain.scenario_editing import (
     ScenarioEditIntentPayload,
     ScenarioEditProviderError,
     SupplyScenarioPayload,
-    _extract_json_object_text,
     _build_intent_messages,
+    _extract_json_object_text,
+    _get_k2think_settings,
     _to_editable_scenario,
     apply_filtered_scenario,
     classify_prompt_with_k2,
     edit_scenario_with_k2,
     normalize_edited_scenario,
     restore_scenario_revision,
-    _get_k2think_settings,
 )
 
 

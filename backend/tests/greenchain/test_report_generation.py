@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, Mock, patch
 from domains.greenchain.report_generation import (
     ReportGenerationConfigError,
     ReportNarrativePayload,
-    _build_report_context,
     _build_latex_document,
+    _build_report_context,
     _get_gemini_settings,
     _latex_escape,
     generate_scenario_report_with_gemini,

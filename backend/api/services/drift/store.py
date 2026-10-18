@@ -375,20 +375,24 @@ class FalkorDriftStore:
                 for m, pa, ms, sid, ra, at in rows]
 
     def memory_lineage(self, site_id: str, *, limit: int = 200) -> list[dict[str, Any]]:
-        """Every Memory with the claims it derives from and those claims' source versions, in one bounded read."""
+        """Read complete lineage for a bounded set of memories, or fail closed on excessive fan-out."""
         if not 1 <= limit <= 1000:
             raise ContractError("limit must be between 1 and 1000")
         if self.graph_name(site_id) not in self._client.list_graphs():
             return []
+        row_budget = min(limit * 64, 10_000)
         rows = self._graph(site_id).ro_query(
             "MATCH (m:Memory) "
+            f"WITH m ORDER BY m.id LIMIT {limit} "
             "OPTIONAL MATCH (m)-[:DERIVED_FROM]->(c:Claim) "
             "OPTIONAL MATCH (c)-[:SUPPORTED_BY]->(s:SourceVersion) "
             "OPTIONAL MATCH (s)-[:VERSION_OF]->(d:Document) "
             "RETURN m.id, properties(m), c.id, c.fact_key, c.fact_value, c.status, s.id, s.status, d.id, s.content_sha256 "
-            f"ORDER BY m.id LIMIT {limit * 8}",
+            f"ORDER BY m.id, c.id, s.id LIMIT {row_budget + 1}",
             timeout=self._query_timeout_ms,
         ).result_set
+        if len(rows) > row_budget:
+            raise TraversalLimitExceeded("memory lineage exceeded the row limit")
         out: dict[str, dict[str, Any]] = {}
         for mid, props, cid, ckey, cval, cstatus, sid, sstatus, did, sha in rows:
             entry = out.setdefault(str(mid), {"id": str(mid), **{k: v for k, v in dict(props).items() if k not in {"id", "site_id"}}, "claims": [], "sources": []})
@@ -426,8 +430,25 @@ class FalkorDriftStore:
         for node_id, labels, props in node_rows[:max_nodes]:
             clean = {k: v for k, v in dict(props).items() if k not in {"id", "site_id"} and isinstance(v, (str, int, float, bool))}
             kept.add(str(node_id))
+            rev_n = clean.get("revision_n")
+            stat = clean.get("status", "")
+            summary = clean.get("summary")
+            val = clean.get("fact_value")
+            nlabel = clean.get("title") or clean.get("name")
+            if not nlabel and summary:
+                nlabel = str(summary)[:45] + ("..." if len(str(summary)) > 45 else "")
+            if not nlabel and val is not None:
+                nlabel = str(val)[:35]
+            if not nlabel and clean.get("fact_key"):
+                nlabel = str(clean.get("fact_key"))
+            if not nlabel and rev_n is not None:
+                nlabel = f"Rev {rev_n} ({stat})" if stat else f"Rev {rev_n}"
+            if not nlabel and clean.get("reason"):
+                nlabel = str(clean.get("reason"))[:45]
+            if not nlabel:
+                nlabel = str(node_id)
             nodes.append({"id": str(node_id), "type": (labels[0] if labels else "node"),
-                          "label": str(clean.get("title") or clean.get("name") or node_id), "props": clean})
+                          "label": str(nlabel), "props": clean})
         edges = []
         for source, target, rel, props in edge_rows[:max_edges]:
             if str(source) in kept and str(target) in kept:
