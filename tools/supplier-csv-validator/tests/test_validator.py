@@ -7,11 +7,14 @@ Deterministic, standard library only. Run from the tool directory:
 
 from __future__ import annotations
 
+import contextlib
 import csv
+import hashlib
 import io
 import json
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -22,6 +25,8 @@ import validator
 from validator import (
     ISO2_COUNTRIES,
     ValidatorFileError,
+    format_number,
+    parse_number,
     validate_file,
     validate_text,
     write_outputs,
@@ -188,6 +193,17 @@ class CountryTests(unittest.TestCase):
             self.assertNotIn(code, ISO2_COUNTRIES)
 
 
+class CountrySetIntegrityTests(unittest.TestCase):
+    def test_iso2_set_has_249_codes(self):
+        self.assertEqual(len(ISO2_COUNTRIES), 249)
+
+    def test_iso2_codes_are_two_uppercase_letters(self):
+        for code in ISO2_COUNTRIES:
+            self.assertEqual(len(code), 2, code)
+            self.assertTrue(code.isalpha(), code)
+            self.assertTrue(code.isupper(), code)
+
+
 class DuplicateTests(unittest.TestCase):
     def test_duplicate_supplier_record_rejected(self):
         result = validate_rows([{}, {}])
@@ -205,6 +221,25 @@ class DuplicateTests(unittest.TestCase):
         result = validate_rows([{}, {"component": "led module"}])
         self.assertEqual(len(result.accepted_rows), 2)
         self.assertEqual(result.rejected, [])
+
+    def test_duplicate_message_names_first_seen_row(self):
+        result = validate_rows(
+            [{}, {"component": "led module"}, {}]
+        )
+        message = result.rejected[0].errors[0].message
+        self.assertIn("row 2", message)
+
+    def test_duplicate_of_rejected_row_not_flagged(self):
+        # Two identical rows that are both invalid for their own reasons:
+        # neither is accepted, so neither registers the duplicate key.
+        result = validate_rows(
+            [{"destination": "USA"}, {"destination": "USA"}]
+        )
+        self.assertEqual(len(result.rejected), 2)
+        for record in result.rejected:
+            self.assertEqual(
+                [error.code for error in record.errors], ["invalid_country_code"]
+            )
 
 
 class QuantityTests(unittest.TestCase):
@@ -228,9 +263,71 @@ class QuantityTests(unittest.TestCase):
         result = validate_rows([{"quantity": "inf"}])
         self.assertEqual(result.rejected[0].errors[0].code, "invalid_quantity")
 
+    def test_quantity_overflow_rejected(self):
+        result = validate_rows([{"quantity": "1e400"}])
+        self.assertEqual(result.rejected[0].errors[0].code, "invalid_quantity")
+
     def test_quantity_normalized_to_canonical(self):
         result = validate_rows([{"quantity": " 8000.0 "}])
         self.assertEqual(result.accepted_rows[0]["quantity"], "8000")
+
+
+class NumericGrammarTests(unittest.TestCase):
+    def test_underscore_separator_rejected(self):
+        # Python float("1_000") == 1000.0; CSV data must not allow it.
+        self.assertIsNone(parse_number("1_000"))
+        result = validate_rows([{"quantity": "1_000"}])
+        self.assertEqual(result.rejected[0].errors[0].code, "invalid_quantity")
+
+    def test_hex_rejected(self):
+        self.assertIsNone(parse_number("0x1F"))
+        result = validate_rows([{"quantity": "0x1F"}])
+        self.assertEqual(result.rejected[0].errors[0].code, "invalid_quantity")
+
+    def test_leading_dot_fraction_accepted(self):
+        result = validate_rows([{"quantity": ".5"}])
+        self.assertEqual(result.accepted_rows[0]["quantity"], "0.5")
+
+    def test_trailing_dot_accepted(self):
+        result = validate_rows([{"quantity": "5."}])
+        self.assertEqual(result.accepted_rows[0]["quantity"], "5")
+
+    def test_leading_plus_accepted(self):
+        result = validate_rows([{"quantity": "+5"}])
+        self.assertEqual(result.accepted_rows[0]["quantity"], "5")
+
+    def test_scientific_notation_accepted(self):
+        result = validate_rows([{"quantity": "1e3"}])
+        self.assertEqual(result.accepted_rows[0]["quantity"], "1000")
+
+    def test_surrounding_whitespace_accepted(self):
+        result = validate_rows([{"quantity": " 5 "}])
+        self.assertEqual(result.accepted_rows[0]["quantity"], "5")
+
+    def test_thousands_separator_rejected(self):
+        result = validate_rows([{"quantity": "1,000"}])
+        self.assertEqual(result.rejected[0].errors[0].code, "invalid_quantity")
+
+    def test_empty_string_is_not_a_number(self):
+        self.assertIsNone(parse_number(""))
+
+
+class FormatNumberTests(unittest.TestCase):
+    def test_integral_values_lose_decimal_point(self):
+        self.assertEqual(format_number(8000.0), "8000")
+        self.assertEqual(format_number(-0.0), "0")
+
+    def test_no_scientific_notation(self):
+        self.assertEqual(format_number(1e-07), "0.0000001")
+        self.assertEqual(format_number(1e20), "100000000000000000000")
+
+    def test_large_near_integer_not_rounded(self):
+        # 999999999999.9 is not integral and must not silently become 1e12.
+        self.assertEqual(format_number(999999999999.9), "999999999999.9")
+
+    def test_output_roundtrips_to_same_float(self):
+        for value in (8000.0, 28.5, 0.1, 1e-07, 123.456, 999999999999.9, 0.01, 100.0):
+            self.assertEqual(float(format_number(value)), value, value)
 
 
 class TransportModeTests(unittest.TestCase):
@@ -275,6 +372,33 @@ class CsvInjectionTests(unittest.TestCase):
         self.assertEqual(result.accepted_rows, [])
 
 
+class ControlCharacterTests(unittest.TestCase):
+    def test_nul_in_cell_rejected(self):
+        result = validate_rows([{"product": "bad\x00name"}])
+        error = result.rejected[0].errors[0]
+        self.assertEqual(error.field, "product")
+        self.assertEqual(error.code, "invalid_control_character")
+
+    def test_vertical_tab_and_form_feed_rejected(self):
+        for value in ("bad\x0bname", "bad\x0cname"):
+            result = validate_rows([{"current_city": value}])
+            self.assertEqual(
+                result.rejected[0].errors[0].code, "invalid_control_character", value
+            )
+
+    def test_control_char_in_header_is_file_error(self):
+        text = ",".join(HEADER) + ",bad\x00column\n" + build_csv([{}]).split("\n", 1)[1]
+        result = validate_text(text, input_name="test.csv")
+        self.assertEqual(len(result.file_errors), 1)
+        self.assertEqual(result.file_errors[0]["code"], "invalid_header")
+
+    def test_newline_and_tab_are_not_control_char_errors(self):
+        # \n inside a quoted cell is legitimate; \t is reported as a formula
+        # vector, never as an accepted value.
+        result = validate_rows([{"product": "Multi\nLine"}])
+        self.assertEqual(result.accepted_rows[0]["product"], "Multi Line")
+
+
 class ShipmentWeightTests(unittest.TestCase):
     def test_negative_shipment_weight_rejected(self):
         result = validate_rows([{"shipment_weight_kg": "-50"}])
@@ -294,6 +418,10 @@ class ShipmentWeightTests(unittest.TestCase):
         result = validate_rows([{"shipment_weight_kg": ""}])
         self.assertEqual(len(result.accepted_rows), 1)
         self.assertEqual(result.accepted_rows[0]["shipment_weight_kg"], "")
+
+    def test_zero_shipment_weight_allowed(self):
+        result = validate_rows([{"shipment_weight_kg": "0"}])
+        self.assertEqual(len(result.accepted_rows), 1)
 
 
 class EmptyFileTests(unittest.TestCase):
@@ -317,6 +445,17 @@ class EmptyFileTests(unittest.TestCase):
         self.assertEqual(result.accepted_rows, [])
         self.assertEqual(result.headers, HEADER)
 
+    def test_whitespace_only_file_is_file_error(self):
+        result = validate_text(" \n \n", input_name="test.csv")
+        self.assertEqual(result.file_errors[0]["code"], "empty_file")
+
+    def test_bom_only_file_is_file_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bom.csv"
+            path.write_bytes(b"\xef\xbb\xbf")
+            result = validate_file(path)
+        self.assertEqual(result.file_errors[0]["code"], "empty_file")
+
 
 class UnicodeTests(unittest.TestCase):
     def test_unicode_text_preserved(self):
@@ -325,16 +464,25 @@ class UnicodeTests(unittest.TestCase):
         self.assertEqual(accepted["current_city"], "Iași")
         self.assertEqual(accepted["product"], "Öko-Stofftasche")
 
-    def test_non_utf8_file_rejected(self):
+    def test_non_utf8_file_reports_encoding_error(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "latin1.csv"
             path.write_bytes("product,quantity\nTüllamp,öö\n".encode("latin-1"))
-            with self.assertRaises(ValidatorFileError):
-                validate_file(path)
+            result = validate_file(path)
+        self.assertEqual(len(result.file_errors), 1)
+        self.assertEqual(result.file_errors[0]["code"], "invalid_encoding")
 
     def test_utf8_bom_handled(self):
         text = build_csv([{}])
         result = validate_text("\ufeff" + text, input_name="test.csv")
+        self.assertEqual(len(result.accepted_rows), 1)
+
+    def test_utf8_bom_file_handled(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bom.csv"
+            path.write_bytes(b"\xef\xbb\xbf" + build_csv([{}]).encode("utf-8"))
+            result = validate_file(path)
+        self.assertEqual(result.file_errors, [])
         self.assertEqual(len(result.accepted_rows), 1)
 
 
@@ -372,6 +520,12 @@ class NormalizationTests(unittest.TestCase):
         result = validate_rows([{"current_revenue_usd_m": "38.50"}])
         self.assertEqual(result.accepted_rows[0]["current_revenue_usd_m"], "38.5")
 
+    def test_uppercase_header_normalized(self):
+        header = [c.upper() for c in HEADER]
+        result = validate_rows([{}], header=header)
+        self.assertEqual(result.file_errors, [])
+        self.assertEqual(result.headers, HEADER)
+
 
 class OtherValidationTests(unittest.TestCase):
     def test_invalid_target_count_text_rejected(self):
@@ -382,6 +536,15 @@ class OtherValidationTests(unittest.TestCase):
         result = validate_rows([{"target_count": "6.5"}])
         self.assertEqual(result.rejected[0].errors[0].code, "invalid_target_count")
 
+    def test_target_count_near_integer_rejected(self):
+        # Exact whole-number check: 5.0000001 must not pass as 5.
+        result = validate_rows([{"target_count": "5.0000001"}])
+        self.assertEqual(result.rejected[0].errors[0].code, "invalid_target_count")
+
+    def test_target_count_integral_float_accepted(self):
+        result = validate_rows([{"target_count": "6.0"}])
+        self.assertEqual(result.accepted_rows[0]["target_count"], "6")
+
     def test_invalid_revenue_rejected(self):
         result = validate_rows([{"current_revenue_usd_m": "abc"}])
         self.assertEqual(result.rejected[0].errors[0].code, "invalid_revenue_usd_m")
@@ -390,15 +553,28 @@ class OtherValidationTests(unittest.TestCase):
         result = validate_rows([{"current_revenue_usd_m": "0"}])
         self.assertEqual(result.rejected[0].errors[0].code, "invalid_revenue_usd_m")
 
+    def test_revenue_at_minimum_accepted(self):
+        result = validate_rows([{"current_revenue_usd_m": "0.01"}])
+        self.assertEqual(len(result.accepted_rows), 1)
+
     def test_renewable_pct_out_of_range_rejected(self):
         result = validate_rows([{"current_renewable_pct": "150"}])
         self.assertEqual(result.rejected[0].errors[0].code, "invalid_renewable_pct")
+
+    def test_renewable_pct_bounds_accepted(self):
+        for value in ("0", "100"):
+            result = validate_rows([{"current_renewable_pct": value}])
+            self.assertEqual(len(result.accepted_rows), 1, value)
 
     def test_field_too_long_rejected(self):
         result = validate_rows([{"current_manufacturer": "M" * 201}])
         error = result.rejected[0].errors[0]
         self.assertEqual(error.field, "current_manufacturer")
         self.assertEqual(error.code, "field_too_long")
+
+    def test_field_at_length_limit_accepted(self):
+        result = validate_rows([{"current_manufacturer": "M" * 200}])
+        self.assertEqual(len(result.accepted_rows), 1)
 
     def test_unsupported_disclosure_status_rejected(self):
         result = validate_rows([{"current_disclosure_status": "maybe"}])
@@ -422,6 +598,65 @@ class OtherValidationTests(unittest.TestCase):
         self.assertEqual(result.rejected[0].raw["destination"], "USA")
         self.assertEqual(result.rejected[0].row, 2)
 
+    def test_rejected_record_raw_has_every_mapped_column(self):
+        result = validate_rows([{"destination": "USA"}])
+        self.assertEqual(set(result.rejected[0].raw.keys()), set(HEADER))
+
+    def test_validate_file_rejects_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(ValidatorFileError):
+                validate_file(tmp)
+
+
+class CsvParsingTests(unittest.TestCase):
+    def test_quoted_comma_field_accepted(self):
+        result = validate_rows([{"product": "Lamp, desk variant"}])
+        self.assertEqual(result.accepted_rows[0]["product"], "Lamp, desk variant")
+
+    def test_multiline_quoted_field_line_numbering(self):
+        # Row 2 spans physical lines 2-3; the next row is therefore line 4.
+        buffer = io.StringIO()
+        writer = csv.writer(buffer, lineterminator="\n")
+        writer.writerow(HEADER)
+        merged = dict(DEFAULT_ROW)
+        merged["product"] = "Multi\nLine"
+        writer.writerow([merged.get(column, "") for column in HEADER])
+        writer.writerow(
+            [dict(DEFAULT_ROW, destination="USA").get(column, "") for column in HEADER]
+        )
+        result = validate_text(buffer.getvalue(), input_name="test.csv")
+        self.assertEqual(len(result.accepted_rows), 1)
+        self.assertEqual(result.accepted_rows[0]["product"], "Multi Line")
+        self.assertEqual(len(result.rejected), 1)
+        self.assertEqual(result.rejected[0].row, 4)
+
+    def test_crlf_file_accepted(self):
+        text = build_csv([{"component": "led module"}]).replace("\n", "\r\n")
+        result = validate_text(text, input_name="test.csv")
+        self.assertEqual(len(result.accepted_rows), 1)
+        self.assertEqual(result.accepted_rows[0]["component"], "led module")
+
+    def test_short_row_padded(self):
+        # Only the 7 required columns are present; the row is accepted and
+        # the normalized map contains exactly the file's own columns.
+        values = ["LED desk lamp", "8000", "US", "sea", "aluminum housing", "MetalForm Precision", "CN"]
+        text = "product,quantity,destination,transport_mode,component,current_manufacturer,current_country\n"
+        text += ",".join(values) + "\n"
+        result = validate_text(text, input_name="test.csv")
+        self.assertEqual(len(result.accepted_rows), 1)
+        self.assertEqual(
+            set(result.accepted_rows[0].keys()),
+            {
+                "product",
+                "quantity",
+                "destination",
+                "transport_mode",
+                "component",
+                "current_manufacturer",
+                "current_country",
+            },
+        )
+
 
 class WarningTests(unittest.TestCase):
     def test_suspicious_website_warning(self):
@@ -435,6 +670,14 @@ class WarningTests(unittest.TestCase):
         result = validate_rows([{"unit": ""}])
         self.assertEqual(len(result.accepted_rows), 1)
         self.assertEqual(result.warnings[0].code, "missing_unit")
+
+    def test_no_unit_warning_when_column_absent(self):
+        header = [c for c in HEADER if c != "unit"]
+        result = validate_rows(
+            [{"component": "a"}, {"component": "b"}], header=header
+        )
+        self.assertEqual(len(result.accepted_rows), 2)
+        self.assertEqual(result.warnings, [])
 
     def test_no_warning_on_rejected_row(self):
         result = validate_rows(
@@ -450,6 +693,35 @@ class WarningTests(unittest.TestCase):
         self.assertEqual(len(result.rejected), 1)
         self.assertEqual(result.rejected[0].errors[0].code, "duplicate_supplier_record")
         self.assertEqual(result.warnings, [])
+
+
+class ProvenanceTests(unittest.TestCase):
+    def test_summary_contains_sha256_of_text(self):
+        text = build_csv([{}])
+        result = validate_text(text, input_name="test.csv")
+        expected = hashlib.sha256(text.encode("utf-8")).hexdigest()
+        self.assertEqual(result.input_sha256, expected)
+        self.assertEqual(result.summary()["input_sha256"], expected)
+
+    def test_summary_sha256_matches_file_bytes(self):
+        payload = build_csv([{}]).encode("utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "in.csv"
+            path.write_bytes(payload)
+            result = validate_file(path)
+        self.assertEqual(
+            result.input_sha256, hashlib.sha256(payload).hexdigest()
+        )
+
+    def test_outputs_contain_sha256_and_headers(self):
+        result = validate_rows([{}])
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = write_outputs(result, tmp)
+            errors_doc = json.loads(Path(paths["errors"]).read_text(encoding="utf-8"))
+            summary_doc = json.loads(Path(paths["summary"]).read_text(encoding="utf-8"))
+        self.assertIn("input_sha256", errors_doc)
+        self.assertEqual(errors_doc["input_sha256"], result.input_sha256)
+        self.assertEqual(summary_doc["headers"], HEADER)
 
 
 class OutputTests(unittest.TestCase):
@@ -502,6 +774,15 @@ class OutputTests(unittest.TestCase):
         self.assertEqual(rows[1][0], "LED desk lamp")
         self.assertEqual(rows[2][6], "led module")
 
+    def test_rejected_and_warnings_ordered_by_row(self):
+        rows = [{"destination": "USA"}, {}, {"quantity": "0"}, {}]
+        header = [c for c in HEADER if c != "unit"]
+        result = validate_text(build_csv(rows, header=header), input_name="test.csv")
+        rejected_rows = [record.row for record in result.rejected]
+        self.assertEqual(rejected_rows, sorted(rejected_rows))
+        warning_rows = [warn.row for warn in result.warnings]
+        self.assertEqual(warning_rows, sorted(warning_rows))
+
 
 class CliTests(unittest.TestCase):
     def _write_input(self, tmp: str, text: str, name: str = "input.csv") -> str:
@@ -542,11 +823,59 @@ class CliTests(unittest.TestCase):
             errors = json.loads((Path(tmp) / "errors.json").read_text(encoding="utf-8"))
             self.assertEqual(errors["file_errors"][0]["code"], "missing_required_columns")
 
+    def test_cli_exit_two_on_bad_encoding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "latin1.csv"
+            source.write_bytes("product,quantity\nTüllamp,öö\n".encode("latin-1"))
+            code = cli.main(["--input", str(source), "--output", tmp])
+            self.assertEqual(code, 2)
+            errors = json.loads((Path(tmp) / "errors.json").read_text(encoding="utf-8"))
+            self.assertEqual(errors["file_errors"][0]["code"], "invalid_encoding")
+
     def test_cli_rejects_non_csv_extension(self):
         with tempfile.TemporaryDirectory() as tmp:
             source = self._write_input(tmp, build_csv([{}]), name="input.txt")
             code = cli.main(["--input", source, "--output", tmp])
             self.assertEqual(code, 2)
+
+    def test_cli_output_path_is_file_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._write_input(tmp, build_csv([{}]))
+            blocker = Path(tmp) / "blocker.txt"
+            blocker.write_text("not a directory", encoding="utf-8")
+            code = cli.main(["--input", source, "--output", str(blocker)])
+            self.assertEqual(code, 2)
+
+    def test_cli_strict_warning_causes_exit_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._write_input(
+                tmp, build_csv([{"current_website": "example.com"}])
+            )
+            out = Path(tmp) / "out"
+            self.assertEqual(
+                cli.main(["--input", source, "--output", str(out), "--strict"]), 1
+            )
+            self.assertEqual(
+                cli.main(["--input", source, "--output", str(out)]), 0
+            )
+
+    def test_cli_version_exits_zero(self):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            with self.assertRaises(SystemExit) as ctx:
+                cli.main(["--version"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("supplier-csv-validator", buffer.getvalue())
+
+    def test_cli_quiet_suppresses_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self._write_input(tmp, build_csv([{}]))
+            out = Path(tmp) / "out"
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                code = cli.main(["--input", source, "--output", str(out), "--quiet"])
+            self.assertEqual(code, 0)
+            self.assertEqual(buffer.getvalue(), "")
 
     def test_cli_on_example_files(self):
         base = Path(__file__).parent.parent
@@ -565,6 +894,104 @@ class CliTests(unittest.TestCase):
                 ]
             )
             self.assertEqual(code, 1)
+
+
+class CliBatchTests(unittest.TestCase):
+    def _make_batch_dir(self, tmp: str) -> str:
+        batch = Path(tmp) / "batch"
+        batch.mkdir()
+        (batch / "clean.csv").write_text(build_csv([{}]), encoding="utf-8")
+        (batch / "broken.csv").write_text(
+            build_csv([{}, {"destination": "USA"}]), encoding="utf-8"
+        )
+        return str(batch)
+
+    def test_batch_creates_per_file_outputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = self._make_batch_dir(tmp)
+            out = Path(tmp) / "out"
+            code = cli.main(["--input", batch, "--output", str(out)])
+            self.assertEqual(code, 1)  # broken.csv has a rejection
+            self.assertTrue((out / "clean" / "cleaned.csv").exists())
+            self.assertTrue((out / "broken" / "cleaned.csv").exists())
+            self.assertTrue((out / "broken" / "errors.json").exists())
+            self.assertTrue((out / "combined_summary.json").exists())
+
+    def test_batch_combined_summary_totals(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = self._make_batch_dir(tmp)
+            out = Path(tmp) / "out"
+            cli.main(["--input", batch, "--output", str(out)])
+            combined = json.loads(
+                (out / "combined_summary.json").read_text(encoding="utf-8")
+            )
+        self.assertEqual(combined["mode"], "batch")
+        self.assertEqual(combined["file_count"], 2)
+        self.assertEqual(combined["totals"]["total_rows"], 3)
+        self.assertEqual(combined["totals"]["accepted_rows"], 2)
+        self.assertEqual(combined["totals"]["rejected_rows"], 1)
+        statuses = {entry["input_file"]: entry["status"] for entry in combined["files"]}
+        self.assertEqual(statuses[str(Path(batch) / "clean.csv")], "ok")
+        self.assertEqual(statuses[str(Path(batch) / "broken.csv")], "rejected_rows")
+
+    def test_batch_all_clean_exit_zero(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = Path(tmp) / "batch"
+            batch.mkdir()
+            (batch / "a.csv").write_text(build_csv([{}]), encoding="utf-8")
+            (batch / "b.csv").write_text(
+                build_csv([{"component": "led module"}]), encoding="utf-8"
+            )
+            out = Path(tmp) / "out"
+            code = cli.main(["--input", str(batch), "--output", str(out)])
+            self.assertEqual(code, 0)
+
+    def test_batch_strict_warning_exit_one(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = Path(tmp) / "batch"
+            batch.mkdir()
+            (batch / "a.csv").write_text(
+                build_csv([{"current_website": "example.com"}]), encoding="utf-8"
+            )
+            out = Path(tmp) / "out"
+            code = cli.main(["--input", str(batch), "--output", str(out), "--strict"])
+            self.assertEqual(code, 1)
+            code = cli.main(["--input", str(batch), "--output", str(out)])
+            self.assertEqual(code, 0)
+
+    def test_batch_empty_directory_exit_two(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = Path(tmp) / "batch"
+            batch.mkdir()
+            out = Path(tmp) / "out"
+            code = cli.main(["--input", str(batch), "--output", str(out)])
+            self.assertEqual(code, 2)
+
+    def test_batch_ignores_non_csv_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            batch = Path(tmp) / "batch"
+            batch.mkdir()
+            (batch / "a.csv").write_text(build_csv([{}]), encoding="utf-8")
+            (batch / "notes.txt").write_text("ignore me", encoding="utf-8")
+            out = Path(tmp) / "out"
+            code = cli.main(["--input", str(batch), "--output", str(out)])
+            self.assertEqual(code, 0)
+            combined = json.loads(
+                (out / "combined_summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(combined["file_count"], 1)
+
+
+class SmokeTests(unittest.TestCase):
+    def test_two_thousand_rows_processed(self):
+        rows = [{"component": f"component {i}", "current_manufacturer": f"M{i}"} for i in range(2000)]
+        text = build_csv(rows)
+        started = time.monotonic()
+        result = validate_text(text, input_name="big.csv")
+        elapsed = time.monotonic() - started
+        self.assertEqual(result.file_errors, [])
+        self.assertEqual(len(result.accepted_rows), 2000)
+        self.assertLess(elapsed, 30.0)
 
 
 if __name__ == "__main__":

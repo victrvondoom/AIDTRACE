@@ -14,6 +14,7 @@ Standard library only. No API keys, database, network, or AI model required.
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import math
@@ -57,6 +58,8 @@ OPTIONAL_COLUMNS = (
 KNOWN_COLUMNS = REQUIRED_COLUMNS + OPTIONAL_COLUMNS
 
 # Fields parsed as numbers. Values: (parse kind, minimum, maximum, error code).
+# "positive_*" kinds treat the minimum as exclusive (quantity > 0),
+# "float" kinds treat it as inclusive (revenue >= 0.01, like GreenChain ge=0.01).
 NUMERIC_FIELDS = {
     "quantity": ("positive_float", 0.0, None, "invalid_quantity"),
     "target_count": ("positive_int", 0.0, None, "invalid_target_count"),
@@ -86,7 +89,20 @@ MAX_FIELD_LENGTHS = {
 DEFAULT_MAX_FIELD_LENGTH = 500
 
 # Spreadsheet formula injection prefixes (OWASP CSV injection vectors).
-DANGEROUS_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+# FORMULA_PREFIXES are checked on the first character of a cell;
+# DANGEROUS_PREFIXES additionally lists in-cell tab/CR, which are injection
+# vectors and never survive into cleaned.csv.
+FORMULA_PREFIXES = ("=", "+", "-", "@")
+DANGEROUS_PREFIXES = FORMULA_PREFIXES + ("\t", "\r")
+
+# Strict decimal grammar for CSV numeric fields. Deliberately stricter than
+# float(): rejects Python-isms such as "1_000" (underscore separators),
+# "nan", "inf", "0x1F", and localized forms such as "1,000" or "1.000,5".
+_NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
+
+# C0 control characters that are neither whitespace handled by the CSV layer
+# (\t, \n, \r) nor acceptable in a text cell (NUL, VT, FF, SOH, ...).
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 # ISO 3166-1 alpha-2 country codes.
 ISO2_COUNTRIES = frozenset(
@@ -152,6 +168,7 @@ class RejectedRecord:
 @dataclass
 class FileResult:
     input_file: str
+    input_sha256: str = ""
     file_errors: list[dict[str, str]] = field(default_factory=list)
     headers: list[str] = field(default_factory=list)
     accepted_rows: list[dict[str, str]] = field(default_factory=list)
@@ -172,7 +189,9 @@ class FileResult:
             warnings_by_code[warn.code] = warnings_by_code.get(warn.code, 0) + 1
         return {
             "input_file": self.input_file,
+            "input_sha256": self.input_sha256,
             "schema_version": SCHEMA_VERSION,
+            "headers": list(self.headers),
             "total_rows": self.total_rows,
             "accepted_rows": len(self.accepted_rows),
             "rejected_rows": len(self.rejected),
@@ -193,16 +212,38 @@ def normalize_country(value: str) -> str:
 
 
 def format_number(number: float) -> str:
-    """Canonical numeric text: integral values lose the trailing '.0'."""
-    if math.isclose(number, round(number), abs_tol=1e-12):
-        return str(int(round(number)))
-    return repr(number)
+    """Canonical numeric text.
+
+    Integral values lose the trailing '.0'; non-integral values use the
+    shortest exact decimal form and never scientific notation. The output
+    always parses back to the identical float.
+    """
+    if number.is_integer():
+        return str(int(number))
+    text = repr(number)
+    if "e" not in text and "E" not in text:
+        return text
+    # Scientific notation: find the shortest plain-decimal expansion that
+    # still parses back to the identical float.
+    for precision in range(1, 31):
+        expanded = format(number, f".{precision}f").rstrip("0").rstrip(".")
+        if expanded and float(expanded) == number:
+            return expanded
+    return text
 
 
 def parse_number(value: str) -> float | None:
-    """Parse a finite decimal number. Returns None for anything else."""
+    """Parse a finite plain-decimal number. Returns None for anything else.
+
+    Accepts optional sign, integer or fractional decimal digits, and an
+    optional decimal exponent (``1e3``). Rejects underscores, hex, NaN,
+    infinity, localized separators, and anything non-numeric.
+    """
+    text = value.strip()
+    if not _NUMBER_RE.match(text):
+        return None
     try:
-        number = float(value)
+        number = float(text)
     except (TypeError, ValueError):
         return None
     if not math.isfinite(number):
@@ -217,7 +258,12 @@ def _is_dangerous(value: str) -> bool:
         return False
     if "\t" in value or "\r" in value:
         return True
-    return trimmed[0] in ("=", "+", "-", "@")
+    return trimmed[0] in FORMULA_PREFIXES
+
+
+def _has_control_characters(value: str) -> bool:
+    """NUL, VT, FF and other C0 controls that are not \t, \n or \r."""
+    return _CONTROL_RE.search(value) is not None
 
 
 def _check_formula(row: int, name: str, value: str, code: str) -> RowError | None:
@@ -306,7 +352,7 @@ def _validate_numeric(
                 message=f"{name} is outside the supported range ({minimum}..{upper_bound}).",
             )
         ]
-    if kind == "positive_int" and not math.isclose(number, round(number)):
+    if kind == "positive_int" and number != int(number):
         return None, [
             RowError(
                 row=row,
@@ -367,6 +413,17 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
             formula_error = _check_formula(row_number, name, value, "dangerous_formula_prefix")
             if formula_error is not None:
                 fail(formula_error)
+            continue
+
+        if _has_control_characters(value):
+            fail(
+                RowError(
+                    row=row_number,
+                    field=name,
+                    code="invalid_control_character",
+                    message=f"{name} contains a control character (NUL, VT, FF or similar).",
+                )
+            )
             continue
 
         if name in COUNTRY_FIELDS:
@@ -442,8 +499,9 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
                 )
             )
 
-    # Warnings (record stays acceptable).
-    if not raw.get("unit", "").strip():
+    # Warnings (record stays acceptable). Only fields whose column exists in
+    # this file can warn: a file without a `unit` column is not "missing" it.
+    if "unit" in raw and not raw["unit"].strip():
         warnings.append(
             RowWarning(
                 row=row_number,
@@ -452,16 +510,20 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
                 message="unit is empty; the record is accepted but lacks a unit of measure.",
             )
         )
-    website = raw.get("current_website", "").strip()
-    if website and not (website.lower().startswith("http://") or website.lower().startswith("https://")):
-        warnings.append(
-            RowWarning(
-                row=row_number,
-                field="current_website",
-                code="suspicious_website",
-                message="current_website does not start with http:// or https://.",
+    if "current_website" in raw:
+        website = raw["current_website"].strip()
+        if website and not (
+            website.lower().startswith("http://")
+            or website.lower().startswith("https://")
+        ):
+            warnings.append(
+                RowWarning(
+                    row=row_number,
+                    field="current_website",
+                    code="suspicious_website",
+                    message="current_website does not start with http:// or https://.",
+                )
             )
-        )
 
     return normalized, errors, warnings
 
@@ -476,6 +538,14 @@ def _parse_headers(raw_headers: list[str]) -> tuple[list[str], list[dict[str, st
         if not normalized:
             file_errors.append(
                 {"code": "empty_header", "message": "Header names cannot be empty."}
+            )
+            return [], file_errors
+        if _has_control_characters(normalized):
+            file_errors.append(
+                {
+                    "code": "invalid_header",
+                    "message": f"Header name contains a control character: {raw_header!r}.",
+                }
             )
             return [], file_errors
         if normalized in seen:
@@ -496,14 +566,31 @@ def _parse_headers(raw_headers: list[str]) -> tuple[list[str], list[dict[str, st
     return headers, file_errors
 
 
-def validate_text(text: str, input_name: str = "input.csv") -> FileResult:
-    """Validate CSV text against the GreenChain supplier contract."""
-    result = FileResult(input_file=input_name)
+def _sha256_hex(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def validate_text(
+    text: str, input_name: str = "input.csv", sha256: str | None = None
+) -> FileResult:
+    """Validate CSV text against the GreenChain supplier contract.
+
+    ``sha256`` optionally supplies the provenance hash of the source bytes
+    (``validate_file`` passes the raw file bytes); by default the hash of the
+    BOM-stripped text is used.
+    """
+    result = FileResult(
+        input_file=input_name,
+        input_sha256=sha256 if sha256 is not None else "",
+    )
     if text.startswith("\ufeff"):  # UTF-8 BOM, mirrors utf-8-sig file decoding
         text = text[1:]
+    if not result.input_sha256:
+        result.input_sha256 = _sha256_hex(text)
+
     reader = csv.reader(io.StringIO(text))
-    rows = list(reader)
-    if not rows or not any(cell.strip() for cell in rows[0]):
+    header_row = next(reader, None)
+    if header_row is None or not any(cell.strip() for cell in header_row):
         result.file_errors.append(
             {
                 "code": "empty_file",
@@ -512,16 +599,13 @@ def validate_text(text: str, input_name: str = "input.csv") -> FileResult:
         )
         return result
 
-    headers, header_errors = _parse_headers(rows[0])
+    headers, header_errors = _parse_headers(header_row)
     result.file_errors.extend(header_errors)
     if header_errors:
         return result
     result.headers = headers
 
-    seen_keys: set[tuple[str, str, str, str]] = set()
-    # Re-iterate so reader.line_num gives the physical source line of each row.
-    reader = csv.reader(io.StringIO(text))
-    next(reader, None)  # header
+    seen_keys: dict[tuple[str, str, str, str], int] = {}
     for row in reader:
         row_number = reader.line_num
         if not any(cell.strip() for cell in row):
@@ -541,14 +625,18 @@ def validate_text(text: str, input_name: str = "input.csv") -> FileResult:
                             row=row_number,
                             field=",".join(DUPLICATE_KEY),
                             code="duplicate_supplier_record",
-                            message="Duplicate supplier record (product, component, current_manufacturer, current_country already seen).",
+                            message=(
+                                "Duplicate supplier record (product, component, "
+                                "current_manufacturer, current_country already seen at "
+                                f"row {seen_keys[key]})."
+                            ),
                         )
                     ],
                     raw={header: value for header, value in zip(headers, row + [""] * (len(headers) - len(row)))},
                 )
             )
             continue
-        seen_keys.add(key)
+        seen_keys[key] = row_number
         result.warnings.extend(warnings)
         result.accepted_rows.append(normalized)
     return result
@@ -559,11 +647,15 @@ def validate_file(path: str | Path) -> FileResult:
     input_path = Path(path)
     if not input_path.exists():
         raise ValidatorFileError(f"Input file not found: {input_path}")
+    if input_path.is_dir():
+        raise ValidatorFileError(
+            f"Input is a directory: {input_path}. Pass a .csv file (or use batch mode)."
+        )
     if input_path.suffix.lower() != ".csv":
         raise ValidatorFileError("Only .csv files are supported.")
     data = input_path.read_bytes()
     if not data:
-        result = FileResult(input_file=str(input_path))
+        result = FileResult(input_file=str(input_path), input_sha256=_sha256_hex(""))
         result.file_errors.append(
             {
                 "code": "empty_file",
@@ -571,11 +663,17 @@ def validate_file(path: str | Path) -> FileResult:
             }
         )
         return result
+    sha256 = hashlib.sha256(data).hexdigest()
     try:
         text = data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
-        raise ValidatorFileError("CSV must be UTF-8 encoded.") from exc
-    return validate_text(text, input_name=str(input_path))
+        # Still emit outputs for provenance even when decoding fails.
+        result = FileResult(input_file=str(input_path), input_sha256=sha256)
+        result.file_errors.append(
+            {"code": "invalid_encoding", "message": "CSV must be UTF-8 encoded."}
+        )
+        return result
+    return validate_text(text, input_name=str(input_path), sha256=sha256)
 
 
 def write_outputs(result: FileResult, output_dir: str | Path) -> dict[str, str]:
@@ -593,6 +691,7 @@ def write_outputs(result: FileResult, output_dir: str | Path) -> dict[str, str]:
 
     errors_doc = {
         "input_file": result.input_file,
+        "input_sha256": result.input_sha256,
         "schema_version": SCHEMA_VERSION,
         "file_errors": result.file_errors,
         "rejected": [
