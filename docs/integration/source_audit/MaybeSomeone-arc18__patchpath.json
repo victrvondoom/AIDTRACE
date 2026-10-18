@@ -1,0 +1,119 @@
+{
+  "repository": "MaybeSomeone-arc18/patchpath",
+  "url": "https://github.com/MaybeSomeone-arc18/patchpath",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\MaybeSomeone-arc18__patchpath",
+  "commit_sha": "6665b03a52bb10b38f4a407951f345de7c98650c",
+  "license": "MIT",
+  "copyright_holder": "Sanskar Kharya (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "LICENSE",
+    "README.md",
+    "requirements.txt",
+    "requirements-mcp.txt",
+    "compose.yaml",
+    "patchpath/graphstore.py",
+    "patchpath/tools_query.py",
+    "patchpath/acquire.py",
+    "patchpath/analyze.py (symbol list and structure)",
+    "patchpath/packet.py",
+    "patchpath/registry.py",
+    "patchpath/viewer.py",
+    "patchpath/mcp_server.py",
+    "patchpath/eval.py (header)",
+    "patchpath/dbconn.py",
+    "tests/test_security.py",
+    "benchmarks/README.md"
+  ],
+  "languages_frameworks": ["Python 3.10+", "falkordb==1.8.0 client (compose pins server image falkordb/falkordb:6.0.2)", "FastAPI viewer + Jinja2", "stdlib ast for static analysis", "SQLite registry", "httpx", "MCP FastMCP (optional)", "pytest"],
+  "implemented_capabilities": [
+    {
+      "capability": "Pinned-commit repository snapshot acquisition with archive hardening",
+      "files": ["patchpath/acquire.py"],
+      "symbols": ["resolve_sha", "_unpack", "_safe_member", "_check_redirect_host", "Snapshot", "SnapshotFile"],
+      "real_or_stub": "REAL",
+      "notes": "git ls-remote to resolve an exact 40-char SHA, then codeload tarball; enforces compressed/expanded byte caps, file-count caps, rejects absolute/parent paths and symlinks/hardlinks, skips vendored/generated files, hashes each file (sha256), redirects limited to GitHub hosts."
+    },
+    {
+      "capability": "Static Python code graph extraction (symbols, EXACT/NAME_ONLY/UNRESOLVED/EXTERNAL call resolution, imports, refs, module vars, test detection, fixtures)",
+      "files": ["patchpath/analyze.py"],
+      "symbols": ["analyze_files", "_Visitor", "symbol_id", "module_name", "is_test_file", "EXACT", "NAME_ONLY", "UNRESOLVED", "EXTERNAL"],
+      "real_or_stub": "REAL",
+      "notes": "AST-only analysis (no execution) with import-map resolution, class hierarchy lookup, constructor tracking and an explicit confidence tag on every call edge so gaps stay visible instead of being guessed."
+    },
+    {
+      "capability": "Staging-then-publish immutable graph per snapshot with count validation",
+      "files": ["patchpath/graphstore.py", "patchpath/registry.py"],
+      "symbols": ["GraphStore.build_staging", "GraphStore.validate", "GraphStore.publish", "staging_graph_name", "published_graph_name", "Registry"],
+      "real_or_stub": "REAL",
+      "notes": "Batched parameterised UNWIND writes of File/Symbol/ModuleVar/Unresolved/External nodes and CALLS/REFS/IMPORTS edges into a staging graph; validate() compares graph counts with analyzer output; publish() uses GRAPH.COPY then deletes staging; SQLite registry marks BUILDING/READY/FAILED so readers never see half-built graphs; graph names embed analyzer and schema versions and a prune command drops superseded ones."
+    },
+    {
+      "capability": "Bounded read-only query tools: issue-text to candidate symbols, callers, tests, constraint files",
+      "files": ["patchpath/tools_query.py"],
+      "symbols": ["QueryTools.find_candidates", "QueryTools.neighbors", "QueryTools.nearby_tests", "QueryTools.inspect_symbol", "QueryTools.external_usage", "QueryTools.constraint_files", "identifiers", "frames"],
+      "real_or_stub": "REAL",
+      "notes": "Deterministic tiered ranking (traceback frame > title > linked-PR changed files > dotted name > module var > bare name > param) with hop cap 3 and result caps; no arbitrary Cypher accepted from UI or models; the graph-hop expansions are real but candidate selection itself is lexical heuristics, not learned."
+    },
+    {
+      "capability": "Evidence packet with citation re-validation and honest status/unknowns",
+      "files": ["patchpath/packet.py", "patchpath/issues.py"],
+      "symbols": ["build_packet", "Packet", "Citation", "CitationError", "render_markdown", "_github_url"],
+      "real_or_stub": "REAL",
+      "notes": "Each cited line range is re-checked against stored snapshot text at the pinned SHA (excerpt_hash) and a mismatch fails the pack; statuses never say ready-to-claim; issue/PR evidence carries observed_at with a 15 minute cache; failed checks are labelled unverified rather than empty; markdown output is HTML-escaped."
+    },
+    {
+      "capability": "Benchmark harness with frozen cases and oracle scoring",
+      "files": ["patchpath/eval.py", "benchmarks/README.md", "benchmarks/results_2026-10-15_run8.json"],
+      "symbols": ["main"],
+      "real_or_stub": "REAL",
+      "notes": "Evaluates whether packet candidates cover files the real fix changed (parent-commit snapshot, 12 frozen cases): reports 9/12 file hits and 6/12 file+symbol hits after iterations; results are reported honestly including misses."
+    },
+    {
+      "capability": "MCP server and local viewer",
+      "files": ["patchpath/mcp_server.py", "patchpath/viewer.py", "patchpath/cli.py"],
+      "symbols": ["snapshot_status", "make_app"],
+      "real_or_stub": "REAL",
+      "notes": "Seven read-only MCP tools via FastMCP; loopback-only FastAPI viewer with per-start access token, CSRF token and autoescaped templates."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Snapshot {repo, sha, analyzer, schema}, File {path, hash}, Symbol {id, qualname, name, kind: module|class|function|method, line_start, line_end, is_test, params, bases}, ModuleVar, Unresolved {expr}, External {expr}. Edges: IN_SNAPSHOT, DEFINED_IN, CALLS {tag: EXACT|NAME_ONLY|UNRESOLVED|EXTERNAL, expr, line, derived}, REFS, IMPORTS {line}. Writes are UNWIND batches (500/2000) with parameters only; reads are bounded parameterised MATCH queries; indexes created on Symbol.qualname/id/name, File.path, ModuleVar.name; GRAPH.COPY for publish. Standard OpenCypher, no APOC/GDS. Compose pins FalkorDB 6.0.2 while Kairos targets 4.22, so index syntax and any 6.x-only behaviour should be verified.",
+  "algorithms": [
+    "AST-based call/reference resolution with confidence tags (patchpath/analyze.py)",
+    "Tiered lexical candidate ranking with call-distance tie-break up to 2 hops (patchpath/tools_query.py:find_candidates)",
+    "Caller in-degree via OPTIONAL MATCH count(DISTINCT) (patchpath/tools_query.py:_caller_indegree)",
+    "Snapshot validation by count reconciliation then GRAPH.COPY publish (patchpath/graphstore.py)",
+    "Citation excerpt hash re-validation at pinned SHA (patchpath/packet.py)"
+  ],
+  "backend_interfaces": [
+    "CLI: python -m patchpath.cli ingest / pack / prune",
+    "FastAPI viewer (patchpath/viewer.py) on 127.0.0.1 with token + CSRF",
+    "MCP stdio server (patchpath/mcp_server.py), seven read-only tools"
+  ],
+  "frontend_interfaces": ["Single inline Jinja2 HTML page in patchpath/viewer.py (no separate frontend)"],
+  "agent_or_memory_mechanisms": "No LLM agent in the pack path: deterministic query tools plus markdown/JSON packets in data/packets/. SQLite registry is the only state readers trust for which graph is READY. Snapshot graphs are immutable and versioned by analyzer/schema, so earlier evidence remains reproducible. MCP exposes the tools to external agents.",
+  "tests_present": "tests/: 9 files, about 108 pytest tests (analyze 54, packet 13, audit 11, registry 8, bridge 6, security 5, acquire 4, ranking 4, prune 3) including hostile tar paths, prompt-injection README/docstrings, XSS in markdown, and citation validation; plus recorded benchmark runs 2026-10-15/16. Most tests are offline; graph-store paths need FalkorDB. Not executed by auditor.",
+  "dependency_requirements": ["FalkOrDB==1.8.0 client", "fastapi==0.143.1", "httpx==0.28.1", "Jinja2==3.1.6", "pydantic==2.14.1", "uvicorn==0.54.0", "redis==8.1.0", "mcp>=1.0,<2 (optional)", "git binary (git ls-remote)", "FalkorDB server (compose pins 6.0.2)"],
+  "security_findings": [
+    "patchpath/acquire.py:85 - subprocess.run(['git','ls-remote',...]) with the repo string validated by regex (owner/name) and a minimal env (PATH only, GIT_TERMINAL_PROMPT=0); safe pattern, but ref is passed as an argument without a '--' separator (low risk)",
+    "patchpath/eval.py:16 - imports subprocess for the benchmark harness (evaluation only; it does not run repository code per the docstring)",
+    "patchpath/acquire.py:183-222 - tar extraction is done in memory with isfile()/path-safety/size caps; positive control, no extractall",
+    "patchpath/viewer.py:105-148 - loopback bind, per-run secrets token compared with compare_digest, cookie httponly+samesite=strict, CSRF on POST /pack; single-user by design",
+    "patchpath/tools_query.py - all Cypher parameterised; no f-string Cypher with user data (graphstore.py:create_indexes interpolates only fixed label/property constants)",
+    "No hard-coded secrets, eval/exec or pickle found; README states it never runs repository code"
+  ],
+  "duplicates_or_overlaps": "Code-dependency / call-graph extraction and caller traversal overlaps blast-radius and software dependency repos; the pinned-snapshot evidence pack overlaps provenance-focused audit tools.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "MEDIUM - immutable commit-pinned snapshots, analyzer/schema-versioned graphs with superseded ones pruned, observed_at timestamps with cache TTL, explicit unknowns/unverified labels and citation excerpt hashes re-validated against stored text provide staleness and provenance primitives, but there is no dependency invalidation cascade or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "patchpath/graphstore.py",
+    "symbols": ["GraphStore.build_staging", "GraphStore.validate", "GraphStore.publish", "Registry"],
+    "why": "A tested stage-validate-publish (GRAPH.COPY) pattern with a registry pointer and versioned graph names that guarantees readers never see a half-built or superseded graph; together with packet.py's citation hash re-validation it is a reusable provenance-freshness primitive. analyze.py is a separate reusable Python AST call-graph extractor.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (client falkordb 1.8.0); git binary and GitHub network access only for acquisition"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Self-contained Python package with a clear graph schema; best adopted as a Software Dependency Intelligence pack (code graph + issue evidence), lifting the staging/publish and citation re-validation patterns into shared code. Verify compatibility against FalkorDB 4.22 since the project pins 6.0.2.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

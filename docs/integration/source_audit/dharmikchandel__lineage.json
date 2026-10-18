@@ -1,0 +1,116 @@
+{
+  "repository": "dharmikchandel/lineage",
+  "url": "https://github.com/dharmikchandel/lineage",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\dharmikchandel__lineage",
+  "commit_sha": "b68c04dea5a0e5ca270c22fff1ba06c1aade48c3",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "package.json",
+    "docker-compose.yml",
+    ".env.example",
+    "src/domain/types.ts",
+    "src/domain/propagation.ts",
+    "src/domain/skeptic.ts",
+    "src/graph/schema.ts",
+    "src/graph/queries.ts",
+    "src/graph/writes.ts",
+    "src/lib/db.ts",
+    "src/lib/config.ts",
+    "src/agents/linker.ts",
+    "src/llm/llm.ts",
+    "src/llm/embed.ts",
+    "src/app/api/analyze/route.ts",
+    "src/app/api/lineage/[claimId]/route.ts",
+    "tests/propagation.test.ts (count only)"
+  ],
+  "languages_frameworks": ["TypeScript", "Next.js 16 (app router) + React 19", "falkordb Node client ^6.8", "zod 4", "vitest", "pnpm", "Gemini (google generativelanguage REST) + optional Groq", "FalkorDB 4.22.0 docker image"],
+  "implemented_capabilities": [
+    {
+      "capability": "Basis-aware verdict inheritance along a mutation DAG (conditional validity)",
+      "files": ["src/domain/propagation.ts", "src/domain/types.ts"],
+      "symbols": ["SURVIVES", "checkHop", "evaluatePath", "deriveVerdict", "PathOutcome (inherited|broken|correction|context_only)", "NEGATIVE_VERDICTS", "DEBUNK_BASES"],
+      "real_or_stub": "REAL",
+      "notes": "Pure, DB-free rule table: each debunk basis (fabricated, misattributed, wrong_figure, misdated, overstated, missing_context) survives only specific mutation types; a hop that breaks the basis returns 'broken' with the before/after delta; per-hop decay times edge confidence with threshold and max depth; multiple paths are combined and the strongest inherited path wins. Fails safe (unlisted mutation breaks the basis)."
+    },
+    {
+      "capability": "Skeptic confidence-lowering pass (can only keep or lower confidence)",
+      "files": ["src/domain/skeptic.ts"],
+      "symbols": ["assess", "DEFAULT_SKEPTIC", "Assessment", "SkepticSettings"],
+      "real_or_stub": "REAL",
+      "notes": "Pure rules applying single-source and uncertain-direction penalties, contested-origin cautions and weak-link call-outs; lists fact-checks 'notCarried' with reasons."
+    },
+    {
+      "capability": "Claim lineage graph with provenance on every edge, DAG/date guards",
+      "files": ["src/graph/writes.ts", "src/graph/schema.ts"],
+      "symbols": ["upsertClaim", "addSighting", "linkMutation", "CycleError", "addOrigin", "addFactCheck", "ensureSchema", "comparePartialDates"],
+      "real_or_stub": "REAL",
+      "notes": "MERGE-based idempotent writes; MUTATED_FROM refuses self-links, cycles (loop query) and backwards-in-time parents; edges carry asserted_by, at, confidence, direction_certain, low_confidence_types; uniqueness constraints plus range and vector indexes."
+    },
+    {
+      "capability": "Named Cypher queries Q1-Q6 incl. vector search, upward/downward traversal, WCC",
+      "files": ["src/graph/queries.ts"],
+      "symbols": ["Q1_CANDIDATES", "Q2_ORIGINS", "Q3_DESCENDANTS", "Q4_INHERITANCE_PATHS", "Q5_FAMILIES", "Q6_PUBLISHER_SPREAD", "q4InheritancePaths", "q5FamilyOf"],
+      "real_or_stub": "REAL",
+      "notes": "Uses FalkorDB-native db.idx.vector.queryNodes + vecf32 + vec.cosineDistance and algo.WCC (not Neo4j GDS); all reads via GRAPH.RO_QUERY; verdict is recomputed at read time from the graph, nothing cached as truth."
+    },
+    {
+      "capability": "Four-agent pipeline (Extractor, Linker, Skeptic, Writer) coordinating through the graph",
+      "files": ["src/agents/extractor.ts", "src/agents/linker.ts", "src/agents/skeptic.ts", "src/agents/writer.ts", "src/agents/trace.ts", "src/pipeline.ts"],
+      "symbols": ["runLinker", "runAgent", "readFindings", "runAnalysis"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Extractor and Linker are LLM prompts (same/mutation/related/unrelated judgments validated by zod, capped by MUTATION_RELIABILITY); agents persist AgentRun/Finding nodes and read each other's findings from the graph (shared memory). Skeptic agent wraps the pure rules. LLM budget, cache and backoff are real."
+    },
+    {
+      "capability": "Lineage visual UI",
+      "files": ["src/components/LineageGraph.tsx", "src/components/LineageApp.tsx", "src/components/AnswerPanel.tsx", "src/components/AgentTrace.tsx"],
+      "symbols": ["LineageGraph", "AgentTrace", "AnswerPanel"],
+      "real_or_stub": "REAL",
+      "notes": "Custom SVG/CSS graph rendering of the story family; polls /api/analysis/[id] to show live agent trace read from the graph."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Claim{id,text,embedding vecf32,first_seen,attributed_to,synthetic}, Sighting, Publisher, Source, FactCheck{verdict,basis}, AgentRun, Finding. Edges: SIGHTING_OF, PUBLISHED_BY, MUTATED_FROM{types[],before_text,after_text,confidence,direction_certain,low_confidence_types,asserted_by,at}, ORIGINATES_FROM{established,confidence,evidence_url}, CHECKED_BY{verdict,basis}, FOUND, ABOUT. FalkorDB-native features: vector index (CREATE VECTOR INDEX ... OPTIONS {dimension, similarityFunction:'cosine'}), db.idx.vector.queryNodes, vec.cosineDistance, algo.WCC, UNIQUE constraints via constraintCreate, variable-length paths *0..N with depth interpolated as Math.trunc(int) constants. No APOC/GDS.",
+  "algorithms": [
+    "Basis-compatibility path walk with per-hop confidence decay and threshold (domain/propagation.ts:evaluatePath)",
+    "Multi-path verdict merge: strongest inherited path wins, others kept (deriveVerdict)",
+    "Variable-length upward traversal to fact-checked ancestors with reduce() decay (queries.ts Q4)",
+    "Weakly connected components over MUTATED_FROM for story families (Q5, algo.WCC)",
+    "Cosine nearest-neighbour candidate retrieval with 0.75 similarity floor (Q1, linker.ts MIN_CANDIDATE_SIMILARITY)",
+    "Cycle and temporal-order guard on DAG insert (writes.ts:linkMutation)"
+  ],
+  "backend_interfaces": [
+    "Next.js route handlers: POST /api/analyze, GET /api/analysis/[id], GET /api/lineage/[claimId], GET /api/health",
+    "CLI (tsx): scripts/analyze.ts, query.ts (run named Q1-Q6), seed.ts, schema.ts, preflight.ts"
+  ],
+  "frontend_interfaces": [
+    "React 19 / Next.js: LineageApp, LineageGraph (556 lines), AnswerPanel, AgentTrace, AmbientTree, FlipNumber"
+  ],
+  "agent_or_memory_mechanisms": "Agents coordinate only through graph nodes (AgentRun -[:FOUND]-> Finding -[:ABOUT]-> Claim): later agents read earlier findings via readFindings(); per-run and per-day LLM budgets; LLM response cache keyed by hash(provider, model, prompt, schema). Mode 'recorded' serves presets without LLM calls.",
+  "tests_present": "tests/propagation.test.ts (~15 cases), tests/skeptic.test.ts (~6), tests/writer.test.ts (~4); vitest, pure rule tests with no DB. No tests for Cypher queries, linker or API routes. Not executed by auditor.",
+  "dependency_requirements": ["falkordb ^6.8.0", "next 16.3.8", "react ^19.3.1", "zod ^4.6.7", "dotenv ^18.0.8", "vitest ^5.0.5", "node>=20, pnpm>=10", "docker image falkordb/falkordb:v4.22.0 (matches Kairos server version)", "GEMINI_API_KEY (optional Groq key) only for free-text analysis"],
+  "security_findings": [
+    "src/graph/writes.ts:139 - label interpolated into Cypher (t:${o.targetLabel}); typed as the union 'Source'|'Publisher' so safe unless the type is bypassed.",
+    "src/graph/queries.ts:51,101,126 - variable-length depth bounds interpolated via Math.trunc(config...) (integers from env; safe).",
+    "src/graph/schema.ts:34,53 - DDL built from constant label/key maps (safe).",
+    "src/llm/llm.ts:36-40, src/llm/embed.ts:36 - outbound HTTPS to generativelanguage.googleapis.com and api.groq.com (llm.ts:74) with key in x-goog-api-key / Authorization header; fixed hosts, not user-controlled. User claim text (<=2000 chars) is sent to a third-party LLM (README privacy note).",
+    "src/app/api/analyze/route.ts - unauthenticated POST triggers paid LLM calls in 'local' mode; guarded by LINEAGE_MODE != local (403) and a single global 'running' lock; no per-user rate limit.",
+    "docker-compose.yml - FalkorDB exposed on host ports with no password (local default).",
+    ".env.example contains empty placeholders only; no committed secrets found. README references DECISIONS.md and AI_USAGE.md that are not present in the checkout."
+  ],
+  "duplicates_or_overlaps": "Overlaps claim/fact-check lineage and misinformation provenance (Research & Legal Evidence), and at an abstract level 'does an upstream finding still apply downstream' dependency invalidation. Distinct from code blast-radius repos because validity depends on edge change type, not mere reachability.",
+  "capability_family": "Research & Legal Evidence",
+  "evidence_drift_relevance": "HIGH - propagation.ts is a conditional-validity engine: an upstream verdict (evidence) is carried down a derivation chain only while the change types on each hop keep its basis valid, otherwise it is explicitly 'broken' with the delta and demands its own check; verdicts are recomputed from the graph at read time and edges carry asserted_by/at/confidence provenance, though there is no versioning/supersession of the fact-checks themselves.",
+  "strongest_reusable_unit": {
+    "file": "src/domain/propagation.ts",
+    "symbols": ["SURVIVES", "checkHop", "evaluatePath", "deriveVerdict", "PathOutcome"],
+    "why": "A small, pure, unit-tested rule table mapping (basis of an upstream finding x kind of change on the hop) to survive/break/correction with decay and depth caps; generalizes to Kairos 'does this evidence still hold after the upstream thing changed' checks. Pair with Q4 (variable-length upward path query returning per-hop change types).",
+    "pure_python_portable": false,
+    "external_runtime_needed": "None for the rule module (pure TypeScript, ~280 lines, trivially re-implemented in Python); Q4 needs FalkorDB; LLM key only for the Linker agent"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Re-implement propagation.ts (basis x change-type survival table, decay, multi-path merge) and the Q4 path query as a Python shared engine for evidence-validity checks; the claim-misinformation domain, Next.js UI and Gemini linker stay reference-only. Language mismatch (TypeScript) means port, not import; no LICENSE file so reuse relies on attested owner permission.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

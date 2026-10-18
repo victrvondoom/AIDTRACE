@@ -230,6 +230,7 @@ DEMO_UNGUARDED = frozenset({
     ("POST", "/search/rca-pack"),
 })
 DEMO_GUARDED = frozenset({
+    ("POST", "/resolveai/drift/demo"),
     ("POST", "/annotations/"),
     ("POST", "/assets/"),
     ("POST", "/assets/bulk"),

@@ -1,0 +1,133 @@
+{
+  "repository": "AgentAhmed/blast-radius",
+  "url": "https://github.com/AgentAhmed/blast-radius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\AgentAhmed__blast-radius",
+  "commit_sha": "19cf98dbd21a1e1353b9c904098e499111a9ffaf",
+  "license": "MIT",
+  "copyright_holder": "Ahmed",
+  "source_files_inspected": [
+    "LICENSE",
+    "pyproject.toml",
+    "blastradius/queries.py",
+    "blastradius/schema.py",
+    "blastradius/db.py",
+    "blastradius/memory.py",
+    "blastradius/actions.py",
+    "blastradius/incidents.py",
+    "blastradius/config.py",
+    "blastradius/agents/incident_agents.py",
+    "blastradius/agents/store.py",
+    "blastradius/agents/tools.py",
+    "blastradius/agents/runtime.py (symbol list)",
+    "blastradius/agents/worker.py (symbol list)",
+    "blastradius/api.py",
+    "blastradius/mcp_server.py (symbol list)",
+    "blastradius/connectors/repo_model.py (head + symbols)",
+    "blastradius/llm/gateway.py (symbol list)",
+    "blastradius/eval.py (symbols) and docs/EVALUATION.md",
+    ".env.example (key names only)",
+    "tests/ (file list + def test_ counts)"
+  ],
+  "languages_frameworks": ["Python 3.12/FastAPI", "falkordb Python client (>=1.0.10)", "fastembed (local embeddings)", "MCP SDK (>=2.3.0) server", "OpenAI/Anthropic/Groq/Gemini/OpenRouter via LLM gateway", "React/Vite/TypeScript UI"],
+  "implemented_capabilities": [
+    {
+      "capability": "Blast radius / user-flow impact via reverse dependency traversal",
+      "files": ["blastradius/queries.py"],
+      "symbols": ["BLAST_RADIUS", "FLOWS_AT_RISK", "blast_radius", "MAX_HOPS", "DEP"],
+      "real_or_stub": "REAL",
+      "notes": "Variable-length Cypher match (dep)-[:CALLS|READS_WRITES|PUBLISHES|CONSUMES*1..6]->(target) with min(length(p)) hops, joined to UserFlow via SERVES. Depth-capped (6) but relies on FalkorDB variable-length pattern semantics rather than a Python BFS."
+    },
+    {
+      "capability": "Graph-ranked root-cause candidates",
+      "files": ["blastradius/queries.py", "blastradius/agents/incident_agents.py"],
+      "symbols": ["ROOT_CAUSE_CANDIDATES", "root_cause_candidates", "_validate_findings"],
+      "real_or_stub": "REAL",
+      "notes": "Ranks components that are transitive dependencies of the alerting set by (covers desc, is_alerting desc, alerting_deps asc, recent merged PRs desc). _validate_findings rejects (once) an LLM root cause that explains fewer alerts than the graph's best candidate - a real graph-consistency guard on the LLM output."
+    },
+    {
+      "capability": "Three-agent on-call team (Triage -> Investigator -> Scribe) handing off via Task nodes",
+      "files": ["blastradius/agents/incident_agents.py", "blastradius/agents/store.py", "blastradius/agents/runtime.py", "blastradius/agents/worker.py", "blastradius/agents/tools.py"],
+      "symbols": ["triage", "INVESTIGATOR_SYSTEM", "_after_investigation", "CLAIM_TASK", "CREATE_RUN", "ADD_STEP", "AgentSpec", "execute", "process_once"],
+      "real_or_stub": "REAL",
+      "notes": "Triage is deterministic (alert grouping + severity from user flows); Investigator is an LLM tool loop over 15+ allowlisted graph tools ending in submit_findings; Scribe writes postmortem Document/Lesson/embedding/SIMILAR_TO. Runs persist as AgentRun->Step(NEXT chain)->TOUCHED nodes so crashed/paused runs resume from the step trail; CLAIM_TASK is a single atomic Cypher claim."
+    },
+    {
+      "capability": "Incident memory with vector recall (past incidents, documents) and graph-boosted scoring",
+      "files": ["blastradius/queries.py", "blastradius/memory.py", "blastradius/schema.py", "blastradius/embeddings.py"],
+      "symbols": ["SIMILAR_INCIDENTS", "SEARCH_DOCS", "LINK_SIMILAR", "embed_missing", "link_similar", "create_indexes"],
+      "real_or_stub": "REAL",
+      "notes": "db.idx.vector.queryNodes on Incident/Document embeddings (fastembed, cosine) with score = 0.6*text_sim + 0.3*same_root_cause + 0.1*component_overlap. Requires FalkorDB vector index support."
+    },
+    {
+      "capability": "Graph algorithm analytics (PageRank criticality, shortest path to user, community clusters, bus factor)",
+      "files": ["blastradius/queries.py", "blastradius/memory.py"],
+      "symbols": ["CRITICALITY", "PATH_TO_USER", "CLUSTERS", "BUS_FACTOR", "DERIVE_DEPENDS_ON", "STORE_CRITICALITY"],
+      "real_or_stub": "REAL",
+      "notes": "Uses FalkorDB native procedures algo.pageRank, algo.SPpaths, algo.labelPropagation over a derived DEPENDS_ON edge. FalkorDB-specific; availability of each procedure (esp. labelPropagation, SPpaths args) must be verified on server 4.22 before reuse."
+    },
+    {
+      "capability": "Idempotent outbound actions (page, GitHub issue, Slack/Discord notify)",
+      "files": ["blastradius/actions.py"],
+      "symbols": ["page", "github_issue", "notify", "RECORD_ACTION", "GET_ACTION"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Each action is an Action node keyed by incident+kind so repeat calls are no-ops; page is only recorded in the graph (no real paging); GitHub/Slack/Discord calls are real urllib POSTs only when env tokens/webhooks are set, otherwise dry_run/skipped."
+    },
+    {
+      "capability": "Alert ingestion (Alertmanager/generic) and fault simulator",
+      "files": ["blastradius/incidents.py"],
+      "symbols": ["parse_alerts", "match_component", "ingest_alerts", "simulate_fault", "open_incident", "RESOLVE_ALERTS"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Webhook parsing and incident grouping are real; simulate_fault derives alerts from the same DEPENDS_ON graph the agent later queries, so the published 8/8 evaluation is on a synthetic OTel-demo topology and is partly circular."
+    },
+    {
+      "capability": "GitHub repo to system-model connector (compose, CODEOWNERS, ADRs, PRs)",
+      "files": ["blastradius/connectors/github.py", "blastradius/connectors/repo_model.py"],
+      "symbols": ["from_compose", "from_catalog", "parse_codeowners", "owners_by_component", "parse_adr", "add_path_guesses"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Pure-function parsers (unit-tested) infer components and dependencies from docker-compose depends_on and env hostnames; heuristic, regex-based classification of datastores/brokers."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph per tenant 'org_<tenant>'. Labels: Component (Service/Datastore/Topic subtypes via extra label), Team, Person, PullRequest, Release, Incident, Alert, Finding, Action, Document, Decision, Lesson, Runbook, UserFlow, Scenario (hidden ground truth), AgentRun, Step, Task, Meta. Edges: CALLS, READS_WRITES, PUBLISHES, CONSUMES, DEPENDS_ON (derived), SERVES, OWNS, ON_CALL_FOR, MEMBER_OF, MODIFIES, AUTHORED, INCLUDES, FIRED_ON, TRIGGERED_BY, IMPACTED, ROOT_CAUSE, HAS_FINDING, BLAMES, SUPPORTED_BY, PAGED, HAS_ACTION, RESOLVED_BY, SIMILAR_TO, ABOUT, AFFECTS, MADE, RECORDED_IN, HAS_STEP, NEXT, TOUCHED, INVESTIGATES, WORKED_ON, FOR, PRODUCED. FalkorDB-specific: algo.pageRank, algo.SPpaths, algo.labelPropagation, db.idx.vector.queryNodes with vecf32(), CREATE VECTOR INDEX, db.idx.fulltext.createNodeIndex. No APOC/GDS. Reads use ro_query; values are bound parameters; f-strings only interpolate the module constant DEP and MAX_HOPS (not user input).",
+  "algorithms": [
+    "Reverse variable-length traversal (depth cap 6) with min hop distance for blast radius (queries.py:BLAST_RADIUS)",
+    "Coverage-ranked root-cause candidate scoring (queries.py:ROOT_CAUSE_CANDIDATES) plus LLM-answer consistency check (incident_agents.py:_validate_findings)",
+    "Hybrid incident similarity: 0.6 vector + 0.3 same root + 0.1 component overlap (queries.py:SIMILAR_INCIDENTS)",
+    "PageRank criticality, SPpaths shortest path from user entry point, label propagation clusters (FalkorDB native)",
+    "Expertise score: PR count with recency x2 within 30d (queries.py:EXPERTS); bus-factor counting distinct authors",
+    "Atomic task claiming via single Cypher SET on oldest open Task (agents/store.py:CLAIM_TASK)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/tenants, /api/llm, /api/topology, /api/stats, /api/component/{name}, /api/queries, /api/faults, /api/tenant; POST /api/alerts (Alertmanager webhook), POST /api/connect/github + GET /api/connect/jobs/{id}, POST simulate, GET incidents/incident/{id}, POST resolve, GET run/{id}, POST resume, POST ask",
+    "MCP server (blastradius.mcp_server): root_cause_candidates, blast_radius, recent_changes, who_to_page, experts, similar_incidents, past_fixes, path_to_user, criticality, decisions_for, search_docs, component_overview, ask_company_brain",
+    "CLI: python -m blastradius.cli / blastradius.eval / blastradius.llm / agents.worker"
+  ],
+  "frontend_interfaces": [
+    "React/Vite/TS: App, Graph (topology), IncidentPanel, Timeline, ComponentDrawer, AskPanel, ConnectPanel"
+  ],
+  "agent_or_memory_mechanisms": "Multi-agent handoff through (:Task)-[:FOR]->(:Incident) nodes; persistent step trail (AgentRun/Step/NEXT/TOUCHED) acts as checkpoint so paused/crashed runs rebuild and continue; LLM gateway with provider fallback chain, RPM limiter and cooldown that pauses runs until resume_at; long-term memory = postmortem Document + Lesson + embeddings + SIMILAR_TO links written by the Scribe; Finding SUPPORTED_BY cited entities gives answer provenance.",
+  "tests_present": "~48 test functions in 6 files (test_agents 13, test_connectors 10, test_llm_gateway 8, test_queries 8, test_llm_providers 6, test_actions 3). Some tests exercise the graph and need a live FalkorDB; connectors/repo_model parsers are pure. docs/EVALUATION.md reports an 8/8 fault-injection eval run against real LLMs on a synthetic topology.",
+  "dependency_requirements": ["falkordb>=1.0.10", "fastapi>=0.143.1", "mcp>=2.3.0", "fastembed>=0.9.0", "anthropic>=1.14.0", "openai>=3.31.0", "pyyaml>=6.0.3", "uvicorn[standard]>=0.54.0", "python-dotenv>=1.0.1", "python >=3.12,<3.13", "LLM provider API keys (runtime)", "FalkorDB server with vector index + algo procedures"],
+  "security_findings": [
+    "blastradius/api.py - no authentication or CORS control on any route, including POST /api/alerts, POST /api/connect/github, POST simulate and resolve; anyone reaching the port can inject alerts, trigger outbound GitHub fetches and write to the graph",
+    "blastradius/api.py:~185-205 - /api/connect/github spawns a daemon thread that calls out to GitHub for a user-supplied repo (unrestricted outbound fetch, in-memory _jobs dict, no rate limit); max_prs capped at 300",
+    "blastradius/actions.py:~66-76,~102-115 - urllib.request POST to GitHub API and to Slack/Discord webhook URLs read from env; webhook URL deliberately not stored in graph (good), tokens read from env",
+    "blastradius/queries.py - f-string Cypher interpolates only module constants (DEP, MAX_HOPS); all user values are bound params (no injection)",
+    ".env.example - placeholder entries for GROQ/GEMINI/OPENROUTER/OPENAI/ANTHROPIC/CUSTOM_LLM keys and GITHUB_TOKEN; no real key values observed",
+    "No eval/exec/pickle/subprocess in blastradius/; MCP tools and agent tools are allowlisted and component-name validated (agents/tools.py:_check_component)"
+  ],
+  "duplicates_or_overlaps": "Directly overlaps blast-radius traversal and RCA families (also 986036734/blastradius and NishaadG/blastradius in the same sweep, patchpath, rootcause-agent). Agent step-trail/handoff overlaps Agent Memory & Provenance repos.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - Finding SUPPORTED_BY cited entities, AgentRun/Step/TOUCHED audit trail, Decision/ADR AFFECTS component, and recent-change correlation give provenance and decision lineage, but there is no supersession, temporal invalidation of facts, or approval gating (actions are auto-executed).",
+  "strongest_reusable_unit": {
+    "file": "blastradius/queries.py",
+    "symbols": ["BLAST_RADIUS", "FLOWS_AT_RISK", "ROOT_CAUSE_CANDIDATES", "SIMILAR_INCIDENTS", "CRITICALITY", "PATH_TO_USER", "_validate_findings"],
+    "why": "Compact, parameterized FalkorDB-native Cypher library for reverse-dependency blast radius and graph-ranked root cause with a consistency check on LLM output, plus a proven AgentRun/Step/Task graph schema for resumable multi-agent handoff.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (vector index + algo.* procedures); fastembed model for similarity; LLM key only for the Investigator/Scribe agents"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The blast-radius and root-cause Cypher patterns map directly onto Kairos dependency/RCA traversal on FalkorDB and can be merged into a shared traversal engine; the agent runtime, actions and connectors should be taken selectively (step-trail schema yes, unauthenticated actions no).",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,116 @@
+{
+  "repository": "HIZMALI/rippleproof-ai",
+  "url": "https://github.com/HIZMALI/rippleproof-ai",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\HIZMALI__rippleproof-ai",
+  "commit_sha": "3851bc365dcee175ae0098275004ff780dfe8f80",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": "Mert Hızmalı (per RIGHTS.md: 'All rights reserved', no open-source license granted; reuse requires the owner permission that the user attests). Third-party deps keep their own licenses (THIRD_PARTY_NOTICES.md).",
+  "source_files_inspected": [
+    "RIGHTS.md",
+    "requirements.txt",
+    "pyproject.toml",
+    "rippleproof/simulation/engine.py",
+    "rippleproof/simulation/snapshot.py",
+    "rippleproof/decisions.py",
+    "rippleproof/queries.py",
+    "rippleproof/evidence.py",
+    "rippleproof/config.py",
+    "rippleproof/mcp_server.py",
+    "rippleproof/inbound_data.py",
+    "rippleproof/agent.py",
+    "rippleproof/provider.py",
+    "rippleproof/tools.py (REGISTRY, dispatch)",
+    "rippleproof/repository.py (symbol list)",
+    "rippleproof/app.py (route list)",
+    "scripts/release_candidate.py, scripts/verify_clean_install.py (subprocess grep)",
+    "tests/ (file list + def test_ counts)"
+  ],
+  "languages_frameworks": ["Python 3.12/FastAPI", "falkordb 1.8.0 sync client", "official MCP SDK 2.3.0 (stdio server + client)", "React/Vite/TypeScript + Cytoscape frontend", "Playwright + Vitest", "Docker Compose"],
+  "implemented_capabilities": [
+    {
+      "capability": "Deterministic supply-disruption simulation (materials-only feasibility, mitigation)",
+      "files": ["rippleproof/simulation/engine.py", "rippleproof/simulation/snapshot.py", "rippleproof/simulation/models.py"],
+      "symbols": ["simulate", "timeline", "allocate", "evaluate_candidates", "propose", "mitigate", "certificate_checks", "eligible_offer", "ENGINE_VERSION", "ASSUMPTIONS"],
+      "real_or_stub": "REAL",
+      "notes": "Pure Python (no DB imports). Shifts PLANNED shipments inside an outage window, allocates lots oldest-first by order deadline/priority, flags at-risk vs insufficient_data, then runs a bounded greedy mitigation over cost_first/lead_first/per-supplier policies with certificate-valid-at-arrival checks. Assumptions are explicitly listed; it is not an optimizer."
+    },
+    {
+      "capability": "Graph snapshot normalization with data-quality issues and content fingerprint",
+      "files": ["rippleproof/simulation/snapshot.py", "rippleproof/evidence.py"],
+      "symbols": ["normalize", "GraphSnapshot.fingerprint (sha256 of sorted nodes+relationships)", "dependencies", "connected_path", "path_evidence"],
+      "real_or_stub": "REAL",
+      "notes": "Converts falkordb Node/Edge objects into strictly validated facts; any missing/invalid property becomes a DataIssue and downgrades results to insufficient_data rather than guessing. The sha256 fingerprint of the operational subgraph is used as a revision token."
+    },
+    {
+      "capability": "Approval gating with stale-preview detection, idempotency and archived evidence snapshot",
+      "files": ["rippleproof/decisions.py", "rippleproof/queries.py (SAVE_DECISION)"],
+      "symbols": ["DecisionService.prepare", "DecisionService.approve", "DecisionService.calculate", "DecisionService.authenticate", "ApprovalRequest", "DecisionPreview", "APPROVAL_LOCK", "digest", "canonical"],
+      "real_or_stub": "REAL",
+      "notes": "Approve re-runs the simulation and rejects (409 stale_preview) if operational fingerprint, scenario_id or plan_revision hash differ from what the operator reviewed. Requires bearer secret (hmac.compare_digest), operator_id, rationale, explicit confirm flag and idempotency key; writes Decision + Evidence(snapshot_json) + SUPPORTED_BY/SELECTS/AFFECTS/REFERENCES edges in one Cypher statement. Internal decision only; no real action."
+    },
+    {
+      "capability": "Read-only MCP tool server over the graph",
+      "files": ["rippleproof/mcp_server.py", "rippleproof/tools.py", "rippleproof/mcp_client.py", "rippleproof/tool_models.py"],
+      "symbols": ["build_server", "REGISTRY", "GraphTools.dispatch", "GraphTools.execute", "connect_graph_tools"],
+      "real_or_stub": "REAL",
+      "notes": "Six typed read-only tools (graph_summary, trace_supplier_impact, evaluate_part_alternatives, simulate_supply_disruption, get_decision_history, resolve_evidence), 32 KiB result cap, pagination, all annotated read_only_hint."
+    },
+    {
+      "capability": "Bounded LLM tool coordinator with grounded rendering",
+      "files": ["rippleproof/agent.py", "rippleproof/provider.py", "rippleproof/agent_models.py", "rippleproof/telemetry.py"],
+      "symbols": ["AgentCoordinator.run", "grounded_answer", "evidence_refs", "OpenAIProvider.complete", "FinalSelection"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Model may only pick registry tools; scenario args are checked against the operator's scenario (scenario_mismatch). Final prose is rendered by the app from simulation facts (grounded_answer); LLM output is only a typed selection. OpenAI provider is opt-in (allow_paid_calls) and default is a no-LLM guided walkthrough."
+    },
+    {
+      "capability": "Dependency path tracing (supplier -> part -> product -> order)",
+      "files": ["rippleproof/queries.py", "rippleproof/simulation/snapshot.py", "rippleproof/repository.py"],
+      "symbols": ["IMPACT_PATHS (Cypher)", "dependencies", "GraphRepository.impact_paths"],
+      "real_or_stub": "REAL",
+      "notes": "Fixed 3-hop Cypher pattern over SUPPLIES{is_primary}/USES/CONTAINS; not a generic variable-depth traversal."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'rippleproof'. Node labels: Supplier, Part, Product, Order, Certificate, InboundShipment (operational); Decision, Evidence (memory). Edges: SUPPLIES{is_primary,unit_cost,lead_days,daily_capacity}, USES, CONTAINS, REQUIRES_CERT, HOLDS_CERT{valid_until}, FULFILLS, FOR_PART, and Decision edges SELECTS, AFFECTS, SUPPORTED_BY, REFERENCES. Every relationship carries a stable string id property (does not rely on FalkorDB internal IDs). Cypher is a reviewed allowlist in queries.py with all user values passed as params; reads use GRAPH.RO_QUERY; seed uses UNWIND/MERGE; SAVE_DECISION is a single multi-clause MERGE/FOREACH statement. No APOC/GDS.",
+  "algorithms": [
+    "Deadline/priority-ordered all-or-nothing lot allocation (simulation/engine.py:allocate)",
+    "Outage-window shipment shifting preserving transit time (engine.py:timeline)",
+    "Bounded greedy mitigation across cost_first/lead_first/supplier:<id> policies with protected-on-time-order constraint and rank by (restored desc, unused units, cost, suppliers) (engine.py:mitigate, propose)",
+    "Certificate-valid-at-arrival check (engine.py:certificate_checks)",
+    "SHA-256 content fingerprint of normalized subgraph as optimistic-concurrency/stale token (snapshot.py:normalize)",
+    "Plan revision hash and idempotent decision identity from sha256(graph,key) (decisions.py:digest, approve)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /health, graph summary, impact paths, alternatives, POST simulate scenario, agent capabilities, POST agent run, POST prepare decision, POST approve decision (Bearer), GET decision/{id}, GET decisions history",
+    "MCP stdio server (rippleproof.mcp_server) with 6 read-only tools"
+  ],
+  "frontend_interfaces": [
+    "React/Vite/TS: Overview, ScenarioForm, Comparison, OutcomeDetails, EvidenceExplorer, GraphCanvas (Cytoscape), MaterialInspector, DecisionReview, Ledger, PlanDetails, AgentPanel"
+  ],
+  "agent_or_memory_mechanisms": "Decision memory is graph-native: approved internal decisions persist as Decision nodes with archived Evidence snapshot_json and fingerprint, queryable via get_decision_history/resolve_evidence. Agent mode is a bounded MCP tool loop (max 6 turns / 8 tool calls / 90 s) with model-supplied args validated against the operator scenario; guided mode needs no LLM.",
+  "tests_present": "~100 test functions: unit (test_simulation 20, test_validation 8, test_agent_provider 7, test_provider_telemetry 7, test_seed_data 4, others) plus integration tests requiring a live FalkorDB (test_mcp_agent 16, test_simulation 13, test_decisions 11, test_graph 10, test_fingerprint 2); frontend vitest + playwright e2e (approval, workspace, agent, restart).",
+  "dependency_requirements": ["falkordb==1.8.0", "fastapi==0.143.2", "pydantic==2.14.1", "pydantic-settings==2.14.0", "mcp==2.3.0", "httpx2==2.13.1", "redis==8.1.0", "uvicorn==0.49.0", "pyjwt==2.15.1", "cryptography==50.0.2", "OpenAI API key only if agent provider enabled (opt-in)"],
+  "security_findings": [
+    "RIGHTS.md - NO open-source license; all rights reserved, public source for hackathon review only. Reuse is legally blocked absent the owner's written permission (user-attested only).",
+    "rippleproof/decisions.py:~101-110 - approval uses Bearer secret with hmac.compare_digest (positive); secret is min 32 chars via SecretStr in config.py",
+    "rippleproof/decisions.py:~97-99 - APPROVAL_LOCK is a process-local threading.RLock; comment itself notes it does not protect against other API processes/external DB writers (concurrency gap in multi-worker deployments)",
+    "rippleproof/provider.py - outbound HTTPS only to OpenAI Responses endpoint when explicitly enabled (allow_paid_calls); 'no arbitrary endpoints' by design",
+    "scripts/release_candidate.py:149,159,163,166 and scripts/verify_clean_install.py:88,118,171 - subprocess with list args (no shell=True); dev/release scripts only",
+    "No eval/exec/pickle in rippleproof/; Cypher is allowlisted constants with bound params (no string concatenation of user input)",
+    "No hard-coded API keys found (only .env.example)"
+  ],
+  "duplicates_or_overlaps": "Overlaps Supply Chain & Logistics blast-radius traversal (supplier->part->order dependency paths) and disruption/what-if simulation. The approval-with-fingerprint pattern overlaps Hemu585/campaign-context-agent revision CAS approval.",
+  "capability_family": "Supply Chain & Logistics",
+  "evidence_drift_relevance": "HIGH - stale_preview invalidation via sha256 snapshot fingerprint + plan_revision, archived Evidence snapshot per decision, idempotent approval with operator rationale, and certificate expiry-at-arrival checks directly model dependency invalidation and approval gating; lacks source supersession/versioning.",
+  "strongest_reusable_unit": {
+    "file": "rippleproof/decisions.py + rippleproof/simulation/snapshot.py",
+    "symbols": ["DecisionService.approve", "DecisionService.calculate", "normalize (fingerprint)", "digest", "canonical", "SAVE_DECISION"],
+    "why": "Compact stale-preview/approval gate: recompute under lock, compare fingerprint and plan hash, require idempotency + rationale + confirm, archive the evidence snapshot atomically in the graph. The simulation/engine.py is a separate pure-Python, DB-free engine.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB for decisions/queries; none for simulation/engine.py; OpenAI key only for optional agent mode. LICENSE BLOCKER: no license granted."
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Supply-disruption simulation and the fingerprint-gated approval flow are real and self-contained, but are domain-specific (parts/orders/certificates) and the repo carries an all-rights-reserved notice, so reuse needs documented owner permission; port the approval/fingerprint pattern into Kairos and keep the supply simulation as an optional logistics pack.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

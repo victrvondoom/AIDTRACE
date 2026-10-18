@@ -1,0 +1,171 @@
+{
+  "repository": "Bhav-ikkk/GraphHacks",
+  "url": "https://github.com/Bhav-ikkk/GraphHacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Bhav-ikkk__GraphHacks",
+  "commit_sha": "a81518a98f43aac0be8dda3d16cfeec9228c48e9",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "edl/models.py",
+    "edl/engine.py",
+    "edl/evidence.py",
+    "edl/policy.py",
+    "edl/review.py",
+    "edl/gate.py",
+    "edl/queries.py",
+    "edl/memory.py",
+    "edl/falkor.py",
+    "edl/graph_reader.py",
+    "edl/tools.py",
+    "edl/agent.py",
+    "edl/api.py",
+    "edl/change.py",
+    "edl/ingest.py",
+    "edl/__main__.py",
+    "policies/policies.yaml",
+    "syzygy.evidence.yaml",
+    "requirements.txt",
+    ".env.example",
+    ".mcp.json",
+    ".github/workflows/ci.yml",
+    "tests/test_gate.py"
+  ],
+  "languages_frameworks": [
+    "Python 3.11+/FastAPI",
+    "Typer CLI",
+    "FalkorDB (falkordb==1.1.2) with an in-memory MemoryGraph test double",
+    "Hand-written MCP stdio server",
+    "PyYAML policy file",
+    "Vanilla JS/HTML UI (web/app.js, index.html, styles.css)",
+    "pytest"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Deterministic evidence-gated change decision with five states and fixed precedence (PROCEED, PROCEED_WITH_GUARDS, NEEDS_REVIEW, HOLD, INSUFFICIENT_EVIDENCE)",
+      "files": ["edl/policy.py", "policies/policies.yaml", "edl/models.py"],
+      "symbols": ["decide", "_state_for", "_finding", "load_policy", "PRECEDENCE", "STATE_FOR", "STATES"],
+      "real_or_stub": "REAL",
+      "notes": "No model calls: rules P1-P8, R1-R4, G-TEST, G-HOP are evaluated over a bundle of graph facts. Missing/stale/inferred evidence produces 'insufficient' findings that abstain (P5 freshness thresholds ci_hours 24 / deploy_hours 6 / owner_days 90; P6 inferred symbol mapping is not proof). Production health beats green CI (R3). hold > insufficient > review > guard."
+    },
+    {
+      "capability": "Evidence catalog with claim-citation contract and rejection of uncited claims",
+      "files": ["edl/evidence.py", "edl/review.py"],
+      "symbols": ["make_evidence", "assemble_evidence", "reject_claim", "catalog_ids", "validate_decision_record", "validate_evidence_record", "EVIDENCE_TYPES", "EVIDENCE_ROLES", "review_change", "_claims"],
+      "real_or_stub": "REAL",
+      "notes": "Each evidence record carries id, source_system, source_ref, entity_id, version_ref, observed_at, freshness_ok, evidence_type (observed|inferred|synthetic), role (supports|contradicts|missing|context), limitations and policy; every claim must cite an evidence id present in the per-review catalog or it is moved to rejected_claims; the full decision record is contract-validated (contract_ok/contract_errors)."
+    },
+    {
+      "capability": "Time-validity checks on ownership edges and freshness of CI/deploy facts",
+      "files": ["edl/queries.py", "edl/graph_reader.py", "edl/policy.py"],
+      "symbols": ["owner_of", "_edge_stale", "FalkorReader.owner_of", "decide (P5 branches)"],
+      "real_or_stub": "PARTIAL",
+      "notes": "OWNS edges carry observed_at/valid_until and are stale if valid_until < now or older than owner_days. However the review clock is the fixed constant models.NOW (2026-10-15T12:00Z) and ingest stamps OBSERVED_AT = '2026-10-15T12:00:00Z' (edl/ingest.py:43); CI/deploy age in live mode comes from declared age_hours in syzygy.evidence.yaml or a GitHub Actions lookup, not computed from timestamps."
+    },
+    {
+      "capability": "Blast-radius of a scoped change: function->service, reverse DEPENDS_ON BFS with hop limit and truncation flag, caller count (hub) and critical-consumer test coverage",
+      "files": ["edl/review.py", "edl/queries.py", "edl/graph_reader.py", "edl/explore.py", "edl/calls.py"],
+      "symbols": ["_evaluate", "consumers", "FalkorReader.consumers", "callers", "_critical_consumers", "centrality (callers count)", "calls.py AST CALLS extraction"],
+      "real_or_stub": "REAL",
+      "notes": "Reverse breadth-first traversal over DEPENDS_ON (hop_limit 3, 1 in one_hop mode, ablated in graph_off) with explicit hop_limit_hit evidence; 'centrality_rank' is just inbound CALLS count, not PageRank. Python-only AST name-match call graph."
+    },
+    {
+      "capability": "Approval/action gate that never changes the decision state and is idempotent",
+      "files": ["edl/gate.py", "edl/engine.py"],
+      "symbols": ["assess", "execute", "ALLOWED", "Engine._act"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Only PROCEED and PROCEED_WITH_GUARDS may open an issue; one issue per change id (idempotent); the 'ticketing' backend is simulated (timeout/401/429 flags on the change) and 'issue recorded locally' - no external ticketing call."
+    },
+    {
+      "capability": "Decision lineage: DecisionRecord nodes bound to policy_version and a graph revision fingerprint",
+      "files": ["edl/engine.py", "edl/memory.py", "edl/review.py"],
+      "symbols": ["Engine._remember", "_write_back", "MemoryGraph.revision", "DecisionRecord", "DECIDES"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Each review records (DecisionRecord{state,policy_version,graph_revision,evidence_count})-[:DECIDES]->(Change) and a 16-hex SHA-256 fingerprint of node ids and edge triples. Nothing later compares the stored revision with the current graph, so decisions are never marked stale or superseded; records live in process memory (and are optionally pushed with the graph)."
+    },
+    {
+      "capability": "Prompt-injection marker detection on change text",
+      "files": ["edl/review.py"],
+      "symbols": ["INJECTION_MARKERS", "_injection"],
+      "real_or_stub": "STUB",
+      "notes": "Five hard-coded substrings ('ignore policy', 'approve this', ...) are surfaced as an 'injection' list; the policy itself never reads change text, which is the real defence."
+    },
+    {
+      "capability": "Repository ingest to structural graph (services, deps, owners from CODEOWNERS, functions, tests) and publish-to-FalkorDB",
+      "files": ["edl/ingest.py", "edl/change.py", "edl/falkor.py", "edl/config.py"],
+      "symbols": ["ingest", "build_graph", "detect_local", "detect_github", "parse_codeowners", "build_scoped_change", "list_changed_files", "publish", "replace_graph", "node_groups", "edge_groups"],
+      "real_or_stub": "REAL",
+      "notes": "Local folder or GitHub URL (GitHub REST), regex function scan, compose/proto discovery; publishes by deleting and recreating the whole named FalkorDB graph via UNWIND literal rows, then reads back Service names. Fails closed (INSUFFICIENT_EVIDENCE) when FalkorDB is not ready; EDL_ALLOW_MEMORY_GRAPH enables a labelled test double."
+    },
+    {
+      "capability": "Named-tool surface over the graph (no free Cypher) via MCP stdio, API and CLI agent",
+      "files": ["edl/tools.py", "edl/mcp_server.py", "edl/agent.py", "edl/api.py", "edl/__main__.py"],
+      "symbols": ["TOOL_SPECS", "call_tool", "_impact", "_owner", "_incidents", "_tests", "_deploy", "_centrality", "_decide", "_propose", "run_agent", "McpServer"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Tool envelopes include backend, evidence_type, observed_at, partial and limitations. run_agent is a fixed deterministic sequence (ingest/scope -> impact -> owner -> incidents -> tests -> deploy -> centrality -> decide -> gate). The --llm and llm-check commands import edl.llm_agent, which is NOT present in this checkout (git ls-files shows no such file), so the model-driven path cannot run as shipped."
+    },
+    {
+      "capability": "Offline evaluation harness (graph full vs one-hop vs graph-off ablation)",
+      "files": ["edl/eval/harness.py", "edl/eval/scenarios.py"],
+      "symbols": ["run_eval", "summarize", "format_report", "all_scenarios", "missing_ci_must_abstain", "graph_necessary_incident_hold", "graph_adds_nothing_missing_ci", "safe_proceed_complete_evidence"],
+      "real_or_stub": "STUB",
+      "notes": "Hand-built synthetic scenarios (payments/auth style) used to show graph lift; explicitly never loaded by the live UI. Results are by construction, not measured on real repos."
+    }
+  ],
+  "graph_models_and_cypher": "Labels (allow-listed in falkor.py): Repository, Team, Engineer, Service{tier,kind}, Function{granularity}, Test{status}, Deployment{age_hours,health}, Incident{status,age_days}, Fix, Policy, Change, UnresolvedPath, DecisionRecord{state,policy_version,graph_revision}, Outcome, EvidenceSource. Relations: MEMBER_OF, IN_REPO, OWNS{observed_at,valid_until}, PART_OF, COVERS, DEPLOYED_AS, DEPENDS_ON, AFFECTED, RESOLVED_BY, MODIFIES, CALLS, TOUCHES, UNRESOLVED, DECIDES, SUPPORTED_BY, GOVERNS. Cypher is generated by f-string with label/relationship names checked against allow-lists and _NAME regex, and values inlined via custom _cypher_value/qid escaping (not query parameters): CREATE via UNWIND [{...literal rows...}] AS row; reads such as MATCH (c)-[:DEPENDS_ON]->(t {id: '<escaped id>'}) RETURN DISTINCT c.id. Hop-limited BFS is done in Python over repeated one-hop queries rather than variable-length Cypher. No Neo4j GDS/APOC and no FalkorDB algo.* procedures.",
+  "algorithms": [
+    "Policy lattice with fixed precedence hold > insufficient > review > guard > proceed (edl/policy.py:decide, _state_for)",
+    "Reverse hop-limited BFS over DEPENDS_ON with cycle safety and truncated flag (edl/queries.py:consumers; edl/graph_reader.py:FalkorReader.consumers)",
+    "Edge staleness test: valid_until < now OR (now - observed_at).days > owner_days (edl/queries.py:_edge_stale)",
+    "Claim-to-evidence citation filter (edl/evidence.py:reject_claim)",
+    "Canonical graph fingerprint: SHA-256 over sorted node ids and edge triples, truncated to 16 hex chars (edl/memory.py:MemoryGraph.revision)",
+    "Idempotent gate per change id (edl/gate.py:execute)",
+    "AST name-matching call graph for Python (edl/calls.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /, GET /api/health, GET /api/bootstrap, POST /api/ingest, POST /api/change, GET /api/suggest-files, POST /api/review, POST /api/actions (single process-wide Engine, no auth)",
+    "MCP stdio server (python -m edl mcp) with named tools ingest_repository, scope_change, list_changes, impact_analysis, nearest_owner, find_similar_incidents, get_test_coverage, get_deploy_state, centrality_rank, decide_change, propose_action",
+    "Typer CLI: python -m edl agent | change | eval | serve | mcp | llm-check | graph ..."
+  ],
+  "frontend_interfaces": [
+    "Static single page web/index.html + web/app.js (1.3k lines) + styles.css: analyze repo, scope change, run review, show state/evidence/tool trace/graph"
+  ],
+  "agent_or_memory_mechanisms": "Deterministic tool-sequencing agent (edl/agent.py:run_agent) emitting a tool_trace and explanation; policy, not the agent, sets the state. Optional model-chooses-tools mode referenced in README/CLI but edl/llm_agent.py is absent. 'Memory' is the process-held MemoryGraph plus DecisionRecord nodes and a JSONL action log; no cross-session recall or learning.",
+  "tests_present": "tests/: test_review.py (7), test_ingest.py (6), test_falkor.py (5), test_gate.py (5), test_api.py (1) ~24 tests, run against the MemoryGraph test double (CI sets EDL_ALLOW_MEMORY_GRAPH=1; FalkorDB publish is skipped under pytest); tests/mirror_selected.py is a helper. Eval scenarios in edl/eval are separate fixtures.",
+  "dependency_requirements": [
+    "fastapi==0.115.6",
+    "uvicorn==0.34.0",
+    "pyyaml==6.0.2",
+    "typer==0.15.1",
+    "pytest==8.3.4",
+    "falkordb==1.1.2 (older than the 1.8 client used by Kairos)",
+    "Optional: Gemini/OpenAI-compatible endpoint (module missing), GITHUB_TOKEN, a FalkorDB server with password auth"
+  ],
+  "security_findings": [
+    "NO LICENSE FILE in repository: reuse relies solely on the user-attested owner permission",
+    "edl/falkor.py:21 and .env.example:5 - hard-coded public IP 13.236.193.238 (plain-HTTP FalkorDB Browser on :3000 and Redis :6379) shipped as default host; edl/falkor.py:286-311 posts the FalkorDB password in a JSON body to settings.browser over HTTP and edl/falkor.py:212-216 deletes and recreates the configured remote graph on every publish (destructive on a shared database)",
+    "edl/falkor.py:221-231,242-267 - Cypher assembled by f-string with values inlined through a home-made escaper (backslash and single quote only) from repository-derived strings (function, team, incident names); no query parameters",
+    "edl/graph_reader.py:59-62,150-332 - f-string Cypher with ids passed through qid() (regex _ID allow-list plus escaping) and relationship names validated by regex; reduces but does not eliminate injection risk",
+    "edl/change.py:22-66,322-350 - subprocess.run(['git','-C',root,'diff','--name-only',...,rev_range]) where rev_range is built from unvalidated base/head strings (f'{base}...{head}'); a base starting with '--' becomes a git option (argument injection, e.g. --output=<path>) reachable from POST /api/ingest and /api/change",
+    "edl/api.py:75-135 - all endpoints unauthenticated against one global Engine; POST /api/ingest accepts an arbitrary local filesystem path or GitHub URL (local file read of source trees, outbound GitHub calls); _rejects_query only string-matches 'cypher'/'match '/'create '",
+    "edl/ingest.py:747-770 and edl/falkor.py:303,368 - urllib.request calls to GitHub and to the configured FalkorDB browser; optional GITHUB_TOKEN read from environment; no hard-coded API keys found",
+    "edl/review.py:13-19 - prompt-injection defence is a 5-phrase deny-list (cosmetic); policy ignores free text by design",
+    ".mcp.json:5 - hard-coded absolute path to the author's Windows virtualenv python (not a secret, but breaks portability)",
+    "No eval/exec/pickle; yaml.safe_load used for policy"
+  ],
+  "duplicates_or_overlaps": "Change-impact / blast-radius gating (Software Dependency Intelligence), approval gating and evidence abstention (overlaps interdict's certificate/gateway and reachable's approval hashing), named-tool MCP pattern (overlaps many Graph Hacks entries). Closest conceptual match in the batch to an Evidence Drift Cascade engine's policy and abstention layer.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - the evidence record contract (source_system, version_ref, observed_at, freshness_ok, evidence_type, role, limitations), policy-versioned DecisionRecord with graph_revision fingerprint, abstention on stale/missing/inferred evidence, claim-must-cite-evidence enforcement and approval-gated actions are the right primitives, but drift is not yet propagated (no supersession, no invalidation of stored decisions when the graph revision or evidence age changes, and live timestamps are fixed constants).",
+  "strongest_reusable_unit": {
+    "file": "edl/policy.py + edl/evidence.py + edl/gate.py",
+    "symbols": ["decide", "_state_for", "PRECEDENCE", "make_evidence", "assemble_evidence", "reject_claim", "validate_decision_record", "assess", "execute", "MemoryGraph.revision", "_edge_stale"],
+    "why": "About 1,000 lines of dependency-light, deterministic Python (stdlib + PyYAML) that turn a bundle of facts into a five-state decision with cited, typed, freshness-flagged evidence and a gate that cannot override it; the policy table is data (policies.yaml) and the abstain-on-missing-evidence rule maps directly onto Evidence Drift Cascade decisions. The graph-reading side must be re-pointed at Kairos' FalkorDB schema and its string-built Cypher replaced with parameterised queries.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for policy/evidence/gate; FalkorDB only for the graph reader; LLM optional (and its module is missing)"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The policy evaluator, evidence-catalog contract, claim-rejection and idempotent gate are domain-neutral and pure Python, so they should be adopted as (or re-implemented into) a shared Kairos decision/abstention layer; the repository ingest, UI and string-built Cypher publish path should not be merged. License is absent, so reuse depends on the recorded owner permission.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

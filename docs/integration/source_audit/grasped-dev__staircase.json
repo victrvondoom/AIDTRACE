@@ -1,0 +1,172 @@
+{
+  "repository": "grasped-dev/staircase",
+  "url": "https://github.com/grasped-dev/staircase",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\grasped-dev__staircase",
+  "commit_sha": "f43273c5fea617569a18e411c9c8a1ca7250f62c",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "requirements.txt",
+    ".env.example",
+    "staircase/db.py",
+    "staircase/privacy.py",
+    "staircase/mcp_server.py",
+    "staircase/goal.py",
+    "staircase/tools.py (symbol/query grep + staircase, foundations sections)",
+    "staircase/agent.py (head)",
+    "staircase/demo.py (head)",
+    "app.py (route list, district allowlist)",
+    "tests/test_staircase.py (test count)"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "falkordb==1.8.0",
+    "MCP (mcp==1.30.0 FastMCP)",
+    "google-genai (optional Gemini)",
+    "vanilla JS static frontend",
+    "Docker / Cloud Run / Netlify"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Prerequisite-staircase graph tools over Common Core standards",
+      "files": [
+        "staircase/tools.py"
+      ],
+      "symbols": [
+        "Tools.baseline_options",
+        "Tools.staircase",
+        "Tools.frontier",
+        "Tools.group_students",
+        "Tools.foundations",
+        "Tools.path_between",
+        "Tools.recall",
+        "Tools.set_mastery",
+        "Tools.save_goal"
+      ],
+      "real_or_stub": "REAL",
+      "notes": "Hand-written parameterized Cypher over Standard/SubArea/Student nodes: variable-length PROGRESSES_TO predecessor walk (depth clamped to MAX_DEPTH, depth interpolated as an int after clamping), shortestPath climb to the student's grade, algo.pageRank over BUILDS_ON, mastered-set frontier computation, dated MASTERED edges and Goal/Objective persistence."
+    },
+    {
+      "capability": "Epistemic outcome taxonomy (answered_with_path / answered_from_memory / not_in_graph / unknown)",
+      "files": [
+        "staircase/tools.py",
+        "staircase/goal.py"
+      ],
+      "symbols": [
+        "Result",
+        "Tools._finish",
+        "resolve_standard",
+        "resolve_subarea",
+        "resolve_student",
+        "draft_goal"
+      ],
+      "real_or_stub": "REAL",
+      "notes": "Every tool resolves each named entity against the graph first; unknown entities short-circuit with 'unknown' and nothing runs, and a missing edge returns 'not_in_graph' with an explicit statement that this is a gap in the maps, not a finding. Each result carries the hops walked and a per-call trace (args, time, rows)."
+    },
+    {
+      "capability": "Graph-grounded goal drafting with LLM-phrase verification",
+      "files": [
+        "staircase/goal.py"
+      ],
+      "symbols": [
+        "draft_goal",
+        "check_skill",
+        "skill_for",
+        "template_skill",
+        "_gemini_skill",
+        "CODE"
+      ],
+      "real_or_stub": "REAL",
+      "notes": "Goal structure (baseline, one-grade-up goal, objectives, aligned standard) is computed from graph paths. A model (Gemini, optional) may only reword a standard as a skill phrase; check_skill rejects phrases that name standards not on the path, add numbers, use pronouns or add capitalised words, falling back to the standard's own text. Checks are logged per phrase."
+    },
+    {
+      "capability": "Per-tenant graph isolation and privacy allowlist audit",
+      "files": [
+        "staircase/db.py",
+        "staircase/privacy.py"
+      ],
+      "symbols": [
+        "graph_for",
+        "check_student_id",
+        "check_grade",
+        "audit_graph",
+        "STUDENT_PROPERTIES",
+        "MASTERED_PROPERTIES"
+      ],
+      "real_or_stub": "REAL",
+      "notes": "One FalkorDB graph per district (staircase:<tenant>, regex-validated). Student IDs must match an opaque-ID regex before any write; audit_graph checks every Student node and MASTERED edge property against an allowlist via ro_query."
+    },
+    {
+      "capability": "Keyword-router / Gemini tool-calling agent and MCP server",
+      "files": [
+        "staircase/agent.py",
+        "staircase/mcp_server.py",
+        "app.py"
+      ],
+      "symbols": [
+        "route_without_model",
+        "call",
+        "TOOL_SPECS",
+        "REQUIRED",
+        "mcp tools (list_subareas, baseline_options, staircase, frontier, group_students, foundations, path_between, recall, draft_goal)"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "The public demo runs with a regex/keyword router (no model). With GEMINI_API_KEY the model picks from a fixed tool catalogue and never sees Cypher; arguments are re-validated by the tools."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph per tenant 'staircase:<district>'. Labels: Standard{id,grade,gi,description,level,subject,strand}, SubArea{key,label,area,subject,minGrade,maxGrade}, Student{sid,grade}, Goal{gid,created,session,text}, Objective{n,text}. Edges: PROGRESSES_TO, BUILDS_ON, RELATED, PART_OF, IN_SUBAREA, MASTERED{at,session}, FOR, STARTS_FROM, TARGETS, ALIGNS_TO, OF, PRACTICES. Uses shortestPath(), variable-length paths, algo.pageRank('Standard','BUILDS_ON'), UNWIND/MERGE, FOREACH conditional create. No APOC/GDS. Values are bound params except one clamped-int depth interpolation.",
+  "algorithms": [
+    "Variable-length predecessor walk (depth 1..3) and shortestPath climb to the student's grade with fallback to the furthest reachable grade (tools.py:staircase)",
+    "PageRank load-bearing standards per sub-area (tools.py:foundations)",
+    "Mastered-prerequisite frontier and shared-next-step student grouping (tools.py:frontier, group_students)",
+    "Rule-based verification of model-generated phrases against the graph path (goal.py:check_skill)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/subareas, /api/students, /api/baseline, /api/staircase, /api/frontier, /api/groups, /api/foundations, /api/path, /api/recall, /api/privacy; POST /api/students, /api/mastery, /api/draft, /api/goals (save), /api/ask",
+    "MCP stdio server (python -m staircase.mcp_server), 9 typed tools"
+  ],
+  "frontend_interfaces": [
+    "Static page (static/index.html, app.js, style.css) showing goal cards, staircase paths and a per-call tool trace"
+  ],
+  "agent_or_memory_mechanisms": "Dated student memory in the graph: MASTERED edges (at, session) and saved Goal nodes linked STARTS_FROM/TARGETS/ALIGNS_TO standards, returned as answered_from_memory with dates. Goals are drafted read-only and persisted only by a separate save call (teacher acceptance). Graph is rebuilt on container start in the public demo, so memory is not durable there.",
+  "tests_present": "tests/test_staircase.py with 14 tests against a live FalkorDB (README): seed counts vs source JSON, path hops verified against the source JSON rather than the graph, tenant isolation, privacy refusal of name-like IDs, phrase-check rejections.",
+  "dependency_requirements": [
+    "falkordb==1.8.0",
+    "fastapi==0.143.2",
+    "uvicorn[standard]==0.54.0",
+    "mcp==1.30.0",
+    "google-genai==2.31.0 (optional)",
+    "pytest==9.1.1",
+    "httpx==0.28.1"
+  ],
+  "security_findings": [
+    "app.py:~25-36,43-150 - no authentication on any route; district names are regex-validated and can be restricted with the STAIRCASE_DISTRICTS allowlist (public deploy sets it to 'demo'), but if unset any caller can create/read any staircase:<district> graph and write students, mastery and goals (MAX_STUDENTS cap only)",
+    "staircase/tools.py:198 - f-string interpolates depth into the variable-length range after int() clamp to MAX_DEPTH (safe as written)",
+    "staircase/goal.py:~60-80 - sends standard text to Gemini when GEMINI_API_KEY is set (external network call); failures are swallowed and fall back silently",
+    "data/ela.json (~589 KB) and data/math.json (~408 KB) - third-party Common Core / Achieve the Core derived content; redistribution terms are not stated in the repo and need verification before reuse",
+    "No eval/exec/pickle/subprocess found in staircase/ or app.py; no hard-coded secrets (.env.example is empty-valued)"
+  ],
+  "duplicates_or_overlaps": "Domain is unique in this batch (special-education IEP goal planning). The prerequisite-path/frontier logic overlaps Mobility & Accessibility learning-path style repos and software-dependency 'what must exist first' traversals; the entity-resolve-then-query guard overlaps generic anti-hallucination tool wrappers.",
+  "capability_family": "Other",
+  "evidence_drift_relevance": "MEDIUM - explicit unknown vs not_in_graph vs answered_from_memory outcomes with hop-level provenance, dated memory edges, accept-then-save gating and deterministic checking of LLM output against graph facts are good patterns for an Evidence Drift engine, though there is no supersession or dependency invalidation.",
+  "strongest_reusable_unit": {
+    "file": "staircase/tools.py + staircase/goal.py",
+    "symbols": [
+      "Result",
+      "Tools._finish",
+      "resolve_standard",
+      "check_skill",
+      "audit_graph",
+      "graph_for"
+    ],
+    "why": "Small pure-Python patterns: resolve-before-query with a four-way epistemic outcome, per-call trace, rule-based verification of model text against graph-derived allowed identifiers, and a property-allowlist audit of stored data.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB for the tools; Gemini key only for optional phrase rewriting"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The IEP/Common Core domain and bundled third-party standards data do not belong in Kairos and there is no license file, but the outcome taxonomy, LLM-output grounding check and tenant-per-graph privacy audit are worth re-implementing as patterns.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 3,
+  "auditor_confidence": "MEDIUM"
+}

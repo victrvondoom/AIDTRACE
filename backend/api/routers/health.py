@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from api.dependencies import (
     CurrentUserDep,
     ElasticsearchDep,
+    FalkorDriftDep,
     Neo4jDep,
     QdrantDep,
     RedisDep,
@@ -40,6 +41,73 @@ async def health_check() -> HealthResponse:
     """Returns 200 if the API process is alive."""
     from api.config import settings
     return HealthResponse(status="ok", version=settings.APP_VERSION, service="kairos-api")
+
+
+@router.get("/falkordb", summary="Read-only FalkorDB readiness for the signed-in site")
+async def falkordb_health(
+    current_user: CurrentUserDep,
+    drift_store: FalkorDriftDep,
+) -> dict[str, bool]:
+    """Check FalkorDB connectivity and whether this token's site graph exists; never creates it."""
+    try:
+        return await asyncio.to_thread(drift_store.inspect_site, current_user.get("site_id"))
+    except Exception as exc:  # noqa: BLE001 — readiness is a status response, not an API crash
+        log.warning("health.falkordb_check_failed", error=str(exc))
+        return {"reachable": False, "site_graph_exists": False}
+
+
+@router.get("/model-catalog", summary="Configured model roles without provider credentials")
+async def model_catalog(
+    _current_user: CurrentUserDep,
+    settings: SettingsDep,
+) -> dict:
+    """Describe configured model roles without probing providers or returning credentials."""
+    tiers = all_tiers(settings)
+    models = [
+        {
+            "role": "reasoning",
+            "provider": tier.name,
+            "model": tier.model,
+            "configured": bool(tier.api_key),
+        }
+        for tier in tiers
+    ]
+    models.extend([
+        {
+            "role": "entity_extraction",
+            "provider": "NVIDIA NIM",
+            "model": settings.NVIDIA_NIM_NER_MODEL,
+            "configured": bool(settings.NVIDIA_NIM_API_KEY),
+        },
+        {
+            "role": "document_ocr",
+            "provider": "NVIDIA NIM",
+            "model": settings.NVIDIA_NIM_OCR_MODEL,
+            "configured": bool(settings.NVIDIA_NIM_API_KEY),
+        },
+        {
+            "role": "topology_vision",
+            "provider": "NVIDIA NIM",
+            "model": settings.NVIDIA_NIM_VISION_MODEL,
+            "configured": bool(settings.NVIDIA_NIM_API_KEY),
+        },
+        {
+            "role": "embeddings",
+            "provider": "Jina",
+            "model": settings.JINA_EMBED_MODEL,
+            "configured": bool(settings.JINA_API_KEY),
+        },
+        {
+            "role": "speech_to_text",
+            "provider": "Groq",
+            "model": settings.GROQ_WHISPER_MODEL,
+            "configured": bool(settings.GROQ_API_KEY),
+        },
+    ])
+    return {
+        "models": models,
+        "fine_tuning": {"status": "not_connected", "registry_available": False},
+    }
 
 
 @router.get("/detailed", summary="Detailed readiness probe")

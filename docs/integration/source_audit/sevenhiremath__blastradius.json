@@ -1,0 +1,97 @@
+{
+  "repository": "sevenhiremath/blastradius",
+  "url": "https://github.com/sevenhiremath/blastradius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\sevenhiremath__blastradius",
+  "commit_sha": "0814c2d214748a583a9b7903ef283d939457b8c0",
+  "license": "MIT",
+  "copyright_holder": "BlastRadius contributors (Copyright (c) 2026)",
+  "source_files_inspected": ["src/graph.js", "src/queries.js", "src/agent.js", "src/llm.js", "src/server.js", "src/data.js", "src/sources.js", "docs/queries.cypher", "public/app.js", "test/integration.test.js", "test/model-tools.test.js", "scripts/evaluate.js", "scripts/configure-provider.js", "compose.yaml", "package.json", "AI_DISCLOSURE.md", "LICENSE"],
+  "languages_frameworks": ["Node.js >=22.9 (ESM, no web framework: node:http)", "FalkorDB (node falkordb client 6.8.0)", "Vanilla JS front end (SVG graph)", "node:test"],
+  "implemented_capabilities": [
+    {
+      "capability": "Incident investigation: alert -> dependency-reachable recent deployment candidates",
+      "files": ["src/agent.js", "src/queries.js"],
+      "symbols": ["investigate", "queries.candidates"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher MATCH (alerted)-[:DEPENDS_ON*0..6]->(s)<-[:DEPLOYED_TO]-(d) with d.minutesAgo<=60 and d.errorDelta>0 ordered by errorDelta desc, recency asc; a fixed policy (errorDelta>=10) decides 'supported hypothesis' vs 'weak signal' vs 'insufficient evidence' and explicitly labels results correlation, not causation. Operates on 5 synthetic scenarios; minutesAgo/errorDelta are static seed integers, not live telemetry."
+    },
+    {
+      "capability": "Customer blast radius with per-edge source evidence",
+      "files": ["src/queries.js", "src/agent.js"],
+      "symbols": ["queries.customers", "investigate"],
+      "real_or_stub": "REAL",
+      "notes": "Reverse traversal (c:Customer)-[:USES]->()-[:DEPENDS_ON*0..6]->(failure) returns node-id paths and [r.source] evidence per relationship; the shortest path per customer is kept and ARR exposure summed."
+    },
+    {
+      "capability": "Persistent incident memory and human-outcome recording",
+      "files": ["src/agent.js", "src/queries.js"],
+      "symbols": ["resolveIncident", "createTicket", "loadInvestigation", "queries.memory"],
+      "real_or_stub": "REAL",
+      "notes": "Each investigation is saved as an Incident node (report JSON in a property); resolveIncident stores only a human-observed outcome and sets fix='' so an unverified recommendation is never recorded as a successful fix; later investigations recall resolved incidents and flag a 'newer recorded outcome' versus the postmortem fix. Ticket creation is idempotent via MERGE on a deterministic id."
+    },
+    {
+      "capability": "What-if graph mutation with stale-report invalidation",
+      "files": ["src/graph.js", "public/app.js"],
+      "symbols": ["setDependency", "topology", "state.stale", "staleMessage"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Adding/removing the analytics->payments DEPENDS_ON edge changes exposure from 3 customers/$420k to 4/$630k (asserted in tests). The 'stale' marker that disables ticket/outcome/AI actions after a graph or alert change is a client-side flag only; the server does not compute drift between a saved report and the current graph."
+    },
+    {
+      "capability": "Bounded LLM tool-calling agent with validated structured output",
+      "files": ["src/llm.js"],
+      "symbols": ["runToolAgent", "validateAndRender", "tools", "providerRequest"],
+      "real_or_stub": "REAL",
+      "notes": "Model may call four read-only parameterized tools (candidates/customers/owners/memory) with service ids restricted to an enum; max 6 turns, 12 tool calls, no repeated tool/service pair; the final answer must be a JSON selection that is cross-checked against retrieved rows, and the factual narrative is rendered from graph rows, not model prose. Optional (needs LLM_API_KEY, OpenAI-compatible endpoint)."
+    },
+    {
+      "capability": "Source-reference registry for evidence drill-down",
+      "files": ["src/sources.js", "src/server.js"],
+      "symbols": ["sourceRecords", "GET /api/source"],
+      "real_or_stub": "STUB",
+      "notes": "Every 'source' string on nodes/edges resolves to a synthetic in-memory record generated from data.js, not a real document store; the provenance pattern is real, the content is fabricated demo data (declared as synthetic)."
+    },
+    {
+      "capability": "Deterministic evaluation harness",
+      "files": ["scripts/evaluate.js", "test/integration.test.js"],
+      "symbols": ["evaluate script", "scenarios[].expectedCandidate/expectedCustomers"],
+      "real_or_stub": "REAL",
+      "notes": "Runs the 5 scenarios plus the mutation scenario in a throwaway graph and writes docs/evaluation.json; documented as a fixed synthetic set, not a generalization benchmark."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Service(id,name,x,y,source), Person(owner), Customer(arr,tier), Deployment(minutesAgo,errorDelta,summary,source), Incident(status,outcome,fix,createdAt,source,origin,report,aiAnalysis), Ticket, Dataset. Edges: DEPENDS_ON{source}, USES{source}, DEPLOYED_TO, OWNED_BY, ABOUT, FOR. All Cypher is parameterized ($service, $id) and plain openCypher: variable-length DEPENDS_ON*0..6, list comprehensions [n IN nodes(p) | n.id], MERGE/ON CREATE SET, no APOC/GDS or FalkorDB algo.* procedures, so it runs on FalkorDB 4.x unchanged. Time is modeled as relative integers (minutesAgo) against a fixed incident clock string, not as timestamps with validity intervals.",
+  "algorithms": [
+    "Bounded variable-length dependency traversal (depth cap 6) from alerted service to recent deployments in queries.js:candidates",
+    "Reverse upstream traversal to exposed customers with shortest-path selection per customer in agent.js:investigate",
+    "Threshold policy ranking changes by error delta then recency; errorDelta>=10 gate for rollback consideration in agent.js:investigate",
+    "Validate-then-render guard for LLM selections (exact customer-set equality, decision/threshold consistency) in llm.js:validateAndRender"
+  ],
+  "backend_interfaces": ["Node http server: GET /api/health, GET /api/bootstrap, GET /api/history, GET /api/source?ref=, GET /api/investigations/:id, POST /api/investigate, POST /api/dependency, POST /api/tickets, POST /api/resolve, POST /api/ai-agent; static file whitelist for UI"],
+  "frontend_interfaces": ["public/index.html + public/app.js: scenario picker, SVG dependency graph with highlighted paths, evidence table with source drill-down, response desk (local ticket, outcome save), incident memory list, stale-report banner, AI tool-agent panel"],
+  "agent_or_memory_mechanisms": "Deterministic 4-tool policy loop (candidates, customers, owners, memory) producing a trace of query/params/rows/ms for each call; optional LLM tool loop over the same tools with budget and validation. Memory = Incident/Ticket nodes in FalkorDB (survives restart via a named volume) recalled by service; human-observed outcomes are kept separate from recommendations.",
+  "tests_present": "test/integration.test.js (one top-level test with ~9 subtests: 5 scenario checks, edge-mutation exposure change, ticket idempotence plus persistence across reconnect, unknown scenario rejection, simulated-provider tool loop and validation failures, rejection of unapproved tools/injected service ids) and test/model-tools.test.js (2 tests for repeated-tool rejection). Integration tests require a live FalkorDB. Live-LLM checks are recorded as JSON under docs/ and not reproducible offline.",
+  "dependency_requirements": ["falkordb 6.8.0 (npm, pinned)", "node >=22.9", "falkordb/falkordb:v4.14.11 docker image (compose.yaml)", "optional OpenAI-compatible LLM endpoint via LLM_API_KEY/LLM_BASE_URL/LLM_MODEL"],
+  "security_findings": [
+    "src/llm.js:75-77 - LLM_API_KEY read from env and sent as Bearer to configurable LLM_BASE_URL; tool outputs from the graph are forwarded to a third-party model (data egress by design); no hard-coded secrets found",
+    "src/server.js:29-57 - all mutating POST routes (/api/dependency, /api/tickets, /api/resolve, /api/ai-agent) have no authentication; protected only by same-origin Origin header check and JSON content-type (intended local single-user app; compose.yaml binds published ports to 127.0.0.1)",
+    "src/agent.js:46-47,63 - every investigation persists the full report as a JSON string property on an Incident node (unbounded growth, stored data later JSON.parse'd at agent.js:54-55)",
+    "src/graph.js:6 - graph name validated with ^[a-zA-Z0-9_]+$ before use; all Cypher in src/ uses $params (no string-concatenated user input found)",
+    "src/llm.js:34-36 - model tool arguments are strictly validated against the service-id enum, preventing injected Cypher (covered by test 'checkout\\' DELETE n')",
+    "scripts/configure-provider.js:12-18 - rewrites the local .env file (no secret printed); operator-run script only, not executed in this audit",
+    "compose.yaml:7 - FalkorDB published on 127.0.0.1:6388 without a password by default"
+  ],
+  "duplicates_or_overlaps": "Direct overlap with blast-radius traversal / incident RCA family (also LENGND123/clearpath, Argus-SOC); the validated-LLM-selection and relative-time candidate ranking are unique within this batch.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "HIGH - puts a source reference on every DEPENDS_ON/USES edge, records human-observed outcomes separately from recommendations, shows newer outcomes superseding old postmortem fixes, validates LLM claims against retrieved rows before they are rendered, and flags saved reports as stale when the graph changes (though staleness detection is client-side only and time is relative, not interval-based).",
+  "strongest_reusable_unit": {
+    "file": "src/queries.js",
+    "symbols": ["candidates", "customers", "memory", "runToolAgent/validateAndRender in src/llm.js", "resolveIncident in src/agent.js"],
+    "why": "A tiny, parameterized openCypher query catalog plus a validate-then-render guard and an outcome-vs-recommendation memory discipline that translate directly to an evidence-drift/RCA engine on FalkorDB without needing any Neo4j-only features.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; Node.js 22 if used as-is (Cypher and policy logic are straightforward to re-implement in Python); LLM key only for the optional tool agent"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Implementation is JavaScript, so it cannot be merged into the Python/FastAPI Kairos directly; re-implement the query catalog, stale-report check and validated-selection guard as an incident-RCA capability pack in Python. MIT licensed, so porting with attribution is straightforward.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

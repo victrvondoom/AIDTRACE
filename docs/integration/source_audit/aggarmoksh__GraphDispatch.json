@@ -1,0 +1,162 @@
+{
+  "repository": "aggarmoksh/GraphDispatch",
+  "url": "https://github.com/aggarmoksh/GraphDispatch",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\aggarmoksh__GraphDispatch",
+  "commit_sha": "b3a5165390c9368b952e0be895f0be8600703865",
+  "license": "MIT",
+  "copyright_holder": "Moksh Aggarwal (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "graphdispatch/db.py",
+    "graphdispatch/queries.cypher",
+    "graphdispatch/recommend.py",
+    "graphdispatch/ops.py",
+    "graphdispatch/closures.py",
+    "graphdispatch/rules.py",
+    "graphdispatch/tools.py",
+    "graphdispatch/mcp_server.py",
+    "graphdispatch/llm.py",
+    "graphdispatch/intake.py",
+    "graphdispatch/api.py",
+    "eval/oracle.py",
+    "tests/test_oracle.py",
+    "pyproject.toml",
+    "requirements-runtime.txt",
+    ".env.example",
+    "AGENT.md",
+    "deploy/ship.sh",
+    "scripts/reset.py",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python 3.12/FastAPI",
+    "FalkorDB (falkordb 1.8.0, algo.SPpaths)",
+    "MCP stdio server (official mcp SDK)",
+    "Amazon Bedrock Converse API via boto3",
+    "Vanilla JS + MapLibre GL static UI",
+    "pytest, networkx (test-only oracle)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Emergency unit ranking and hospital choice via FalkorDB shortest paths on a real OSM road graph",
+      "files": ["graphdispatch/recommend.py", "graphdispatch/queries.cypher"],
+      "symbols": ["recommend", "snap", "_assign", "_pick_hospital", "_eta", "_route", "OutOfArea", "queries eta/route/unit_candidates/hospitals"],
+      "real_or_stub": "REAL",
+      "notes": "Runs CALL algo.SPpaths({relTypes:['ROAD'], weightProp:'travel_s', pathCount:1}) for each unit-to-incident and incident-to-hospital leg, greedy scarcest-capability-first assignment, nearest-intersection snapping (500 m cap). Roads are ~10k real OSM edges (seed/osm_b2_2026-10-15); units, incident types and hospital capabilities are synthetic and labelled so."
+    },
+    {
+      "capability": "Road closures as edge retyping with counterfactual 'what changed because of the closure'",
+      "files": ["graphdispatch/closures.py", "graphdispatch/recommend.py", "graphdispatch/queries.cypher"],
+      "symbols": ["close_road", "reopen_road", "expire_closures", "_rerouted_leg", "queries close_road/reopen_road/eta_all/route_all/expired_closures"],
+      "real_or_stub": "REAL",
+      "notes": "A Closure node is created and ROAD edges are retyped to CLOSED_ROAD (same props + closure_id) so SPpaths with relTypes ['ROAD'] skips them; reopening restores the edges and keeps the node. recommend() recomputes the decision ignoring closures (eta_all over ROAD+CLOSED_ROAD) and reports the units/hospital that would have differed and the extra seconds per leg. Closures auto-expire (expires_at)."
+    },
+    {
+      "capability": "Time-windowed hazard memory that modifies resource requirements",
+      "files": ["graphdispatch/ops.py", "graphdispatch/queries.cypher"],
+      "symbols": ["add_hazard", "recall", "group_hazards", "queries recall_hazards/effective_requirements/add_hazard/address_hazards"],
+      "real_or_stub": "REAL",
+      "notes": "Hazard nodes carry valid_from/valid_to and are recalled only when valid_from <= now <= valid_to; the effective_requirements query adds capability needs from active hazards (max count per kind so repeats do not double count) and labels every requirement with its source ('base' or 'hazard:<ids>:<kind>')."
+    },
+    {
+      "capability": "Decision provenance graph with single-query 'why' reconstruction",
+      "files": ["graphdispatch/ops.py", "graphdispatch/queries.cypher"],
+      "symbols": ["record_decision", "why", "explain_why", "queries decision_create/decision_considered/decision_chose/decision_destination/decision_skipped/decision_route/decision_recalled_hazards/decision_recalled_incidents/decision_rerouted/why"],
+      "real_or_stub": "REAL",
+      "notes": "Each decision persists (Decision)-[:FOR]->(Incident), CONSIDERED/CHOSE units with ETA and rank, DESTINATION/SKIPPED hospitals with reasons, ROUTE node sequence, RECALLED hazards/incidents, REROUTED_AROUND closures, rule_applied text and agent='deterministic-v1'; why() rebuilds all of it in one Cypher. Decisions are never invalidated when a hazard or closure later expires."
+    },
+    {
+      "capability": "Human-confirmed, all-or-nothing atomic dispatch",
+      "files": ["graphdispatch/ops.py", "graphdispatch/queries.cypher"],
+      "symbols": ["dispatch", "clear", "DispatchRefused", "queries dispatch/clear/expire_incidents"],
+      "real_or_stub": "REAL",
+      "notes": "One Cypher query sets chosen units to 'assigned' only if every chosen unit is still 'available' (all(x IN units WHERE x.status='available')); otherwise no rows and nothing changes. run_call()/MCP never dispatch; the HTTP /api/dispatch endpoint is the only path and is unauthenticated."
+    },
+    {
+      "capability": "Pure rule function: AHA stroke bypass limit",
+      "files": ["graphdispatch/rules.py"],
+      "symbols": ["stroke_bypass"],
+      "real_or_stub": "REAL",
+      "notes": "Small pure function choosing the EVT-capable hospital only if extra time <= max_extra_s and total <= max_total_s, with a human-readable rule string; thresholds live on the DESTINATION_NEEDS edge (data, not code)."
+    },
+    {
+      "capability": "LLM call intake constrained to graph-derived enums",
+      "files": ["graphdispatch/intake.py", "graphdispatch/llm.py"],
+      "symbols": ["take_call", "classify_tool", "graph_enums", "converse", "IntakeRejected", "CallCapExceeded"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Bedrock Converse with forced classify_call tool whose schema enums come from IncidentType/HazardKind nodes; output is validated before any write; the model never writes Cypher; per-process and daily/IP caps. Requires AWS Bedrock credentials; the prompt is the only 'intelligence' and confidence is explicitly uncalibrated."
+    },
+    {
+      "capability": "MCP tool surface with schema-validated, read-mostly tools",
+      "files": ["graphdispatch/tools.py", "graphdispatch/mcp_server.py"],
+      "symbols": ["build_tools", "run_tool", "recommend_units", "recall_address", "explain_decision", "list_open_incidents", "unit_status", "report_hazard"],
+      "real_or_stub": "REAL",
+      "notes": "Six tools; no Cypher-accepting tool, no dispatch/clear tool; exactly one write tool (report_hazard). Arguments are jsonschema-validated with enums built from the live graph."
+    },
+    {
+      "capability": "Independent pure-Python oracle (networkx Dijkstra) for evaluating the graph engine vs an LLM baseline",
+      "files": ["eval/oracle.py", "eval/run.py", "eval/baselines.py", "eval/PROTOCOL.md", "tests/test_oracle.py"],
+      "symbols": ["World", "solve", "haversine"],
+      "real_or_stub": "REAL",
+      "notes": "Recomputes every scenario from seed CSVs alone; a test asserts the oracle imports only stdlib+networkx and never graphdispatch. Evaluation harness compares graph vs LLM-only answers (results in eval/RESULTS.md); not needed at runtime."
+    }
+  ],
+  "graph_models_and_cypher": "Seed: Intersection{osm_id,lat,lon,loc point}, Station, Hospital{osm_id,source,source_date}, Capability, IncidentType{synthetic}, HazardKind{crew_note}, Unit{type,status,synthetic}; edges ROAD{travel_s,length_m,name}, CLOSED_ROAD{...,closure_id}, BASED_AT, LOCATED_AT{snap_m}, HAS_CAPABILITY, OFFERS{level}, REQUIRES{count}, DESTINATION_NEEDS{fallback,max_extra_s,max_total_s,source}, ADDS_REQUIREMENT{incident_type,count}. Runtime: Incident{status,created_at,created_ns}, Caller, Address, Hazard{valid_from,valid_to}, Decision{ts,agent,rule_applied,unmet,changes}, Closure{closed_at,expires_at,reopened_at}; edges OF_TYPE, AT, NEAREST, CALLED_ABOUT, REPORTED_IN, FOR, CONSIDERED, CHOSE, DESTINATION, SKIPPED, ROUTE{leg,seq}, RECALLED, REROUTED_AROUND, ASSIGNED_TO. Every runtime query is a named, fully parameterised statement in graphdispatch/queries.cypher (loaded by regex in db.py). FalkorDB-native: algo.SPpaths, point()/distance(), GRAPH.RO_QUERY vs GRAPH.QUERY split, FOREACH with CASE-list idiom, CREATE INDEX FOR (n:L) ON (n.p). No Neo4j GDS/APOC.",
+  "algorithms": [
+    "Dijkstra-style cheapest path via algo.SPpaths weighted by travel_s (graphdispatch/recommend.py:_eta/_route)",
+    "Greedy scarcest-capability-first unit assignment with each unit used once (recommend.py:_assign)",
+    "Nearest-intersection snapping by geodesic distance() with 500 m limit (queries.cypher snap_incident, recommend.py:snap)",
+    "Counterfactual re-planning ignoring closures (eta_all/route_all) to attribute detours and changed choices (recommend.py:recommend/_rerouted_leg)",
+    "Hazard-added requirement aggregation with max-per-kind grouping (queries.cypher effective_requirements)",
+    "Thresholded bypass rule (graphdispatch/rules.py:stroke_bypass)",
+    "Atomic compare-and-assign dispatch in a single Cypher statement (queries.cypher dispatch)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, GET /api/meta, POST /api/call (LLM intake), POST /api/recommend, GET /api/decision/{decision_id}, POST /api/dispatch/{decision_id}, POST /api/clear/{incident_id}, GET /api/incidents, POST /api/hazard, GET/POST /api/closures, DELETE /api/closures/{closure_id}; every response carries the executed Cypher + timings (graphdispatch/api.py:respond/_with_cypher)",
+    "MCP stdio server: python -m graphdispatch.mcp_server (6 tools)",
+    "CLI: python -m graphdispatch.recommend --lat --lon --type; scripts/load.py, scripts/reset.py (dry-run by default)"
+  ],
+  "frontend_interfaces": [
+    "Static SPA graphdispatch/static (index.html, app.js, map.js, panel.js, api.js, style.css) using vendored MapLibre GL: dispatch map, decision panel, 'Why' drawer showing Cypher, closure toggles"
+  ],
+  "agent_or_memory_mechanisms": "No autonomous agent loop. LLM is a single forced-tool classifier (intake.py). 'Memory' is graph state: prior incidents at a normalised address within 30 days and time-valid hazards are recalled into each decision and linked via RECALLED edges. Decision node is the lineage record (agent='deterministic-v1'). Dispatch requires explicit human confirmation.",
+  "tests_present": "tests/: 15 files, ~96 test functions (test_api 14, test_closures 16, test_deploy 11, test_hazard_rules 9, test_oracle 9, test_intake 7, test_docs_public 7, test_provenance 5, test_labels 5, test_rules 5, test_recommend 3, test_memory 3, test_mcp 2). Most require a live FalkorDB graph 'sjfd_test' reloaded from seed/. eval/ holds a protocol and results comparing graph vs LLM-only baselines.",
+  "dependency_requirements": [
+    "python>=3.12",
+    "FalkorDB==1.8.0 (client)",
+    "fastapi==0.143.2",
+    "uvicorn==0.54.0",
+    "boto3==1.43.114 (Bedrock Converse; only for /api/call)",
+    "mcp (unpinned in pyproject)",
+    "jsonschema==4.26.0",
+    "redis==8.1.0",
+    "python-dotenv==1.2.4",
+    "dev only: networkx, osmnx, pandas, playwright, pillow"
+  ],
+  "security_findings": [
+    "graphdispatch/api.py:325-470 - all mutating endpoints (/api/dispatch, /api/clear, /api/hazard, /api/closures POST/DELETE) are unauthenticated; mitigated only by per-IP rate limits (api.py:check_close_limit, IP_LIMIT=6/10min for LLM) and synthetic data - not suitable as-is for a real deployment",
+    "graphdispatch/api.py:123-142 - client_ip trusts CloudFront-Viewer-Address / rightmost X-Forwarded-For only when TRUST_PROXY=1 (sound design); default ignores forwarding headers",
+    "graphdispatch/api.py:142-165 - daily LLM cap persisted in runs/llm_daily.json under a threading.Lock (not multi-process safe)",
+    "graphdispatch/llm.py:28-32 - boto3 credential chain from environment/instance role; no keys in repo (deploy/iam-bedrock-policy.json restricts to bedrock:InvokeModel); caller text goes to a third-party LLM",
+    "graphdispatch/llm.py:17,35-42 - appends call metadata to runs/llm_calls.log (no prompts/credentials)",
+    "graphdispatch/api.py (respond/_with_cypher) - returns the exact Cypher text and parameters in every response (information disclosure of query shapes, intended for 'Why' drawer)",
+    "graphdispatch/db.py:62-68 - queries.cypher parsed by regex at runtime; all queries parameterised, no f-string Cypher found in runtime code",
+    "eval/run.py:309 and tests/test_deploy.py:144-158 - subprocess git/shell calls in eval/test code only (not runtime)",
+    "deploy/ship.sh - ssh/scp deployment script with dry-run default; not executed in this audit",
+    "No eval/exec/pickle found; no hard-coded secrets found"
+  ],
+  "duplicates_or_overlaps": "Shortest-path routing / logistics (Supply Chain & Logistics, Mobility), resource allocation, incident memory and decision-lineage families. Overlaps with ClearPath-style FalkorDB incident tooling on decision provenance but is distinct on weighted routing and closure counterfactuals.",
+  "capability_family": "Operational Optimization",
+  "evidence_drift_relevance": "MEDIUM - hazards carry valid_from/valid_to and are filtered by time at decision time, closures have expires_at/reopened_at, every Decision records exactly which hazards/closures/rules it relied on (RECALLED, REROUTED_AROUND, rule_applied) and dispatch is human-gated, but there is no supersession edge or dependency invalidation that re-flags a stored decision when its inputs expire.",
+  "strongest_reusable_unit": {
+    "file": "graphdispatch/ops.py + graphdispatch/queries.cypher",
+    "symbols": ["record_decision", "why (query why)", "recall / effective_requirements", "dispatch (query dispatch)", "graphdispatch/db.py:read/write/record_queries"],
+    "why": "The decision-provenance write set plus the single-query 'why' reconstruction, the valid_from/valid_to recall filter, and the compare-and-assign atomic dispatch are compact, work on FalkorDB 4.x, and the db.py named-query + recorded-Cypher pattern makes every answer auditable. The closure-retyping and counterfactual diff is a reusable 'what would have changed' pattern.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB server with algo.SPpaths (routing only); Bedrock credentials only for the optional LLM intake"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "It is a self-contained, working emergency-dispatch domain (OSM roads + synthetic units) best offered as an Operational Optimization pack on Kairos; the named-query/recorded-Cypher helper and Decision-lineage schema can be borrowed into the shared engine, but the dispatch domain data and unauthenticated mutation endpoints should not be merged natively.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,187 @@
+{
+  "repository": "jeeva5655/falkor-nexus",
+  "url": "https://github.com/jeeva5655/falkor-nexus",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\jeeva5655__falkor-nexus",
+  "commit_sha": "d0f11a4e265cc0b118d1fc98181535c4ce884ef9",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "requirements.txt",
+    ".env.example (key names only)",
+    "backend/config.py",
+    "backend/graph_engine.py",
+    "backend/mcp_server.py (tool list + decision_lineage + execute_action)",
+    "backend/app.py (route list, connect, cypher, ingest/event, rag/compare)",
+    "backend/agents/orchestrator.py",
+    "backend/agents/investigator_agent.py",
+    "backend/agents/memory_agent.py (head)",
+    "backend/agents/llm_reasoner.py (head)",
+    "backend/memory/episodic.py",
+    "backend/seeds/enterprise_data.py (decision grep)",
+    "backend/tests/test_system.py"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "falkordb >=1.8.0 (optional at runtime)",
+    "networkx (in-process emulator)",
+    "httpx (LLM calls)",
+    "vanilla JS/HTML frontend with graph view"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Dual-mode graph engine: in-process NetworkX 'Cypher emulator' with optional live FalkorDB",
+      "files": [
+        "backend/graph_engine.py"
+      ],
+      "symbols": [
+        "FalkorDBLocalCypherEmulator",
+        "GraphEngine.execute_cypher",
+        "GraphEngine.native_pagerank",
+        "GraphEngine.native_shortest_path",
+        "GraphEngine.execute_root_cause_cypher",
+        "GraphEngine.sync_to_live_falkordb"
+      ],
+      "real_or_stub": "STUB",
+      "notes": "The 'emulator' does not parse Cypher: query() only string-matches 'RETURN n' / 'MATCH (n:Label)' and otherwise returns a node/edge count. Real algorithms (BFS blast radius treating edges as undirected, networkx pagerank/betweenness/greedy modularity) run in Python on the emulator graph. Live FalkorDB is used only for a few pass-through queries (algo.pageRank, shortestPath, one root-cause path query) and a MERGE sync; all agents/memory read and write the in-process emulator, not FalkorDB."
+    },
+    {
+      "capability": "MCP-style tool registry over the graph",
+      "files": [
+        "backend/mcp_server.py"
+      ],
+      "symbols": [
+        "FalkorMCPServer.call_tool",
+        "falkordb_cypher_query",
+        "falkordb_shortest_path",
+        "falkordb_blast_radius",
+        "falkordb_pagerank",
+        "falkordb_centrality",
+        "falkordb_find_expert",
+        "falkordb_decision_lineage",
+        "falkordb_execute_action"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "In-process class (not a protocol server). Decision lineage matches a node by substring on id/code/title and returns its adjacent edges; falkordb_execute_action returns a canned 'EXECUTED' dict with templated remediation text and performs no action."
+    },
+    {
+      "capability": "Four-agent pipeline (Triage, Investigator, Action, Memory) with handoff nodes",
+      "files": [
+        "backend/agents/orchestrator.py",
+        "backend/agents/investigator_agent.py",
+        "backend/agents/memory_agent.py",
+        "backend/agents/triage_agent.py",
+        "backend/agents/action_agent.py"
+      ],
+      "symbols": [
+        "AgentOrchestrator.process_query",
+        "AgentOrchestrator._record_state_handoff",
+        "InvestigatorAgent.run",
+        "MemoryAgent.run"
+      ],
+      "real_or_stub": "DEMO_ONLY",
+      "notes": "Fixed sequential pipeline. Investigator branches by intent and issues fixed tool calls against hard-coded demo ids (service_payment_gw, inc_804, sarah_chen, service_auth, rfc_104); synthesis strings are literal text naming 'Sarah Chen' and 'PR #482' regardless of what the tools returned; hops_count is hard-coded 1 vs 5."
+    },
+    {
+      "capability": "Two-run learning loop (HISTORICAL_CASCADE shortcut edge) and tri-memory",
+      "files": [
+        "backend/agents/memory_agent.py",
+        "backend/memory/episodic.py",
+        "backend/memory/semantic.py",
+        "backend/memory/procedural.py"
+      ],
+      "symbols": [
+        "MemoryAgent.run",
+        "EpisodicMemoryManager.record_episode",
+        "EpisodicMemoryManager.recall_recent_episodes"
+      ],
+      "real_or_stub": "DEMO_ONLY",
+      "notes": "Episodes/sessions/shortcut edges are nodes in the in-memory emulator (lost on restart; /api/agents/reset_learning resets them). The claimed '80% speedup' is the scripted 5-hop vs 1-hop branch, not a measured effect."
+    },
+    {
+      "capability": "Vector RAG vs graph comparison endpoint",
+      "files": [
+        "backend/app.py"
+      ],
+      "symbols": [
+        "compare_vector_vs_graph"
+      ],
+      "real_or_stub": "STUB",
+      "notes": "Returns a literal JSON body (fake chunk ids/scores, execution_latency_ms: 1.2); no retrieval is performed."
+    },
+    {
+      "capability": "Event ingestion (commit, Slack, ticket) and chaos injector",
+      "files": [
+        "backend/app.py"
+      ],
+      "symbols": [
+        "ingest_event",
+        "inject_chaos_webhook"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Adds nodes/edges into the in-memory graph from request data with defaults (author sarah_chen); not persisted to FalkorDB unless sync is called."
+    },
+    {
+      "capability": "LLM dynamic tool selection",
+      "files": [
+        "backend/agents/llm_reasoner.py"
+      ],
+      "symbols": [
+        "DynamicLLMReasoner"
+      ],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Formats the tool registry as function schemas for OpenAI-compatible endpoints; falls back to the scripted planner when no key is set."
+    }
+  ],
+  "graph_models_and_cypher": "Per-tenant graph names tenant_<id>_brain / tenant_<id>_memory. Labels (emulator): Service, Person, PullRequest, Commit, Incident, RFC, Decision, Ticket, SlackMessage, Playbook, AgentSession, MemoryEpisode, AgentState. Edges: DEPENDS_ON, MODIFIES, AUTHORED, AFFECTS, HAS_COMMIT, DOCUMENTED_IN, MOTIVATED_BY, CONTAINS_EPISODE, REFERENCED, HAS_STATE_TRANSITION, HISTORICAL_CASCADE. Live-FalkorDB Cypher present: algo.pageRank('Service','DEPENDS_ON'), shortestPath((a {id})-[*..6]-(b {id})), and a root-cause path (Incident)-[:AFFECTS]->(Service)-[:DEPENDS_ON*1..4]->(Service)<-[:MODIFIES]-(PullRequest)<-[:AUTHORED]-(Person). shortestPath() is not guaranteed on FalkorDB 4.22 (SPpaths/algo.* is the native route) so those queries silently fall back to the emulator.",
+  "algorithms": [
+    "BFS blast radius over undirected successors+predecessors with depth cap (graph_engine.py:FalkorDBLocalCypherEmulator.blast_radius) - note direction is ignored",
+    "networkx PageRank, betweenness, degree centrality, greedy modularity communities, shortest path",
+    "Scripted 'learned shortcut' edge insertion (memory_agent.py) presented as learning"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health; POST /api/falkordb/connect, /api/falkordb/sync; GET /api/graph/data; POST /api/graph/cypher (arbitrary Cypher passthrough); GET /api/graph/algorithms/{pagerank,centrality,communities,shortest_path,blast_radius}; POST /api/agents/chat; GET /api/agents/sessions/{id}, /api/agents/handoffs; GET /api/memory/summary and procedural playbooks; POST /api/memory/procedural/learn; GET /api/mcp/tools; POST /api/mcp/call; POST /api/ingest/event, /api/ingest/chaos, /api/agents/reset_learning; GET /api/rag/compare"
+  ],
+  "frontend_interfaces": [
+    "Static HTML/CSS/JS dashboard (frontend/index.html, js/app.js, js/graph_view.js)"
+  ],
+  "agent_or_memory_mechanisms": "Sequential Triage->Investigator->Action->Memory handoff with AgentState nodes; episodic/semantic/procedural managers over the in-memory emulator graph; the claimed two-run learning loop is a scripted branch keyed on is_memory_accelerated. Nothing durable unless explicitly synced to FalkorDB.",
+  "tests_present": "One end-to-end smoke test (backend/tests/test_system.py::test_full_system_across_all_tracks) that seeds the emulator and asserts on scripted outputs; no unit tests and no live-FalkorDB test.",
+  "dependency_requirements": [
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "pydantic>=2.0.0",
+    "networkx>=3.2.0",
+    "falkordb>=1.8.0",
+    "redis>=5.0.0",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.0",
+    "OpenAI/Gemini/Ollama (optional)"
+  ],
+  "security_findings": [
+    "backend/app.py:184-188 - POST /api/graph/cypher forwards arbitrary caller-supplied Cypher (and tenant/graph names) to FalkorDB with no auth or read-only guard; mcp tool falkordb_cypher_query exposes the same to the LLM",
+    "backend/app.py:46 - CORS allow_origins=['*']; no authentication on any route including /api/falkordb/connect (app.py:99-100; lets a caller repoint the engine at an arbitrary FalkorDB host:port/url - SSRF-style) and /api/mcp/call",
+    "backend/graph_engine.py:385,398 - sync_to_live_falkordb builds Cypher with f-strings from node label and relationship type taken from graph data (injection if labels/types originate from request payloads)",
+    "backend/mcp_server.py:283-300 - falkordb_execute_action reports status EXECUTED for isolate_service/page_on_call/revert_pr without doing anything (misleading audit trail)",
+    "backend/graph_engine.py:236 and backend/app.py:487 - hard-coded claims ('FalkorDB 6.0 GraphBLAS Rust Engine', 1.2 ms latency) are fabricated telemetry",
+    "No eval/exec/pickle/subprocess; no hard-coded secrets (.env.example placeholders only)"
+  ],
+  "duplicates_or_overlaps": "Overlaps Incident & Root Cause Analysis (blast radius + root cause path), Agent Memory & Provenance (episodic/procedural memory, decision lineage) and Enterprise Knowledge ('company brain'); same pattern as AgentAhmed/blast-radius but without the real graph persistence.",
+  "capability_family": "Enterprise Knowledge",
+  "evidence_drift_relevance": "LOW - decision lineage is a substring lookup plus adjacent edges in an in-memory graph; the RFC status APPROVED_ACTIVE field exists in seed data but nothing enforces supersession, temporal validity or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "backend/graph_engine.py",
+    "symbols": [
+      "FalkorDBLocalCypherEmulator.blast_radius",
+      "FalkorDBLocalCypherEmulator.community_detection",
+      "GraphEngine.execute_root_cause_cypher"
+    ],
+    "why": "The only portable pieces are small networkx helpers and one multi-hop root-cause Cypher pattern; the rest is scripted demo narrative.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for the networkx helpers; FalkorDB for the Cypher pattern"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Core behavior runs on a networkx emulator with scripted agent outputs and fabricated claims, the real FalkorDB path is a thin optional layer, and there is no license; nothing here beats the stronger sources in the same sweep.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

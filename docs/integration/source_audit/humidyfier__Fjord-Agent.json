@@ -1,0 +1,123 @@
+{
+  "repository": "humidyfier/Fjord-Agent",
+  "url": "https://github.com/humidyfier/Fjord-Agent",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\humidyfier__Fjord-Agent",
+  "commit_sha": "de42031c471fde9b87e105abd64f8529ac82c002",
+  "license": "MIT",
+  "copyright_holder": "humidyfier (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "LICENSE",
+    "requirements.txt",
+    "docker-compose.yml",
+    "architecture.md",
+    "BENCHMARK_RESULTS.md",
+    "backend/db/connection.py",
+    "backend/db/compiler.py (first 140 lines)",
+    "backend/solver/ilp_solver.py",
+    "backend/solver/sandbox.py",
+    "backend/solver/yaml_generator.py (symbol list)",
+    "backend/agent/guardrails.py",
+    "backend/agent/orchestrator.py",
+    "backend/agent/tools.py (symbol list, lines 440-600)",
+    "backend/agent/server.py (symbol list)",
+    "backend/api/app.py and router.py (grep)",
+    "backend/ingest/parser.py (yaml grep)",
+    "tests/ (function counts)"
+  ],
+  "languages_frameworks": ["Python 3.11", "falkordb Python client", "FastAPI + embedded HTML UI", "FastMCP/mcp server", "scipy.optimize.milp (HiGHS)", "NetworkX (tests oracle only)", "google-genai (Gemini)", "PyYAML (safe_load)", "Kubernetes manifests / kind + Calico fixtures"],
+  "implemented_capabilities": [
+    {
+      "capability": "Exploit-plane compiler: compiles Kubernetes/cloud posture into :EXPLOIT_STEP edges with virtual super-source and super-sink",
+      "files": ["backend/db/compiler.py", "backend/schema.py"],
+      "symbols": ["ExploitGraphCompiler", "ExploitGraphCompiler.compile", "_compile_entry_points", "_compile_network_pivots", "_compile_rbac_escalations", "_compile_host_escapes", "_compile_cloud_bridges", "_compile_crown_jewel_mounts", "_compile_crown_jewel_sinks"],
+      "real_or_stub": "REAL",
+      "notes": "Parameter-free parameterized Cypher MERGE passes that derive attack edges (INITIAL_ACCESS, NET_RCE, RBAC escalation, host escape, IRSA AssumeRole) from the inventory layer; this is a rule set, not a learned model. Only the first ~140 lines were read in detail; later passes were taken from architecture.md and method names."
+    },
+    {
+      "capability": "Minimum-disruption attack-path severing via cutting-plane hitting-set MILP with counterfactual sandbox verification",
+      "files": ["backend/solver/ilp_solver.py", "backend/solver/sandbox.py"],
+      "symbols": ["CuttingPlaneILPSolver", "CuttingPlaneILPSolver.enumerate_candidates", "CuttingPlaneILPSolver.solve", "CuttingPlaneILPSolver._solve_milp", "RemediationAction", "SolverResult", "SandboxManager", "SandboxManager.simulate", "_count_broken_required_deps"],
+      "real_or_stub": "REAL",
+      "notes": "min sum c_m x_m s.t. each active path is hit and required-dependency edges are forbidden (cost 999 / excluded); each iteration re-queries paths, solves with scipy milp, applies mutations on a GRAPH.COPY sandbox, recompiles, and adds cuts for surviving paths until zero remain. Costs per remediation class are a hard-coded table. Self-reported benchmark: 14 exploit edges and 2 simple paths in the test graph (very small)."
+    },
+    {
+      "capability": "Verification gate and operator approval/veto memory",
+      "files": ["backend/agent/guardrails.py", "backend/agent/orchestrator.py", "backend/agent/tools.py", "backend/solver/ilp_solver.py"],
+      "symbols": ["GuardrailManager.register_verified_simulation", "GuardrailManager.assert_verification_gate", "VerificationGateError", "commit_verified_remediation", "simulate_fix_in_sandbox", "AgentOrchestrator.record_operator_decision", "CuttingPlaneILPSolver.enumerate_candidates (sentinel_memory veto block)"],
+      "real_or_stub": "PARTIAL",
+      "notes": "commit_verified_remediation refuses unless a VERIFIED_IN_MODEL simulation exists for the exact (snapshot_sha, candidate_set_id); operator decisions are persisted as RemediationRecord nodes in a 'sentinel_memory' graph with stable_key, edge_keys, expires_at and cluster_id, and unexpired REJECTED_BY_OPERATOR records mark candidates forbidden in later solves. The gate state is an in-process Python set (lost on restart), and record_operator_decision swallows write errors (bare except: pass). 'Commit' only validates (kubeconform + re-ingest) and logs; no kubectl apply."
+    },
+    {
+      "capability": "Prompt-injection hardening for LLM tool use",
+      "files": ["backend/agent/guardrails.py", "benchmarks/eval_injection.py", "benchmarks/injection_suite.json"],
+      "symbols": ["sanitize_untrusted_data", "redact_sensitive_credentials", "GuardrailManager.check_and_increment_quota", "GuardrailManager.verify_quote", "QuotaExceededError", "QuoteVerificationError"],
+      "real_or_stub": "REAL",
+      "notes": "Untrusted strings wrapped in <untrusted_data> tags with regex credential redaction and 2048-char truncation, 5 tool calls per turn, operator-decision tool never exposed to the model, and constraint updates need a verbatim substring of the user prompt. Reported 0/50 attack success is self-measured on its own suite."
+    },
+    {
+      "capability": "K8s manifest / Trivy / Prowler ingestion with RBAC pre-flattening and CNI NetworkPolicy reachability truth table",
+      "files": ["backend/ingest/parser.py", "backend/ingest/cni_resolver.py"],
+      "symbols": ["IngestionEngine", "CNIReachabilityResolver", "CNIReachabilityResolver.is_workload_selected_by_policy", "matches_selector", "ParsedNetworkPolicy", "ParsedWorkload"],
+      "real_or_stub": "REAL",
+      "notes": "Uses yaml.safe_load_all; derives :CAN_REACH_NET edges from NetworkPolicy semantics (default allow, isolated-if-selected). parser.py (36 KB) and cni_resolver.py were not read line by line; behaviour taken from architecture.md plus grep evidence."
+    },
+    {
+      "capability": "Minimal-diff NetworkPolicy / RBAC / IAM remediation manifest generation",
+      "files": ["backend/solver/yaml_generator.py"],
+      "symbols": ["NetworkPolicyYAMLGenerator", "generate", "_generate_policies_for_workload", "_generate_rbac_unbind_manifest", "_generate_iam_revoke_manifest"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Generates YAML text from the selected severed edges and existing policy state; correctness against a real cluster is not demonstrated beyond kind fixtures in deploy/kind/."
+    },
+    {
+      "capability": "Gemini-driven 7-tool MCP agent, flight recorder and FastAPI command-centre UI",
+      "files": ["backend/agent/server.py", "backend/agent/tools.py", "backend/agent/logger.py", "backend/api/app.py", "backend/api/router.py"],
+      "symbols": ["get_posture_and_cluster_summary", "discover_attack_paths", "compute_optimal_remediations", "inspect_resource_context", "update_dependency_or_constraint", "simulate_fix_in_sandbox", "commit_verified_remediation", "FlightRecorder"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Seven typed tools wrapping the engine; endpoints /health, /scenarios, /sessions/init, /sessions/{id}(/stream), /graph/{name}, /agent/run, /operator/decision. Has a replay_mode (scripted) when no BYOK key is supplied, so demos without a key are replays."
+    }
+  ],
+  "graph_models_and_cypher": "Two layers in FalkorDB (16 node labels / 16 relationship types per architecture.md and backend/schema.py): Layer 1 inventory/posture (Workload, ServiceAccount, RBACRole, Service, Ingress, EntryPoint, CrownJewel, IAMRole, WorkerNode, ... with CAN_REACH_NET, USES_SA, BOUND_TO, MOUNTS_HOST, ASSUMES_IAM_ROLE, REQUIRED_DEPENDENCY, ALLOWS_API, EXPOSES, ROUTES_TO, SELECTS) and Layer 2 :EXPLOIT_STEP edges {step_type, technique, mechanism, cost} between :VirtualSource and :VirtualSink. Cypher uses $params; mutation Cypher is stored per candidate (MATCH ... DELETE r). Uses FalkorDB-specific algo.SPpaths({sourceNode,targetNode,relTypes}) and GRAPH.COPY for sandboxes; query() uses ro_query for reads. find_shortest_paths builds the MATCH label/property names via f-string from keyword arguments with defaults (values are params). compose.yaml uses falkordb/falkordb:latest (unpinned). NOTE: LastLift's docs (docs/falkordb-sppaths-note.md) report algo.SPpaths on FalkorDB 4.22.0 running for hours and ignoring query timeout on dense graphs, so Fjord's reliance on it is a risk on Kairos' 4.22 server.",
+  "algorithms": [
+    "Cutting-plane minimum-cost hitting-set ILP (scipy.optimize.milp) with per-path cuts and sandbox-derived additional cuts in backend/solver/ilp_solver.py:CuttingPlaneILPSolver.solve",
+    "Counterfactual verification by GRAPH.COPY + mutate + recompile + path recount in backend/solver/sandbox.py:SandboxManager.simulate",
+    "Virtual super-source / super-sink reduction so one algo.SPpaths call covers all entry-to-asset paths (backend/db/connection.py:find_shortest_paths)",
+    "NetworkPolicy default-allow/isolation truth table in backend/ingest/cni_resolver.py",
+    "Operator-veto filtering with expiry (expires_at > now) in ilp_solver.py:enumerate_candidates"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /, GET /health, GET /scenarios, POST /sessions/init, GET /sessions/{id}, GET /sessions/{id}/stream, GET /graph/{graph_name}, POST /agent/run, POST /operator/decision (backend/api/router.py)",
+    "FastMCP server with 7 tools (backend/agent/server.py)",
+    "Benchmarks CLI benchmarks/run_all_benchmarks.py (eval_agent, eval_compiler, eval_faithfulness, eval_injection)"
+  ],
+  "frontend_interfaces": ["Single-page 3-pane 'command centre' HTML/JS embedded in backend/api/app.py (inline script; BYOK Gemini key textbox, SSE stream)"],
+  "agent_or_memory_mechanisms": "Gemini tool-calling agent with per-turn quota, untrusted-data wrapping, verification gate, flight-recorder JSONL log, and a persistent 'sentinel_memory' FalkorDB graph storing operator ACCEPT/REJECT decisions with expiry and cluster scope that later bias the solver. In-memory _candidate_action_registry holds candidate sets between tool calls.",
+  "tests_present": "tests/ has ~32 test functions across test_ilp_solver.py (8), test_compiler_monotonicity.py (6), test_agent_tools.py (7), test_api.py (4), test_audit_hardening.py (4), test_graph_integrity.py (2) plus tests/task0_vertical_slice.py; needs live FalkorDB; benchmarks compare against a NetworkX simple-path oracle. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.0.8", "redis>=5.0.0", "pydantic>=2.7.0", "fastapi>=0.111.0", "uvicorn>=0.30.0", "scipy>=1.13.0", "networkx>=3.2.0", "google-genai>=0.1.1", "pyyaml>=6.0.1", "requests>=2.31.0", "rich>=13.7.0", "python-dotenv>=1.0.1", "mcp>=1.0.0", "pytest/pytest-asyncio"],
+  "security_findings": [
+    "backend/api/app.py:20 - CORS allow_origins=['*'] on the API.",
+    "backend/api/router.py:53,189 - accepts a user-supplied BYOK Gemini API key in the request body (byok_api_key); keys transit the server and must not be logged.",
+    "backend/api/router.py:415-440 - /operator/decision is protected only by a per-session UI token compared with plain != (not constant-time); operator identity is hard-coded 'SecurityOperator_Local' (no real user identity) and the route never passes expires_at/stable_key/edge_keys to record_operator_decision, so HTTP-recorded vetoes are not scoped or expiring.",
+    "backend/agent/tools.py:534-548 - subprocess.run(['kubeconform','-summary', tmp_path]) with list args (no shell) on LLM-influenced YAML written to a temp file; low risk but executes an external binary.",
+    "backend/agent/orchestrator.py:~100-125 - sentinel_memory write wrapped in try/except: pass; failed approval/veto writes are silent.",
+    "backend/agent/guardrails.py - verification gate is an in-process set; it is lost on restart and not bound to a snapshot content hash.",
+    "backend/solver/sandbox.py / ilp_solver.py - mutation_cypher strings are stored on actions and executed on sandboxes; they are code-generated with $params, not user text.",
+    "docker-compose.yml - uses falkordb/falkordb:latest (unpinned); port bound to 127.0.0.1 only.",
+    "backend/ingest/parser.py:68,602 - uses yaml.safe_load(_all) (good). No eval/exec/pickle found.",
+    "No hard-coded secrets found; GEMINI_API_KEY read from env."
+  ],
+  "duplicates_or_overlaps": "Attack-path discovery and remediation (Security & Vulnerability), overlapping other attack-path / blast-radius entries; the min-cost hitting-set remediation planner with counterfactual sandbox, verification gate and expiring operator vetoes is the distinctive piece. Overlaps conceptually with LastLift's GRAPH.COPY what-if pattern.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "MEDIUM - guardrails.py gates commits on a verified simulation tied to (snapshot_sha, candidate_set_id) and ilp_solver.py honours operator vetoes with expires_at/cluster scope, which is approval gating and decision memory; but the gate is in-memory, there is no supersession or dependency-invalidation cascade, and snapshot staleness is not re-checked at commit.",
+  "strongest_reusable_unit": {
+    "file": "backend/solver/ilp_solver.py",
+    "symbols": ["CuttingPlaneILPSolver", "RemediationAction", "_solve_milp", "enumerate_candidates"],
+    "why": "A compact, well-documented min-cost hitting-set remediation planner over graph paths, with hard-invariant exclusion, sandbox re-verification loop and persistent expiring vetoes; the same pattern ('choose the cheapest set of edges/dependencies to cut or re-verify') fits Kairos blast-radius remediation and Evidence Drift re-verification planning. Pair with guardrails.GuardrailManager for the verify-before-commit gate.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (algo.SPpaths, GRAPH.COPY) plus numpy/scipy; path-source could be swapped for a pure-Python path finder to avoid the 4.22 SPpaths hang risk"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The hitting-set planner, sandbox verification loop and verify-before-commit gate are generic and can be extracted as a Kairos remediation/re-verification engine, but the K8s compiler and ingest are a Security & Vulnerability domain pack, and the algo.SPpaths dependency must be replaced or bounded for FalkorDB 4.22.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "MEDIUM"
+}

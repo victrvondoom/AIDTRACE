@@ -409,6 +409,76 @@ export interface Fetched<T> {
   source: DataSource;
 }
 
+export interface FalkorHealth {
+  reachable: boolean;
+  site_graph_exists: boolean;
+}
+
+export interface ModelCatalogItem {
+  role: string;
+  provider: string;
+  model: string;
+  configured: boolean;
+}
+
+export interface ModelCatalog {
+  models: ModelCatalogItem[];
+  fine_tuning: { status: "not_connected"; registry_available: false };
+}
+
+export interface ValidationCorpusStats {
+  total_corpus_size: number;
+  by_entity_type: Record<string, number>;
+  last_updated_at: string | null;
+}
+
+export interface AnnotationStats {
+  total: number;
+  corrections_this_week: number;
+  top_corrected_entity_types: { corrected_type: string; count: number }[];
+}
+
+export interface DriftDemoResult {
+  case_id: string;
+  scenario: "synthetic_only";
+  authority_verdict?: string;
+  source_before?: string;
+  source_after?: string;
+  impact_paths?: { node_id: string; depth: number; path: string[] }[];
+  condition_results?: { key: string; op: string; value: unknown; actual: unknown; claim_id: string | null; holds: boolean }[];
+  decision_status?: string;
+  decision_revision?: {
+    previous_revision_id: string;
+    previous_graph_revision: string;
+    current_revision_id: string;
+    current_graph_revision: string;
+  };
+  human_review?: {
+    approval_id: string;
+    approved_revision_id: string;
+    approval_status: string;
+    matches_current_revision: boolean;
+  };
+  agent_focus_trace?: { agent_id: string; session_id: string; focus_level: string; scope: string; trace_kind: string }[];
+  decision_head?: { revision_n: number | null; current_revision_id: string | null };
+  approval?: Record<string, unknown> | null;
+  agent_sessions?: Record<string, unknown>[];
+  action_eligibility?: string;
+  statuses: Record<string, string>;
+  audit_chain_hash?: string;
+  external_actions_executed: false;
+  seeded?: boolean;
+}
+
+export async function getDriftDemo(): Promise<Fetched<DriftDemoResult>> {
+  const data = await getJson<DriftDemoResult>("/resolveai/drift/demo", 8000);
+  return { data, source: "live" };
+}
+
+export function runDriftDemo(): Promise<DriftDemoResult> {
+  return postJson<DriftDemoResult>("/resolveai/drift/demo", {});
+}
+
 // Live-only policy: give real queries room to land (cold Neo4j/Supabase calls run
 // ~1s+). A genuine down/hanging backend still surfaces as an error+retry after the
 // timeout — we never substitute fabricated data. Slow endpoints pass an even
@@ -1514,6 +1584,26 @@ const _SERVICE_LABELS: Record<string, string> = {
   redis: "Redis",
   temporal: "Temporal",
 };
+
+export async function getFalkorHealth(): Promise<Fetched<FalkorHealth>> {
+  const data = await getJson<FalkorHealth>("/health/falkordb", 8000);
+  return { data, source: "live" };
+}
+
+export async function getModelCatalog(): Promise<Fetched<ModelCatalog>> {
+  const data = await getJson<ModelCatalog>("/health/model-catalog");
+  return { data, source: "live" };
+}
+
+export async function getValidationCorpusStats(): Promise<Fetched<ValidationCorpusStats>> {
+  const data = await getJson<ValidationCorpusStats>("/governance/validation-corpus/stats", 8000);
+  return { data, source: "live" };
+}
+
+export async function getAnnotationStats(): Promise<Fetched<AnnotationStats>> {
+  const data = await getJson<AnnotationStats>("/annotations/stats", 8000);
+  return { data, source: "live" };
+}
 
 export async function getHealthDetailed(): Promise<Fetched<HealthDetailed | null>> {
   const raw = await getJson<{

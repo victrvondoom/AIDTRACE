@@ -17,6 +17,8 @@ import { ThemeToggle } from "./theme-toggle";
 import { PageSkeleton } from "./skeleton";
 import { Icon as SharedIcon, isIconName, type IconName as SharedIconName } from "./icon";
 import { getSearchShortcut } from "@/lib/search-shortcut";
+import { SpatialInteraction } from "./spatial-interaction";
+import { CAPABILITIES } from "@/lib/capabilities";
 
 // Staff surfaces (Assure group + RCA) are hidden from field workers. Dev-bypass (no session)
 // defaults to engineer, so an unauthenticated demo still sees everything.
@@ -51,7 +53,11 @@ const navAllowed = (it: NavItem, role: Role) => !it.roles || role === "demo" || 
 const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: "",
-    items: [{ href: "/overview", label: "Overview", icon: "management", roles: STAFF }],
+    items: [
+      { href: "/overview", label: "Overview", icon: "management", roles: STAFF },
+      { href: "/workspace", label: "All Features", icon: "management", roles: STAFF },
+      { href: "/resolveai", label: "ResolveAI RDS", icon: "graph", roles: STAFF },
+    ],
   },
   {
     group: "Operate",
@@ -205,6 +211,10 @@ export function SidebarContent({ onNavigate, role, user, actions }: { onNavigate
       </nav>
 
       {user && <GovernorPill userId={user.user_id} />}
+      <div className="mx-3 mt-3">
+        <p className="mb-2 text-micro font-semibold uppercase tracking-wider text-muted">Appearance</p>
+        <ThemeToggle labeled />
+      </div>
 
       {/* Account lives at the foot of the rail, as in Linear / Vercel / Notion.
           Settings, System Health (admins) and sign-out are inside the menu it opens. */}
@@ -395,6 +405,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
     return [
       ...nav,
+      ...CAPABILITIES.filter((item) => routeAllowed(item.href.split("#")[0], role) && !nav.some((entry) => entry.href === item.href))
+        .map((item) => ({ group: "Features", label: item.title, href: item.href })),
       {
         group: "Actions",
         label: "Toggle dark mode",
@@ -556,7 +568,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Shell owns page padding; /copilot opts out (full-bleed sticky composer).
             Every other route sits in the landing's frame: hairline rails either side
             of a centred column, visible once the viewport is wider than the column. */}
-        <main id="main" className="flex min-w-0 flex-1 flex-col overflow-x-clip">
+        <main id="main" className="kairos-spatial flex min-w-0 flex-1 flex-col overflow-x-clip">
+          <SpatialInteraction />
           {pathname === "/copilot" ? (
             <div key={pathname} className="app-route flex-1">{children}</div>
           ) : (

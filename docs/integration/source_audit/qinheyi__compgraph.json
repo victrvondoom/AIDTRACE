@@ -1,0 +1,95 @@
+{
+  "repository": "qinheyi/compgraph",
+  "url": "https://github.com/qinheyi/compgraph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\qinheyi__compgraph",
+  "commit_sha": "85375c2414dbe1022045af1ac42a12e016e746c8",
+  "license": "MIT",
+  "copyright_holder": "qinheyi",
+  "source_files_inspected": [
+    "LICENSE",
+    "package.json",
+    "cypher/schema.cypher",
+    "cypher/queries.cypher",
+    "cypher/seed-synthetic.cypher (head + CREATE count)",
+    "server/falkordb.js",
+    "server/tools.js",
+    "server/agent.js",
+    "server/llm.js",
+    "server/index.js",
+    "server/demo-data.js (head)",
+    "server/vercel-app.js (head)",
+    "scripts/load.mjs (head)",
+    "docker-compose.yml",
+    "vercel.json",
+    "docs/architecture.md"
+  ],
+  "languages_frameworks": ["Node.js >=18 / Express 4 (ES modules)", "falkordb npm client ^6.8.0", "optional MiniMax LLM via fetch", "vanilla JS/SVG frontend", "Docker Compose (FalkorDB), Vercel (demo mode)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Eligibility-gap analysis (unmet requirements for a competition)",
+      "files": ["server/tools.js", "cypher/queries.cypher"],
+      "symbols": ["listGaps", "recommendNext", "explainPath"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher over (Person)-[:HAS]->(Resource {status})-[:SATISFIES]->(Requirement)<-[:REQUIRES]-(Competition). A requirement is a gap when no ready Resource satisfies it. recommendNext runs two queries (coverage + decision status) and merges/sorts in JS by fewest missing then soonest ISO deadline because the author reports FalkorDB dropping a follow-up OPTIONAL MATCH after an aggregating WITH."
+    },
+    {
+      "capability": "Session decision memory",
+      "files": ["server/tools.js"],
+      "symbols": ["rememberDecision", "listDecisions"],
+      "real_or_stub": "REAL",
+      "notes": "Writes (Person)-[:DECIDED]->(Decision {status joined|abandoned|submitted|candidate, at ISO string, note})-[:ABOUT]->(Competition) with bound params; recommendNext filters out abandoned/submitted contests. Append-only, no supersession or revocation."
+    },
+    {
+      "capability": "Keyword intent router with optional LLM polish",
+      "files": ["server/agent.js", "server/llm.js"],
+      "symbols": ["runAgent", "detectTool", "resolveCompetitionId", "polishAnswer", "templateAnswer"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Regex routing to six tools and a hard-coded alias table mapping phrases to competition ids; an optional MiniMax call rewrites the tool JSON (truncated to 3500 chars) and falls back to deterministic templates. No LLM tool-calling."
+    },
+    {
+      "capability": "Read-only demo twin when FalkorDB is unavailable",
+      "files": ["server/demo-data.js", "server/index.js", "server/vercel-app.js"],
+      "symbols": ["DEMO_COMPETITIONS", "demoListGaps", "demoRecommend", "demoExplain", "runDemoAgent"],
+      "real_or_stub": "STUB",
+      "notes": "On connect failure (and always on Vercel) answers come from a hard-coded JavaScript copy of the seed data; remember_decision returns a read-only message. The mode flag is returned so callers can tell, but the same answers appear without a graph."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'CompGraph'. Labels: Person{id:'self'}, Competition{id,name,url,deadline ISO string,mode,fee,prize_note,host}, Requirement{id,kind,detail}, Resource{id,kind,status ready|missing|blocked}, Decision{id,status,at,note}. Edges: HAS, SATISFIES, REQUIRES, DECIDED, ABOUT (COULD_ENTER, SAME_HOST, SIMILAR_TO mentioned in schema comments). Plain openCypher (OPTIONAL MATCH, collect, list comprehension, CASE). Dates stored as ISO strings because the author notes no datetime(). No APOC/GDS or algo procedures; no indexes defined.",
+  "algorithms": [
+    "Requirement coverage set difference (all_reqs minus covered_kinds) and rank by (missing_count, deadline) in JS (tools.js:recommendNext)",
+    "Fixed 3-hop evidence path Person-HAS->Resource-SATISFIES->Requirement<-REQUIRES-Competition (tools.js:explainPath)"
+  ],
+  "backend_interfaces": [
+    "Express: GET /api/health, GET /api/competitions, POST /api/ask {question, tool, competitionId, status, note, limit}, static UI and SPA fallback",
+    "Scripts: npm run load (scripts/load.sh, load.mjs) seeds the graph from cypher/seed-synthetic.cypher"
+  ],
+  "frontend_interfaces": [
+    "Vanilla JS page (web/index.html, app.js, styles.css) rendering an SVG path/gaps/recommendation visualization from graphPath payloads"
+  ],
+  "agent_or_memory_mechanisms": "Single-user decision memory in the graph (Decision nodes written by remember_decision and read back to filter recommendations). No multi-agent or state-machine logic.",
+  "tests_present": "none",
+  "dependency_requirements": ["express ^4.21.2", "cors ^2.8.5", "falkordb (npm) ^6.8.0", "node >=18", "MINIMAX_API_KEY (optional)"],
+  "security_findings": [
+    "server/index.js:~27 - app.use(cors()) allows any origin; no authentication on POST /api/ask which can write Decision nodes in live mode",
+    "scripts/load.mjs:~24-36 - execSync builds a docker exec ... redis-cli GRAPH.DELETE shell command from FALKORDB_CONTAINER and GRAPH_NAME env vars (shell injection if env is attacker-controlled; also hard-deletes the graph on every load); dev script only",
+    "server/llm.js:~27-45 - sends tool result JSON to an external LLM endpoint (MiniMax) with a bearer key from env when set; failures degrade silently to the template",
+    "server/tools.js:~143 - note sanitization replaces ';' with ',' (unneeded because the value is a bound parameter; suggests the author considered statement splitting)",
+    "cypher/seed-synthetic.cypher (head) - seed data contains the owner's personal name, a Devpost handle and personal-status notes; not secrets but personal data in a public repo",
+    "No eval/exec/pickle; no hard-coded API keys found"
+  ],
+  "duplicates_or_overlaps": "Eligibility/requirement-satisfaction gap analysis is a generic 'what is missing before X is allowed' pattern; no direct duplicate in this batch. Decision memory overlaps Agent Memory & Provenance repos but is much thinner.",
+  "capability_family": "Other",
+  "evidence_drift_relevance": "LOW - a timestamped Decision node linked ABOUT a subject and a Resource.status that gates eligibility are minimal decision lineage and dependency-satisfaction signals; no provenance sources, supersession or validity windows.",
+  "strongest_reusable_unit": {
+    "file": "server/tools.js",
+    "symbols": ["listGaps", "recommendNext", "explainPath"],
+    "why": "The unmet-REQUIRES Cypher (OPTIONAL MATCH ready satisfier, collect, size()=0) is a concise requirement-coverage check that could be ported to Python for 'dependency not satisfied' gating; everything else is demo scaffolding.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; Node runtime (code is JavaScript, would need a Python port)"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "A small single-user Node demo with a personal domain, a hard-coded demo twin and no tests; only the requirement-coverage Cypher idiom is worth borrowing, and it would need a Python rewrite.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

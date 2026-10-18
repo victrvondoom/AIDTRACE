@@ -44,10 +44,10 @@ default allow := false
 
 roles := {
     "field_worker":  {"read_search", "read_briefs", "ack_brief"},
-    "engineer":      {"read_search", "read_briefs", "ack_brief", "ingest_document", "ingest_event", "read_governance", "read_nonconformance", "read_compliance", "read_audit", "read_documents", "read_events", "resolve_admin_conflict", "read_assets", "write_assets"},
-    "reliability":   {"read_search", "read_briefs", "ingest_document", "ingest_event", "read_governance", "read_nonconformance", "read_compliance", "read_audit", "read_documents", "read_events", "promote_quarantine", "countersign_brief", "resolve_admin_conflict", "read_assets"},
+    "engineer":      {"read_search", "read_briefs", "ack_brief", "ingest_document", "ingest_event", "read_governance", "read_nonconformance", "read_compliance", "read_audit", "read_documents", "read_events", "read_resolveai", "resolve_admin_conflict", "read_assets", "write_assets"},
+    "reliability":   {"read_search", "read_briefs", "ingest_document", "ingest_event", "read_governance", "read_nonconformance", "read_compliance", "read_audit", "read_documents", "read_events", "read_resolveai", "promote_quarantine", "countersign_brief", "resolve_admin_conflict", "read_assets"},
     "compliance":    {"read_search", "read_compliance", "read_audit", "read_nonconformance", "read_events"},
-    "demo":          {"read_search", "read_briefs", "read_assets", "read_documents", "read_events", "read_compliance", "read_nonconformance", "read_audit", "read_governance", "read_other", "synthesize", "rca_pack", "answer_feedback", "write_api", "ingest_document", "ingest_event", "write_assets", "promote_quarantine", "resolve_admin_conflict"},
+    "demo":          {"read_search", "read_briefs", "read_assets", "read_documents", "read_events", "read_compliance", "read_nonconformance", "read_audit", "read_governance", "read_resolveai", "read_other", "synthesize", "rca_pack", "answer_feedback", "write_api", "ingest_document", "ingest_event", "write_assets", "promote_quarantine", "resolve_admin_conflict"},
     "admin":         {"*"},
 }
 

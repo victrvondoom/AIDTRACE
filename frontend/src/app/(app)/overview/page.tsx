@@ -18,6 +18,8 @@ import { nowMs } from "@/lib/utils";
 import { AttentionList } from "./_components/attention-list";
 import { HealthStrip } from "./_components/health-strip";
 import { SignalsFeed } from "./_components/signals-feed";
+import { ReasoningWorkspace } from "./_components/reasoning-workspace";
+import { WorkspaceLaunchpad } from "@/components/workspace-launchpad";
 
 const DAY_MS = 86_400_000;
 const TREND_DAYS = 14;
@@ -118,7 +120,7 @@ export default function ManagementPage() {
     <div data-testid="overview-workspace" className="mx-auto max-w-[1400px]">
       <PageHeader
         title="Plant Overview"
-        lede="The state of the plant at a glance: what needs a decision, how much sits in review, which deadlines are overdue, where compliance evidence is missing, and what the plant has been doing over the last two weeks."
+        lede="Your plant, intelligence and decisions in one workspace. Explore every capability, then focus on the operational signals that need your attention."
         actions={
           <div className="flex flex-col items-end gap-2">
             <Link
@@ -133,6 +135,8 @@ export default function ManagementPage() {
           </div>
         }
       />
+
+      <WorkspaceLaunchpad />
 
       {state.status === "error" ? (
         <section data-testid="overview-error" className="mt-6 rounded-xl border border-line bg-surface p-8 text-center">
@@ -188,8 +192,10 @@ export default function ManagementPage() {
               <SignalsFeed events={data?.events ?? []} spark={spark} loading={loading} />
             </div>
           </div>
+
         </>
       )}
+      <ReasoningWorkspace health={health} loading={healthLoading} />
     </div>
   );
 }

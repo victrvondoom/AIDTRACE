@@ -1,0 +1,136 @@
+{
+  "repository": "Hemu585/campaign-context-agent",
+  "url": "https://github.com/Hemu585/campaign-context-agent",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Hemu585__campaign-context-agent",
+  "commit_sha": "a4c81bcd2d536b8960b6cb1f16cad5a46e12f2b0",
+  "license": "MIT",
+  "copyright_holder": "Hemang Singh",
+  "source_files_inspected": [
+    "LICENSE",
+    "backend/pyproject.toml",
+    "backend/requirements.lock",
+    "backend/app/config.py",
+    "backend/app/security.py",
+    "backend/app/services/rules.py",
+    "backend/app/services/evidence.py",
+    "backend/app/services/memory.py",
+    "backend/app/services/mutations.py",
+    "backend/app/services/proposals.py",
+    "backend/app/services/decisions.py",
+    "backend/app/services/graph_reads.py",
+    "backend/app/db/factsig.py",
+    "backend/app/db/client.py",
+    "backend/app/db/queries.py",
+    "backend/app/agent/loop.py",
+    "backend/app/agent/prompts.py",
+    "backend/app/agent/tools.py",
+    "backend/app/agent/verify.py",
+    "backend/app/routes/*.py (route grep)",
+    "backend/app/queries/Q00_revision.cypher",
+    "backend/app/queries/Q03_availability.cypher",
+    "backend/app/queries/Q09_stage_draft.cypher",
+    "backend/app/queries/Q10_approve.cypher",
+    "backend/app/queries/Q11_reject.cypher",
+    "backend/app/queries/Q11_revoke.cypher",
+    "backend/app/queries/Q12_edit_agreement.cypher",
+    "backend/tests/ (file list + def test_ counts)"
+  ],
+  "languages_frameworks": ["Python 3.11+/FastAPI", "falkordb 1.8.0 async client (redis.asyncio)", "Ollama local LLM (httpx)", "React/Vite/TypeScript frontend", "Playwright + Vitest tests", "Docker Compose (FalkorDB only)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Source-backed fact validation (freshness, verification, supersession, conflict, fact-hash drift)",
+      "files": ["backend/app/services/evidence.py", "backend/app/db/factsig.py"],
+      "symbols": ["source_state", "fact_support", "Support", "fact_hash", "FACT_FIELDS", "SOURCE_KIND_TO_FACT", "text_checksum"],
+      "real_or_stub": "REAL",
+      "notes": "A fact counts only if its Source is verified, not dated after as_of, within a freshness window (30d default) and not superseded. Source.fact_hash is compared with a SHA-256 recomputed from the live node fields, so an edit that bypasses source versioning yields SOURCE_MISMATCH; equally recent disagreeing sources yield CONFLICTING_SOURCES. Pure Python, deterministic."
+    },
+    {
+      "capability": "Deterministic multi-check eligibility engine with evidence paths",
+      "files": ["backend/app/services/rules.py"],
+      "symbols": ["evaluate_context", "check_participation", "check_offer", "check_quote", "check_budget", "check_availability", "_audit_check", "check_exclusivity", "check_memory", "status_of", "overlap_tristate", "recommended_ids"],
+      "real_or_stub": "REAL",
+      "notes": "Per-candidate checks return pass/fail/unknown/not_applicable with reason codes and source IDs; missing dates or audits resolve to unknown (never silently pass). Status precedence ineligible > unknown > excluded_by_memory > eligible. Builds EvidencePath objects (nodes/edges with source_ids) from graph rows only. Domain is creator-replacement for marketing campaigns but the pattern is domain-generic."
+    },
+    {
+      "capability": "Revision-gated, idempotent graph mutations (compare-and-set + receipts)",
+      "files": ["backend/app/services/mutations.py", "backend/app/queries/Q10_approve.cypher", "backend/app/queries/Q11_reject.cypher", "backend/app/queries/Q11_revoke.cypher", "backend/app/queries/Q09_stage_draft.cypher"],
+      "symbols": ["MutationService.run", "payload_hash", "stale", "Receipt", "MutationResult"],
+      "real_or_stub": "REAL",
+      "notes": "All decision-affecting writes run under one asyncio lock; same Idempotency-Key + payload replays, same key different payload raises IDEMPOTENCY_CONFLICT. Each write is ONE Cypher statement that matches Workspace.context_revision = $expected_revision, writes a MutationReceipt and bumps the revision; no returned row means conflict."
+    },
+    {
+      "capability": "Human approval gating with full revalidation and immutable snapshot",
+      "files": ["backend/app/services/proposals.py", "backend/app/queries/Q09_stage_draft.cypher", "backend/app/queries/Q10_approve.cypher"],
+      "symbols": ["ProposalService.stage", "ProposalService.approve", "_snapshot", "staging_key", "_present"],
+      "real_or_stub": "REAL",
+      "notes": "Agent can only stage a DRAFT for a candidate eligible in the current evaluation; approval is a separate HTTP action that rechecks slot, run status, revision and re-runs consistent_evaluate before Q10 creates an approval Decision linked to the Proposal, Session and supporting Sources. Proposal snapshot_json (candidate, evidence paths, source excerpts, as_of, context_revision) is immutable; draft goes stale if revision moves."
+    },
+    {
+      "capability": "Scoped rejection memory with expiry and append-only revocation (decision lineage)",
+      "files": ["backend/app/services/decisions.py", "backend/app/services/memory.py", "backend/app/queries/Q11_reject.cypher", "backend/app/queries/Q11_revoke.cypher"],
+      "symbols": ["DecisionService.reject", "DecisionService.revoke", "decision_is_active", "decision_state", "is_expired", "effective_revocation"],
+      "real_or_stub": "REAL",
+      "notes": "Decisions carry scope (campaign|brand), as_of, optional expires_at (exclusive); revocation is a new Decision node with REVOKES edge; original is never deleted. Each decision also creates an operator_feedback Source node so the rationale is itself evidence."
+    },
+    {
+      "capability": "Versioned source edits via SUPERSEDES chain",
+      "files": ["backend/app/queries/Q12_edit_agreement.cypher", "backend/app/services/demo_edits.py", "backend/app/db/sourcedocs.py"],
+      "symbols": ["DemoEditService", "render_source", "Q12_edit_agreement (Cypher)"],
+      "real_or_stub": "REAL",
+      "notes": "A fact edit atomically updates the node, creates a new Source (new version, new fact_hash) with (new)-[:SUPERSEDES]->(old), moves current SUPPORTED_BY, refreshes the audit source and bumps revision. Old sources retained. Demo-edit surface to show drift being detected."
+    },
+    {
+      "capability": "Bounded local-LLM tool agent (Ollama) with server-side guardrails",
+      "files": ["backend/app/agent/loop.py", "backend/app/agent/tools.py", "backend/app/agent/prompts.py", "backend/app/agent/final.py", "backend/app/agent/ollama.py", "backend/app/agent/runner.py"],
+      "symbols": ["run_agent", "AgentLimits", "TOOL_SCHEMAS", "execute_tool", "RunContext", "validate_final", "parse_final", "render_final"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Five allowlisted tools (get_campaign_requirements, evaluate_candidates, get_candidate_evidence, get_previous_decisions, stage_replacement_proposal); server injects run/campaign/as_of/revision; model output is validated against the deterministic evaluation and has one repair attempt. The LLM only orchestrates and summarizes; all decisions are in rules.py. Requires a local Ollama model."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'campaign_context_*'. Labels: Workspace(context_revision, seed_status), Brand, Creator, Campaign, Offer, Availability, Agreement, Audit, Source(version, observed_at_ms, verified, checksum, fact_hash, kind), Session, Run, Proposal(status, snapshot_json, context_revision), Decision(action approved|rejected|revoked, scope_type, scope_id, as_of_ms, expires_at_ms), MutationReceipt. Edges: HAS_BRAND, RUNS, HAS_CREATOR, HAS_AVAILABILITY, HAS_AGREEMENT, HAS_AUDIT, WITH_BRAND, COMPETES_WITH, PARTICIPATED_IN, OFFERS, SUPPORTED_BY, SUPERSEDES, HAS_RUN, FROM_RUN, FOR_CAMPAIGN, SELECTS, CONSIDERED, APPROVES, REVOKES, IN_SESSION, HAS_RECEIPT. 50+ named parameterized .cypher templates (Q00..Q13, SEED_*) loaded by db/queries.py; reads go through GRAPH.RO_QUERY. Single-statement MATCH..WHERE revision CAS + CREATE + SET patterns with FOREACH; OPTIONAL MATCH receipt for idempotency. No APOC/GDS; plain openCypher that FalkorDB supports. Only values are bound parameters; no string-concatenated Cypher.",
+  "algorithms": [
+    "Evidence support resolution: pick latest valid source, detect CONFLICTING_SOURCES by differing fact_hash among equally recent sources, SOURCE_MISMATCH vs recomputed node hash (services/evidence.py:fact_support)",
+    "Tri-state interval overlap that returns unknown when a missing end date could matter (services/rules.py:overlap_tristate)",
+    "Status precedence ineligible > unknown > excluded_by_memory > eligible and ranking by (fee asc, completed campaigns desc, creator id) (services/rules.py:evaluate_context, status_of)",
+    "Decision activeness: made-at <= as_of, exclusive expiry, effective revocation (services/memory.py:decision_is_active)",
+    "Optimistic concurrency via workspace revision CAS inside a single Cypher statement + idempotency receipts (services/mutations.py, queries/Q10_approve.cypher)"
+  ],
+  "backend_interfaces": [
+    "FastAPI GET /api/campaigns, /api/campaigns/{id}, POST /api/campaigns/{id}/evaluate",
+    "GET/POST /api/sessions, POST /api/sessions/{id}/runs, GET /api/runs/{id}, POST /api/runs/{id}/cancel, GET /api/runs/{id}/evidence",
+    "GET /api/proposals, GET /api/proposals/{id}, POST /api/proposals/{id}/approve",
+    "GET /api/decisions, POST /api/decisions/rejections, POST /api/decisions/{id}/revoke",
+    "GET /api/sources/{id}, GET /api/demo/facts, PATCH /api/demo/facts/{fact_type}/{fact_id}",
+    "GET /api/health, GET /api/bootstrap (per-process nonce)",
+    "CLI: python -m app.cli (seed, reset-demo, preflight, verify-model)"
+  ],
+  "frontend_interfaces": [
+    "React/Vite/TS: App.tsx, CampaignCard, CandidateTable, Conversation, EvidenceDrawer, PathDiagram, SourceViewer, ProposalDialog, RejectDialog, HistoryTab, DataEditorTab, Header, ErrorBoundary; generated OpenAPI types (src/api/schema.d.ts)"
+  ],
+  "agent_or_memory_mechanisms": "Bounded tool-calling loop (8 turns / 12 tool calls / 180 s) against a local Ollama model; final answer is JSON-schema constrained and cross-validated against the deterministic evaluation with one repair. Persistent operator memory is graph-native (Decision nodes with scope/expiry/revocation, Session/Run history, MutationReceipt idempotency). Prompt includes anti-injection instruction and verify.py contains an injection-style source-text fixture to test resistance; model reasoning text is deliberately not persisted.",
+  "tests_present": "~230 test functions: unit (test_rules 30, test_evidence 10, test_timeutil 9, test_dataset 9, test_config 9, test_ollama_adapter 7, others) and integration against live FalkorDB (test_oracle 26, test_approval 17, test_agent_loop 14, test_memory 13, test_read_api 11, test_sessions_runs 11, test_write_api 10, test_demo_edits 8, test_atomicity 2, etc.) with a fake model helper; frontend Vitest + Playwright specs; docs/verification has recorded live-model run reports. Integration tests need FalkorDB (compose.test.yaml).",
+  "dependency_requirements": ["falkordb==1.8.0 (lock)", "fastapi==0.143.2 (lock; pyproject >=0.115)", "uvicorn>=0.30", "pydantic>=2.7", "pydantic-settings>=2.3", "httpx==0.28.1", "redis (via falkordb)", "Ollama local model (runtime, not pip)", "FalkorDB server (docker compose)"],
+  "security_findings": [
+    "backend/app/config.py - settings validators force FalkorDB and Ollama endpoints to loopback and refuse cloud-tagged models (positive control, limits unrestricted network calls)",
+    "backend/app/security.py:25-52 - LoopbackHostMiddleware + write_guard (nonce, Origin allowlist, Idempotency-Key UUID); explicitly 'not multi-user authentication' so unsuitable as-is for a networked multi-tenant deployment",
+    "backend/app/agent/verify.py:~30 - embeds a prompt-injection style test string (INJECTION) used against the model in verification scenarios; it is test data only, not executed as an instruction",
+    "scripts/e2e_backend.py:22, scripts/persistence_check.py:38,44, scripts/make_demo_cut.py:29,56,70 - subprocess.run of python/docker/ffmpeg with list args (no shell=True); dev/demo scripts only",
+    "No eval/exec/pickle found in backend/app; all Cypher via named templates with bound params (no string concatenation); db/client.py:run_catalog_script splits index script on ';' (static files only)",
+    "No hard-coded secrets seen; .env.example only"
+  ],
+  "duplicates_or_overlaps": "Overlaps Agent Memory & Provenance (decision lineage, receipts), approval gating / human-in-the-loop, source-evidence validation and supersession. Domain (creator replacement) is unique but the evidence/approval engine is domain-generic and overlaps any 'agent proposes, human approves' repo.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - implements source freshness, supersession (SUPERSEDES chain), fact-hash drift detection (SOURCE_MISMATCH), revision-gated approvals with re-evaluation, expiry/revocation of decisions and immutable decision snapshots, all directly mappable to an Evidence Drift Cascade engine.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/services/evidence.py + backend/app/db/factsig.py",
+    "symbols": ["source_state", "fact_support", "Support", "fact_hash", "FACT_FIELDS", "decision_is_active", "payload_hash", "MutationService.run"],
+    "why": "Small, pure-Python, deterministic evidence-validity and fact-hash drift logic plus a proven idempotent revision-CAS mutation pattern against FalkorDB 4.x via falkordb 1.8; directly reusable for Kairos approval gating and drift detection.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for evidence.py/factsig.py/memory.py; FalkorDB for Cypher mutation templates; Ollama only for the optional agent loop"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "evidence.py, factsig.py, memory.py and the revision-CAS/receipt mutation pattern are domain-agnostic and portable into a shared Kairos evidence/approval layer; the creator-eligibility rules and Ollama agent are domain-specific and should stay as reference or an optional capability pack.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

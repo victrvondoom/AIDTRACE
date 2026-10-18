@@ -1,0 +1,134 @@
+{
+  "repository": "nightmoose/lineagegate",
+  "url": "https://github.com/nightmoose/lineagegate",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\nightmoose__lineagegate",
+  "commit_sha": "d16c9fbb5ca95ebc1ae9ac1782faa58eb79483b0",
+  "license": "MIT",
+  "copyright_holder": "Alex Suarez (nightmoose), Copyright (c) 2026",
+  "source_files_inspected": [
+    "README.md",
+    "DISCLOSURE.md",
+    "pyproject.toml",
+    ".env.example",
+    "Dockerfile",
+    "docker-compose.yml",
+    "fly.toml",
+    "deploy/start.sh",
+    "src/lineagegate/graph/client.py",
+    "src/lineagegate/tools/lineage.py",
+    "src/lineagegate/tools/ops.py",
+    "src/lineagegate/agent/loop.py (first 80 lines)",
+    "src/lineagegate/api/app.py",
+    "src/lineagegate/seed/load.py",
+    "tests/test_hardening.py",
+    "data/nodes_Contract.csv, nodes_Column.csv, edges_VIOLATED.csv (headers)"
+  ],
+  "languages_frameworks": ["Python >=3.11", "FastAPI", "falkordb>=1.0 client (lru-cached connection)", "OpenAI-compatible SDK (xAI Grok / OpenAI / Anthropic endpoint, optional)", "vis-network single-page static UI", "Docker/Fly.io single-image deployment"],
+  "implemented_capabilities": [
+    {
+      "capability": "Column-level blast radius with contracts, tests, jobs, dashboards and owners, each with a cited evidence path",
+      "files": ["src/lineagegate/tools/lineage.py"],
+      "symbols": ["impact_from_column", "IMPACT_MODELS", "IMPACT_DASHBOARDS", "IMPACT_JOBS", "IMPACT_COLUMNS", "IMPACT_CONTRACTS", "IMPACT_TESTS", "IMPACT_OWNERS", "_shortest_per_target", "MAX_HOPS"],
+      "real_or_stub": "REAL",
+      "notes": "Variable-length DEPENDS_ON*0..8 downstream traversal from a Column, hops to Model, Dashboard, Job (REFRESHES), Contract and Test, owner Teams via OWNED_BY; keeps the shortest path per impacted asset and renders it as an arrow string. Handles typos (did_you_mean via difflib and graph names) and returns found=false instead of guessing."
+    },
+    {
+      "capability": "Path projection and rendering helpers (client-side-decode-free)",
+      "files": ["src/lineagegate/graph/client.py"],
+      "symbols": ["PATH_NODES", "PATH_RELS", "make_path", "node_str", "resolve_node", "suggest", "requires_graph", "ro"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher list-comprehension fragments project a path into plain id/label/name and src/dst/type maps so results do not depend on driver Path objects; make_path orients each edge to produce human-readable evidence text; requires_graph returns an explicit empty_graph error rather than misleading empty results."
+    },
+    {
+      "capability": "k shortest explanation paths (FalkorDB algo.SPpaths) with fallback",
+      "files": ["src/lineagegate/tools/lineage.py"],
+      "symbols": ["paths_explain", "PATHS_ALGO", "PATHS_SHORTEST", "LINEAGE_RELS"],
+      "real_or_stub": "REAL",
+      "notes": "CALL algo.SPpaths({sourceNode, targetNode, relTypes, relDirection:'both', maxLen, pathCount}); falls back to shortestPath on older servers; ownership edges excluded by default so unrelated people do not appear connected."
+    },
+    {
+      "capability": "Failed-job triage",
+      "files": ["src/lineagegate/tools/ops.py"],
+      "symbols": ["triage_failed_job"],
+      "real_or_stub": "REAL",
+      "notes": "Pure Cypher: failing tests on refreshed models, upstream suspect models and the ingestion jobs feeding them (REFRESHES -> DEPENDS_ON* -> READS_FROM <- WRITES_TO), contracts involved, downstream dashboards, owners with on-call people, and similar past incidents."
+    },
+    {
+      "capability": "Incident memory (write-back and recall) in the graph",
+      "files": ["src/lineagegate/tools/ops.py"],
+      "symbols": ["record_incident", "similar_incidents", "_words"],
+      "real_or_stub": "REAL",
+      "notes": "record_incident MERGEs an Incident node, links TRIGGERED_BY job, VIOLATED contracts and RELATED_TO the two most similar prior incidents; similar_incidents ranks by 1/shortestPath-hops plus keyword overlap (token set, no embeddings). No decay, no supersession, status is set open and never updated by code."
+    },
+    {
+      "capability": "Critical-asset ranking with FalkorDB algorithms",
+      "files": ["src/lineagegate/tools/ops.py"],
+      "symbols": ["critical_assets"],
+      "real_or_stub": "REAL",
+      "notes": "CALL algo.pageRank('Model','DEPENDS_ON') or algo.betweenness({nodeLabels, relationshipTypes}) joined to downstream dashboard counts and owner, plus shortest dashboard-to-asset evidence paths."
+    },
+    {
+      "capability": "Tool-calling agent loop with deterministic offline router",
+      "files": ["src/lineagegate/agent/loop.py"],
+      "symbols": ["ask", "_llm_client", "_call_tool", "SYSTEM_PROMPT", "AgentResult"],
+      "real_or_stub": "PARTIAL",
+      "notes": "With a key an OpenAI-compatible model selects among 7 tools and must cite returned paths (prompt-enforced abstention); without a key a regex/keyword router templates answers. Evidence discipline is a system prompt plus tool-level found=false semantics, verified by one opt-in live-LLM test."
+    },
+    {
+      "capability": "FastAPI service and graph UI",
+      "files": ["src/lineagegate/api/app.py", "src/lineagegate/api/static/index.html"],
+      "symbols": ["GET /health", "GET /impact", "POST /chat", "GET /triage", "GET /incidents", "GET /critical", "GET /schema"],
+      "real_or_stub": "REAL",
+      "notes": "Live /schema introspects labels, relationship types and label-[type]->label counts; static vis-network page renders returned evidence paths."
+    },
+    {
+      "capability": "Synthetic seed data (Acme Analytics warehouse)",
+      "files": ["src/lineagegate/seed/generate.py", "src/lineagegate/seed/load.py", "data/*.csv", "data/incidents.json"],
+      "symbols": ["load", "ensure"],
+      "real_or_stub": "STUB",
+      "notes": "Deterministic synthetic graph (111 nodes, 248 edges, 11 labels) loaded from CSV with UNWIND; clearly disclosed as synthetic in DISCLOSURE.md."
+    }
+  ],
+  "graph_models_and_cypher": "Graph 'acme'. Labels: Source, Table, Column{fqn,data_type}, Model, Dashboard, Contract{spec,version,status}, Test{status}, Job{status,last_error}, Incident{severity,root_cause,resolution,status}, Person{on_call}, Team. Edges: READS_FROM, WRITES_TO, HAS_COLUMN, DEPENDS_ON (Column->Column and Model->Model), DISPLAYS, REFRESHES, GOVERNED_BY, OWNED_BY, MEMBER_OF, TRIGGERED_BY, VIOLATED, RELATED_TO. FalkorDB-native: algo.SPpaths, algo.pageRank, algo.betweenness, shortestPath, db.labels()/db.relationshipTypes(), GRAPH.RO_QUERY for all reads. All user values passed as $params; only constant MAX_HOPS and constant rel-type strings are f-string interpolated. No APOC/GDS.",
+  "algorithms": [
+    "Depth-capped (8) downstream lineage closure with shortest path per impacted asset (tools/lineage.py:_shortest_per_target)",
+    "algo.SPpaths k-shortest-paths with directional rendering (paths_explain)",
+    "algo.pageRank / algo.betweenness criticality joined to dashboard reach (critical_assets)",
+    "Graph-distance + keyword-overlap incident similarity score 1/hops + token overlap (similar_incidents)",
+    "difflib.get_close_matches fuzzy suggestion over graph ids/fqns/names (client.suggest)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: /health, /impact?column=, POST /chat, /triage?job=, /incidents, /critical, /schema, / (UI)",
+    "CLI: lineagegate seed | serve | ask [--show-tools] | impact | owners | path"
+  ],
+  "frontend_interfaces": [
+    "Single static page api/static/index.html (150 lines) using vis-network: chat panel, evidence graph, Data model tab"
+  ],
+  "agent_or_memory_mechanisms": "Seven Cypher tools exposed as OpenAI function specs; Incident nodes persisted and recalled across sessions via graph traversal (no vector store); offline deterministic router fallback; abstention rules in the system prompt (never invent paths). No multi-agent coordination.",
+  "tests_present": "tests/: test_hardening.py (10), test_ops_tools.py (8), test_impact_queries.py (7), test_api.py (4) = ~29 pytest tests against a live seeded FalkorDB (typos, ambiguity, empty graph, no-path, evidence paths); one live-LLM abstention test gated by XAI_API_KEY and RUN_LLM_TESTS. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.0", "python-dotenv>=1.0", "openai>=1.40 (optional extra 'llm')", "fastapi>=0.110, uvicorn>=0.29 (extra 'api')", "pytest>=8, httpx>=0.27 (extra 'dev')", "Python >=3.11", "falkordb/falkordb:latest image (unpinned)"],
+  "security_findings": [
+    "src/lineagegate/api/app.py:47-51 - POST /chat is unauthenticated and triggers paid LLM calls and, if the model chooses record_incident, a graph write; there is no rate limit (public Fly demo). Writes are prompt-gated ('only when user explicitly asks'), not code-gated.",
+    "src/lineagegate/tools/ops.py:144-170 - record_incident writes arbitrary caller/LLM-supplied title/root_cause text into the graph (stored prompt-injection vector when later returned to the LLM by similar_incidents).",
+    "src/lineagegate/graph/client.py:119 - suggest() interpolates the label into Cypher (WHERE n:{label}); all callers pass constant labels ('Column','Job').",
+    "src/lineagegate/seed/load.py:40 - label from CSV filename interpolated in CREATE (n:{label}); data directory is trusted repo content.",
+    "src/lineagegate/tools/lineage.py:13-60 - MAX_HOPS interpolated into variable-length patterns (constant 8).",
+    "deploy/start.sh - FalkorDB bound to 127.0.0.1 inside the image (good); docker-compose.yml exposes 6379 and 3000 with no password and the unpinned :latest tag.",
+    "src/lineagegate/agent/loop.py:50-62 - outbound LLM calls to api.x.ai / api.openai.com / api.anthropic.com or a user-set LLM_BASE_URL with keys read from environment; .env.example has placeholders only. No eval/exec/pickle/subprocess in application code."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal (data-lineage flavour: column -> model -> dashboard), ownership/on-call lookup, incident memory and critical-asset ranking. Closest siblings are other 'what breaks if X changes' repos; this one is unusually clean about evidence paths and abstention.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "MEDIUM - Answers 'what breaks if this changes' by traversing dependency edges to Contracts (with version/spec), Tests and Dashboards and returns the exact edge path as evidence, which is a ready-made dependency-invalidation fan-out; it does not persist drift state, version evidence or gate approvals, and incident memory has no supersession.",
+  "strongest_reusable_unit": {
+    "file": "src/lineagegate/tools/lineage.py + src/lineagegate/graph/client.py",
+    "symbols": ["impact_from_column", "_shortest_per_target", "paths_explain", "PATH_NODES", "PATH_RELS", "make_path", "resolve_node", "requires_graph"],
+    "why": "Compact, tested pattern for depth-capped downstream impact with per-asset shortest evidence paths rendered as text, plus driver-independent path projection and fuzzy node resolution with explicit not-found semantics. Maps directly to a Kairos evidence-impact query ('which claims, contracts or decisions depend on this changed source') with citable paths.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB 4.x with algo.* procedures (SPpaths/pageRank/betweenness) for the optional pieces; no LLM key required (offline router)"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Port the impact/path/ownership tools as a data-lineage and contracts capability pack on Kairos' FastAPI + FalkorDB stack, reusing the path projection helpers as shared utilities. MIT license and an identical stack make adoption cheap; swap the synthetic Acme schema for Kairos entities.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,104 @@
+{
+  "repository": "Sourabh-Kumar04/graph-hacks-verdict",
+  "url": "https://github.com/Sourabh-Kumar04/graph-hacks-verdict",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Sourabh-Kumar04__graph-hacks-verdict",
+  "commit_sha": "ab0490fd04a67e04f3b324f188ee662285779bc6",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "pyproject.toml",
+    "requirements.txt",
+    "pytest.ini",
+    "demo.py",
+    "README.md (head)",
+    "verdict/agent.py",
+    "verdict/claim_decomposer.py",
+    "verdict/retriever.py",
+    "verdict/graph_store.py",
+    "verdict/trust.py",
+    "verdict/proof_path.py",
+    "verdict/verdict.py",
+    "tests/test_anti_decoration.py (head)",
+    "tests/*.py (function counts)"
+  ],
+  "languages_frameworks": ["Python >=3.9", "falkordb Python client >=1.8", "requests (Wikipedia/Wikidata APIs)", "pytest"],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence-graph claim verification with stance-weighted Cypher aggregation and explicit abstention",
+      "files": ["verdict/verdict.py", "verdict/graph_store.py"],
+      "symbols": ["VerdictEngine.evaluate_claim", "VerdictResult", "SubVerdict", "GraphStore.add_evidence", "GraphStore.add_subclaim", "GraphStore.add_root_claim"],
+      "real_or_stub": "REAL",
+      "notes": "Evidence -[SUPPORTS|REFUTES|QUALIFIES {weight}]-> Claim; per-subclaim score = sum(edge weight * source pagerank) by stance. Thresholds are hard-coded: UNVERIFIED if no evidence or both scores < 0.20; REFUTED if refute > 1.15*support and >= 0.25; SUPPORTED if support > 1.25*refute and >= 0.25; confidence = score/1.5 capped at 0.99. The verdict and resolved_at are written back to the root Claim node."
+    },
+    {
+      "capability": "Source trust via FalkorDB PageRank over a Source citation graph",
+      "files": ["verdict/trust.py"],
+      "symbols": ["TrustEngine.compute_source_trust"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Calls algo.pageRank('Source','CITES') and persists scores. The CITES edges are fabricated by the retriever (every Wikipedia source is assumed to cite the Wikidata item found in the same search), not extracted from real citations; on any procedure error it silently falls back to a uniform 1/N baseline."
+    },
+    {
+      "capability": "Ranked proof path (source -> evidence -> claim) rendering",
+      "files": ["verdict/proof_path.py"],
+      "symbols": ["ProofPathEngine.get_ranked_proof_path", "ProofPathEngine.format_proof_path", "ProofPathEngine.get_one_line_summary", "ProofStep"],
+      "real_or_stub": "REAL",
+      "notes": "Single Cypher traversal ordered by pagerank*edge weight with LIMIT; returns evidence text, source name/url and scores. Swallows exceptions (returns [])."
+    },
+    {
+      "capability": "Deterministic claim decomposition into sub-claims",
+      "files": ["verdict/claim_decomposer.py"],
+      "symbols": ["ClaimDecomposer.decompose", "_extract_subject", "_starts_with_predicate", "_extract_time", "_extract_entities"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Regex-based splitting on conjunctions and capitalised-phrase entity extraction with a small hard-coded verb list; adequate for simple demo sentences only, not general NLP."
+    },
+    {
+      "capability": "Public evidence retrieval and stance classification (Wikipedia + Wikidata)",
+      "files": ["verdict/retriever.py"],
+      "symbols": ["EvidenceRetriever.retrieve_evidence_for_subclaim", "_evaluate_stance", "_search_wikipedia", "_get_wikipedia_summary", "_search_wikidata"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real HTTP calls to Wikipedia/Wikidata APIs. Stance is keyword-overlap heuristics with a hard-coded planet/moon contradiction rule, year-mismatch refutation and a negation regex; weights are constants (0.92, 0.85, 0.88...). Not semantic entailment. Contact address in the User-Agent is a placeholder (contact@example.com)."
+    },
+    {
+      "capability": "Orchestrated end-to-end investigation pipeline and CLI",
+      "files": ["verdict/agent.py", "demo.py"],
+      "symbols": ["VerdictAgent.investigate"],
+      "real_or_stub": "REAL",
+      "notes": "Fixed pipeline (decompose -> retrieve -> build graph -> PageRank -> verdict -> proof path). Not an LLM agent: there is no model call anywhere in the repo. By default investigate() deletes the whole graph first (clear_graph=True)."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Claim {id,text,is_root,time_expr,root_id,verdict,confidence,reason,evidence_count,resolved_at}, Evidence {id,text,stance,weight,snippet}, Source {url,name,source_type,pagerank}. Edges: HAS_SUBCLAIM, EXTRACTED_FROM (Evidence->Source), SUPPORTS|REFUTES|QUALIFIES {weight} (Evidence->Claim), CITES (Source->Source). All values are $params; the stance relationship type is interpolated via f-string in GraphStore.add_evidence but is forced into a 3-element allow-set first. Uses FalkorDB algo.pageRank; no APOC/GDS. Docstrings refer to 'FalkorDB 6.0.1' pitfalls (vecf32, flat properties), i.e. the target server is not the 4.22 Kairos uses; helper format_vector exists but no vector search is used. GraphStore.run_query executes arbitrary Cypher (not exposed externally).",
+  "algorithms": [
+    "Authority-weighted stance aggregation (sum weight*pagerank per stance) with ratio/threshold abstention in verdict/verdict.py:VerdictEngine.evaluate_claim",
+    "PageRank source trust in verdict/trust.py:TrustEngine.compute_source_trust",
+    "Keyword-overlap + year-mismatch + negation-regex stance heuristic in verdict/retriever.py:_evaluate_stance",
+    "Regex clause splitting and subject-ellipsis resolution in verdict/claim_decomposer.py"
+  ],
+  "backend_interfaces": ["Python API: VerdictAgent(host, port, graph_name).investigate(claim)", "CLI: python demo.py \"<claim>\"", "No HTTP server, no MCP server"],
+  "frontend_interfaces": ["none"],
+  "agent_or_memory_mechanisms": "None beyond a fixed pipeline. No LLM, no session memory, no cross-claim memory; the graph is wiped on each investigation by default.",
+  "tests_present": "tests/ has 10 files with ~18 test functions (decomposition, graph CRUD, supported/refuted verdicts, abstention, pagerank, retriever, an 'anti-decoration' test that the verdict depends on graph content, and e2e tests that hit live Wikipedia/Wikidata + FalkorDB). Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.8.0", "redis>=5.0.0", "requests>=2.31.0", "pytest>=8.0.0 (listed as a runtime dependency)"],
+  "security_findings": [
+    "verdict/graph_store.py:175 - f-string Cypher with the stance relationship type; guarded by a 3-value allow-list, so not injectable as written.",
+    "verdict/graph_store.py:226 - run_query executes arbitrary Cypher passed by the caller; internal use only in this repo.",
+    "verdict/agent.py:38,42 and verdict/graph_store.py delete_graph - investigate() defaults to clear_graph=True and deletes the named graph (default 'verdict_investigation'); pointing it at a shared graph name would destroy data.",
+    "verdict/retriever.py:174,189,202 - unauthenticated outbound HTTPS to Wikipedia/Wikidata with 6s timeout and blanket except returning empty results; placeholder contact in User-Agent; claim text is sent as search query (data leaves the host).",
+    "verdict/trust.py:50 and verdict/proof_path.py:92 - broad except blocks silently fall back to uniform trust or an empty proof, masking failures.",
+    "No hard-coded secrets, eval/exec, subprocess or pickle found. No LICENSE file."
+  ],
+  "duplicates_or_overlaps": "Research & Legal Evidence / fact-checking family: claim -> evidence -> source provenance graph with stance edges. Overlaps conceptually with the evidence-weighting in RingLens (assessments/evidence) and with any claim-verification entry; far simpler than UGI's claim/evidence ledger.",
+  "capability_family": "Research & Legal Evidence",
+  "evidence_drift_relevance": "LOW - it models claim<-stance<-evidence->source provenance with weights and persists a timestamped verdict, but the graph is rebuilt each run, there is no temporal validity, supersession, dependency invalidation or approval gating, and citation/trust edges are partly synthetic.",
+  "strongest_reusable_unit": {
+    "file": "verdict/verdict.py",
+    "symbols": ["VerdictEngine.evaluate_claim"],
+    "why": "A short, readable example of computing a support/refute/abstain decision purely from graph aggregation over weighted evidence edges with explicit thresholds and write-back of the verdict to the claim node; useful as a reference scoring pattern for claim-vs-evidence verdicts in an Evidence Drift engine if the weights come from real provenance rather than these heuristics.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (Cypher aggregation, algo.pageRank); Wikipedia/Wikidata network access for the retriever"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Small prototype with heuristic NLP, fabricated citation edges and a destructive default, so only the evidence-weighted verdict pattern is worth borrowing; richer claim/evidence ledgers exist elsewhere in this batch.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

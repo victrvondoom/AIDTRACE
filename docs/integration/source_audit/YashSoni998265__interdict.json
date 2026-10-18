@@ -1,0 +1,189 @@
+{
+  "repository": "YashSoni998265/interdict",
+  "url": "https://github.com/YashSoni998265/interdict",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\YashSoni998265__interdict",
+  "commit_sha": "829f1dd63fab80f56c019c4a0a40d761c822ea2a",
+  "license": "MIT",
+  "copyright_holder": "Yash Soni (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "backend/pyproject.toml",
+    "backend/src/interdict/graphstore.py",
+    "backend/src/interdict/db.py",
+    "backend/src/interdict/audit.py",
+    "backend/src/interdict/gateway.py",
+    "backend/src/interdict/memory.py",
+    "backend/src/interdict/agent.py",
+    "backend/src/interdict/mcp_server.py",
+    "backend/src/interdict/sandbox_ops.py",
+    "backend/src/interdict/api.py",
+    "backend/src/interdict/engine/evidence.py",
+    "backend/src/interdict/engine/attackgraph.py",
+    "backend/src/interdict/engine/certificate.py",
+    "backend/src/interdict/engine/sandbox.py",
+    "backend/src/interdict/engine/snapshot.py",
+    "backend/src/interdict/engine/statuses.py",
+    "backend/src/interdict/engine/hunter.py",
+    "backend/src/interdict/engine/planner.py",
+    "backend/src/interdict/engine/triage.py",
+    "backend/src/interdict_oracle/reachability.py",
+    "backend/tests/test_falkordb_contract.py",
+    "backend/scripts/gate_results/day1.json",
+    "frontend/package.json",
+    "docker-compose.yml",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python 3.12/FastAPI",
+    "FalkorDB (falkordb>=1.8.0 client, server image falkordb/falkordb:v4.22.1)",
+    "MCP server (mcp==2.3.0, streamable HTTP)",
+    "Anthropic SDK (anthropic==1.13.0) tool-use agent",
+    "React 18 + TypeScript + Vite + @xyflow/react + TanStack Query",
+    "pytest, vitest"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence provenance, freshness and scope-completeness judgement (fail-closed)",
+      "files": ["backend/src/interdict/engine/evidence.py", "backend/src/interdict/engine/statuses.py"],
+      "symbols": ["judge", "Provenance", "collect_evidence", "EvidenceSnapshot", "ScopeReport", "ScopeIssue", "baseline_contradictions", "allowed_flows", "CollectionStatus", "InconclusiveReason"],
+      "real_or_stub": "REAL",
+      "notes": "Every evidence edge carries id/verified/observed_at/valid_until/evidence_source; judge() returns fresh|stale|unverified against one evaluation time. collect_evidence() runs named read-only Cypher per tier, records every query (template, rows, latency) and turns stale, unverified, uncollected, duplicate-id, contradictory or failed-query evidence into INCONCLUSIVE reasons so absence is never confused with missing data."
+    },
+    {
+      "capability": "Time-bound, snapshot-hashed verification certificate with supersession and expiry",
+      "files": ["backend/src/interdict/engine/certificate.py", "backend/src/interdict/engine/snapshot.py"],
+      "symbols": ["Certificate", "build_certificate", "certificate_status", "earliest_valid_until", "Certificate.digest", "snapshot_hash", "export_graph", "digest", "CertificateStatus"],
+      "real_or_stub": "REAL",
+      "notes": "A certificate expires at min(earliest evidence valid_until, issue+24h) and becomes SUPERSEDED the moment Meta.revision of the sandbox differs from certificate.sandbox_revision. It binds to SHA-256 of a canonical, paged, id-checked graph export (nodes+edges, derived ATTACK_STEP excluded) and records engine sha, FalkorDB version and audit hash."
+    },
+    {
+      "capability": "Revision compare-and-set mutation with graph-level locking (dependency invalidation by revision bump)",
+      "files": ["backend/src/interdict/engine/sandbox.py", "backend/src/interdict/sandbox_ops.py"],
+      "symbols": ["mutate", "set_revision", "reset_sandbox", "create_sandbox", "stamp_evidence", "read_revision", "ConcurrentModificationError", "apply_operation", "EXPIRE_EVIDENCE operation"],
+      "real_or_stub": "REAL",
+      "notes": "Each mutation is one Cypher query 'MATCH (m:Meta) WHERE m.revision=$expected ... SET m.revision=m.revision+1' under a Redis-keyspace lock; any change invalidates all certificates and derived ATTACK_STEP edges. sandbox_ops supports EXPOSE_WORKLOAD, ADD_LATERAL_REACH and EXPIRE_EVIDENCE (forces a valid_until into the past) with typed validation."
+    },
+    {
+      "capability": "Tamper-evident hash-chained audit log in Redis Streams",
+      "files": ["backend/src/interdict/audit.py"],
+      "symbols": ["AuditLog.append", "AuditLog.verify", "AuditLog.page", "GENESIS"],
+      "real_or_stub": "REAL",
+      "notes": "hash_N = SHA256(payload_hash_N || hash_{N-1}); appends are serialised by a cross-process lock; verify() replays the chain and detects insert/delete/modify. Stored in XADD stream with 7-day PEXPIRE retention."
+    },
+    {
+      "capability": "Approval-gating Action Gateway (allowlist, idempotency, revision and certificate checks)",
+      "files": ["backend/src/interdict/gateway.py"],
+      "symbols": ["submit_execution", "certificate_status", "GatewayRejection"],
+      "real_or_stub": "REAL",
+      "notes": "Ordered checks: action allowlist, SIMULATION-only mode, idempotency key regex + cached receipt, certificate belongs to this plan, sandbox_revision == current revision, certificate VALID. Every rejection and receipt is appended to the audit chain. Execution is a simulation receipt only; no infrastructure is touched."
+    },
+    {
+      "capability": "Internet-to-crown-jewel ATTACK_STEP derivation, bounded chain enumeration, FalkorDB max-flow and independent oracle BFS",
+      "files": ["backend/src/interdict/engine/attackgraph.py", "backend/src/interdict_oracle/reachability.py", "backend/src/interdict/engine/hunter.py"],
+      "symbols": ["build_attack_steps", "enumerate_chains", "max_flow", "forward_reachable_in_graph", "reachable", "shortest_path", "reachable_targets", "witness_paths", "decompose", "disagreement", "hunt", "apply_plan"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher CREATEs ENTRY/LATERAL/GOAL ATTACK_STEP edges (MITRE T1190/T1210/T1078.004 labels) only when evidence scope is complete; enumerates chains with CAN_REACH*0..3; uses FalkorDB algo.maxFlow and algo.bfs; a pure-Python BFS oracle cross-checks; hunter copies the graph (GRAPH.COPY), prunes flows under candidate policies, requires E/F/O agreement for up to 5 rounds before issuing a certificate."
+    },
+    {
+      "capability": "Exact bounded minimum-impact remediation search (hitting-set over bitmasks)",
+      "files": ["backend/src/interdict/engine/planner.py"],
+      "symbols": ["build_catalogue", "solve", "plan_remediation", "objective", "Action", "Plan", "constraint_set"],
+      "real_or_stub": "REAL",
+      "notes": "Enumerates all plans of at most 3 egress-allowlist actions from a catalogue capped at 30 using bitmask coverage of the chain constraint set; lexicographic objective (declared deps broken, unknown impact, action count, flows blocked, ids). Optimality is explicitly 'EXACT_WITHIN_K', not global."
+    },
+    {
+      "capability": "Alert-storm triage into ON_ATTACK_PATH / NOT_ON_ATTACK_PATH / NOT_ACTIONABLE / TRIAGE_INCONCLUSIVE with clustering",
+      "files": ["backend/src/interdict/engine/triage.py"],
+      "symbols": ["run_triage", "_classify", "_clusters", "StormReport", "AlertVerdict", "Cluster"],
+      "real_or_stub": "REAL",
+      "notes": "Cross-checks FalkorDB BFS against the Python reachability and fails closed with METHOD_DISAGREEMENT; alerts with stale or unverified vulnerability evidence become TRIAGE_INCONCLUSIVE rather than being dismissed."
+    },
+    {
+      "capability": "FalkorDB graph store utilities: named-graph copy under global lock with fork-retry, RENAMENX, TTL, version probe",
+      "files": ["backend/src/interdict/graphstore.py", "backend/src/interdict/db.py"],
+      "symbols": ["GraphStore.copy", "GraphStore.lock", "GraphStore.rename", "GraphStore.expire", "GraphStore.server_version", "run", "QueryFailedError"],
+      "real_or_stub": "REAL",
+      "notes": "Handles the FalkorDB 'could not fork' quirk with a Redis owner-token lock and exponential backoff; run() maps timeouts and truncated results (row_limit reached) to QueryFailedError so truncation is never trusted. Verified against falkordb server 4.22.1."
+    },
+    {
+      "capability": "Investigation memory graph (Plan, Certificate, Asset nodes, recalled but re-verified)",
+      "files": ["backend/src/interdict/memory.py"],
+      "symbols": ["Memory.record", "Memory.recall", "Q_RECORD", "Q_CERTIFY", "Q_RECALL"],
+      "real_or_stub": "REAL",
+      "notes": "Per-session memory graph stores (Plan)-[:PROTECTS]->(Asset) and (Plan)-[:CERTIFIED_BY]->(Certificate) with sandbox_revision, so recall can compare the remembered revision to the current one; failures degrade to UNAVAILABLE and never break a run."
+    },
+    {
+      "capability": "Claude tool-use investigation agent over a 7-tool MCP server with code-enforced guards",
+      "files": ["backend/src/interdict/agent.py", "backend/src/interdict/mcp_server.py", "backend/src/interdict/tools.py", "backend/src/interdict/investigation.py"],
+      "symbols": ["run_agent", "strict_schema", "_agent_report", "triage_alert_storm", "find_evidence_by_workload", "find_attack_paths_to_asset", "plan_remediation", "hunt_residual_paths", "submit_remediation_execution", "recall_incident_memory"],
+      "real_or_stub": "PARTIAL",
+      "notes": "LLM only narrates and picks tools; status/plan/certificate/receipt are copied from tool results, containment wording without SIMULATED_CONTAINMENT is flagged, 12 tool-call/14 turn/180 s caps, deterministic fallback pipeline when the API fails. Requires an Anthropic API key; the environment is fully synthetic."
+    },
+    {
+      "capability": "Synthetic cloud/K8s environment generator and loader",
+      "files": ["backend/src/interdict/seed/generator.py", "backend/src/interdict/seed/loader.py", "backend/src/interdict/seed/model.py"],
+      "symbols": ["generator (seeded RNG)", "loader.load", "_identifier"],
+      "real_or_stub": "STUB",
+      "notes": "All pods, CVEs, IAM roles and alerts are generated demo data (evidence_source 'SYNTHETIC_GENERATOR'); the 'collector' that stamps observed_at/valid_until in stamp_evidence is a synthetic re-stamp, not a real scanner."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Meta{id:'meta',revision,inventory_complete,storm_id}, Pod, Service, Ingress, Internet, ContainerImage, Vulnerability{status,attack_vector,cvss_score}, Database{is_crown_jewel}, IAMRole, IAMPermission{effect}, NetworkPolicy{status:'CANDIDATE', managed_by}, Alert; memory graph: Plan, Certificate, Asset. Edges: EXPOSES, ROUTES_TO, TARGETS, RUNS_IMAGE, HAS_VULNERABILITY, CAN_REACH, ASSUMES_ROLE, GRANTS_ACCESS, APPLIES_TO, SELECTS, ALLOWS_EGRESS, DEPENDS_ON, ON_WORKLOAD, REFERENCES, derived ATTACK_STEP{kind,capacity,backing_evidence_ids,built_at_revision,technique_id}, PROTECTS, CERTIFIED_BY. Every evidence edge has id, verified, observed_at, valid_until, evidence_source. Uses FalkorDB-native procedures algo.bfs and algo.maxFlow (not Neo4j GDS/APOC), GRAPH.COPY, ro_query with per-query timeout, FOREACH delete, UNWIND bulk create, variable-length CAN_REACH*0..N (N int()-cast), labels(), properties(), collect(DISTINCT). Cypher is parameterised; only constant fragments or whitelisted identifiers are interpolated.",
+  "algorithms": [
+    "Layered attack-step graph built from evidence with backing_evidence_ids per edge (engine/attackgraph.py:build_attack_steps) and revision stamping",
+    "Bounded chain enumeration with variable-length CAN_REACH*0..3 and node-sequence de-dup, CHAIN_ENUM_CAP 10,000 (attackgraph.py:enumerate_chains)",
+    "Unit-capacity max-flow via algo.maxFlow = edge-disjoint path count, flow decomposition into paths with cycle removal (attackgraph.py:max_flow, hunter.py:decompose)",
+    "Three-method agreement rule E (bounded chains) / F (max-flow) / O (pure-Python BFS) before certification (hunter.py:disagreement, interdict_oracle/reachability.py)",
+    "Iterative CEGAR-like re-planning loop, max 5 rounds, residual paths added to the constraint set (hunter.py:hunt)",
+    "Exact bounded hitting-set search with bitmask coverage and lexicographic cost (planner.py:solve)",
+    "Hash-chained append-only log (audit.py) and canonical graph hashing (snapshot.py)",
+    "Compare-and-set revision counter for optimistic concurrency (sandbox.py:mutate)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: POST /api/sessions, GET /api/storm, GET /api/clusters/{cluster_id}/subgraph, GET /api/workloads/{pod_id}/evidence, POST /api/plans, POST /api/hunts, POST /api/investigations (202) + GET /api/investigations/{id} + GET /api/investigations/{id}/events (SSE-style), GET /api/certificates/{certificate_id}, GET /api/audit, POST /api/sandbox/operations, POST /api/sandbox/reset, GET /api/system, /healthz, /readyz",
+    "MCP server (python -m interdict.mcp_server, streamable HTTP, Bearer internal token + session header): triage_alert_storm, find_evidence_by_workload, find_attack_paths_to_asset, plan_remediation, hunt_residual_paths, submit_remediation_execution, recall_incident_memory",
+    "scripts: seed CLI (python -m interdict.seed), day1_gates.py, export_ui_fixtures.py"
+  ],
+  "frontend_interfaces": [
+    "React pages: LandingPage, StormPage, WorkbenchPage, SandboxPage, CertificatePage, SystemPage",
+    "Components: AttackGraph (@xyflow/react + elkjs layout), EdgeEvidenceDrawer, Provenance, TierChecklist, CertificateCard, LifecycleRail, PlanReport, HuntReport, AuditStrip, SandboxPanel, UntrustedText (renders graph-sourced text defensively)",
+    "Mock API client + fixtures (frontend/src/api/mock, frontend/src/mocks/fixtures) allow the UI to run without the backend"
+  ],
+  "agent_or_memory_mechanisms": "Claude tool-use loop (agent.py:run_agent) over MCP tools with hard budgets and a deterministic fallback pipeline (investigation.py). Memory is a per-session FalkorDB graph of dated Plan/Certificate/Asset nodes recalled first and always re-verified (memory.py). Evidence-tier state machine: CollectionStatus (COLLECTED_COMPLETE/EMPTY, QUERY_FAILED, STALE_EXPIRED, UNCOLLECTED) -> InvestigationStatus/PlanStatus/SimulationStatus -> CertificateStatus (VALID, EXPIRED, SUPERSEDED, REVERIFICATION_FAILED). Session isolation via HMAC-derived graph keys never accepted from clients.",
+  "tests_present": "backend/tests: 14 pytest files, roughly 167 test functions (test_hunter 23, test_planner 25, test_services 16, test_falkordb_contract 15, test_evidence 14, test_seed_generator 12, test_triage 11, test_attack_paths 10, test_api 9, test_mcp_agent 9, test_oracle_reachability 7, test_graphstore 6, test_seed_loader 6, test_snapshot 4); they need a live FalkorDB 4.22.1 (CI service container pinned by digest). test_falkordb_contract.py pins FalkorDB quirks (silent result truncation, maxFlow erroring on absent rel type, outgoing-only BFS, copy refusing existing dst). Frontend has vitest/RTL tests (http, sha256, stream, Num, UntrustedText, derive, status, pages, WorkbenchPage).",
+  "dependency_requirements": [
+    "python>=3.12 (uses PEP 695 generics: def timed[T])",
+    "falkordb>=1.8.0",
+    "redis (transitive, used directly for locks/streams/eval)",
+    "fastapi==0.143.0",
+    "uvicorn==0.54.0",
+    "mcp==2.3.0",
+    "anthropic==1.13.0 (optional at runtime; agent disabled when ANTHROPIC_API_KEY unset)",
+    "FalkorDB server v4.22.1 (docker, digest-pinned)",
+    "frontend: react 18.3.1, @xyflow/react 12.12.0, elkjs 0.12.0, @tanstack/react-query 5.104.1, vite 8.3.4, node>=22.12"
+  ],
+  "security_findings": [
+    "backend/src/interdict/api.py:681 - reads ANTHROPIC_API_KEY from environment (no hard-coded key found); sends alert/graph-derived context to Anthropic API when enabled",
+    "backend/src/interdict/engine/attackgraph.py:334 - f-string Cypher interpolating max_lateral_hops, but cast with int() and range-checked 0..3 (not injectable); lines 36-69 use .format() on constant fragments only",
+    "backend/src/interdict/seed/loader.py:107-204 - f-string Cypher with labels/relationship types passed through _identifier() validator (not user-controlled)",
+    "backend/src/interdict/engine/sandbox.py:142-146 and sandbox_ops.py:106,178 - mutate() concatenates a 'body' Cypher fragment; all callers pass constant fragments with $params (not injectable today, but a footgun if body ever comes from input)",
+    "backend/src/interdict/graphstore.py:110 - Redis EVAL of a fixed Lua release-if-owner script (safe)",
+    "backend/src/interdict/api.py:127-194 - HMAC cookie + CSRF token signing with server secret; config.py:70-79 refuses to start with secrets <32 chars (good practice, no hard-coded secret)",
+    "backend/src/interdict/mcp_server.py:70-78 - MCP tools require Bearer internal token (hmac.compare_digest) and session header; sandbox mutation operations are deliberately not exposed as MCP tools",
+    "backend/src/interdict/audit.py - tamper-evident only; anyone controlling Redis can rewrite the whole chain (documented in module docstring)",
+    "No subprocess, eval/exec, pickle or shell execution found in backend/src; no unrestricted outbound HTTP except the Anthropic client"
+  ],
+  "duplicates_or_overlaps": "Attack-path / blast-radius traversal (Security & Vulnerability family); remediation planning; alert triage; certificate/approval gating overlaps with any decision-lineage or evidence-drift engine; graph-memory family. Overlaps with Argus/blastradius-style traversal repos but is far deeper on evidence freshness and verification.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "HIGH - implements per-edge provenance with observed_at/valid_until/verified/evidence_source, a fail-closed freshness judge, certificates that become SUPERSEDED on any graph revision change or EXPIRED when the earliest underlying evidence ages out, snapshot hashing, an approval-gating gateway and a hash-chained audit log, which are the core primitives of an Evidence Drift Cascade engine.",
+  "strongest_reusable_unit": {
+    "file": "backend/src/interdict/engine/evidence.py + backend/src/interdict/engine/certificate.py",
+    "symbols": ["judge", "Provenance", "collect_evidence", "ScopeReport", "build_certificate", "certificate_status", "earliest_valid_until", "Certificate.digest", "snapshot_hash", "AuditLog", "submit_execution", "GraphStore.lock/copy", "mutate"],
+    "why": "Domain-neutral parts (freshness/verification judge, completeness-before-verdict rule, revision CAS, certificate supersession/expiry, canonical graph hashing, hash-chained audit, gating gateway, FalkorDB lock/copy handling) are written for the exact stack Kairos runs (FalkorDB 4.22 + falkordb client + FastAPI + Python 3.12) and are covered by live-graph tests. Only the K8s/attack-path queries are domain-specific.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB 4.22.x (Redis-backed; uses redis client directly for locks/streams); Anthropic key only for the optional agent"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The evidence-judgement, revision-CAS, certificate-lifecycle, snapshot-hash, audit-chain and gateway modules are domain-neutral and map directly onto an Evidence Drift Cascade engine, so they should be lifted into a shared Kairos engine with the Pod/Vulnerability queries replaced by Kairos labels. The attack-path/planner/hunter stack can be offered as a Security domain pack on top.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

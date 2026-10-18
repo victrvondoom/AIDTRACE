@@ -1,0 +1,126 @@
+{
+  "repository": "Noah-zipit/timetrace",
+  "url": "https://github.com/Noah-zipit/timetrace",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Noah-zipit__timetrace",
+  "commit_sha": "52aa990a0832c25eeef4401d4149d94936e844b8",
+  "license": "MIT",
+  "copyright_holder": "Ashar Qaisar (LICENSE says 'Copyright (c) 2026 Ashar Qaisar'; repository owner is Noah-zipit, so the attested owner and the licence holder differ)",
+  "source_files_inspected": [
+    "timetrace/graph/queries.py",
+    "timetrace/graph/db.py",
+    "timetrace/agent.py",
+    "timetrace/ingest/ingest.py",
+    "timetrace/api/main.py",
+    "timetrace/parser/parser.py",
+    "timetrace/sampler/sampler.py",
+    "requirements.txt",
+    ".env.example",
+    ".github/workflows/ingest-cloud.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python 3.10+/FastAPI",
+    "stdlib ast parser",
+    "FalkorDB (falkordb>=1.8)",
+    "Vanilla JS timeline UI (ui/)",
+    "Vercel serverless entry (api/index.py, vercel.json)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Interval (valid_from/valid_to) temporal graph planner from snapshot series",
+      "files": ["timetrace/ingest/ingest.py"],
+      "symbols": ["plan_ingest", "body_hash", "rekey_node_id", "similarity", "_plausible_move", "epoch_seconds"],
+      "real_or_stub": "REAL",
+      "notes": "Pure, DB-free function that diffs consecutive snapshots into node_open/node_close/edge_open/edge_close ops. Append-only history: closing a window stamps valid_to, never deletes; content changes (body_hash) close and reopen a new version and re-point incident edges to the new version; renames are detected by qualname equality plus Jaccard feature similarity >= 0.8 with plausibility guards and emit RENAMED_TO edges."
+    },
+    {
+      "capability": "As-of (time-travel) queries with window predicate on every node and edge",
+      "files": ["timetrace/graph/queries.py"],
+      "symbols": ["_win", "time_slice", "blast_radius", "_callers", "_importers", "target_versions", "timeline", "resolve_target"],
+      "real_or_stub": "REAL",
+      "notes": "Every MATCH adds n.valid_from <= $t AND (n.valid_to IS NULL OR n.valid_to > $t) for each node and relationship on the walk. Reverse CALLS is hard-capped at two explicit hops plus IMPORTS; all reads go through ro_query."
+    },
+    {
+      "capability": "Deterministic temporal verdict with provenance-citing proof chain",
+      "files": ["timetrace/agent.py"],
+      "symbols": ["answer", "parse_question", "risk_score", "verdict_tier", "_commit_source"],
+      "real_or_stub": "REAL",
+      "notes": "No LLM. risk = 2*live dependents + 3*importing modules + changes in 30d + 2*authors; thresholds <=6 safe, <=15 care, else risky (explicitly a demo-tuned heuristic). Each proof-chain step cites the commit (sha, date, author) or the edge-walk at time t that produced it. Returns NEED MORE INFO instead of guessing when target or repo is ambiguous."
+    },
+    {
+      "capability": "Honest-failure data-access discipline (read-only handle, 503 when DB down)",
+      "files": ["timetrace/graph/db.py"],
+      "symbols": ["ReadOnlyGraph", "ro_graph", "require_db", "DatabaseUnavailableError", "FalkorConfig.__repr__"],
+      "real_or_stub": "REAL",
+      "notes": "Agent code can only run GRAPH.RO_QUERY, so it cannot mutate the graph; unreachable DB raises a 503-mapped error rather than answering from files. Password redacted from repr/errors."
+    },
+    {
+      "capability": "Python source parsing into modules, classes, functions, calls and imports",
+      "files": ["timetrace/parser/parser.py", "timetrace/sampler/sampler.py"],
+      "symbols": ["parse_files", "_ModuleVisitor", "_DefsCollector", "sample_repo", "_git"],
+      "real_or_stub": "REAL",
+      "notes": "ast-based extraction with best-effort call-target resolution (unresolved callees are skipped); sampler walks git log/ls-tree/show read-only to build weekly-sampled snapshots."
+    },
+    {
+      "capability": "Graph writer with UNWIND batches and chunked remote ingest API",
+      "files": ["timetrace/ingest/ingest.py", "timetrace/api/main.py"],
+      "symbols": ["FalkorWriter.write_ops", "FalkorWriter.create_indexes", "POST /api/ingest", "POST /api/ingest-ops"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Node writes are MERGE on (id, valid_from) and idempotent; edge opens are plain CREATE, so re-ingesting duplicates edges (documented by the author). Remote ingest endpoints accept raw ops from the client."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Repository, Module, Class, Function, Person, Commit. Edges: DEFINES, CALLS, IMPORTS, MODIFIED{change,timestamp,commit}, AUTHORED, IN_REPO, RENAMED_TO{similarity}. Every node and edge carries valid_from/valid_to (epoch seconds, NULL = open) plus uid on edges. External imports are stub Module nodes with id prefix module:<repo>:$ext:. Cypher patterns: UNWIND batch MERGE (n:L {id, valid_from}) SET n += props; MATCH ()-[e]->() WHERE e.uid = row.uid SET e.valid_to; UNION-based label branches because FalkorDB lacks label disjunction; STARTS WITH/ENDS WITH/CONTAINS since there is no regex. Indexes on (Function|Module|Class).{id,valid_from}, Person.email, Repository.name, Commit.id. No APOC/GDS.",
+  "algorithms": [
+    "Snapshot-diff to interval-operations planner with append-only version windows (timetrace/ingest/ingest.py:plan_ingest)",
+    "Content hash (sha256 over canonicalised signature) to decide node version rollover (ingest.py:body_hash)",
+    "Edge re-pointing after node version rollover so edges never outlive the version they were pinned to (plan_ingest, 're-point edges' section)",
+    "Rename detection by same qualname + Jaccard feature similarity >= 0.8 + same-dir/same-basename plausibility + file-appeared/vanished corroboration (ingest.py:similarity, _plausible_move)",
+    "As-of 2-hop reverse-CALLS blast radius with per-hop validity windows (graph/queries.py:_callers)",
+    "Open-window counting across commit timestamps in Python instead of N queries (graph/queries.py:timeline)",
+    "Deterministic additive risk score (agent.py:risk_score)"
+  ],
+  "backend_interfaces": [
+    "FastAPI timetrace/api/main.py: GET /api/health, /api/stats, /api/timeline, /api/state; POST /api/query, /api/ingest, /api/ingest-ops; GET /api/diag-net",
+    "CLIs: python -m timetrace.sampler.cli, timetrace.parser.cli, timetrace.ingest.cli",
+    "Vercel serverless adapter api/index.py"
+  ],
+  "frontend_interfaces": [
+    "Static UI ui/index.html + ui/app.js + ui/styles.css: repo timeline scrubber, module list at time T, ask box, verdict card, proof chain (served by FastAPI StaticFiles)"
+  ],
+  "agent_or_memory_mechanisms": "No LLM and no conversational memory. The 'agent' is a fixed pipeline: parse question -> resolve target -> presence at t -> blast radius -> churn -> owners -> verdict + proof chain. The graph itself is the memory (versioned history of code, who modified what, when).",
+  "tests_present": "6 pytest files, ~65 test functions (test_agent 12, test_e2e_local 8, test_ingest 18, test_parser 9, test_queries 11, test_sampler 7). The planner and parser tests are DB-free; test_queries and e2e need a local FalkorDB.",
+  "dependency_requirements": [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "falkordb>=1.8",
+    "httpx>=0.27",
+    "aiofiles>=23.0",
+    "pytest>=8"
+  ],
+  "security_findings": [
+    "timetrace/ingest/ingest.py:539-563,630,640,652 + timetrace/api/main.py:288-312 - Cypher injection: write_ops interpolates op['label'] and op['kind'] into query text with % formatting, and POST /api/ingest-ops passes client-supplied ops straight through with no auth and no allowlist (arbitrary graph write/delete)",
+    "timetrace/api/main.py:197-250 - POST /api/ingest accepts an arbitrary server-side directory path (snapshots_dir) and reads manifest.json and <sha>.json from it (path-controlled file read), unauthenticated, and writes to the configured FalkorDB",
+    "timetrace/api/main.py:262-285 - /api/diag-net performs DNS lookup and a raw TCP connect to the configured DB host (config-driven, not user-controlled, but unauthenticated network probe)",
+    "timetrace/ingest/ingest.py:597-598 - CREATE INDEX statement built with f-string from module-constant labels/properties (constants only)",
+    "timetrace/graph/queries.py:94-127,306-323 - labels interpolated into Cypher via f-strings but taken from a fixed tuple or from _label_for() which only returns Module/Function/Class; ids and times are parameters (safe)",
+    "timetrace/sampler/sampler.py:26-30 - subprocess.run(['git','-C',repo_path,*args]) list form, no shell; repo_path is caller-supplied (CLI/path), args are fixed git subcommands",
+    "No authentication or CORS config at all on the API; edge inserts are non-idempotent so repeated POSTs duplicate edges (data-integrity risk)",
+    "No hard-coded secrets: credentials come from .env/OS env and CI secrets; no eval/exec/pickle (parser uses ast.parse only)."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal (code call graph), software dependency intelligence, and lineage/temporal-validity modelling (version windows, RENAMED_TO lineage). Complements kanchan0505/GraphHacks (freshness policy) with a real interval-validity data model.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "HIGH - the only repo in this batch with a true append-only valid_from/valid_to interval model, as-of queries that apply the window to every node and edge, version rollover with edge re-pointing, rename lineage edges and commit-cited proof chains; directly strengthens temporal validity, supersession (version close/reopen) and provenance in an Evidence Drift Cascade.",
+  "strongest_reusable_unit": {
+    "file": "timetrace/ingest/ingest.py",
+    "symbols": ["plan_ingest", "body_hash", "similarity", "FalkorWriter.write_ops"],
+    "why": "Domain-agnostic in structure: it turns any ordered series of {nodes, edges} snapshots into idempotent-for-nodes open/close operations with content-hash change detection, closing windows instead of deleting, and edge re-pointing. Pair it with queries.py:_win for the as-of predicate. Only the node/edge schema (module/class/function) is code-specific.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for the planner (stdlib only); FalkorDB only for FalkorWriter and queries"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The interval planner and window-predicate query builder are a reusable temporal-validity layer for Kairos evidence, and are MIT-licensed. Generalise the node/edge schema, fix op-label allowlisting and make edge opens idempotent (MERGE on uid) before reuse.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,103 @@
+{
+  "repository": "adarsh-bhati/Safecortex",
+  "url": "https://github.com/adarsh-bhati/Safecortex",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\adarsh-bhati__Safecortex",
+  "commit_sha": "5b1d9ad2bec3b5decc0858b8b5622b83942756d4",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["graph_client.py", "agents.py", "llm_router.py", "main.py", "app.py", "test_populate.py", "requirements.txt", ".gitignore"],
+  "languages_frameworks": ["Python 3 / asyncio", "FalkorDB (falkordb client)", "Streamlit + pyvis UI", "sentence-transformers (optional)", "Groq / Gemini / Ollama LLM clients"],
+  "implemented_capabilities": [
+    {
+      "capability": "FalkorDB blackboard for multi-agent coordination",
+      "files": ["graph_client.py"],
+      "symbols": ["GraphClient", "GraphClient.initialize_schema", "GraphClient.add_task", "GraphClient.get_pending_tasks", "GraphClient.register_agent"],
+      "real_or_stub": "REAL",
+      "notes": "All agent state (Agent, Goal, Task, Observation, Belief, Constraint nodes) lives in one FalkorDB graph via parameterized Cypher; agents never call each other. get_pending_tasks uses OPTIONAL MATCH on DEPENDS_ON with count(d)=0 to find dependency-ready tasks."
+    },
+    {
+      "capability": "Atomic task claiming (compare-and-set lock) with stale-lock release",
+      "files": ["graph_client.py"],
+      "symbols": ["GraphClient.lock_task", "GraphClient.release_stale_locks"],
+      "real_or_stub": "REAL",
+      "notes": "lock_task does MATCH ... WHERE t.status=$from SET t.status=$to in one Cypher query and returns false if nothing matched; the ASSIGNED_TO edge is written in a second, non-atomic query. release_stale_locks reverts locked/verifying tasks after a 60s timeout."
+    },
+    {
+      "capability": "Safety-verifier approval gate before execution",
+      "files": ["agents.py"],
+      "symbols": ["SafetyVerifierAgent.step", "SafetyVerifierAgent.check", "SafetyVerifierAgent._stem", "GraphClient.add_violation"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Tasks go pending -> verifying -> verified|blocked; blocked adds a VIOLATES edge to the Constraint and an Observation. 'forbidden_keyword' constraints are a crude stemmed substring match; 'policy' constraints are a YES/NO LLM prompt that fails closed. Blocked status propagates to dependents via a Cypher SET on (t)-[:DEPENDS_ON]->(b {status:'blocked'}) run every cycle."
+    },
+    {
+      "capability": "Belief / observation memory with support and contradiction links",
+      "files": ["graph_client.py", "agents.py"],
+      "symbols": ["GraphClient.add_observation", "GraphClient.add_belief", "GraphClient.link_observation", "GraphClient.update_belief_confidence", "MemoryCuratorAgent.step"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Observation -[:SUPPORTS|CONTRADICTS]-> Belief edges with heuristic confidence deltas (+0.1 / -0.25). The decision of which observations support or contradict is an LLM JSON prompt (LLM_PROMPT_ONLY for the semantic part); the graph bookkeeping is real. No supersession or validity windows."
+    },
+    {
+      "capability": "LLM planner decomposing goals into dependency DAG of tasks",
+      "files": ["agents.py"],
+      "symbols": ["PlannerAgent.plan", "PlannerAgent.maybe_complete_goals", "extract_json"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Task decomposition is an LLM JSON prompt with a hard-coded 3-task fallback; the real part is writing tasks in status 'planning' then releasing to 'pending' only after all DEPENDS_ON edges exist."
+    },
+    {
+      "capability": "Executor agent",
+      "files": ["agents.py"],
+      "symbols": ["ExecutorAgent.step", "ExecutorAgent.mock_action"],
+      "real_or_stub": "STUB",
+      "notes": "mock_action sleeps and returns a random canned string ('API call returned 200 OK' etc.); nothing is actually executed."
+    },
+    {
+      "capability": "Multi-provider LLM router with backoff",
+      "files": ["llm_router.py"],
+      "symbols": ["LLMRouter.generate", "LLMRouter._with_backoff", "_first_working"],
+      "real_or_stub": "REAL",
+      "notes": "Groq -> Gemini -> optional local Ollama fallback chain with exponential backoff on 429/timeout/503."
+    },
+    {
+      "capability": "Live graph visualization UI",
+      "files": ["app.py", "graph_client.py"],
+      "symbols": ["render_graph", "start_system", "GraphClient.get_graph_data_for_vis"],
+      "real_or_stub": "REAL",
+      "notes": "Streamlit + pyvis render of the blackboard with colour per label and dark-red blocked tasks; starts agents in a daemon thread."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Agent, Goal, Task(status: planning|pending|verifying|verified|locked|blocked|done), Observation(embedding list prop), Belief(confidence), Constraint(rule,type). Edges: HAS_TASK, DEPENDS_ON, ASSIGNED_TO, PRODUCED, YIELDED, VIOLATES, SUPPORTS, CONTRADICTS. Patterns: OPTIONAL MATCH + count(d)=0 for dependency readiness; WITH ... ORDER BY LIMIT 1 for latest goal; CAS via WHERE status=$from SET. Plain openCypher plus 'CREATE INDEX FOR (n:Label) ON (n.prop)'; no APOC/GDS, no vector index (embeddings are stored as raw float list but never queried).",
+  "algorithms": [
+    "Dependency-ready task selection via OPTIONAL MATCH (t)-[:DEPENDS_ON]->(d) WHERE d.status<>'done' WITH count(d) in graph_client.py:get_pending_tasks",
+    "Compare-and-set task lock with timeout-based lease release in graph_client.py:lock_task/release_stale_locks",
+    "Blocked-status propagation to dependents (iterative one-hop Cypher each cycle) in agents.py:SafetyVerifierAgent.step",
+    "Heuristic belief confidence update (+0.1 support, -0.25 contradiction, clamped 0..1) in agents.py:MemoryCuratorAgent.step and graph_client.py:update_belief_confidence"
+  ],
+  "backend_interfaces": ["No HTTP API. main.py asyncio orchestrator (python main.py '<goal>'); Streamlit app.py acts as UI and in-process agent host. Python module API GraphClient."],
+  "frontend_interfaces": ["Streamlit single page (app.py) with pyvis force-directed graph, goal submit box, constraint add box, agent status list, belief progress bars"],
+  "agent_or_memory_mechanisms": "Blackboard architecture: Planner, SafetyVerifier, 2x Executor, MemoryCurator agents poll the FalkorDB graph on intervals and coordinate only through node status transitions (planning->pending->verifying->verified->locked->done|blocked). Memory = Observation and Belief nodes with SUPPORTS/CONTRADICTS edges and numeric confidence.",
+  "tests_present": "No test suite. test_populate.py is a single smoke script (needs a live FalkorDB on localhost:6379) that seeds data, asserts get_pending_tasks and lock_task exclusivity, and writes graph_preview.html.",
+  "dependency_requirements": ["falkordb (unpinned)", "groq", "google-generativeai", "streamlit", "fastapi", "uvicorn", "python-dotenv", "sentence-transformers", "pyvis", "networkx", "requests", "streamlit-autorefresh (all unpinned)"],
+  "security_findings": [
+    "llm_router.py:38-39 - API keys read from environment (GROQ_API_KEY, GEMINI_API_KEY); no hard-coded secrets found; .gitignore excludes .env",
+    "llm_router.py:73 - unauthenticated HTTP call to local Ollama endpoint http://localhost:11434 (only when OLLAMA_ENABLED=true)",
+    "graph_client.py:227 - f-string interpolates relationship type into Cypher, but value is restricted to the constants SUPPORTS/CONTRADICTS (not injectable)",
+    "agents.py:167-170 - task description and constraint rule are interpolated into an LLM prompt for policy checks (prompt-injection could flip YES/NO verdict; verifier fails closed only on exceptions)",
+    "app.py:73 - UI button runs unconditional DETACH DELETE of all Task/Goal/Observation/Belief nodes with no auth",
+    "graph_client.py:66-72 - clear() deletes the whole graph; no guard"
+  ],
+  "duplicates_or_overlaps": "Overlaps generic agent-memory / multi-agent blackboard patterns and approval-gating workflows; not a domain analytics engine.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "MEDIUM - has an approval gate (pending->verified|blocked with VIOLATES edges), dependency-driven blocking propagation and SUPPORTS/CONTRADICTS confidence decay on beliefs, but no temporal validity, supersession or lineage versioning.",
+  "strongest_reusable_unit": {
+    "file": "graph_client.py",
+    "symbols": ["GraphClient.lock_task", "GraphClient.release_stale_locks", "GraphClient.get_pending_tasks", "GraphClient.link_observation", "GraphClient.update_belief_confidence"],
+    "why": "Small, FalkorDB-native parameterized-Cypher primitives for atomic task claiming, dependency-ready scheduling and belief support/contradiction bookkeeping that map directly onto an evidence/approval ledger.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (falkordb client); LLM key only for curator/planner/policy agents; sentence-transformers optional"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The executor is a mock and planner/curator are LLM prompts, so the value is the graph schema and CAS/lease pattern, which is small enough to re-implement cleanly in Kairos. No license file, so copy only after owner permission is confirmed.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

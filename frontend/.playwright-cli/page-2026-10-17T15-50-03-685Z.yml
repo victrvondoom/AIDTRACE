@@ -1,0 +1,393 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e2]:
+    - link "Skip to content" [ref=f8e3] [cursor=pointer]:
+      - /url: "#main"
+    - complementary [ref=f8e4]:
+      - generic [ref=f8e6]:
+        - link "Kairos home" [ref=f8e8] [cursor=pointer]:
+          - /url: /overview
+          - img "Kairos" [ref=f8e9]
+          - generic [ref=f8e10]: Kairos
+        - generic [ref=f8e11]:
+          - button "Search workspace" [ref=f8e12] [cursor=pointer]:
+            - generic [ref=f8e15]: Search
+            - generic [ref=f8e16]: Ctrl K
+          - button "Ingest document" [ref=f8e17] [cursor=pointer]
+        - navigation [ref=f8e20]:
+          - list [ref=f8e21]:
+            - listitem [ref=f8e22]:
+              - link "Overview" [ref=f8e23] [cursor=pointer]:
+                - /url: /overview
+            - listitem [ref=f8e27]:
+              - link "All Features" [ref=f8e28] [cursor=pointer]:
+                - /url: /workspace
+            - listitem [ref=f8e32]:
+              - link "ResolveAI RDS" [ref=f8e33] [cursor=pointer]:
+                - /url: /resolveai
+          - list "Operate" [ref=f8e37]:
+            - listitem [ref=f8e38]:
+              - link "Briefs" [ref=f8e39] [cursor=pointer]:
+                - /url: /briefs
+            - listitem [ref=f8e43]:
+              - link "Copilot" [ref=f8e44] [cursor=pointer]:
+                - /url: /copilot
+            - listitem [ref=f8e48]:
+              - link "Assets" [ref=f8e49] [cursor=pointer]:
+                - /url: /assets
+            - listitem [ref=f8e53]:
+              - link "Events" [ref=f8e54] [cursor=pointer]:
+                - /url: /events
+          - list "Analyze" [ref=f8e58]:
+            - listitem [ref=f8e59]:
+              - link "RCA" [ref=f8e60] [cursor=pointer]:
+                - /url: /rca
+            - listitem [ref=f8e64]:
+              - link "Graph" [ref=f8e65] [cursor=pointer]:
+                - /url: /graph
+            - listitem [ref=f8e69]:
+              - link "Coverage" [ref=f8e70] [cursor=pointer]:
+                - /url: /overview/coverage
+          - list "Assure" [ref=f8e74]:
+            - listitem [ref=f8e75]:
+              - link "Compliance" [ref=f8e76] [cursor=pointer]:
+                - /url: /compliance
+            - listitem [ref=f8e80]:
+              - link "Governance" [ref=f8e81] [cursor=pointer]:
+                - /url: /governance
+            - listitem [ref=f8e85]:
+              - link "Audit Trail" [ref=f8e86] [cursor=pointer]:
+                - /url: /audit
+          - list "Knowledge" [ref=f8e90]:
+            - listitem [ref=f8e91]:
+              - link "Documents" [ref=f8e92] [cursor=pointer]:
+                - /url: /documents
+            - listitem [ref=f8e96]:
+              - link "Projects" [ref=f8e97] [cursor=pointer]:
+                - /url: /projects
+            - listitem [ref=f8e101]:
+              - link "Off-Boarding" [ref=f8e102] [cursor=pointer]:
+                - /url: /offboarding
+        - button "Open user menu" [ref=f8e107] [cursor=pointer]:
+          - generic [ref=f8e108]: KA
+          - generic [ref=f8e109]:
+            - generic [ref=f8e110]: Kairos user
+            - generic [ref=f8e111]: engineer
+    - main [ref=f8e115]:
+      - generic [ref=f8e118]:
+        - generic [ref=f8e119]:
+          - generic [ref=f8e120]:
+            - heading "All Kairos Features" [level=1] [ref=f8e121]
+            - paragraph [ref=f8e122]: Find every workspace, specialist tool and intelligence integration in one place.
+          - link "Back to Overview" [ref=f8e124] [cursor=pointer]:
+            - /url: /overview
+        - generic [ref=f8e126]:
+          - generic [ref=f8e127]:
+            - generic [ref=f8e128]:
+              - searchbox "Search all features" [ref=f8e130]
+              - combobox "Feature availability" [ref=f8e131]:
+                - option "All capabilities" [selected]
+                - option "Workspace"
+                - option "Integration"
+                - option "Workflow preview"
+            - generic "Filter by workspace" [ref=f8e132]:
+              - button "All" [pressed] [ref=f8e133] [cursor=pointer]
+              - button "Plant Operations" [ref=f8e135] [cursor=pointer]
+              - button "Investigations" [ref=f8e137] [cursor=pointer]
+              - button "Agents & Infrastructure" [ref=f8e139] [cursor=pointer]
+              - button "Data & Models" [ref=f8e141] [cursor=pointer]
+              - button "Governance & Assurance" [ref=f8e143] [cursor=pointer]
+              - button "Cyber & Fraud" [ref=f8e145] [cursor=pointer]
+          - generic [ref=f8e147]:
+            - status [ref=f8e148]: 43 of 43 capabilities
+            - button "Reset filters" [ref=f8e149] [cursor=pointer]
+          - paragraph [ref=f8e151]: Workspaces open existing Kairos tools. Integrations show their current connection state. Workflow previews describe capabilities still being built; they do not execute investigations or responses.
+          - region [ref=f8e152]:
+            - generic [ref=f8e153]:
+              - heading "Plant Operations" [level=2] [ref=f8e156]
+              - generic [ref=f8e157]: "9"
+            - generic [ref=f8e158]:
+              - article [ref=f8e159]:
+                - generic [ref=f8e160]: Workspace
+                - heading "Plant Overview" [level=3] [ref=f8e162]
+                - paragraph [ref=f8e163]: Operational KPIs, attention queue and recent signals.
+                - link "Open workspace" [ref=f8e164] [cursor=pointer]:
+                  - /url: /overview
+              - article [ref=f8e167]:
+                - generic [ref=f8e168]: Workspace
+                - heading "Asset Inventory" [level=3] [ref=f8e170]
+                - paragraph [ref=f8e171]: Assets, ownership, documents, events and detailed asset workspaces.
+                - link "Open workspace" [ref=f8e172] [cursor=pointer]:
+                  - /url: /assets
+              - article [ref=f8e175]:
+                - generic [ref=f8e176]: Workspace
+                - heading "Register Asset" [level=3] [ref=f8e178]
+                - paragraph [ref=f8e179]: Create a governed asset record.
+                - link "Open workspace" [ref=f8e180] [cursor=pointer]:
+                  - /url: /assets/register
+              - article [ref=f8e183]:
+                - generic [ref=f8e184]: Workspace
+                - heading "Asset Bootstrap" [level=3] [ref=f8e186]
+                - paragraph [ref=f8e187]: Bootstrap master data and canonical asset identities.
+                - link "Open workspace" [ref=f8e188] [cursor=pointer]:
+                  - /url: /assets/bootstrap
+              - article [ref=f8e191]:
+                - generic [ref=f8e192]: Workspace
+                - heading "Operational Events" [level=3] [ref=f8e194]
+                - paragraph [ref=f8e195]: Search events and inspect their source and timeline.
+                - link "Open workspace" [ref=f8e196] [cursor=pointer]:
+                  - /url: /events
+              - article [ref=f8e199]:
+                - generic [ref=f8e200]: Workspace
+                - heading "Work Briefs" [level=3] [ref=f8e202]
+                - paragraph [ref=f8e203]: Review work orders, evidence and required acknowledgements.
+                - link "Open workspace" [ref=f8e204] [cursor=pointer]:
+                  - /url: /briefs
+              - article [ref=f8e207]:
+                - generic [ref=f8e208]: Workspace
+                - heading "Voice Workspace" [level=3] [ref=f8e210]
+                - paragraph [ref=f8e211]: Voice capture, work-order sessions and guided elicitation.
+                - link "Open workspace" [ref=f8e212] [cursor=pointer]:
+                  - /url: /field/voice
+              - article [ref=f8e215]:
+                - generic [ref=f8e216]: Workspace
+                - heading "Field Deviations" [level=3] [ref=f8e218]
+                - paragraph [ref=f8e219]: Report observations that differ from approved instructions.
+                - link "Open workspace" [ref=f8e220] [cursor=pointer]:
+                  - /url: /field/deviation
+              - article [ref=f8e223]:
+                - generic [ref=f8e224]: Workspace
+                - heading "Plant State" [level=3] [ref=f8e226]
+                - paragraph [ref=f8e227]: Review operating state and governed state changes.
+                - link "Open workspace" [ref=f8e228] [cursor=pointer]:
+                  - /url: /overview/plant-state
+          - region [ref=f8e231]:
+            - generic [ref=f8e232]:
+              - heading "Investigations" [level=2] [ref=f8e235]
+              - generic [ref=f8e236]: "5"
+            - generic [ref=f8e237]:
+              - article [ref=f8e238]:
+                - generic [ref=f8e239]: Workspace
+                - heading "Root Cause Analysis" [level=3] [ref=f8e241]
+                - paragraph [ref=f8e242]: Investigate failures with traceable supporting evidence.
+                - link "Open workspace" [ref=f8e243] [cursor=pointer]:
+                  - /url: /rca
+              - article [ref=f8e246]:
+                - generic [ref=f8e247]: Workspace
+                - heading "Evidence Graph" [level=3] [ref=f8e249]
+                - paragraph [ref=f8e250]: Explore relationships between assets, documents and events.
+                - link "Open workspace" [ref=f8e251] [cursor=pointer]:
+                  - /url: /graph
+              - article [ref=f8e254]:
+                - generic [ref=f8e255]: Workspace
+                - heading "Kairos Copilot" [level=3] [ref=f8e257]
+                - paragraph [ref=f8e258]: Ask questions and inspect source-grounded answers.
+                - link "Open workspace" [ref=f8e259] [cursor=pointer]:
+                  - /url: /copilot
+              - article [ref=f8e262]:
+                - generic [ref=f8e263]: Workspace
+                - heading "Cross-site Patterns" [level=3] [ref=f8e265]
+                - paragraph [ref=f8e266]: Inspect recurring patterns across permitted sites.
+                - link "Open workspace" [ref=f8e267] [cursor=pointer]:
+                  - /url: /overview/cross-site
+              - article [ref=f8e270]:
+                - generic [ref=f8e271]: Workspace
+                - heading "Coverage Analysis" [level=3] [ref=f8e273]
+                - paragraph [ref=f8e274]: Inspect evidence coverage and missing asset knowledge.
+                - link "Open workspace" [ref=f8e275] [cursor=pointer]:
+                  - /url: /overview/coverage
+          - region [ref=f8e278]:
+            - generic [ref=f8e279]:
+              - heading "Agents & Infrastructure" [level=2] [ref=f8e282]
+              - generic [ref=f8e283]: "5"
+            - generic [ref=f8e284]:
+              - article [ref=f8e285]:
+                - generic [ref=f8e286]: Integration
+                - heading "ResolveAI RDS" [level=3] [ref=f8e288]
+                - paragraph [ref=f8e289]: Reasoning and Decision System inside Kairos.
+                - link "Open workspace" [ref=f8e290] [cursor=pointer]:
+                  - /url: /resolveai
+              - article [ref=f8e293]:
+                - generic [ref=f8e294]: Integration
+                - heading "Agent Map" [level=3] [ref=f8e296]
+                - paragraph [ref=f8e297]: Specialist responsibilities, handoffs and human review boundaries.
+                - link "Open workspace" [ref=f8e298] [cursor=pointer]:
+                  - /url: /resolveai#agents
+              - article [ref=f8e301]:
+                - generic [ref=f8e302]: Integration
+                - heading "Memory & FalkorDB" [level=3] [ref=f8e304]
+                - paragraph [ref=f8e305]: Reasoning infrastructure status and evidence memory contracts.
+                - link "Open workspace" [ref=f8e306] [cursor=pointer]:
+                  - /url: /resolveai#memory
+              - article [ref=f8e309]:
+                - generic [ref=f8e310]:
+                  - generic [ref=f8e311]: Workspace
+                  - generic [ref=f8e312]: Role restricted
+                - heading "System Health" [level=3] [ref=f8e313]
+                - paragraph [ref=f8e314]: Inspect service connectivity and infrastructure health.
+                - paragraph [ref=f8e315]: Access depends on your assigned role.
+              - article [ref=f8e316]:
+                - generic [ref=f8e317]: Workspace
+                - heading "System Settings" [level=3] [ref=f8e319]
+                - paragraph [ref=f8e320]: Workspace preferences and account settings.
+                - link "Open workspace" [ref=f8e321] [cursor=pointer]:
+                  - /url: /settings
+          - region [ref=f8e324]:
+            - generic [ref=f8e325]:
+              - heading "Data & Models" [level=2] [ref=f8e328]
+              - generic [ref=f8e329]: "8"
+            - generic [ref=f8e330]:
+              - article [ref=f8e331]:
+                - generic [ref=f8e332]: Workspace
+                - heading "Document Vault" [level=3] [ref=f8e334]
+                - paragraph [ref=f8e335]: Source documents, extraction review, citations and topology.
+                - link "Open workspace" [ref=f8e336] [cursor=pointer]:
+                  - /url: /documents
+              - article [ref=f8e339]:
+                - generic [ref=f8e340]: Workspace
+                - heading "Document Ingestion" [level=3] [ref=f8e342]
+                - paragraph [ref=f8e343]: Bring source material into the governed evidence workflow.
+                - link "Open workspace" [ref=f8e344] [cursor=pointer]:
+                  - /url: /documents/ingest
+              - article [ref=f8e347]:
+                - generic [ref=f8e348]: Workspace
+                - heading "Document Comparison" [level=3] [ref=f8e350]
+                - paragraph [ref=f8e351]: Compare revisions and inspect changed claims.
+                - link "Open workspace" [ref=f8e352] [cursor=pointer]:
+                  - /url: /documents/compare
+              - article [ref=f8e355]:
+                - generic [ref=f8e356]: Integration
+                - heading "Team Data Curation" [level=3] [ref=f8e358]
+                - paragraph [ref=f8e359]: Annotations, corrections and validation corpus summaries.
+                - link "Open workspace" [ref=f8e360] [cursor=pointer]:
+                  - /url: /resolveai#curation
+              - article [ref=f8e363]:
+                - generic [ref=f8e364]: Integration
+                - heading "Models & Fine-tuning" [level=3] [ref=f8e366]
+                - paragraph [ref=f8e367]: Configured model roles and fine-tuning integration readiness.
+                - link "Open workspace" [ref=f8e368] [cursor=pointer]:
+                  - /url: /resolveai#models
+              - article [ref=f8e371]:
+                - generic [ref=f8e372]: Workspace
+                - heading "Model Evaluation Gate" [level=3] [ref=f8e374]
+                - paragraph [ref=f8e375]: Validation corpus and model promotion criteria.
+                - link "Open workspace" [ref=f8e376] [cursor=pointer]:
+                  - /url: /governance/model-gate
+              - article [ref=f8e379]:
+                - generic [ref=f8e380]: Workspace
+                - heading "Projects" [level=3] [ref=f8e382]
+                - paragraph [ref=f8e383]: Organize project knowledge and linked source material.
+                - link "Open workspace" [ref=f8e384] [cursor=pointer]:
+                  - /url: /projects
+              - article [ref=f8e387]:
+                - generic [ref=f8e388]: Workspace
+                - heading "Knowledge Handover" [level=3] [ref=f8e390]
+                - paragraph [ref=f8e391]: Capture departing expertise through off-boarding sessions.
+                - link "Open workspace" [ref=f8e392] [cursor=pointer]:
+                  - /url: /offboarding
+          - region [ref=f8e395]:
+            - generic [ref=f8e396]:
+              - heading "Governance & Assurance" [level=2] [ref=f8e399]
+              - generic [ref=f8e400]: "12"
+            - generic [ref=f8e401]:
+              - article [ref=f8e402]:
+                - generic [ref=f8e403]: Workspace
+                - heading "Governance Center" [level=3] [ref=f8e405]
+                - paragraph [ref=f8e406]: Review queues and policies governing plant knowledge.
+                - link "Open workspace" [ref=f8e407] [cursor=pointer]:
+                  - /url: /governance
+              - article [ref=f8e410]:
+                - generic [ref=f8e411]: Workspace
+                - heading "Conflict Resolution" [level=3] [ref=f8e413]
+                - paragraph [ref=f8e414]: Compare competing claims and record accountable decisions.
+                - link "Open workspace" [ref=f8e415] [cursor=pointer]:
+                  - /url: /governance/conflicts
+              - article [ref=f8e418]:
+                - generic [ref=f8e419]: Workspace
+                - heading "Evidence Quarantine" [level=3] [ref=f8e421]
+                - paragraph [ref=f8e422]: Review held evidence before promotion to trusted knowledge.
+                - link "Open workspace" [ref=f8e423] [cursor=pointer]:
+                  - /url: /governance/quarantine
+              - article [ref=f8e426]:
+                - generic [ref=f8e427]: Workspace
+                - heading "SLA Monitoring" [level=3] [ref=f8e429]
+                - paragraph [ref=f8e430]: Track overdue review and resolution obligations.
+                - link "Open workspace" [ref=f8e431] [cursor=pointer]:
+                  - /url: /governance/sla
+              - article [ref=f8e434]:
+                - generic [ref=f8e435]: Workspace
+                - heading "Management of Change" [level=3] [ref=f8e437]
+                - paragraph [ref=f8e438]: Review, approve and track controlled changes.
+                - link "Open workspace" [ref=f8e439] [cursor=pointer]:
+                  - /url: /governance/moc
+              - article [ref=f8e442]:
+                - generic [ref=f8e443]: Workspace
+                - heading "Timestamp Drift" [level=3] [ref=f8e445]
+                - paragraph [ref=f8e446]: Inspect timestamp consistency and clock-related anomalies.
+                - link "Open workspace" [ref=f8e447] [cursor=pointer]:
+                  - /url: /governance/timestamp-drift
+              - article [ref=f8e450]:
+                - generic [ref=f8e451]: Workspace
+                - heading "Circuit Breakers" [level=3] [ref=f8e453]
+                - paragraph [ref=f8e454]: Inspect safeguards and automation stop conditions.
+                - link "Open workspace" [ref=f8e455] [cursor=pointer]:
+                  - /url: /governance/circuit-breaker
+              - article [ref=f8e458]:
+                - generic [ref=f8e459]: Workspace
+                - heading "Push Volume Gate" [level=3] [ref=f8e461]
+                - paragraph [ref=f8e462]: Review volume safeguards before pushing changes.
+                - link "Open workspace" [ref=f8e463] [cursor=pointer]:
+                  - /url: /governance/push-volume-gate
+              - article [ref=f8e466]:
+                - generic [ref=f8e467]: Workspace
+                - heading "Compliance Coverage" [level=3] [ref=f8e469]
+                - paragraph [ref=f8e470]: Evidence-backed requirements and asset compliance gaps.
+                - link "Open workspace" [ref=f8e471] [cursor=pointer]:
+                  - /url: /compliance
+              - article [ref=f8e474]:
+                - generic [ref=f8e475]: Workspace
+                - heading "Nonconformance" [level=3] [ref=f8e477]
+                - paragraph [ref=f8e478]: Track findings that do not satisfy required controls.
+                - link "Open workspace" [ref=f8e479] [cursor=pointer]:
+                  - /url: /compliance/nonconformance
+              - article [ref=f8e482]:
+                - generic [ref=f8e483]: Workspace
+                - heading "Audit Pack" [level=3] [ref=f8e485]
+                - paragraph [ref=f8e486]: Prepare an evidence package for compliance review.
+                - link "Open workspace" [ref=f8e487] [cursor=pointer]:
+                  - /url: /compliance/audit-pack
+              - article [ref=f8e490]:
+                - generic [ref=f8e491]: Workspace
+                - heading "Audit Trail" [level=3] [ref=f8e493]
+                - paragraph [ref=f8e494]: Inspect the chronology of recorded actions and decisions.
+                - link "Open workspace" [ref=f8e495] [cursor=pointer]:
+                  - /url: /audit
+          - region [ref=f8e498]:
+            - generic [ref=f8e499]:
+              - heading "Cyber & Fraud" [level=2] [ref=f8e502]
+              - generic [ref=f8e503]: "4"
+            - generic [ref=f8e504]:
+              - article [ref=f8e505]:
+                - generic [ref=f8e506]: Workflow preview
+                - heading "Hidden Problem Discovery" [level=3] [ref=f8e508]
+                - paragraph [ref=f8e509]: "Workflow preview: missing telemetry and unsupported assumptions."
+                - link "Explore workflow" [ref=f8e510] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+              - article [ref=f8e513]:
+                - generic [ref=f8e514]: Workflow preview
+                - heading "Fraud & Agent Memory" [level=3] [ref=f8e516]
+                - paragraph [ref=f8e517]: "Workflow preview: compare suspicious requests with verified history."
+                - link "Explore workflow" [ref=f8e518] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+              - article [ref=f8e521]:
+                - generic [ref=f8e522]: Workflow preview
+                - heading "Response & Verification" [level=3] [ref=f8e524]
+                - paragraph [ref=f8e525]: "Workflow preview: authorize a response and independently verify its outcome."
+                - link "Explore workflow" [ref=f8e526] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+              - article [ref=f8e529]:
+                - generic [ref=f8e530]: Workflow preview
+                - heading "NetForensiq Forensics" [level=3] [ref=f8e532]
+                - paragraph [ref=f8e533]: Planned adapter for network evidence and chain of custody.
+                - link "Explore workflow" [ref=f8e534] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+  - alert [ref=f8e537]

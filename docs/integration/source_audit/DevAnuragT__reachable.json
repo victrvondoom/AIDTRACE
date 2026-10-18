@@ -1,0 +1,162 @@
+{
+  "repository": "DevAnuragT/reachable",
+  "url": "https://github.com/DevAnuragT/reachable",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\DevAnuragT__reachable",
+  "commit_sha": "8867a6db51ecc8de8471a539575d1b2514340142",
+  "license": "MIT",
+  "copyright_holder": "Anurag Thakur (Copyright (c) 2026); vendored targets/microblog is MIT, Copyright (c) 2017 Miguel Grinberg",
+  "source_files_inspected": [
+    "reachable/graph.py",
+    "reachable/analysis.py",
+    "reachable/ingest.py",
+    "reachable/verify.py",
+    "reachable/actions.py",
+    "reachable/agent.py",
+    "reachable/planner.py",
+    "reachable/symbols.py",
+    "reachable/advisories.py",
+    "reachable/sources.py",
+    "reachable/callgraph.py",
+    "reachable/guard.py",
+    "reachable/config.py",
+    "reachable/frozen.py",
+    "reachable/mcp_server.py",
+    "streamlit_app.py",
+    "requirements.txt",
+    "requirements-mcp.txt",
+    ".env.example",
+    "LICENSE",
+    "targets/microblog/LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python (3.12-era; falkordb==1.8.0)",
+    "FalkorDB",
+    "Streamlit UI + pyvis graph",
+    "Google Gemini (google-genai==2.31.0) function-calling agent",
+    "MCP stdio server (mcp==2.3.0)",
+    "Python ast static analysis",
+    "OSV.dev + PyPI JSON APIs"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Static Python call-graph extraction with edge-confidence typing (CALLS / MAYBE_CALLS / REFERENCES)",
+      "files": ["reachable/callgraph.py"],
+      "symbols": ["CallGraph", "CallGraph.add_root", "Func", "Cls", "Mod", "Endpoint", "build"],
+      "real_or_stub": "REAL",
+      "notes": "ast-based resolver (imports, class hierarchy, local type inference, module-level aliases) that never imports or executes code; trust level of every edge becomes the relationship type; Flask-style route decorators become public Endpoint nodes; unresolved attribute calls are guessed to at most 6 same-named methods with a stoplist."
+    },
+    {
+      "capability": "Graph-computed reachability triage (REACHABLE / POSSIBLY_REACHABLE / NEEDS_REVIEW / NO_STATIC_PATH) with persisted witness paths",
+      "files": ["reachable/analysis.py", "reachable/ingest.py"],
+      "symbols": ["triage", "_decide", "EXACT_PATH", "ANY_PATH", "VALUE_REFS", "latest_findings", "witness_path", "guard_points", "upgrade_plan", "owner_of", "supply_chain_chokepoints"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher shortestPath over (Endpoint)-[:HANDLED_BY]->(Function)-[:CALLS*1..14]->(vulnerable Function); exact-only path gives REACHABLE, adding MAYBE_CALLS/REFERENCES gives POSSIBLY_REACHABLE; verdict is never LLM-decided. Each run persists Run->Finding nodes with path/kinds/layers and EVIDENCE{step} edges, so a proof survives later re-ingest of the app layer."
+    },
+    {
+      "capability": "Advisory-to-vulnerable-function mapping from fix-commit diffs",
+      "files": ["reachable/symbols.py", "reachable/advisories.py"],
+      "symbols": ["extract_symbols", "candidates", "parse_patch", "fetch_patch", "_ask_gemini", "query_pinned"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Deterministic line-text matching of removed/context hunk lines against functions of the vulnerable release ranks candidates; Gemini (optional) picks among candidates, otherwise a labelled 'heuristic' (confidence 0.5) top-scorer is used; curated overrides in data/curated_symbols.json and a cache in data/cache/symbol_map.json make demo runs reproducible. Symbol provenance (source, confidence, rationale, patch_url) is stored on the Vuln."
+    },
+    {
+      "capability": "Snapshot hash of everything a verdict depends on, bound to each Run",
+      "files": ["reachable/analysis.py"],
+      "symbols": ["snapshot_hash", "run_snapshot"],
+      "real_or_stub": "REAL",
+      "notes": "SHA-256 (16 hex chars) over package pins, DEPENDS_ON edges + specifiers, per-dist function counts, call-edge counts, all app-layer edges and vulnerable-symbol mappings; stored on (Run).snapshot."
+    },
+    {
+      "capability": "Closed-loop remediation verification in a private scratch graph with gates",
+      "files": ["reachable/verify.py", "reachable/planner.py"],
+      "symbols": ["verify_plan", "run_closed_loop", "run_closed_loop_ephemeral", "coverage", "summarize", "requirements_diff", "plan_remediation", "consistency_conflicts", "spec_on", "_compatible_dependent"],
+      "real_or_stub": "REAL",
+      "notes": "Plans version bumps from DEPENDS_ON specifier edges (rejects impossible solo bumps, finds co-upgrades via fixpoint search over PyPI releases), rebuilds the whole graph with candidate pins in a throwaway graph, re-triages, and applies gates (coverage retained >=50%, constraints consistent, exposure decreases, no new exposure) => VERIFIED / REJECTED / UNVERIFIED. Persists a Remediation node BASED_ON the baseline Run."
+    },
+    {
+      "capability": "Evidence-bound human approval: proposed actions with payload hash, tamper check and staleness check",
+      "files": ["reachable/actions.py"],
+      "symbols": ["propose_issue", "propose_vex", "propose_fix_pr", "execute", "_store_action", "_fresh_payload", "_diff_keys", "payload_hash", "canonical", "build_vex"],
+      "real_or_stub": "REAL",
+      "notes": "Every Action stores a canonical payload (witness path, content hashes, graph snapshot) and its SHA-256. execute() first verifies the stored payload/body/diff still hash to the approval hash (status 'tampered'), then rebuilds the payload from the CURRENT graph and compares (status 'stale': 'the evidence changed since this action was proposed (changed: ...)'), and only then runs; one executed action per (type,subject); a PR is only proposed if the remediation's baseline_snapshot equals the latest snapshot. Also emits OpenVEX statements and never asserts not_affected from NO_STATIC_PATH."
+    },
+    {
+      "capability": "Gemini function-calling agent whose tools are graph queries, with deterministic offline fallback",
+      "files": ["reachable/agent.py", "reachable/llm.py", "reachable/mcp_server.py"],
+      "symbols": ["Toolbox", "Agent", "Agent._offline", "FORBIDDEN", "Toolbox.query_graph", "list_findings", "explain_finding", "recommend_fixes", "verify_remediation", "propose_fix_pr", "propose_issue", "propose_vex"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Model explains and proposes; verdicts come from Cypher; read-only guard is a regex FORBIDDEN list plus ro_query. LLM_PROMPT_ONLY only for symbol choice and narration. MCP server exposes read tools, remediation planning/verification and propose_fix_pr, but deliberately not execute()."
+    },
+    {
+      "capability": "Dependency betweenness (supply-chain chokepoints) and guard-point ranking",
+      "files": ["reachable/analysis.py"],
+      "symbols": ["supply_chain_chokepoints", "guard_points", "upgrade_plan"],
+      "real_or_stub": "REAL",
+      "notes": "CALL algo.betweenness over PackageVersion/Repo DEPENDS_ON edges (FalkorDB-native); guard_points counts app functions that appear on the most witness paths."
+    },
+    {
+      "capability": "Read-only public mode and frozen demo artifacts",
+      "files": ["reachable/guard.py", "reachable/frozen.py", "data/frozen/agent.json", "data/frozen/whatif.json"],
+      "symbols": ["require_writable", "ReadOnlyError", "record_whatif"],
+      "real_or_stub": "REAL",
+      "notes": "Backend-enforced PUBLIC_MODE; ephemeral scratch graphs allowed with a lock and 30 s cooldown; recorded what-if and agent conversations are shipped as static JSON for the public site (recorded, not live)."
+    }
+  ],
+  "graph_models_and_cypher": "Three layers. Supply chain: Repo, PackageVersion{key,name,version,parsed,direct} with DEPENDS_ON{direct,spec}. Code: Module{layer,dist,file}, Function{qualname,layer,dist,line}, Endpoint{public} with HANDLED_BY, CALLS|MAYBE_CALLS|REFERENCES, DEFINES, PROVIDES, CONTAINS, EXPOSES, Team-OWNS->Module. Advisories: Vuln{id,cve,severity,fixed_version,symbol_source,symbol_confidence,symbol_rationale,patch_url} with AFFECTS and VULNERABLE_SYMBOL{source,confidence}. Results/lineage: Run{id,label,ts,snapshot}-HAS_FINDING->Finding{verdict,path,kinds,layers}-FOR->Vuln, Finding-VIA->Endpoint, Finding-EVIDENCE{step,via}->Function, Remediation{status,result,baseline_snapshot}-BASED_ON->Run, Action{type,subject,status,payload,hash}-RESOLVES->Finding|Remediation, Action-ASSIGNED_TO->Team. Cypher: shortestPath((h)-[:CALLS*1..14]->(f)), UNWIND $rows bulk CREATE, CREATE INDEX FOR (n:L) ON (n.p), CALL algo.betweenness (FalkorDB-native, not Neo4j GDS). Some Cypher is built with f-strings from internal constants (relationship kind, label).",
+  "algorithms": [
+    "Edge-confidence-typed shortestPath (exact CALLS vs CALLS|MAYBE_CALLS|REFERENCES), depth cap 14 (reachable/analysis.py:EXACT_PATH/ANY_PATH)",
+    "Static name resolution with local type inference and class-hierarchy method lookup (reachable/callgraph.py)",
+    "Patch-hunk line-text overlap scoring to localise the vulnerable function (reachable/symbols.py:candidates)",
+    "Constraint-propagating fixpoint planner over DEPENDS_ON specifiers with PyPI release scan, MAX_CANDIDATES 60 (reachable/planner.py:plan_remediation)",
+    "Scratch-graph differential re-triage with coverage-ratio gate (reachable/verify.py:verify_plan)",
+    "Graph snapshot fingerprint + payload hash tamper/stale check (analysis.py:snapshot_hash, actions.py:execute)",
+    "Betweenness centrality via algo.betweenness (analysis.py:supply_chain_chokepoints)"
+  ],
+  "backend_interfaces": [
+    "MCP stdio server (python -m reachable.mcp_server): list_findings, explain_finding, recommend_fixes, plan_remediation, verify_remediation, supply_chain_hubs, query_graph, propose_fix_pr",
+    "CLI: reachable/cli.py (ingest/triage/etc), reachable/demo.py",
+    "No FastAPI/HTTP API; logic is a Python library used by Streamlit and MCP"
+  ],
+  "frontend_interfaces": [
+    "streamlit_app.py: tabs Triage, Agent, Fix, Actions, Cypher; pyvis witness-path graph; approve/execute buttons gated by PUBLIC mode; target picker (vulnshop demo app, vendored microblog)"
+  ],
+  "agent_or_memory_mechanisms": "Gemini chat with function calling over Toolbox (traces recorded for UI), quota-aware model fallback chain, offline keyword fallback. No conversational memory; durable 'memory' is the graph itself: Runs, Findings, Remediations and Actions are persisted and cross-linked, enabling run-to-run comparison and snapshot-bound approvals.",
+  "tests_present": "tests/: 9 files, ~49 test functions (test_pipeline 14, test_actions 9, test_callgraph 9, test_verify 5, test_public 4, test_real_repo 4, test_demo 2, test_mcp 1, test_ui 1). Most need a live FalkorDB and/or cached OSV/PyPI data in data/cache; test_real_repo exercises the vendored microblog target. test_actions covers approval, tamper and stale paths.",
+  "dependency_requirements": [
+    "falkordb==1.8.0",
+    "google-genai==2.31.0 (optional; needs GEMINI_API_KEY)",
+    "pydantic==2.14.1",
+    "streamlit==1.66.0",
+    "pyvis==0.3.2",
+    "packaging==26.3",
+    "pandas==3.0.6",
+    "mcp==2.3.0 (requirements-mcp.txt)",
+    "optional gh CLI for filing issues/PRs"
+  ],
+  "security_findings": [
+    "reachable/actions.py:244,260 - subprocess.run(['gh', ...]) with argv list (no shell) to create issues, branches, commits and draft PRs on GITHUB_REPO; reachable only through execute(), which requires prior human approval and payload-hash/staleness checks",
+    "reachable/actions.py:139 - f-string Cypher interpolating link[0] label (internal constant 'Finding' or 'Remediation', not user input); reachable/ingest.py:179 interpolates relationship kind from internal constants; reachable/analysis.py:127 interpolates a fixed clause; reachable/graph.py:37 interpolates fixed label/prop tuples (not injectable)",
+    "reachable/agent.py:28-94 - query_graph lets the LLM run arbitrary Cypher; guarded by a regex deny-list (FORBIDDEN) and graph.ro_query (server-side read-only), 25-row cap; regex alone is bypassable but ro_query is the real control; CALL procedures other than db.* are not blocked",
+    "reachable/sources.py:33-45 - downloads wheels/sdists from PyPI and extracts them: tarfile uses filter='data' (safe) but zipfile.ZipFile.extractall is used without explicit path validation (Python sanitises member names; no code is executed, only parsed with ast); unrestricted outbound HTTP to pypi.org",
+    "reachable/ingest.py:42, advisories.py:36-44, symbols.py:51, planner.py:45 - urllib.request.urlopen to pypi.org, api.osv.dev and github.com commit .patch URLs taken from OSV references (URL host not validated: SSRF-style fetch of attacker-influenced reference URLs ending in /commit/)",
+    "reachable/symbols.py:118 and agent.py:166 - GEMINI_API_KEY read from env/.streamlit secrets (config.py:46-48); no hard-coded key; advisory text and diffs are sent to Google",
+    "reachable/config.py:15-27 - hand-rolled .env loader and Streamlit secrets flattening into os.environ; secrets.toml.example only",
+    "reachable/ingest.py:77-86 - variant edits do str.replace on a temp copy of the target app; no code executed",
+    "No eval/exec/pickle; vendored targets/microblog and demo_app/vulnshop are intentionally vulnerable/third-party sample apps (not imported or executed by the engine)"
+  ],
+  "duplicates_or_overlaps": "Software dependency vulnerability reachability / blast radius (Software Dependency Intelligence and Security & Vulnerability families); overlaps conceptually with the interdict attack-path triage but at the code-call-graph level; also overlaps SBOM/VEX tooling. Closest relation to Kairos dependency-invalidation ideas.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "HIGH - approvals are bound to a graph snapshot hash plus a canonical payload SHA-256 and are refused as 'stale' when a rebuild of the current graph no longer reproduces the stored payload ('any change to the evidence expires it'), fixes are only proposed if the remediation's baseline_snapshot equals the latest snapshot, and Run/Finding/Remediation/Action nodes persist witness-path lineage; supersession is implicit (new Run) rather than modelled as edges.",
+  "strongest_reusable_unit": {
+    "file": "reachable/actions.py + reachable/analysis.py (snapshot_hash) + reachable/verify.py",
+    "symbols": ["payload_hash", "canonical", "_store_action", "execute", "_fresh_payload", "_diff_keys", "snapshot_hash", "run_snapshot", "verify_plan", "run_closed_loop_ephemeral"],
+    "why": "Compact, FalkorDB-native implementation of 'evidence-bound approval': propose -> store hash of derived payload+snapshot -> on approve re-derive from current graph and refuse if different (tampered vs stale), plus scratch-graph what-if verification with explicit pass/fail gates. Directly reusable as the approval-gating and dependency-invalidation core of an Evidence Drift Cascade engine; the Python call-graph extractor and PyPI/OSV planner are an additional dependency-intelligence pack.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (algo.betweenness only for chokepoints); network access to OSV/PyPI/GitHub for ingestion; Gemini key optional; gh CLI optional"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The payload-hash/stale-check approval gate, snapshot hashing and scratch-graph verification are domain-neutral and should be lifted into Kairos' shared engine; the Python call-graph/OSV/PyPI pipeline can ship as a Software Dependency Intelligence domain pack, with the GitHub-executing path (gh subprocess) left disabled or sandboxed.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

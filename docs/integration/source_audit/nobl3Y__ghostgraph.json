@@ -1,0 +1,113 @@
+{
+  "repository": "nobl3Y/ghostgraph",
+  "url": "https://github.com/nobl3Y/ghostgraph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\nobl3Y__ghostgraph",
+  "commit_sha": "7e1b79f164de1284fdc2a120930b7474402a0b23",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md (claims; MIT badge only, no LICENSE file in tree)",
+    "requirements.txt",
+    ".env.example (key names only)",
+    "backend/mcp_tools/falkor_client.py",
+    "backend/mcp_tools/cypher_tools.py",
+    "backend/agents/topology_agent.py (head)",
+    "backend/agents/reconstruction_agent.py",
+    "backend/agents/supervisor_agent.py (symbol grep and lines ~395-445)",
+    "backend/harness/compiler.py",
+    "backend/harness/differential.py (head + symbol grep)",
+    "backend/app.py (routes, /api/cypher, /api/ingest, /api/upload)",
+    "backend/tests and test_*.py (names/counts)"
+  ],
+  "languages_frameworks": ["Python/FastAPI + SSE (sse-starlette)", "falkordb >=1.0.8", "google-genai (Gemini)", "capstone/pefile (declared)", "plain JS/HTML/Cytoscape frontend", "C ground-truth sources"],
+  "implemented_capabilities": [
+    {
+      "capability": "Decompiled-binary topology ingestion into FalkorDB",
+      "files": ["backend/agents/topology_agent.py", "backend/data/targets/*.json"],
+      "symbols": ["TopologyAgent.ingest_target", "TopologyAgent.ensure_schema_indices"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real UNWIND/MERGE batch ingest of pre-baked JSON 'decompiled' targets (pacman, snake, lunar_lander, telemetry, keygen) into Program/Function/GlobalMemory/Struct/TestCase nodes. Inputs are hand-authored JSON fixtures, not output of a real decompiler run."
+    },
+    {
+      "capability": "Graph MCP-style tools: function context, memory provenance, struct layout",
+      "files": ["backend/mcp_tools/cypher_tools.py"],
+      "symbols": ["get_function_context", "resolve_memory_source", "get_struct_definition", "fetch_failure_memory", "record_candidate", "record_test_outcome"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher (consumer-READS->GlobalMemory<-WRITES-initializer, CALLS*1..2) and an episodic failure memory pattern (Candidate)-[:FAILED_ON {diff}]->(TestCase). Plain Python functions; despite the name there is no actual MCP server in this repo."
+    },
+    {
+      "capability": "LLM code reconstruction",
+      "files": ["backend/agents/reconstruction_agent.py"],
+      "symbols": ["ReconstructionAgent.reconstruct_function", "_build_prompt", "_template_synthesize"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Builds a Gemini prompt from graph context (hard-coded to the 1980 Pac-Man spec and a 'GameState' struct) and falls back to a fixed template string if no key or on error. The model name in the code ('gemini-3.8-flash') is not verified."
+    },
+    {
+      "capability": "Differential verification / benchmark (graph vs no-graph)",
+      "files": ["backend/harness/differential.py", "backend/harness/compiler.py"],
+      "symbols": ["evaluate_pacman_test", "evaluate_telemetry_test", "evaluate_keygen_test", "evaluate_snake_test", "evaluate_lunar_lander_test", "DifferentialHarness.run_tests", "CCompiler.compile"],
+      "real_or_stub": "STUB",
+      "notes": "Test evaluators are Python re-implementations that take a boolean has_graph_memory and zero out the lookup tables (e.g. dir_offsets, CRC table, S-box) when it is False, so the reported 40% vs 100% parity is determined by the flag, not by compiling and executing the LLM candidate. compiler.py can run gcc (list-args subprocess) but its output is not what the differential tests exercise; without a compiler it returns a simulated success."
+    },
+    {
+      "capability": "Supervisor / multi-agent orchestration",
+      "files": ["backend/agents/supervisor_agent.py", "backend/app.py"],
+      "symbols": ["SupervisorAgent.run_reconstruction_pipeline", "/api/reconstruct/stream"],
+      "real_or_stub": "DEMO_ONLY",
+      "notes": "Streams a scripted sequence of AGENT_STEP / MEMORY_RESOLVED / CANDIDATE_GENERATED events with hard-coded per-target config (reconstructed_c strings, critical memory address) and a literal 'Hallucinated stub' for flat mode; paced with sleep(0.55) 'for readable presentation'. It is a presentation script more than an agent loop."
+    },
+    {
+      "capability": "In-memory FalkorDB fallback",
+      "files": ["backend/mcp_tools/falkor_client.py"],
+      "symbols": ["FalkorClient._simulate_fallback_query"],
+      "real_or_stub": "STUB",
+      "notes": "When the DB is unreachable the client silently returns canned data (e.g. producer 'init_game_tables' for any address containing 6080), so demo results can appear without any graph."
+    },
+    {
+      "capability": "Custom binary upload / disassembly",
+      "files": ["backend/app.py"],
+      "symbols": ["upload_custom_binary"],
+      "real_or_stub": "STUB",
+      "notes": "Optionally counts capstone instructions on the first 4 KB but always returns inferred_functions: 8 and a message claiming it was 'indexed into FalkorDB in 120ms'; nothing is ingested."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'ghostgraph'. Labels: Program, Function{name,signature,pseudocode}, GlobalMemory{address,label,data_type,size}, Struct, StructField{offset,name,type}, TestCase{id,input_payload,expected_output}, Candidate{id,version,status,diff,source_code}. Edges: CONTAINS, CALLS, READS, WRITES, HAS_FIELD, EXERCISES, RECONSTRUCTS, PASSED, FAILED_ON{diff}. Plain openCypher with parameters (MERGE/UNWIND/OPTIONAL MATCH/collect). Supervisor builds display Cypher strings by f-string interpolation of target names/addresses (shown to UI, not executed, but sets a bad pattern). No APOC/GDS or FalkorDB algo procedures.",
+  "algorithms": [
+    "Two-hop provenance traversal consumer->GlobalMemory<-initializer (cypher_tools.py:resolve_memory_source)",
+    "Candidate/TestCase failure-edge episodic memory with version chaining (cypher_tools.py:fetch_failure_memory, record_test_outcome)",
+    "No real graph algorithm; differential 'verification' is flag-driven simulation (harness/differential.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/targets, /api/target/details, POST /api/ingest, GET /api/graph, POST /api/cypher (arbitrary Cypher), GET /api/reconstruct/stream (SSE), GET /api/telemetry/downlink, /api/snake/*, /api/lunar/*, GET /api/export, POST /api/upload"
+  ],
+  "frontend_interfaces": [
+    "Static HTML/JS dashboard (frontend/index.html, app.js, style.css) with Cytoscape graph and arcade/lunar simulators"
+  ],
+  "agent_or_memory_mechanisms": "Claims a Topology/Reconstruction/Verification/Supervisor swarm with episodic failure memory in the graph. In code the failure-memory Cypher is real, but the swarm is a scripted event stream and the verification loop is simulated; there is no genuine self-healing convergence loop.",
+  "tests_present": "No real test suite: ad-hoc scripts (backend/test_app.py with 1 test, test_real_connections.py 2, test_pipeline.py, test_falkor_only.py, test_gemini_key.py, tests/verify_*.py) that mostly print connectivity/pipeline output; ground_truth/test_lunar_lander.py has no test_ functions by grep.",
+  "dependency_requirements": ["fastapi>=0.110.0", "uvicorn[standard]>=0.28.0", "sse-starlette>=2.0.0", "pydantic>=2.6.0", "falkordb>=1.0.8", "google-genai>=0.1.0", "capstone>=5.0.0", "pefile>=2023.2.7", "python-dotenv>=1.0.0", "GEMINI_API_KEY (optional)"],
+  "security_findings": [
+    "backend/app.py:~192-202 - POST /api/cypher executes arbitrary caller-supplied Cypher (including writes and graph deletion) with no authentication or read-only guard; unrestricted query execution",
+    "backend/app.py:~41-42 - CORS allow_origins=[\"*\"] with no auth on any endpoint",
+    "backend/app.py:~387-410 - /api/upload accepts a binary (2 MB cap enforced only via file.size when present) and parses it with capstone; low risk but the response claims ingestion that does not occur",
+    "backend/harness/compiler.py:~55-60 - subprocess.run([gcc, -O1, file, -o, out]) compiles LLM-generated C; harness/differential.py imports subprocess; compiling untrusted generated code and executing outputs would be RCE-adjacent if enabled outside a sandbox (15 s timeout only, no sandbox)",
+    "backend/agents/supervisor_agent.py:~395-402 - f-string Cypher with target name/address interpolated (display-only today)",
+    "backend/mcp_tools/falkor_client.py:~72 - logs full Cypher text on error",
+    "No hard-coded secrets found (GEMINI_API_KEY and FALKORDB_PASSWORD from env; .env.example holds placeholders)"
+  ],
+  "duplicates_or_overlaps": "Name-collides with chief-07/ghostgraph (same sweep, different project). Failure-memory pattern overlaps Agent Memory & Provenance; reverse-engineering theme is unique but low value for Kairos.",
+  "capability_family": "Scientific & Technical Analysis",
+  "evidence_drift_relevance": "LOW - the Candidate-FAILED_ON-TestCase failure memory and version-chained candidates are a thin form of decision lineage, but there is no provenance validation, supersession, temporal validity or approval gating, and the verification is simulated.",
+  "strongest_reusable_unit": {
+    "file": "backend/mcp_tools/cypher_tools.py",
+    "symbols": ["resolve_memory_source", "fetch_failure_memory", "record_candidate", "record_test_outcome"],
+    "why": "Small parameterized Cypher helpers showing a failure-memory edge pattern (Candidate)-[:FAILED_ON {diff}]->(TestCase) and consumer/producer provenance; nothing else in the repo is reliable.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; Gemini key only for the (non-essential) code generation"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The headline graph-vs-no-graph result is produced by a boolean flag in simulated evaluators, the 'swarm' is a scripted stream, there is an in-memory canned-data fallback, an open arbitrary-Cypher endpoint and no license file; only the failure-memory edge idea is worth borrowing.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,142 @@
+{
+  "repository": "estatic-coder/Graph_Hacks",
+  "url": "https://github.com/estatic-coder/Graph_Hacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\estatic-coder__Graph_Hacks",
+  "commit_sha": "5c8a2a9169e071d900778eecc327251dafd4313a",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "docker-compose.yml",
+    "backend/requirements.txt",
+    "backend/app/config.py",
+    "backend/app/main.py",
+    "backend/app/graph/client.py",
+    "backend/app/graph/schema.py",
+    "backend/app/graph/algorithms.py",
+    "backend/app/memory/manager.py",
+    "backend/app/agent/decision_engine.py",
+    "backend/app/agent/multi_agent.py",
+    "backend/app/agent/verifier.py",
+    "backend/app/agent/actions.py",
+    "backend/app/agent/tools.py",
+    "backend/app/agent/scenario_ledger.py",
+    "backend/app/agent/deployweave_answers.py",
+    "backend/app/ingestion/parsers/python.py",
+    "backend/app/repositories/manager.py",
+    "frontend/package.json",
+    "backend/.env (key names only; values not read into report)"
+  ],
+  "languages_frameworks": ["Python 3.12/FastAPI", "falkordb client (imported, NOT in requirements.txt)", "Pydantic v2", "google-genai (Gemini, optional)", "React 18 + Vite + TypeScript + Tailwind + Cytoscape.js"],
+  "implemented_capabilities": [
+    {
+      "capability": "Code property graph ingestion (Python AST) into FalkorDB",
+      "files": ["backend/app/ingestion/parsers/python.py", "backend/app/ingestion/pipeline.py", "backend/app/ingestion/incremental.py", "backend/app/graph/client.py"],
+      "symbols": ["PythonASTVisitor", "IngestionPipeline", "FalkorClient.upsert_node", "FalkorClient.upsert_edge"],
+      "real_or_stub": "REAL",
+      "notes": "ast.NodeVisitor extracts Class/Function/CallSite/INHERITS etc.; MERGE-based idempotent node/edge upserts; SHA-256 incremental skip. Other languages go to generic/fallback regex-style parsers (thin)."
+    },
+    {
+      "capability": "Graph algorithm engine (BFS blast radius, Tarjan SCC, PageRank, label-propagation, betweenness, ablation)",
+      "files": ["backend/app/graph/algorithms.py"],
+      "symbols": ["GraphAlgorithmEngine.shortest_path", "reachable_nodes", "reverse_dependencies", "strongly_connected_components", "centrality", "pagerank", "community_detection", "impact_subgraph", "dependency_ablation_analysis", "cycle_condensation_analysis", "_build_adjacency"],
+      "real_or_stub": "REAL",
+      "notes": "Bounded in-memory algorithms over an adjacency pulled from FalkorDB (no GDS/APOC); depth/path caps; shortest_path first tries Cypher shortestPath then BFS fallback. Returns AlgorithmExecutionResult with rationale/explanation."
+    },
+    {
+      "capability": "Persistent agent memory with staleness invalidation via snippet hash",
+      "files": ["backend/app/memory/manager.py", "backend/app/memory/models.py"],
+      "symbols": ["GraphMemoryManager.record_finding", "compute_snippet_hash", "get_current_revision", "invalidate_stale_findings", "quarantine_contaminated_memories", "record_hypothesis", "resolve_hypothesis", "record_procedure"],
+      "real_or_stub": "REAL",
+      "notes": "Findings are stored as (:Finding)-[:EVIDENCED_BY]->(:SourceEvidence {file,start/end line,snippet_hash}) with source_revision (git HEAD or file-stat hash). invalidate_stale_findings recomputes SHA-256 of the cited lines and sets is_stale/stale_reason when file deleted, lines changed, or revision advanced. query_semantic_memory excludes stale/quarantined by default."
+    },
+    {
+      "capability": "Evidence/citation verification (anti-fabrication)",
+      "files": ["backend/app/agent/verifier.py"],
+      "symbols": ["EvidenceVerifier.verify", "CitationVerification", "PathVerification", "VerificationReport", "CrossSectionValidator"],
+      "real_or_stub": "REAL",
+      "notes": "Checks every file:line citation against disk and every claimed graph path edge against FalkorDB; reports fabricated citations/paths, extracted vs inferred claims, and multi-dimension verification flags (source, graph, scenario, execution receipt, memory persistence, multi-agent handoff)."
+    },
+    {
+      "capability": "13-step graph-driven decision loop with provenance",
+      "files": ["backend/app/agent/decision_engine.py"],
+      "symbols": ["GraphDecisionEngine.execute_agent_loop", "_select_graph_tool", "_retrieve_graph_context", "DecisionStep"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Deterministic rule-based tool selection keyed on graph topology (fan-in, circuit breaker edge); records decision steps; no LLM needed. The 'causal dependency' demo is a rule table, not learned."
+    },
+    {
+      "capability": "Multi-agent coordination with task leases and handoff edges",
+      "files": ["backend/app/agent/multi_agent.py"],
+      "symbols": ["MultiAgentInvestigation.claim_task", "record_handoff", "MultiAgentInvestigationCoordinator.resume_investigation", "execute_collaborative_investigation", "AgentRole", "TaskStatus"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Atomic Cypher MATCH...WHERE status='PENDING' OR lease_expires<=now SET claimed_by lease; HANDOFF_TO edges persisted. Four 'roles' are in-process Python methods, not independent agents. Errors are swallowed at debug level."
+    },
+    {
+      "capability": "Graph-guided test selection and execution",
+      "files": ["backend/app/agent/actions.py", "backend/app/agent/test_impact.py", "backend/app/agent/impact.py"],
+      "symbols": ["AgentActionEngine.select_tests_by_graph", "investigate_regression_from_diff", "investigate_architecture_risk"],
+      "real_or_stub": "REAL",
+      "notes": "Ranks tests by graph distance, requires authorize flag before running pytest via subprocess with a 30s timeout."
+    },
+    {
+      "capability": "Benchmark-specific scenario simulators and canned question handlers",
+      "files": ["backend/app/agent/scenario_ledger.py", "backend/app/agent/deployweave_answers.py", "backend/app/agent/demo_scenario.py", "backend/app/agent/control_flow.py", "backend/app/agent/symbolic_exec.py"],
+      "symbols": ["CanonicalScenarioLedger.dw_submit", "dw_drain_one", "execute_deployweave_capability", "IncidentInvestigatorDemo"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Hand-coded state machines for the DeployWeave/OrbitOps/SignalForge/RelayMesh/NexusPay fixture repos shipped under backend/data/repos, keyed on question text (Q51..Q85). This is benchmark-fitted logic, not general-purpose."
+    },
+    {
+      "capability": "Company brain (ownership/ADR linking)",
+      "files": ["backend/app/knowledge/company_brain.py"],
+      "symbols": ["CompanyBrain"],
+      "real_or_stub": "STUB",
+      "notes": "_load_default_organizational_catalog() returns a hard-coded in-memory catalog of teams/people/ADRs (ADR-004, ADR-007) for the demo repos; hard-coded demo data, not ingested from any real source."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph per repo: workspace_<repo_id>. Labels (schema.py NodeType): Repository, Revision, File, Module, Class, Function, Method, CallSite, Branch, Queue, StateStore, ExternalService, Test, Config*; memory: Investigation, InvestigationSession, Finding, SourceEvidence, Hypothesis, Procedure, Decision, Observation, AgentTask, Agent; company: Person, Team, DecisionRecord. Edges (RelType): CALLS, IMPORTS, DEFINES, INHERITS, TESTS, DEPENDS_ON, READS_STATE/WRITES_STATE, ENQUEUES/DEQUEUES, RECORDED, REFERENCES, EVIDENCED_BY, PROPOSED, TARGETS, HANDOFF_TO, plus declared-but-unused INVALIDATES and SUPERSEDES (schema.py:100-101; no code writes them - staleness is a property flag). Edge props: provenance, confidence, is_inferred. Cypher is FalkorDB-compatible (shortestPath, variable-length paths); no APOC/GDS. Parameterized $params throughout; f-string interpolation only of clamped integer depths and rel-type lists (tools.py:41-83, algorithms.py:92-99).",
+  "algorithms": [
+    "BFS reachable_nodes/reverse_dependencies with depth_map and max_depth cap (graph/algorithms.py:190-249)",
+    "Tarjan SCC for circular dependencies (algorithms.py:292-353, recursive, no recursion guard)",
+    "Degree/betweenness centrality, PageRank, label-propagation community detection (algorithms.py:358-528)",
+    "Bounded DFS all-paths with max_paths cap (algorithms.py:152-185)",
+    "SHA-256 snippet-hash drift detection for stale findings (memory/manager.py:92-106, 693-752)",
+    "Atomic Cypher task lease with expiry (agent/multi_agent.py:156-208)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /health, GET/POST repositories (import local/github/zip), POST /repositories/{id}/index, DELETE repo, POST ingest, GET graph/{repo_id}, POST investigate, POST impact (git diff), GET memory/sessions|findings|hypotheses, POST memory/invalidate (main.py:44-406)"
+  ],
+  "frontend_interfaces": [
+    "React 18 + Cytoscape: App.tsx (909 lines), components/GraphExplorer.tsx, ImportRepositoryModal.tsx, RepositorySelector.tsx"
+  ],
+  "agent_or_memory_mechanisms": "Episodic (InvestigationSession), semantic (Finding+SourceEvidence with snippet_hash and revision), hypothesis lifecycle (unresolved/validated/rejected), procedural memory (Procedure.success_count), staleness invalidation and quarantine of contaminated memories; multi-role handoff with leases. LLM (Gemini) used only in agent/investigator.py; falls back to mock_mode when no key.",
+  "tests_present": "backend/tests: ~38 pytest files, ~279 test functions (algorithms, memory, multi-agent, graph mock, reconciliation, memory poisoning, cross-repo isolation, benchmarks). Tests run against MockFalkorClient (ENVIRONMENT=test) - the mock pattern-matches Cypher substrings, so tests do not validate real Cypher. README claims 104 passing; not executed by auditor.",
+  "dependency_requirements": ["pyyaml (imported by ingestion/parsers/generic.py, uses safe_load; MISSING from requirements.txt)", "fastapi (unpinned)", "uvicorn", "pydantic", "pydantic-settings", "pytest", "requests", "httpx", "python-multipart", "falkordb (imported by graph/client.py but MISSING from requirements.txt)", "redis (transitive; imported)", "google-genai (imported in investigator.py but MISSING from requirements.txt)"],
+  "security_findings": [
+    "backend/.env:5 - GEMINI_API_KEY with a non-empty value (53 chars) is TRACKED IN GIT (git ls-files lists backend/.env); treat as leaked and rotate. Value not copied.",
+    "backend/app/agent/actions.py:157 - subprocess.run([sys.executable,-m,pytest,test_file,-k,test_name]) executes tests from an imported repo; guarded by authorize flag and 30s timeout, but test_file/test_name derive from parsed repo content (code execution of untrusted repos).",
+    "backend/app/agent/test_impact.py:341 - same pytest subprocess execution of target repo tests.",
+    "backend/app/repositories/manager.py:245 - git clone of user URL via subprocess (list args, regex-validated github.com URL, 45s timeout); branch arg passed unvalidated to --branch (option-injection risk if value starts with '-').",
+    "backend/app/repositories/manager.py:117-127 - import_local allows arbitrary local directory import; forbidden-root check is POSIX-only and bypassable (startswith home exemption).",
+    "backend/app/repositories/manager.py:171-187 - ZIP import has zip-slip, size and file-count checks (good) but z.extractall after validation.",
+    "backend/app/graph/algorithms.py:92-99 - f-string Cypher interpolates allowed_rel_types and max_depth directly; safe only if callers never pass user-controlled rel types.",
+    "backend/app/graph/client.py:87-89,110-112 - property keys interpolated into Cypher as backtick-quoted names (k from node.properties); injection if keys are attacker-controlled.",
+    "backend/app/graph/client.py:176-178 - get_all_elements interpolates limit into Cypher f-string.",
+    "backend/app/agent/impact.py:198-209 and backend/app/memory/manager.py:58-72 - git subprocess calls with fixed arg lists (low risk).",
+    "docker-compose.yml - falkordb/falkordb:latest exposed on 6379 with no auth; backend volume-mounts ./backend."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal (reverse_dependencies), dependency-cycle detection (SCC), RCA-from-diff, test impact selection, and agent memory/provenance. Many sibling hackathon repos in this corpus implement code-graph blast radius; the memory staleness piece is the differentiator.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "HIGH - GraphMemoryManager stores claims with SourceEvidence(file,line range,snippet_hash,source_revision), detects drift by re-hashing cited lines, marks findings stale with a reason, quarantines contaminated memory, and EvidenceVerifier rejects fabricated citations; however SUPERSEDES/INVALIDATES edges are declared but unused and invalidation does not cascade to dependent decisions.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/memory/manager.py",
+    "symbols": ["GraphMemoryManager.record_finding", "compute_snippet_hash", "invalidate_stale_findings", "quarantine_contaminated_memories", "get_current_revision"],
+    "why": "Concrete content-hash based evidence drift detection with revision tracking and stale reasons, expressed in parameterized FalkorDB-compatible Cypher; directly maps to Evidence Drift Cascade (claim -> evidence -> hash -> stale flag). Needs a cascade step (traverse EVIDENCED_BY/REFERENCES/DECIDED to invalidate dependents).",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (via module-level falkor_client singleton; MockFalkorClient fallback); git CLI optional; no LLM key needed"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Extract the snippet-hash staleness logic, EvidenceVerifier and GraphAlgorithmEngine as a shared engine behind an injected graph client rather than the module-level singleton; do not import the benchmark-fitted scenario/DeployWeave handlers. License is missing so reuse depends on the attested owner permission.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

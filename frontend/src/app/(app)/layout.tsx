@@ -17,6 +17,8 @@ export const dynamic = "force-dynamic";
 // specific one wasn't listed above it. `.find()` returns the first array match, so a
 // specific prefix MUST be listed before any shorter prefix it also satisfies.
 const ROUTE_LABELS: [string, string][] = [
+  ["/resolveai", "ResolveAI Intelligence"],
+  ["/workspace", "All Features"],
   ["/briefs", "Briefs"],
   ["/copilot", "Copilot"],
   ["/assets/register", "Register Assets"],

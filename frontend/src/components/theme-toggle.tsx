@@ -7,18 +7,24 @@ import { Icon } from "@/components/icon";
 type Theme = "light" | "dark";
 
 /** Flips the single Kairos UI between its light and dark palettes. */
-export function ThemeToggle({ className = "" }: { className?: string }) {
+export function ThemeToggle({ className = "", labeled = false }: { className?: string; labeled?: boolean }) {
   const [theme, setTheme] = useState<Theme>("light");
 
   useEffect(() => {
-    // Mount-once sync of the pre-hydration <html data-theme> into React state.
-    const current = document.documentElement.getAttribute("data-theme");
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading external DOM state on mount is what effects are for
-    if (current === "dark" || current === "light") setTheme(current);
+    const sync = () => setTheme(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light");
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "kairos-theme" && (event.newValue === "light" || event.newValue === "dark")) {
+        document.documentElement.setAttribute("data-theme", event.newValue);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => { observer.disconnect(); window.removeEventListener("storage", onStorage); };
   }, []);
 
-  function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
+  function applyTheme(next: Theme) {
     setTheme(next);
     const apply = () => {
       document.documentElement.setAttribute("data-theme", next);
@@ -37,15 +43,28 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
 
   const isDark = theme === "dark";
 
+  if (labeled) return (
+    <div role="group" aria-label="Appearance" className={cn("grid grid-cols-2 gap-1 border border-line bg-surface-2 p-1", className)}>
+      {(["light", "dark"] as const).map((option) => (
+        <button key={option} type="button" aria-pressed={theme === option} onClick={() => applyTheme(option)}
+          className={cn("flex min-h-11 items-center justify-center gap-2 px-2 text-caption font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+            theme === option ? "border border-line bg-surface text-ink shadow-sm" : "border border-transparent text-muted hover:text-ink")}>
+          <Icon name={option === "light" ? "sun" : "moon"} size={16} />
+          {option === "light" ? "Daylight" : "Nightlight"}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => applyTheme(isDark ? "light" : "dark")}
       role="switch"
       aria-checked={isDark}
-      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-      title={`Switch to ${isDark ? "light" : "dark"} mode`}
-      className={cn("grid size-8 place-items-center text-muted transition-colors hover:bg-surface-2 hover:text-ink", className)}
+      aria-label="Nightlight theme"
+      title={`Switch to ${isDark ? "Daylight (white)" : "Nightlight (black)"}`}
+      className={cn("grid size-11 shrink-0 place-items-center text-muted transition-colors hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-accent", className)}
     >
       {isDark ? (
         <Icon name="sun" size={15} />

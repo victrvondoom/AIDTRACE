@@ -1,0 +1,162 @@
+{
+  "repository": "harshitdeora/lastmile",
+  "url": "https://github.com/harshitdeora/lastmile",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\harshitdeora__lastmile",
+  "commit_sha": "73ea222f50f3c3fb9066c781c3d238ce2cd9bbb1",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/requirements.txt",
+    ".env.example",
+    "docs/semantics.md",
+    "backend/app/domain.py",
+    "backend/app/graph.py",
+    "backend/app/lease.py",
+    "backend/app/planning.py",
+    "backend/app/execution.py",
+    "backend/app/agents.py (head and security grep)",
+    "backend/app/api.py (routes, codex endpoint, reset)",
+    "backend/app/service.py (method list)",
+    "backend/app/evaluation.py (head)",
+    "backend/app/simulator.py (method list)",
+    "backend/app/scenarios.py (head)",
+    "backend/app/codex_controller.py (grep)",
+    "scripts/codex_bridge.py (subprocess sections)",
+    "queries/bottlenecks.cypher",
+    "queries/decision.cypher",
+    "queries/impact.cypher",
+    "queries/load.cypher",
+    "queries/paths.cypher",
+    "queries/replay.cypher",
+    "queries/resources.cypher",
+    "queries/resume.cypher",
+    "queries/write.cypher",
+    "backend/tests/test_lastmile.py (head and test names)",
+    "benchmarks/results.csv (head)"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "Pydantic 2",
+    "FalkorDB Python client 1.2.0",
+    "OR-Tools CP-SAT 9.12",
+    "OpenAI Responses API (optional)",
+    "OpenAI Codex app-server bridge (optional, local)",
+    "React/TypeScript/Vite frontend (App.tsx 1633 lines)",
+    "Playwright e2e"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence validity windows with authority-ordered observations",
+      "files": ["backend/app/execution.py", "backend/app/domain.py"],
+      "symbols": ["observe", "advance_world", "Road", "Report"],
+      "real_or_stub": "REAL",
+      "notes": "Roads carry status (VERIFIED_OPEN, VERIFIED_CLOSED, STALE, CONFLICTING, UNKNOWN), observed_at and valid_until. observe() applies an inspection or traversal result only when its observed_at is not older than the road's current observation, so a late older report cannot override newer authority, while unverified reports can only set CONFLICTING. advance_world() flips VERIFIED roads to STALE when valid_until <= time and emits an expiry Event."
+    },
+    {
+      "capability": "Dependency invalidation cascade from stale evidence to plans and reservations",
+      "files": ["backend/app/execution.py", "queries/impact.cypher"],
+      "symbols": ["invalidate", "advance_world", "impact.cypher"],
+      "real_or_stub": "REAL",
+      "notes": "On each simulated minute, unstarted assignments whose route legs lack VERIFIED_OPEN evidence valid at the leg's entry time are cancelled and their stock reservations released; started assignments become blocked and keep their loaded inventory and position; requests return to outstanding. impact.cypher traces Report-DESCRIBES->Road<-USES-Assignment-FULFILLS->DeliveryRequest to preview what a road change touches."
+    },
+    {
+      "capability": "Revision-guarded atomic graph persistence with snapshots and idempotency receipts",
+      "files": ["backend/app/graph.py", "queries/write.cypher", "backend/app/service.py"],
+      "symbols": ["GraphStore.save", "GraphStore.load", "GraphStore.replay", "Operations.mutate", "Conflict", "write.cypher"],
+      "real_or_stub": "REAL",
+      "notes": "A single GRAPH.QUERY statement guarded by MATCH (root:Run) WHERE root.revision=$expected upserts all entities as (:Entity:Label {id, kind, data JSON}) with projected indexed fields, rewires relations and creates a (:Snapshot {revision,time,data}) node; zero rows returned means Conflict (HTTP 409). Idempotency receipts are stored in World.idempotency so retries after a network failure do not re-apply. Replay reads committed snapshots."
+    },
+    {
+      "capability": "Graph path enumeration over time-valid roads",
+      "files": ["queries/paths.cypher", "backend/app/graph.py"],
+      "symbols": ["GraphStore.paths", "paths.cypher"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher variable-length (TRAVEL*1..12) simple-path search that filters every edge by status = VERIFIED_OPEN and valid_until > $now, with an override for hypothetical branches, ordered by summed minutes and limited to 6."
+    },
+    {
+      "capability": "Value-of-information inspection ranking",
+      "files": ["backend/app/planning.py"],
+      "symbols": ["Planner.rank", "Planner.plan", "project"],
+      "real_or_stub": "REAL",
+      "notes": "For each uncertain road it projects observed state forward by the inspection time, solves open and closed hypothetical branches with the same planner and computes p_open*open_utility + (1-p_open)*closed_utility - base_utility. Priors are explicitly synthetic scenario inputs. Branches never write to the live graph."
+    },
+    {
+      "capability": "CP-SAT delivery plan selection",
+      "files": ["backend/app/planning.py"],
+      "symbols": ["Planner.plan"],
+      "real_or_stub": "REAL",
+      "notes": "Enumerates candidate routes of at most 2 stops via permutations, then an OR-Tools boolean model maximises utility with lexicographic tie-breaks under vehicle, request-uniqueness and depot-stock constraints (single worker, seed 0, 2 s limit)."
+    },
+    {
+      "capability": "Bounded controller tool surface (deterministic, OpenAI and Codex bridge)",
+      "files": ["backend/app/agents.py", "backend/app/tool_outputs.py", "backend/app/codex_controller.py", "scripts/codex_bridge.py"],
+      "symbols": ["ARGUMENTS", "tool_definitions", "_dispatch", "llm_cycle", "dispatch"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Eight strictly-schemed tools (context, impact trace, rank, inspect, propose, commit, advance, decision evidence). Decisions record the evidence ids returned by tools and are stored as Decision nodes with BASED_ON and AFFECTS edges. The LLM paths need external credentials and were not exercised; the committed live-Codex smoke report is a single recorded run."
+    },
+    {
+      "capability": "Fixed synthetic disaster-relief scenarios and benchmark",
+      "files": ["backend/app/scenarios.py", "backend/app/simulator.py", "backend/app/evaluation.py", "benchmarks/results.csv"],
+      "symbols": ["CATALOGUE", "observed_world", "Simulator", "benchmark"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Three hard-coded scenarios (critical_crossing, capacity_disruption, no_useful_inspection) over a small road network with a private seeded simulator checkpoint that hides future closures from the controller. Benchmark results are committed CSV/JSON of 10 seeds and three policies."
+    }
+  ],
+  "graph_models_and_cypher": "Every domain object is stored as (:Entity:<Label> {id, kind, data JSON}) with projected fields (status, valid_until, state). Labels: Run, Location, Road, DeliveryRequest, Stock, Vehicle, Report, Assignment, Reservation, Inspection, Plan, Decision, Event, Snapshot. Edges: TRAVEL {road,status,minutes,valid_until} between Locations, CONNECTS, DESCRIBES (Report/Inspection->Road), DESTINATION, USES, FULFILLS, USES_VEHICLE, PART_OF, HOLDS (Reservation->Stock), FOR, BASED_ON (Decision->evidence), AFFECTS (Decision->Plan). One graph per run named lastmile_<32-hex>. Patterns: single-statement revision-guarded FOREACH-MERGE upsert; ALL(n IN nodes(p) WHERE SINGLE(m IN nodes(p) WHERE m.id=n.id)) simple-path filter; reduce() for path cost. Typed World JSON is the source of truth for the planner; Cypher is used for path search, impact tracing and persistence. No APOC or GDS. write.cypher also deletes legacy Stock nodes with ids d1,d2,d3 on every save (a migration leftover).",
+  "algorithms": [
+    "Time-validity path search with per-edge expiry filter in Cypher (queries/paths.cypher) combined with a Python per-leg entry-time validity check (planning.py:valid_path)",
+    "OR-Tools CP-SAT route selection with lexicographic utility, travel and stable-id tie-break objective (planning.py:Planner.plan)",
+    "One-step value-of-information ranking by expected utility of open versus closed branches (planning.py:Planner.rank)",
+    "Discrete-minute event loop that expires evidence and cascades invalidation to assignments and reservations (execution.py:advance_world, invalidate)",
+    "Authority-ordered observation merge that ignores older observations (execution.py:observe)",
+    "Bottleneck road ranking by number of outstanding requests whose depot paths cross it (queries/bottlenecks.cypher)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/scenarios, /api/tools, /api/runs, /api/runs/{id}, /api/runs/{id}/rank, /impact/{road}, /plan, /events, /replay, /evidence/{decision}, /queries, /bottlenecks, /api/benchmarks",
+    "FastAPI: POST /api/runs, /api/runs/{id}/inspect, /commit, /advance, /disrupt, /cycle, /reset, /api/benchmarks",
+    "Internal bearer-protected endpoint POST /api/internal/codex/{run_id}/tool used by the local Codex bridge",
+    "Local host bridge scripts/codex_bridge.py (HTTP server) and helper scripts configure_codex.py, smoke_codex.py, verify_restart.py"
+  ],
+  "frontend_interfaces": [
+    "React/Vite single-page console frontend/src/App.tsx (investigate, replay, benchmarks and live-Codex views) with Playwright specs journey.spec.ts and codex-live.spec.ts"
+  ],
+  "agent_or_memory_mechanisms": "Every controller cycle is recorded as a Decision node that links by BASED_ON to the evidence ids returned by its tool calls and by AFFECTS to the plan; a replay endpoint rebuilds history from Snapshot nodes; idempotency keys make tool retries safe; a process lease file (lease.py) enforces a single backend worker; the controller cannot read simulator truth. State machine for assignments: preview -> reserved -> in_transit -> delivered, with cancelled and blocked outcomes.",
+  "tests_present": "backend/tests/test_lastmile.py has 24 pytest functions and test_codex_connection.py has 5. The main suite uses a fixture that requires a REAL FalkorDB (no fallback) and covers late-report authority, hypothetical branches never mutating the graph, reservation release on expiry, idempotent commit/advance and stale revision, restart/replay, hand-enumerated planner optimum, physical blockage retaining inventory, and graph/provider failure handling. Also two Playwright specs and benchmark artifacts. GitHub Actions workflow present (.github/workflows/checks.yml) but not read. Not run by this audit.",
+  "dependency_requirements": [
+    "falkordb==1.2.0",
+    "fastapi==0.115.12",
+    "uvicorn==0.34.2",
+    "pydantic==2.11.4",
+    "ortools==9.12.4544",
+    "openai==1.78.1 (optional LLM mode)",
+    "httpx==0.28.1",
+    "pytest==8.3.5",
+    "Codex CLI on the host (optional, for the live bridge)"
+  ],
+  "security_findings": [
+    "scripts/codex_bridge.py:97 - subprocess.Popen launches the codex app-server with a built argument list; scripts/codex_bridge.py:379 subprocess.run of 'codex login status' (arguments fixed; depends on a locally installed codex binary)",
+    "scripts/codex_bridge.py:288 and backend/app/codex_controller.py:19-54 - outbound HTTP carrying a Bearer CODEX_BRIDGE_TOKEN; the token is validated with hmac.compare_digest (backend/app/api.py:215, codex_bridge.py:409) and requires at least 32 characters",
+    "backend/app/agents.py:127-166 - optional OpenAI Responses API call using OPENAI_API_KEY read from the environment; no key in source",
+    "backend/app/graph.py:149 - f-string CREATE INDEX with labels from a constant tuple (low risk)",
+    "backend/app/graph.py:73 - reads queries/<name>.cypher by name; names come from code constants and run ids are validated as 32-hex before use as graph names (graph.py:60)",
+    "backend/app/api.py:248-253 - POST /api/runs/{id}/reset deletes a run's graph and checkpoint without authentication, and POST /api/benchmarks starts a long CPU job; intended for single-user local use",
+    "queries/write.cypher:2-4 - unconditionally DETACH DELETEs Stock nodes with ids d1, d2, d3 on every save (legacy migration artifact)",
+    "No hard-coded secrets found",
+    "No LICENSE file: reuse rests on the user-attested owner permission"
+  ],
+  "duplicates_or_overlaps": "Time-bounded evidence validity with stale-evidence invalidation of dependent plans (closest to the Evidence Drift cascade), restricted-resource allocation under uncertainty, and value-of-information ranking. Overlaps with logistics and supply-chain routing repos, and with RCA/impact tracing via impact.cypher.",
+  "capability_family": "Supply Chain & Logistics",
+  "evidence_drift_relevance": "HIGH - evidence has observed_at, valid_until, authority and status, stale evidence is expired by an explicit clock, expiry invalidates dependent assignments and releases reservations, late older reports cannot supersede newer ones, each decision cites evidence ids, writes are revision-guarded and snapshots allow replay; it has no formal supersession edge or human approval gate.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/execution.py",
+    "symbols": ["observe", "advance_world", "invalidate", "project"],
+    "why": "About 175 lines of pure Python that implement evidence authority ordering, validity-window expiry and a cascade from stale evidence to dependent plans and reservations, with a copy-and-project helper for side-effect-free what-if branches. It is the closest working analogue to an Evidence Drift Cascade in the audited set. Pair with graph.py:GraphStore.save and queries/write.cypher for the revision-guarded atomic write and snapshot replay.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "None for execution.py; FalkorDB for graph.py/write.cypher (pinned client 1.2.0, newer 1.8 should work but is untested); OR-Tools only for planning.py"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The observation-authority, validity-window and invalidation-cascade logic is domain-neutral once roads/reservations are replaced by evidence/claims/decisions, and the revision-guarded single-statement save with snapshots fits Kairos persistence. The disaster-relief scenarios and CP-SAT planner are a separate logistics pack that should stay optional. The missing license means the owner attestation must be confirmed before copying.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

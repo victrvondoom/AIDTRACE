@@ -1,0 +1,134 @@
+{
+  "repository": "Mugunth007/aegis-graph",
+  "url": "https://github.com/Mugunth007/aegis-graph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Mugunth007__aegis-graph",
+  "commit_sha": "147dd421f2193da24e01ee2ca684a517b0110d7c",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "docker-compose.yml",
+    "backend/requirements.txt",
+    "backend/.env.example",
+    "backend/app/config.py",
+    "backend/app/main.py",
+    "backend/app/graph/falkor_client.py",
+    "backend/app/graph/algorithms.py",
+    "backend/app/graph/schema.py",
+    "backend/app/agents/swarm.py",
+    "backend/app/agents/triage_agent.py",
+    "backend/app/agents/blast_radius_agent.py",
+    "backend/app/agents/company_brain_agent.py",
+    "backend/app/agents/remediation_agent.py",
+    "backend/app/agents/llm_client.py",
+    "backend/app/integrations/github_client.py",
+    "backend/app/integrations/slack_client.py",
+    "backend/app/mcp/falkor_mcp_server.py"
+  ],
+  "languages_frameworks": ["Python/FastAPI (README says 3.13)", "falkordb>=1.7.0 client", "networkx>=3.2", "httpx", "mcp>=1.0.0 listed (but the 'MCP server' is a plain class, not the SDK)", "Next.js 16 + React + Tailwind (frontend)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Blast radius, betweenness centrality and shortest path via NetworkX over a graph exported from FalkorDB",
+      "files": ["backend/app/graph/algorithms.py"],
+      "symbols": ["GraphAlgorithms.get_nx_graph", "compute_blast_radius", "compute_betweenness_centrality", "compute_shortest_path"],
+      "real_or_stub": "REAL",
+      "notes": "Pulls all nodes and edges with MATCH (n)/(a)-[r]->(b) into a networkx.DiGraph and runs reverse single_source_shortest_path_length with cutoff for blast radius, nx.betweenness_centrality (is_choke_point if >0.15), and tries Cypher shortestPath before an undirected nx fallback. The README claim of 'GraphBLAS algorithms' is not backed by code: no FalkorDB algo.* call is made."
+    },
+    {
+      "capability": "Ephemeral sandbox graph clone for rehearsal",
+      "files": ["backend/app/graph/falkor_client.py", "backend/app/agents/remediation_agent.py"],
+      "symbols": ["FalkorManager.clone_graph", "FalkorManager.delete_graph", "RemediationAgent.rehearse_and_remediate"],
+      "real_or_stub": "PARTIAL",
+      "notes": "clone_graph really copies nodes then edges into a new graph by row-by-row Cypher (slow, id/name matching, fragile) and deletes it after; but the 'rehearsal' only deletes DEPLOYED_TO edges and then sets rehearsal_verified = True unconditionally (no health or deadlock check)."
+    },
+    {
+      "capability": "Triage / root-cause agent",
+      "files": ["backend/app/agents/triage_agent.py"],
+      "symbols": ["TriageAgent.investigate_alert"],
+      "real_or_stub": "STUB",
+      "notes": "Only the first Cypher (Alert->Service) and a shortest-path call are executed. query_pods, query_commits and query_rfc are defined as strings but never run, and the returned 'findings' (commit 7f9a2b, Devon Miller, RFC-104, confidence 0.98, falkordb_queries_executed: 4) are hard-coded literals. Service id defaults to 'svc_auth' if the query returns nothing."
+    },
+    {
+      "capability": "Company-brain decision lineage and ownership agent",
+      "files": ["backend/app/agents/company_brain_agent.py"],
+      "symbols": ["CompanyBrainAgent.investigate_lineage_and_ownership"],
+      "real_or_stub": "STUB",
+      "notes": "Three Cypher strings are declared and never executed; the returned context dict (owners, RFC-104, SecurityBoard approval date, on-call names) is a hard-coded literal."
+    },
+    {
+      "capability": "Swarm commander SSE workflow",
+      "files": ["backend/app/agents/swarm.py", "backend/app/main.py"],
+      "symbols": ["IncidentSwarmCommander.execute_autonomous_incident_workflow", "GET /api/incident/stream"],
+      "real_or_stub": "STUB",
+      "notes": "A fixed 9-step script with asyncio.sleep delays that yields pre-written status messages (e.g. 'Traversing 4 hops...' appears before the triage call). Not an LLM planner. The optional LLM call only produces a commentary string."
+    },
+    {
+      "capability": "Blast radius agent business impact",
+      "files": ["backend/app/agents/blast_radius_agent.py"],
+      "symbols": ["BlastRadiusAgent.evaluate_impact"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Calls the real centrality and blast-radius functions but then attaches hard-coded values: revenue burn 4850/500 USD per minute, impact_level 'SEV-1 CATASTROPHIC', critical_path_affected list, and a fallback centrality 0.38 if the node is not in top-10."
+    },
+    {
+      "capability": "Cypher console and MCP-style tool endpoints",
+      "files": ["backend/app/mcp/falkor_mcp_server.py", "backend/app/main.py"],
+      "symbols": ["FalkorMCPServer.list_tools", "call_tool", "POST /api/graph/query", "POST /api/mcp/call"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Four tool definitions (query, blast radius, shortest path, clone sandbox) dispatched in-process by a REST endpoint; not an actual MCP protocol server (no stdio/SSE transport, SDK unused)."
+    },
+    {
+      "capability": "GitHub PR and Slack dispatch",
+      "files": ["backend/app/integrations/github_client.py", "backend/app/integrations/slack_client.py"],
+      "symbols": ["GitHubIntegration.create_rollback_pr", "SlackIntegration.send_incident_notification"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real httpx POST to the GitHub pulls API if GITHUB_TOKEN+repo are set (it assumes a pre-existing hotfix branch and never creates one or a commit), otherwise returns a simulated PR #104; Slack webhook POST real if configured, else simulated. The PR body diff is a hard-coded Terraform snippet."
+    },
+    {
+      "capability": "In-memory fallback graph proxy",
+      "files": ["backend/app/graph/falkor_client.py", "backend/app/graph/seed_data.py"],
+      "symbols": ["InMemoryGraphProxy", "seed_enterprise_graph", "INITIAL_GRAPH_DATA"],
+      "real_or_stub": "STUB",
+      "notes": "When FalkorDB is unreachable every query returns the whole node/edge list regardless of Cypher; graph content is a hard-coded demo topology."
+    }
+  ],
+  "graph_models_and_cypher": "Master graph 'enterprise_master' and 'agent_procedural_memory'. Labels (schema.py): Service, Database, Pod, Commit, Engineer, Incident, Alert, IAMRole, Decision, RunbookStep, Team. Edges: DEPENDS_ON, CONNECTS_TO, RUNS_ON, DEPLOYED_TO, AUTHORED_BY, TRIGGERED_BY, AFFECTS, ASSUMES_ROLE, ENFORCED_IN (Decision->Commit), DISCUSSED_IN, ON_SUCCESS, ON_FAILURE, MEMBER_OF. Procedural memory writes IncidentRecord-[:RESOLVED_VIA]->RunbookResolution. Cypher is simple; queries read p.properties.phase style nested properties inconsistent with how nodes are stored. Uses shortestPath() variable-length; no APOC/GDS and no algo.* despite README claims.",
+  "algorithms": [
+    "Reverse single-source BFS with cutoff for blast radius (algorithms.py:compute_blast_radius, networkx)",
+    "Betweenness centrality choke-point ranking (networkx.betweenness_centrality)",
+    "Cypher shortestPath with undirected networkx fallback"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/graph/topology, /api/graph/centrality, /api/graph/blast-radius, /api/incident/stream (SSE), /api/mcp/tools; POST /api/graph/query (arbitrary Cypher), /api/mcp/call"
+  ],
+  "frontend_interfaces": [
+    "Next.js 16: app/page.tsx, components GraphVisualizer (force-directed canvas), AgentThoughtStream, BlastRadiusPanel, CompanyBrainPanel, CypherConsole, RemediationModal; Aceternity-style ui components"
+  ],
+  "agent_or_memory_mechanisms": "README claims tri-layer memory and procedural runbook DAG. Code: only RemediationAgent._record_procedural_memory writes one IncidentRecord/RunbookResolution pair with hard-coded step name; no recall, no episodic or semantic retrieval, no handoff beyond sequential function calls in the swarm script.",
+  "tests_present": "none (no tests directory or test files)",
+  "dependency_requirements": ["falkordb>=1.7.0", "redis>=8.0.0", "fastapi>=0.115.0", "uvicorn>=0.30.0", "pydantic>=2.8.0", "python-dotenv>=1.0.0", "requests>=2.31.0", "networkx>=3.2.0", "mcp>=1.0.0 (unused by code)", "httpx (used but not listed in requirements.txt)", "falkordb/falkordb:latest image"],
+  "security_findings": [
+    "backend/app/main.py:105-108 - POST /api/graph/query executes arbitrary caller-supplied Cypher (including DELETE/CREATE) against any graph name with no authentication.",
+    "backend/app/mcp/falkor_mcp_server.py:75-86 and main.py POST /api/mcp/call - falkor_query_cypher and falkor_clone_sandbox_graph reachable unauthenticated; sandbox_name is unvalidated and clone_graph deletes any existing graph of that name (dst.delete()) so an attacker can wipe any graph.",
+    "backend/app/main.py:23-29 - CORS allow_origins=['*'] with allow_credentials=True.",
+    "backend/app/graph/falkor_client.py:106,120 - label and relationship type names from existing graph data are interpolated into Cypher f-strings during clone_graph (CREATE (:{lbl} ...), -[:{rel_type} ...]); injectable if graph content is attacker-controlled.",
+    "backend/app/agents/llm_client.py:35 - Gemini API key is placed in the request URL query string (?key=...), which can leak into httpx/proxy logs; Anthropic/OpenAI keys correctly in headers.",
+    "backend/app/integrations/github_client.py:41-58 - uses a GITHUB_TOKEN to POST pull requests to the configured repo; text is partly built from caller-controlled commit_sha/incident_id (only the fixed demo path passes them today).",
+    "backend/app/config.py:15 - default GITHUB_REPO 'mock-enterprise/cloud-infra'; no hard-coded secrets found; .env.example has placeholders only.",
+    "docker-compose.yml - FalkorDB (latest tag) and browser exposed on 6379/3000 without auth."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal and SRE incident RCA repos (many in the same hackathon). Its distinctive ideas (clone-graph sandbox rehearsal, decision lineage Commit<-Decision) are mostly slideware in this implementation.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "LOW - Models Decision-[:ENFORCED_IN]->Commit lineage and a rehearsal sandbox, but the agents return hard-coded results, rehearsal verification is an unconditional True, and there is no versioning, supersession, invalidation or real approval gate.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/graph/algorithms.py",
+    "symbols": ["GraphAlgorithms.get_nx_graph", "compute_blast_radius", "compute_betweenness_centrality"],
+    "why": "A compact export-to-NetworkX pattern giving depth-bounded reverse-reachability and betweenness without GDS; trivially reimplemented. The clone_graph idea (sandbox what-if on a copy) is conceptually useful but the implementation is slow and should use GRAPH.COPY.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB for data load, networkx; no LLM key required"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Most 'agent' output is hard-coded demo narrative around a fixed incident (commit 7f9a2b, RFC-104), so little can be reused as an engine; keep it as a reference for the sandbox-clone what-if idea and NetworkX blast radius. No LICENSE file.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

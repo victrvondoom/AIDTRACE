@@ -1,0 +1,158 @@
+{
+  "repository": "manav-Mnv/hound-aml",
+  "url": "https://github.com/manav-Mnv/hound-aml",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\manav-Mnv__hound-aml",
+  "commit_sha": "f342a05c68bed3e94b753ccfcdbbb26e4869dd55",
+  "license": "MIT",
+  "copyright_holder": "Manav (Copyright (c) 2026)",
+  "source_files_inspected": ["backend/src/hound/tools.py", "backend/src/hound/memory.py", "backend/src/hound/orchestrator.py", "backend/src/hound/agents.py (lines 100-379)", "backend/src/hound/triage.py", "backend/src/hound/rules.py", "backend/src/hound/analytics.py", "backend/src/hound/consortium.py", "backend/src/hound/db.py", "backend/src/hound/config.py", "backend/src/hound/mcp_server.py", "backend/src/hound/api.py (route list, reset, investigate)", "backend/src/hound/offline.py (head)", "backend/src/hound/evaluate.py (head)", "backend/tests/test_llm_loop.py (head)", "backend/data/eval_alpha_offline.json (head)", "backend/requirements.txt", "docs/FALKORDB_NOTES.md", "start.sh", ".github/workflows/ci.yml", "LICENSE"],
+  "languages_frameworks": ["Python 3.12 / FastAPI", "FalkorDB (falkordb==1.8.0; targets FalkorDB 6.0.2 server)", "Anthropic SDK (anthropic==1.15.0) tool-use agents", "MCP server (mcp==2.3.0)", "React + TypeScript + Vite frontend", "Faker synthetic world generator"],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence ledger: every tool call persists its exact Cypher, params and result as (:Evidence) linked to touched entities",
+      "files": ["backend/src/hound/tools.py", "backend/src/hound/memory.py"],
+      "symbols": ["tools.execute", "tools.Q", "ToolResult", "memory.record_evidence"],
+      "real_or_stub": "REAL",
+      "notes": "Each read tool runs through Q (collects Cypher+params), execute() stores an Evidence node (cypher, params JSON, summary, row count, ms, truncated data, viz graph JSON) with HAS_EVIDENCE to the Case, PRODUCED from the AgentRun and INVOLVES edges to the Party/Account nodes, and returns only the evidence_id plus summary to the LLM."
+    },
+    {
+      "capability": "Evidence-gated findings (claims must cite evidence ids that belong to the same case)",
+      "files": ["backend/src/hound/memory.py", "backend/src/hound/tools.py"],
+      "symbols": ["memory.record_finding", "tools.record_finding"],
+      "real_or_stub": "REAL",
+      "notes": "record_finding verifies the cited ids exist as Evidence attached to this case via Cypher, rejects findings with no valid citation, and writes (Finding)-[:SUPPORTED_BY]->(Evidence); unknown ids are returned in 'ignored'."
+    },
+    {
+      "capability": "SAR narrative grounding review (sentence-level citation and number check)",
+      "files": ["backend/src/hound/agents.py"],
+      "symbols": ["review_sar", "write_sar", "save_sar", "run_sar_pipeline", "_numbers", "NUM_RE", "ID_RE", "case_dossier"],
+      "real_or_stub": "REAL",
+      "notes": "The reviewer is deterministic code, not an LLM: each sentence must cite evidence ids present in the case and every dollar amount/large number in the sentence must appear (within 1.5% tolerance) in the cited evidence text; failures are fed back to the writer for one revision; the SAR stores a grounding score and (SAR)-[:CITES]->(Evidence) edges."
+    },
+    {
+      "capability": "Time-ordered multi-hop money-flow tracing (beam search)",
+      "files": ["backend/src/hound/tools.py"],
+      "symbols": ["trace_money_flow", "HOP_OUT", "HOP_IN"],
+      "real_or_stub": "REAL",
+      "notes": "Per-hop Cypher over a frontier (UNWIND $frontier) with timestamp-window constraints, beam width 6 and path cap 40, depth <=5, channel/amount filters, high-risk jurisdiction endpoint flagging. Implemented as iterative queries, not a native variable-length path."
+    },
+    {
+      "capability": "Pass-through/velocity, cycle (round-tripping), cash-structuring, counterparty and peer-comparison analytics",
+      "files": ["backend/src/hound/tools.py"],
+      "symbols": ["pass_through_analysis", "find_cycles", "cash_structuring_profile", "counterparty_summary", "peer_comparison", "customer_profile"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher with reduce()/list comprehensions and pattern comprehensions; find_cycles uses TRANSFER*2..N with all() predicates for monotone timestamps within 14 days (N clamped to 2..6 and f-string interpolated)."
+    },
+    {
+      "capability": "Identity-ring detection with FalkorDB algo.WCC, plus PageRank/betweenness/label-propagation features",
+      "files": ["backend/src/hound/analytics.py", "backend/src/hound/tools.py"],
+      "symbols": ["run_analytics", "ALGORITHMS", "identity_cluster", "network_position", "shared_identifiers"],
+      "real_or_stub": "REAL",
+      "notes": "CALL algo.pageRank, algo.betweenness (sampled), algo.labelPropagation and algo.WCC over Person/Company/Device/IP/Phone via USES/LOGGED_IN_FROM/HAS_PHONE write scores back to nodes; identity_cluster re-runs WCC at query time and returns the member list, shared identifiers and alert counts."
+    },
+    {
+      "capability": "OFAC 50% rule sanctions exposure through ownership chains",
+      "files": ["backend/src/hound/tools.py"],
+      "symbols": ["sanctions_exposure", "screen_names"],
+      "real_or_stub": "REAL",
+      "notes": "Collects OWNS*1..4 edges to counterparties, runs a fixed-point loop in Python marking an entity blocked when blocked owners hold >=50% in aggregate, and reports LISTED/BLOCKED_50_RULE/PARTIAL_EXPOSURE; screen_names uses difflib.SequenceMatcher >=0.8 with birth-year and country checks (simple fuzzy match)."
+    },
+    {
+      "capability": "Rule-based alert generation and graph-feature triage scoring with union-find case grouping",
+      "files": ["backend/src/hound/rules.py", "backend/src/hound/triage.py"],
+      "symbols": ["RULES", "run_rules", "FEATURES_CYPHER", "score_alerts", "_group"],
+      "real_or_stub": "REAL",
+      "notes": "Six baseline Cypher rules (R1-R6) generate alerts; triage assigns an additive score with a human-readable reason per contribution (including negative weights for prior false-positive cases and analyst lessons), then groups alerts through union-find on identity cluster and money links."
+    },
+    {
+      "capability": "Agent memory: episodic cases/runs, semantic lessons, procedural playbooks, agent handoff graph",
+      "files": ["backend/src/hound/memory.py", "backend/src/hound/orchestrator.py"],
+      "symbols": ["PLAYBOOKS", "ensure_playbooks", "add_lesson", "open_case", "attach_alerts", "start_run", "finish_run", "recall", "open_case_touching", "orchestrator.investigate", "orchestrator.decide"],
+      "real_or_stub": "REAL",
+      "notes": "(AgentRun)-[:HANDOFF]->(AgentRun) chain triage -> investigator -> sar_writer -> reviewer; (Lesson)-[:ABOUT]->(Party|Account) and -[:REFINES]->(Playbook); analyst overrides become lessons; open-case de-duplication merges new alerts into an existing case. Playbook steps are hard-coded constants (version fixed at 1), rewritten on every ensure_playbooks call."
+    },
+    {
+      "capability": "Human-in-the-loop approval gate",
+      "files": ["backend/src/hound/orchestrator.py", "backend/src/hound/memory.py"],
+      "symbols": ["decide", "close_case"],
+      "real_or_stub": "REAL",
+      "notes": "Agents can only move a case to PENDING_APPROVAL; approve_sar / reject_sar / close_false_positive / reopen_escalate are explicit analyst decisions via POST /api/{tenant}/cases/{id}/decision, and only an approved SAR publishes hashed identifiers to the consortium graph."
+    },
+    {
+      "capability": "Cross-institution signal sharing via HMAC-hashed identifiers",
+      "files": ["backend/src/hound/consortium.py"],
+      "symbols": ["fingerprint", "publish", "lookup", "stats"],
+      "real_or_stub": "REAL",
+      "notes": "Separate consortium graph storing (Institution)-[:REPORTED]->(Signal{hash}); lookup excludes the caller's own reports. The HMAC key defaults to a hard-coded demo string when HOUND_CONSORTIUM_KEY is unset."
+    },
+    {
+      "capability": "Claude tool-use investigator with offline deterministic fallback",
+      "files": ["backend/src/hound/agents.py", "backend/src/hound/offline.py", "backend/src/hound/orchestrator.py"],
+      "symbols": ["run_investigator", "call_claude", "INVESTIGATOR_SYSTEM", "offline.run_offline", "_llm_allowed"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Bounded loop (HOUND_MAX_TURNS default 14, hourly live-run cap) calling the same tools; when no ANTHROPIC key or on refusal/API error the offline playbook runner executes the same tools with explicit heuristics and writes identical graph records. LLM judgement quality is not independently verified; the benchmark uses the offline runner."
+    },
+    {
+      "capability": "Read-only free-form Cypher tool",
+      "files": ["backend/src/hound/tools.py", "backend/src/hound/db.py"],
+      "symbols": ["run_cypher", "db.rows"],
+      "real_or_stub": "REAL",
+      "notes": "LLM-supplied Cypher executed via GRAPH.RO_QUERY (writes rejected by the server) with a 50-row cap on returned rows (not on server-side work) and a 60 s timeout."
+    },
+    {
+      "capability": "Synthetic-world benchmark with planted ground truth",
+      "files": ["backend/src/hound/evaluate.py", "backend/src/hound/world/generator.py", "backend/data/ground_truth.json", "backend/data/eval_alpha_offline.json"],
+      "symbols": ["evaluate.run", "reset_investigations"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Compares rules-only precision (0.423 on 71 alerts) against Hound's results on synthetic data it generated itself (reported precision/recall 1.0 for the offline runner); useful as a regression harness but not evidence of real-world performance."
+    },
+    {
+      "capability": "MCP server and REST API with SSE job events",
+      "files": ["backend/src/hound/mcp_server.py", "backend/src/hound/api.py"],
+      "symbols": ["list_alerts", "investigate_alert", "get_case", "GET /api/status", "POST /api/{tenant}/alerts/{alert_id}/investigate", "GET /api/jobs/{job_id}/events", "POST /api/{tenant}/cases/{case_id}/decision", "GET /api/{tenant}/evidence/{evidence_id}", "POST /api/admin/reset"],
+      "real_or_stub": "REAL",
+      "notes": "Investigation runs in a background thread streaming typed events; MCP exposes twelve tools to external clients."
+    }
+  ],
+  "graph_models_and_cypher": "One FalkorDB graph per tenant (hound:alpha, hound:beta) plus hound:consortium. Domain: Party(:Person|:Company, :Customer, :Sanctioned), Account(:External), Branch, Device, IP, Phone, Email, Address, Jurisdiction, Alert; edges HOLDS, TRANSFER{amount,ts,channel,memo}, CASH_DEPOSIT{amount,ts,ctr}, USES, LOGGED_IN_FROM, HAS_PHONE, HAS_EMAIL, LIVES_AT, REGISTERED_AT, OWNS{pct}, DIRECTOR_OF, IN_JURISDICTION, ON. Agent/provenance layer: Case, AgentRun, Evidence(cypher,params,data), Finding, SAR, Lesson, Playbook/Step with SUBJECT, CONCERNS, FROM_ALERT, HAS_EVIDENCE, PRODUCED, INVOLVES, HAS_FINDING, SUPPORTED_BY, CITES, WORKED_ON, HANDOFF, ABOUT, REFINES, LEARNED_FROM, STEP. Cypher is parameterized and extensive (UNWIND frontier, pattern comprehensions, reduce, UNION, OPTIONAL MATCH, ro_query). Uses FalkorDB-native algo.pageRank/betweenness/labelPropagation/WCC (no APOC/GDS). COMPATIBILITY: upstream docs/FALKORDB_NOTES.md says the project pins FalkorDB 6.0.2 and that on 4.22.1 the shape 'WITH coalesce(p, a) AS n ... MATCH (c)-[:R]->(n)' raised '_AR_EXP_UpdateEntityIdx'; the same shape is used in tools._resolve_account and closely related coalesce-alias shapes in tools._resolve_party and memory.recall/add_lesson/record_evidence, so these may need rewriting for Kairos's 4.22 server (not tested here). Notes also record a 6.0.1 UNWIND+varlen WHERE bug and a collect() bug.",
+  "algorithms": [
+    "Time-ordered beam-search money-flow tracing (beam 6, cap 40, depth<=5, per-hop windows) in tools.py:trace_money_flow",
+    "Closed-loop detection with monotone-timestamp predicate (TRANSFER*2..6, 14-day gap) in tools.py:find_cycles",
+    "OFAC 50% aggregate-ownership fixed point over OWNS*1..4 in tools.py:sanctions_exposure",
+    "FalkorDB algo.WCC identity clustering, algo.pageRank, algo.betweenness (sampled), algo.labelPropagation in analytics.py:ALGORITHMS",
+    "Additive explainable triage scoring + union-find alert grouping in triage.py:score_alerts/_group",
+    "Deterministic SAR grounding check (citation presence + numeric tolerance match) in agents.py:review_sar",
+    "Pass-through velocity/dwell and cash-structuring band analysis in tools.py:pass_through_analysis/cash_structuring_profile"
+  ],
+  "backend_interfaces": ["FastAPI: GET /api/status, /api/{tenant}/overview, /api/{tenant}/alerts, POST /api/{tenant}/triage, POST /api/{tenant}/alerts/{alert_id}/investigate, GET /api/jobs/{job_id}/events (SSE), GET /api/{tenant}/cases, /cases/{case_id}, POST /api/{tenant}/cases/{case_id}/decision, GET /api/{tenant}/entity/{entity_id}/neighborhood, /memory, /evidence/{evidence_id}, /api/consortium, /api/eval, /api/schema, POST /api/admin/reset", "MCP server (stdio: hound mcp; HTTP mounted at /mcp-server) with tools list_alerts, investigate_alert, get_case, customer_profile, trace_money_flow, identity_cluster, sanctions_exposure, find_cycles, cash_structuring_profile, consortium_check, recall_memory, run_cypher", "CLI: hound seed / eval / mcp (backend/src/hound/cli.py)"],
+  "frontend_interfaces": ["React/TypeScript SPA: App, views (Investigate, Cases, Memory, Consortium, Benchmark, Model), components (GraphCanvas, Trace, SarView, bits)"],
+  "agent_or_memory_mechanisms": "Multi-agent pipeline recorded as AgentRun nodes with HANDOFF edges (triage -> investigator -> SAR writer -> reviewer -> human decision). Episodic (Case/AgentRun/Finding/Evidence/SAR), semantic (Lesson ABOUT entity) and procedural (Playbook STEP, refined by Lesson REFINES) memory in the same graph as the domain data; recall traverses shared identifiers to find cases on linked parties; analyst overrides are stored as lessons that adjust triage scores and playbooks.",
+  "tests_present": "backend/tests/test_llm_loop.py (1 test driving the Claude investigator loop and SAR pipeline against a scripted fake API; requires a seeded live FalkorDB). CI (.github/workflows/ci.yml) additionally builds the container, boots, seeds, runs an offline investigation and runs 'hound eval --mode offline' on the synthetic ground truth. Test coverage of individual tools is thin.",
+  "dependency_requirements": ["falkordb==1.8.0", "fastapi==0.143.2", "uvicorn==0.54.0", "anthropic==1.15.0", "mcp==2.3.0", "pydantic==2.14.1", "faker==40.43.0", "redis==8.1.0", "falkordb/falkordb-server:6.0.2 image (upstream pins this; latest tag resolves to 4.22.1 per upstream notes)"],
+  "security_findings": [
+    "backend/src/hound/config.py:49 - consortium HMAC key falls back to the hard-coded default 'hound-demo-consortium-key' when HOUND_CONSORTIUM_KEY is unset (weak shared secret; hashes are guessable/forgeable)",
+    "backend/src/hound/api.py:37 - CORS allow_origins=['*'] and no authentication on any route, including POST /api/admin/reset (api.py:285-296, enabled unless HOUND_ALLOW_RESET != '1', default '1') which re-seeds all graphs",
+    "backend/src/hound/api.py:113-131 - unauthenticated endpoint spawns a background thread per investigation (resource/cost abuse; partially bounded by _llm_allowed 30 live runs/hour)",
+    "backend/src/hound/tools.py:968-986 and mcp_server.py:94-96 - run_cypher executes caller/LLM-supplied Cypher; mitigated by GRAPH.RO_QUERY (db.py:75-77) so writes are rejected, but expensive read queries are bounded only by the 60 s timeout; the 50-row cap applies after execution",
+    "backend/src/hound/tools.py:456-463 - f-string interpolates max_length into find_cycles Cypher, clamped to int 2..6 beforehand (not injectable)",
+    "backend/src/hound/config.py:9-20 - hand-rolled .env loader reads backend/.env or repo-root .env into os.environ; ANTHROPIC_API_KEY read from env only (no hard-coded key; deploy/hf/push.py:27-28 uploads it as a Hugging Face Space secret, not executed)",
+    "backend/src/hound/agents.py:249-264 - case data and evidence text are interpolated into LLM prompts (prompt-injection surface via synthetic memos/names; reviewer check partially mitigates numbers but not instructions)",
+    "start.sh:7-9 - starts redis-server with --loadmodule on 127.0.0.1:6379 with no password inside the container (deployment script, not executed)",
+    "Egress: only the Anthropic API when a key is configured (agents.py:108-133); no other unrestricted network calls found"
+  ],
+  "duplicates_or_overlaps": "Overlaps fraud-ring/mule detection (FraudTrace-AI, clearpath fraud_ring) with far greater depth; its Case/Evidence/Finding/Lesson/AgentRun layer overlaps agent-memory and provenance work (Safecortex, NexusGraph) but is the most rigorous in this batch.",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "HIGH - implements persisted evidence provenance (exact Cypher+params per tool call), evidence-gated findings, sentence-level grounding review of generated narratives, human approval gating before external publication, handoff lineage between agent runs and lessons that adjust later triage; it lacks explicit supersession, validity intervals and automatic invalidation of findings when underlying graph data changes.",
+  "strongest_reusable_unit": {
+    "file": "backend/src/hound/memory.py",
+    "symbols": ["record_evidence", "record_finding", "start_run", "finish_run", "add_lesson", "recall", "agents.review_sar", "orchestrator.decide"],
+    "why": "A compact, working evidence-ledger and approval pipeline (Evidence -> Finding -> SAR -> human decision) with deterministic grounding checks, expressed as plain parameterized Cypher; maps directly onto a Kairos evidence-drift cascade where each conclusion must point to re-checkable queries.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (upstream targets 6.0.2; some Cypher shapes need adaptation for 4.22); Anthropic key only for the optional LLM investigator/SAR writer"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Extract the evidence ledger, evidence-gated finding writer, deterministic grounding reviewer and approval-gate logic as a shared provenance engine for Kairos, and optionally the AML tools as a Financial Fraud capability pack. MIT licensed; must rewrite the coalesce/WITH-MATCH query shapes that upstream says break on FalkorDB 4.22.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

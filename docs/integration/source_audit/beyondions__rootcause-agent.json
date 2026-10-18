@@ -1,0 +1,90 @@
+{
+  "repository": "beyondions/rootcause-agent",
+  "url": "https://github.com/beyondions/rootcause-agent",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\beyondions__rootcause-agent",
+  "commit_sha": "0adc20ff29642e35389a644ad38a58aa38cc9871",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "requirements.txt",
+    ".env.example (key names only)",
+    "tools.py",
+    "agent.py",
+    "llm.py",
+    "baseline.py",
+    "compare.py",
+    "compare_results.md",
+    "load_data.py (head: services and dependency edges)",
+    "app.py (symbol grep, answer_box escaping)"
+  ],
+  "languages_frameworks": ["Python", "falkordb==1.8.0", "Groq SDK (groq==1.7.0, OpenAI gpt-oss / qwen models)", "Streamlit 1.66.0 UI", "python-dotenv"],
+  "implemented_capabilities": [
+    {
+      "capability": "Graph-based root-cause ranking from active alerts",
+      "files": ["tools.py"],
+      "symbols": ["get_active_alerts", "find_root_cause", "_downstream", "_upstream", "get_recent_deploys"],
+      "real_or_stub": "REAL",
+      "notes": "A firing-alert service is a root-cause candidate only if no alerting service is among its transitive dependencies (DEPENDS_ON*1..). Candidates are ranked by how many other alerting services depend on them (explains_count), then number of recent deploys, then name. Deploy recency uses a hard-coded clock constant NOW = 121 (minutes) rather than real time."
+    },
+    {
+      "capability": "Blast radius, ownership, similar incidents, evidence path, incident creation",
+      "files": ["tools.py"],
+      "symbols": ["find_blast_radius", "find_owner", "find_similar_incidents", "get_evidence_path", "create_incident"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized ro_query reads; blast radius is unbounded reverse DEPENDS_ON*1.. with DISTINCT services ordered by tier; evidence path uses shortestPath(); create_incident deduplicates on an open incident for the same service and allocates INC-<n> ids in Cypher (read-modify-write, not concurrency safe)."
+    },
+    {
+      "capability": "Groq tool-calling agent with code-enforced answer validation",
+      "files": ["agent.py", "llm.py"],
+      "symbols": ["_investigate", "run_tool", "SYSTEM_PROMPT", "fix_first_line", "fix_yes_no", "fix_suggested_fix", "facts_from_trace", "fallback_answer", "service_check", "chat (model fallback chain)"],
+      "real_or_stub": "PARTIAL",
+      "notes": "LLM is prompted with a fixed investigation order and an answer format, then code rewrites the first line, yes/no verdict and 'Suggested fix' line from the tool trace so facts cannot drift from the graph; nudges up to 3 times if get_evidence_path/create_incident are missing; falls back to a code-built answer if the model returns nothing. Includes a deterministic service_check mode that needs no LLM. Answer cache of 600 s."
+    },
+    {
+      "capability": "Vector RAG baseline comparison",
+      "files": ["baseline.py", "compare.py", "compare_results.md"],
+      "symbols": ["VectorIndex", "baseline_answer", "build_answer_key", "QUESTIONS"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The 'vector RAG' is a hand-written TF-IDF over one-sentence documents rendered from the same seed lists; the answer key is computed from the graph agent's own tools and checks (e.g. 'opens incident') the baseline structurally cannot do. The 10/10 vs 1/10 result is therefore illustrative, not an independent benchmark."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'incidents'. Labels: Service{name,tier}, Team, Engineer, Deploy{id,change,time}, Alert{id,message,severity,fired_at,status}, Incident{id,title,summary,status,opened_at}, Runbook. Edges: DEPENDS_ON, OWNS, MEMBER_OF, AUTHORED, DEPLOYED_TO, FIRED_ON, CAUSED_BY, RESOLVED, FIXED_WITH. ~25 services in a hand-authored shop topology. Plain openCypher with unbounded variable-length DEPENDS_ON*1.. and shortestPath; no APOC/GDS/algo procedures; all values are bound parameters.",
+  "algorithms": [
+    "Alert-set root-cause elimination: exclude alerting services that depend (transitively) on another alerting service; rank by explained-alert count then deploy count (tools.py:find_root_cause)",
+    "Unbounded reverse transitive closure for blast radius (tools.py:find_blast_radius)",
+    "Code-side answer repair from tool trace (agent.py:fix_first_line, fix_yes_no, fix_suggested_fix)",
+    "Lightweight TF-IDF retrieval for the baseline (baseline.py:VectorIndex)"
+  ],
+  "backend_interfaces": [
+    "Python modules (tools.py, agent.py:ask/investigate) and CLI entry points (python agent.py, compare.py, load_data.py --reset); no HTTP API"
+  ],
+  "frontend_interfaces": [
+    "Streamlit app (app.py): alerts panel, Graphviz dot dependency view, diagnosis panel, KPI strip, 'Compare with vector RAG' toggle; LLM text is HTML-escaped (html.escape) before unsafe_allow_html rendering"
+  ],
+  "agent_or_memory_mechanisms": "Single tool-calling agent loop (MAX_STEPS 12, 3 nudges) with a model fallback chain across Groq models and quota handling; history of past incidents in the graph (Incident-CAUSED_BY-Service, RESOLVED, FIXED_WITH) is read as memory, and new incidents are written back, but there is no dedicated memory layer or multi-agent handoff.",
+  "tests_present": "none (compare.py is an LLM-dependent evaluation script, not a test suite)",
+  "dependency_requirements": ["falkordb==1.8.0", "groq==1.7.0", "python-dotenv==1.2.4", "streamlit==1.66.0", "GROQ_API_KEY (required by agent.py at import)", "FalkorDB server"],
+  "security_findings": [
+    "agent.py:~28-30 - process exits at import if GROQ_API_KEY is unset; key read from env only (no hard-coded secret)",
+    "tools.py:~72-85 - create_incident computes the next INC id with a non-atomic read-then-create Cypher statement (race creates duplicate ids under concurrency); module-level _created dict in agent.py is process-local",
+    "tools.py - DEPENDS_ON*1.. traversals are unbounded; on a large or cyclic production graph this can blow up query time (no timeout or depth cap)",
+    "app.py - uses st.markdown(unsafe_allow_html=True) but wraps dynamic text in html.escape (esc); no eval/exec/subprocess/pickle found",
+    "agent.py:~215-235 - LLM tool-call arguments are JSON-parsed and dispatched only to a fixed FUNCTIONS allowlist; arbitrary Cypher is not exposed"
+  ],
+  "duplicates_or_overlaps": "Same RCA family as AgentAhmed/blast-radius (ROOT_CAUSE_CANDIDATES, blast radius, who-to-page, similar incidents) and KHARSHAVARDHAN-eng/CausalTrace; this repo is a smaller, simpler version with the best 'code overrides LLM answer' pattern.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "LOW - the trace-derived answer repair keeps stated facts consistent with tool outputs and incidents are deduplicated, but there is no provenance metadata, supersession, validity window or approval step; time is a hard-coded constant.",
+  "strongest_reusable_unit": {
+    "file": "agent.py",
+    "symbols": ["facts_from_trace", "fix_first_line", "fix_yes_no", "fix_suggested_fix", "fallback_answer"],
+    "why": "Pure-Python post-processing that rebuilds or corrects key answer lines from the tool-call trace so LLM prose cannot contradict graph facts; portable to any tool-trace based agent.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for the repair functions; FalkorDB + Groq key for the surrounding agent"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The RCA logic duplicates the stronger AgentAhmed/blast-radius implementation, uses a synthetic topology with a hard-coded clock, has no tests or license; only the trace-driven answer-repair pattern is worth copying as an idea.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

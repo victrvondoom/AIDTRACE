@@ -1,0 +1,122 @@
+{
+  "repository": "ManjariYagnik/GraphHacks",
+  "url": "https://github.com/ManjariYagnik/GraphHacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\ManjariYagnik__GraphHacks",
+  "commit_sha": "ffec5f41af839940e0e15e60eb8f1f5bcc4402c6",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "pyproject.toml",
+    "compose.yaml",
+    ".env.example",
+    "data/demo/new_evidence/manifest.json",
+    "src/ringlens/graph_store.py",
+    "src/ringlens/schema.py (head)",
+    "src/ringlens/investigation_queries.py",
+    "src/ringlens/import_queries.py",
+    "src/ringlens/case_queries.py",
+    "src/ringlens/review_queries.py",
+    "src/ringlens/scoring.py",
+    "src/ringlens/cases.py",
+    "src/ringlens/reviews.py (first 260 lines)",
+    "src/ringlens/investigator.py (assert_current_input, signatures)",
+    "src/ringlens/agent.py (head)",
+    "src/ringlens/agent_tools.py",
+    "src/ringlens/agent_provider.py (settings)",
+    "src/ringlens/review_models.py (grep)",
+    "src/ringlens/verify.py, ingest.py, cli.py, synthetic.py (symbol listing only)",
+    "tests/ (function counts, subprocess grep)"
+  ],
+  "languages_frameworks": ["Python 3.12 (pinned >=3.12,<3.13)", "falkordb Python client >=1.8,<2", "pydantic v2 / pydantic-settings", "Typer CLI", "OpenAI and Anthropic SDKs (agent provider)", "uv / hatchling"],
+  "implemented_capabilities": [
+    {
+      "capability": "Refund-abuse ring discovery on a FalkorDB property graph",
+      "files": ["src/ringlens/investigator.py", "src/ringlens/investigation_queries.py", "src/ringlens/investigation_models.py"],
+      "symbols": ["investigate", "DISCOVER_ACCOUNTS", "DISCOVERY_PATH", "EXPANSION_PATTERN", "DEVICE_USERS", "REFUND_CONTEXT", "_Reader", "_metadata"],
+      "real_or_stub": "REAL",
+      "notes": "Bounded two-expansion discovery from a seed refund: shared-device peer accounts inside a time window, with named-path queries so parallel edges stay visible and whole-graph device user counts computed independently of the candidate set (to demote shared public devices). Read-only via GRAPH.RO_QUERY."
+    },
+    {
+      "capability": "Deterministic rule-based risk scoring (R1-R5) with per-rule evidence and mitigating context",
+      "files": ["src/ringlens/scoring.py"],
+      "symbols": ["score_records", "refund_bursts", "priority_for_score"],
+      "real_or_stub": "REAL",
+      "notes": "Pure function, no I/O. R1 shared device, R2 synchronized rolling refund burst (3 accounts / 1800s, consume-window sliding algorithm), R3 repeated burst dates, R4 elevated refund rate with integer cross-multiplication, R5 shared address. Counts are distinct IDs, not path multiplicity. Points/thresholds live in ScoringConfig."
+    },
+    {
+      "capability": "Immutable assessment snapshots, idempotent single-writer case publication (LOADING -> READY) and case reopen policy",
+      "files": ["src/ringlens/cases.py", "src/ringlens/case_queries.py", "src/ringlens/case_models.py"],
+      "symbols": ["apply_case_policy", "get_case", "list_cases", "group_key", "assessment_key", "_validate_result", "_validate_saved", "_check_stage", "_core", "_snapshot", "PUBLISH_WITH_EVIDENCE"],
+      "real_or_stub": "REAL",
+      "notes": "Assessment id is a SHA-256 of group, input_revision, window, rule_version and scoring config; stored snapshot is re-validated against deterministic re-scoring on every read (tamper detection). Evidence nodes are content-immutable. Publication happens in one Cypher query after endpoint checks; lost-ack reconciliation reads the completion marker. Overlapping cases get requires_review flags."
+    },
+    {
+      "capability": "Scoped human-review memory keyed on evidence-fact fingerprints with supersession and expiry",
+      "files": ["src/ringlens/reviews.py", "src/ringlens/review_queries.py", "src/ringlens/review_models.py"],
+      "symbols": ["evidence_facts", "compare_evidence", "_scope_covers", "review_history", "persist_assessment", "ScopedReview", "ReviewContext", "ReviewRequest", "LINK_SUPERSEDES", "SUPERSEDERS"],
+      "real_or_stub": "REAL",
+      "notes": "Each review covers only the fingerprinted facts it saw (records + measurements per rule anchor). compare_evidence classifies new assessments as ALREADY_REVIEWED / NO_CASE_REQUIRED / KEEP_CLOSED / REOPEN / ESCALATE based on which facts are covered by non-superseded, non-expired, same-rule-version BENIGN reviews and whether unexplained facts contain records not previously seen or a larger device-user count. Reviews never clear an account permanently."
+    },
+    {
+      "capability": "Stale-input / data-revision guard and idempotent dataset import with provenance",
+      "files": ["src/ringlens/investigator.py", "src/ringlens/ingest.py", "src/ringlens/import_queries.py", "src/ringlens/verify.py", "src/ringlens/dataset_io.py", "src/ringlens/validation.py"],
+      "symbols": ["assert_current_input", "ingest_batch", "prepare_import", "START_BATCH", "FINISH_BATCH", "FAIL_BATCH", "verify_graph", "read_history", "verify_history_content"],
+      "real_or_stub": "REAL",
+      "notes": "Dataset/ImportBatch nodes with content_hash, mode (append) and status INGESTING/READY/FAILED plus a Redis-lock import lease; assessments recheck that the input revision and as_of horizon are unchanged before publishing, else raise 'Input revision changed; run a fresh assessment.' Demo ships data/demo/new_evidence (6 later refunds) to exercise the append/reopen path."
+    },
+    {
+      "capability": "Bounded tool-calling investigation agent with graph-recorded audit and grounded output",
+      "files": ["src/ringlens/agent.py", "src/ringlens/agent_tools.py", "src/ringlens/agent_provider.py"],
+      "symbols": ["run_agent", "_grounded", "get_agent_run", "AgentTools.execute", "tool_schemas", "OpenAIProvider", "AnthropicProvider", "create_provider", "AgentSettings"],
+      "real_or_stub": "REAL",
+      "notes": "Five typed tools (analyze_refund, get_evidence, get_review_context, apply_case_policy, get_case); assess mode cannot write; human review mutation is never an agent tool; the final text is composed from tool results by _grounded rather than trusting model prose. Runs are persisted as AgentRun nodes. Max 8 turns / 16 tool calls."
+    },
+    {
+      "capability": "Synthetic demo-data generator with planted rings and ground truth",
+      "files": ["src/ringlens/synthetic.py", "evaluation/demo_ground_truth.json", "data/demo/base/*.jsonl"],
+      "symbols": ["generate_demo", "write_demo", "SyntheticDemo"],
+      "real_or_stub": "REAL",
+      "notes": "Deterministic seeded synthetic accounts/devices/addresses/orders/refunds for demos; all data is synthetic, not a real fraud corpus."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Account, Device, Address, Order, Refund, Dataset, ImportBatch, Investigation, Assessment, Evidence, Review, AgentRun. Edges: PLACED, USED_DEVICE, SHIPPED_TO, REQUESTED_REFUND, FOR_ORDER, INCLUDES, HAS_EVIDENCE, HAS_REVIEW, ABOUT, HAS_BATCH, HAS_ASSESSMENT, LATEST_ASSESSMENT, OVERLAPS, REVIEWS_ASSESSMENT, SUPERSEDES. All Cypher is fixed, parameterized ($params) and read through GRAPH.RO_QUERY; label/rel names in write queries come from code constants (f-strings over SOURCE_LABELS/EDGE_SPECS only). Patterns: named-path MATCH p=(a)-[:PLACED]->(o)-[:USED_DEVICE]->(d)<-[:USED_DEVICE]-(o2)<-[:PLACED]-(peer), UNWIND+MERGE batch loads, publish-by-single-query with WITH/OPTIONAL MATCH/DELETE/MERGE, id(link) used for duplicate-link detection. No APOC, no GDS, no FalkorDB algo.* procedures. compose.yaml pins falkordb-server v4.20.7 (not 4.22).",
+  "algorithms": [
+    "Rolling-window refund burst detection that consumes events to avoid window reuse in src/ringlens/scoring.py:refund_bursts",
+    "Two-hop shared-device peer expansion (frontier/visited sets, time-window filter) in src/ringlens/investigation_queries.py:DISCOVER_ACCOUNTS + investigator.py:investigate",
+    "Weighted rule aggregation R1-R5 to 0-100 score and HIGH/MEDIUM/LOW priority in scoring.py:score_records",
+    "Fact-fingerprint coverage test (subset-of-record-hashes plus anchor equality, user-count growth override) in reviews.py:_scope_covers/compare_evidence",
+    "Content-addressed assessment identity (SHA-256 over canonical JSON) and re-score-on-read integrity check in cases.py:assessment_key/_validate_saved"
+  ],
+  "backend_interfaces": [
+    "Typer CLI `ringlens` (src/ringlens/cli.py): doctor, schema-init, data generate/validate, ingest, verify, stats, paths, investigate, cases list/show, review record/history, agent run/show-run",
+    "Python library API only; no HTTP server or MCP server in this repo"
+  ],
+  "frontend_interfaces": ["none"],
+  "agent_or_memory_mechanisms": "Native tool-calling loop over five typed tools with strict JSON schemas and turn/tool-call caps, run audit persisted to the graph (AgentRun). 'Memory' is the human Review ledger: scoped to evidence-fact fingerprints, with SUPERSEDES chains, valid_until expiry and rule_version binding, consulted before every case create/update/reopen.",
+  "tests_present": "tests/unit (11 files) and tests/integration (6 files); about 180 test functions by grep. Integration tests need a real FalkorDB (marker 'integration'), live-agent tests need provider keys (marker 'live_agent'); some tests shell out via subprocess for docker/CLI. Not executed by auditor.",
+  "dependency_requirements": ["anthropic>=0.125,<1", "falkordb>=1.8,<2", "openai>=2,<3", "pydantic>=2.10,<3", "pydantic-settings>=2.7,<3", "redis>=8.1,<9", "typer>=0.15,<1", "python >=3.12,<3.13", "uv.lock present"],
+  "security_findings": [
+    "src/ringlens/import_queries.py:~12-35 - Cypher built with f-strings from SOURCE_LABELS / EDGE_SPECS constants; values pass as $rows parameters. Not user-injectable as written.",
+    "src/ringlens/graph_store.py:~85-125 - password handled as SecretStr, query text/params deliberately excluded from error messages, no automatic retry of writes. Good practice.",
+    "compose.yaml - redis-server started with --requirepass from env and --bind 0.0.0.0 inside container, host port bound to 127.0.0.1 only; password is mandatory (':?Set a password').",
+    "src/ringlens/agent_provider.py:13-37 - outbound calls to OpenAI/Anthropic using keys from env (.env); keys not hard-coded.",
+    "tests/integration/test_cases.py:107, test_falkordb.py:110, test_reviews.py:73 and tests/unit/test_synthetic.py:454 - subprocess.run in tests only.",
+    "No eval/exec/pickle in src/. No hard-coded secrets found by grep.",
+    "No LICENSE file; reuse permission is only the owner attestation."
+  ],
+  "duplicates_or_overlaps": "Financial Fraud ring detection (shared device/address, refund bursts) overlaps other fraud-ring entries; its distinctive part is the case-lifecycle layer (immutable assessments, fingerprint-scoped reviews, supersession, reopen-on-material-new-evidence), which overlaps Evidence Drift and decision-lineage concerns.",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "HIGH - reviews.py:compare_evidence plus cases.py:apply_case_policy implement fact-fingerprinted evidence, review supersession (SUPERSEDES), expiry (valid_until), rule_version binding, stale-input rejection (assert_current_input), immutable assessment history and reopen-on-material-new-evidence, i.e. a working evidence-change-to-decision-invalidation loop with human approval memory.",
+  "strongest_reusable_unit": {
+    "file": "src/ringlens/reviews.py",
+    "symbols": ["evidence_facts", "compare_evidence", "_scope_covers", "ReviewContext", "ScopedReview"],
+    "why": "Domain-light logic that decides whether a prior human decision still applies to a changed evidence set by comparing canonical fact fingerprints, honouring supersession/expiry/version, and emitting a REOPEN/KEEP_CLOSED/ESCALATE recommendation. Pairs with cases.py's content-addressed immutable assessment pattern. Needs light refactoring away from refund-specific R1-R5 rule names.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (via falkordb client 1.8, ro_query/query) and Redis lock for the writer lease; scoring.py and the fingerprint comparison itself are pure Python"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Fraud-ring scoring (scoring.py, investigation queries) is a clean Financial Fraud pack for Kairos, and the review-memory/assessment-snapshot pattern should be mined as a reference design for Evidence Drift rather than merged wholesale because it is entangled with refund-specific models.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,177 @@
+{
+  "repository": "ProthamD/graph-hacks",
+  "url": "https://github.com/ProthamD/graph-hacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\ProthamD__graph-hacks",
+  "commit_sha": "b9f0543227dcaab449191d58dfe32070e84ae047",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "blastradius/README.md",
+    "blastradius/.env.example (key names only)",
+    "blastradius/backend/requirements.txt",
+    "blastradius/backend/graph_schema.py",
+    "blastradius/backend/mcp_server.py",
+    "blastradius/backend/api_server.py (route list, ingest, github/pr, pr/triage fallbacks)",
+    "blastradius/backend/agent/orchestrator.py (symbol list, fallback lines)",
+    "blastradius/backend/ingest/code_graph.py",
+    "blastradius/backend/ingest/cve_enricher.py, graphrag_docs.py (symbol list)",
+    "blastradius/backend/seeds/seed_demo.py (Cypher grep)",
+    "blastradius/scripts/test_mcp.py (test count)"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI + FastMCP",
+    "falkordb >=1.0.0",
+    "LiteLLM (OpenAI/Gemini/Ollama)",
+    "Next.js 15/React/TypeScript + D3 frontend",
+    "Docker Compose (FalkorDB, Graphiti MCP, QueryWeaver)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Python AST code-graph ingestion (functions, classes, calls, API routes)",
+      "files": [
+        "blastradius/backend/ingest/code_graph.py"
+      ],
+      "symbols": [
+        "ASTGraphExtractor",
+        "ingest_codebase",
+        "match_diff_to_symbols"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real ast.parse over **/*.py producing Function/Class/API_Endpoint nodes and CALLS/ROUTES_TO edges with one MERGE per row (no UNWIND batching). Calls are resolved by bare callee name against functions already seen, so cross-file calls to files parsed later are missed and same-named functions are conflated; Python only."
+    },
+    {
+      "capability": "Blast radius upstream-caller query with ADR and API perimeter",
+      "files": [
+        "blastradius/backend/mcp_server.py"
+      ],
+      "symbols": [
+        "blast_radius"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Cypher uses (caller)-[:CALLS*1..$hops]->(target) with the bound passed as a query parameter; parameterized variable-length bounds are not generally supported by openCypher engines, so this must be tested on FalkorDB 4.22 (likely to error and fall into the demo fallback)."
+    },
+    {
+      "capability": "FalkorDB native graph algorithm tools (PageRank, Betweenness, SPpaths, WCC, label propagation)",
+      "files": [
+        "blastradius/backend/mcp_server.py"
+      ],
+      "symbols": [
+        "compute_centrality",
+        "cve_exploit_chain",
+        "detect_communities"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Thin wrappers over algo.pageRank, algo.betweenness, algo.SPpaths, algo.WCC, algo.labelPropagation that persist scores onto nodes. Neo4j-GDS-free but FalkorDB-version dependent; unverified here. Writes run through g.query from tools exposed to the LLM."
+    },
+    {
+      "capability": "Hybrid vector + full-text GraphRAG",
+      "files": [
+        "blastradius/backend/mcp_server.py",
+        "blastradius/backend/graph_schema.py"
+      ],
+      "symbols": [
+        "hybrid_search",
+        "bootstrap"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Uses db.idx.vector.queryNodes and db.idx.fulltext.queryNodes plus 2-hop traversal; caller must supply the embedding vector. Schema bootstrap swallows all index errors."
+    },
+    {
+      "capability": "Episodic memory and PR sandbox (GRAPH.COPY)",
+      "files": [
+        "blastradius/backend/mcp_server.py"
+      ],
+      "symbols": [
+        "memory_lookup",
+        "clone_pr_sandbox"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "memory_lookup reads AgentEpisode NEXT chains seeded by seed_demo.py (AgentEpisode nodes are only created by seeds/seed_demo.py:~414; no runtime code writes new episodes); clone_pr_sandbox issues GRAPH.COPY to {base}_pr_{pr_id} and returns status 'simulated' when the DB is offline."
+    },
+    {
+      "capability": "PR triage with PASS/BLOCK verdict",
+      "files": [
+        "blastradius/backend/api_server.py"
+      ],
+      "symbols": [
+        "triage_pr",
+        "fetch_github_pr",
+        "ingest"
+      ],
+      "real_or_stub": "STUB",
+      "notes": "When the graph query returns no rows the endpoint substitutes hard-coded caller/API/ADR/CVE lists keyed on substrings of the function id (e.g. 'payment', 'jwt'); fetch_github_pr returns a fabricated '[Demo]' PR when GitHub is unreachable; /api/ingest returns invented stats (48 functions, 72 calls) on error with status demo_fallback; /api/graph/nodes has a hard-coded fallback graph. Results can look real while being canned."
+    },
+    {
+      "capability": "LLM agent loop (LiteLLM tool calling)",
+      "files": [
+        "blastradius/backend/agent/orchestrator.py"
+      ],
+      "symbols": [
+        "agent_stream",
+        "_dispatch_tool"
+      ],
+      "real_or_stub": "PARTIAL",
+      "notes": "Streams litellm.acompletion with the MCP tool set; if litellm or the key is missing it falls back to keyword intent detection and calls a tool directly (call_id 'call_fallback_1')."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'blastradius'. Labels: Function{id,name,module,filePath,pagerank_score,betweenness_score,community_id,wcc_id,embedding}, Class, API_Endpoint{route,method,is_public}, Package, CVE{cve_id,cvss}, Developer, Commit, PullRequest, PastIncident, ProceduralPlaybook, ArchitectureDoc, AgentEpisode, Service. Edges: CALLS{weight}, ROUTES_TO, USES_PACKAGE, HAS_VULNERABILITY, AUTHORED, MODIFIED{lines_changed,invalidated_at}, GOVERNS, OWNS, CONTAINS, CAUSED_BY, INVESTIGATED, REMEDIATES, NEXT. FalkorDB-specific procedures: algo.pageRank, algo.betweenness, algo.SPpaths, algo.WCC, algo.labelPropagation, db.idx.vector.createNodeIndex/queryNodes, db.idx.fulltext.*, GRAPH.COPY, GRAPH.EXPLAIN. Cypher values are bound params, but graph_schema.py builds fulltext index calls by f-string from literal lists.",
+  "algorithms": [
+    "Reverse CALLS traversal with hop cap as blast radius (mcp_server.py:blast_radius; bound-parameter range unverified)",
+    "PageRank + betweenness centrality persisted on nodes (mcp_server.py:compute_centrality)",
+    "Weighted shortest exploit path from public endpoint to vulnerable package via algo.SPpaths (mcp_server.py:cve_exploit_chain)",
+    "WCC + label propagation community detection (mcp_server.py:detect_communities)",
+    "Python-AST name-based call graph construction (ingest/code_graph.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI :8090 GET /health, /api/graph/stats, /api/graph/nodes, /api/memory, /api/graphs/list, /api/github/pr; POST /api/tool/run (and /api/tools/run), /api/agent/chat (SSE), /api/blast-radius, /api/ingest, /api/pr/triage, /api/centrality, /api/communities, /api/cve, /api/ownership, /api/pr-sandbox",
+    "FastMCP server (mcp_server.py): blast_radius, compute_centrality, cve_exploit_chain, detect_communities, get_ownership, hybrid_search, memory_lookup, clone_pr_sandbox, graph_stats"
+  ],
+  "frontend_interfaces": [
+    "Next.js 15 pages: agent, algorithms (SqlVsGraphBenchmark), blast-radius (BlastShockwaveSimulator), company-brain, cve, graph, memory, pr-agent; JudgeTourModal; VectorVsGraphDiff; lib/falkordb.ts"
+  ],
+  "agent_or_memory_mechanisms": "Episodic memory modeled as AgentEpisode nodes chained by NEXT and linked INVESTIGATED->Function, plus ProceduralPlaybook REMEDIATES->Function, read by memory_lookup/hybrid_search; Triage->Remediation handoff is described in docs but implemented mainly in the demo triage endpoint. Ownership query filters MODIFIED edges by invalidated_at IS NULL (a temporal-invalidation hook) but nothing in the reviewed code writes invalidated_at.",
+  "tests_present": "None: scripts/test_mcp.py is a manual smoke script with no test_ functions; no pytest suite and no frontend tests.",
+  "dependency_requirements": [
+    "falkordb>=1.0.0",
+    "mcp[cli]>=1.0.0",
+    "fastmcp>=2.0.0",
+    "litellm>=1.40.0",
+    "openai>=1.40.0",
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.30.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "OpenAI/Gemini key or Ollama (runtime)"
+  ],
+  "security_findings": [
+    "blastradius/backend/api_server.py:~84-85 - CORS allow_origins includes '*' alongside the localhost origins; no authentication on any route",
+    "blastradius/backend/api_server.py:~265-273 - POST /api/tool/run dispatches any named tool with arbitrary args, including write tools (compute_centrality, detect_communities, clone_pr_sandbox) and a user-chosen graph name",
+    "blastradius/backend/api_server.py:~299-312 - POST /api/ingest takes a caller-supplied repo_path and walks/parses every .py under it (arbitrary local path read, path traversal); errors return fabricated stats",
+    "blastradius/backend/api_server.py:~321-340 - /api/github/pr issues outbound GitHub API requests for user-supplied repo/pr_number with optional GITHUB_TOKEN; falls back to fabricated demo PR data",
+    "blastradius/backend/graph_schema.py:~65-71 - f-string Cypher for fulltext index creation built from literal label/property lists (not user-controlled)",
+    "blastradius/backend/mcp_server.py:349-363 - clone_pr_sandbox builds graph name from unvalidated pr_id/base_graph and calls raw GRAPH.COPY (graph-name injection / overwrite of arbitrary graph copies)",
+    "No real secrets found; .env.example has placeholder OPENAI_API_KEY/GEMINI_API_KEY entries"
+  ],
+  "duplicates_or_overlaps": "Overlaps Software Dependency Intelligence and blast-radius traversal (AgentAhmed/blast-radius, 986036734/blastradius, NishaadG/blastradius, sevenhiremath/blastradius); the CVE exploit-chain tool overlaps Security & Vulnerability attack-path repos.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "LOW - ADR GOVERNS edges, AgentEpisode NEXT chains and an invalidated_at edge filter hint at provenance and temporal validity, but nothing writes invalidation, there is no supersession or approval gating, and many outputs are canned fallbacks.",
+  "strongest_reusable_unit": {
+    "file": "blastradius/backend/mcp_server.py",
+    "symbols": [
+      "compute_centrality",
+      "cve_exploit_chain",
+      "detect_communities",
+      "hybrid_search"
+    ],
+    "why": "Compact catalogue of FalkorDB-native algo.* and index procedure calls (PageRank, betweenness, SPpaths, WCC, labelPropagation, vector, fulltext) with persisted scores - useful as a syntax/reference sheet to verify against FalkorDB 4.22.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB with algo.* procedures, vector and fulltext indexes; LiteLLM/OpenAI key only for the agent"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Several headline results are produced by hard-coded fallback data, the blast-radius Cypher uses a questionable parameterized range, the API is unauthenticated with broad write and path-read surfaces, and there is no license; only the algorithm call syntax and the name-based AST ingest idea are worth referencing.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

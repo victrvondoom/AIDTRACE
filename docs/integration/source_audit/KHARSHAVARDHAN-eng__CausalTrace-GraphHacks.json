@@ -1,0 +1,102 @@
+{
+  "repository": "KHARSHAVARDHAN-eng/CausalTrace-GraphHacks",
+  "url": "https://github.com/KHARSHAVARDHAN-eng/CausalTrace-GraphHacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\KHARSHAVARDHAN-eng__CausalTrace-GraphHacks",
+  "commit_sha": "6446ccd92622366d6f2b8128b3e02fd51b95fc0a",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/requirements.txt",
+    "backend/pyproject.toml",
+    "backend/app/graph/client.py",
+    "backend/app/graph/query.py",
+    "backend/app/graph/seeder.py (head, scenario lines)",
+    "backend/app/services/investigation.py",
+    "backend/app/api/routes/incidents.py",
+    "backend/app/ai/provider.py",
+    "backend/app/core/config.py",
+    "backend/app/main.py",
+    "backend/app/evaluation/ground_truth.py (head)",
+    "backend/tests/test_investigation.py and test_evaluation_benchmark.py (test names)",
+    "docs/schema.cypher (head)",
+    "README.md (claims cross-checked against code)"
+  ],
+  "languages_frameworks": ["Python 3.10+/FastAPI", "falkordb >=1.0.8 sync client", "Pydantic v2", "React 18/Vite/TypeScript/Tailwind frontend"],
+  "implemented_capabilities": [
+    {
+      "capability": "Upstream dependency path traversal with critical/non-critical edge flags",
+      "files": ["backend/app/graph/query.py"],
+      "symbols": ["GraphQueryService.traverse_upstream_paths", "GraphQueryService.get_affected_services"],
+      "real_or_stub": "REAL",
+      "notes": "Variable-length DEPENDS_ON*1..N (default 4) Cypher returning node chain plus per-edge critical/protocol/latency arrays; builds EvidencePath objects with hop list. Note max_depth is f-string interpolated but is an internal int, not user input."
+    },
+    {
+      "capability": "Heuristic root-cause hypothesis ranking with distractor detection and abstention",
+      "files": ["backend/app/services/investigation.py"],
+      "symbols": ["IncidentInvestigationService.investigate"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real deterministic scoring: 0.45*topology (critical path, 0.9^hop decay, 0.25 penalty for async/non-critical) + 0.25*temporal proximity bucket + 0.30*telemetry corroboration (alerts/logs/trace-id match); softmax(T=0.25) relative confidence; marks distractors; abstains if best score < 0.60 or no telemetry. Weights and buckets are hand-picked constants, not learned; several 'missing evidence' and 'recommended_verification_steps' strings are hard-coded demo text (e.g. trace id trc-checkout-881)."
+    },
+    {
+      "capability": "Time-windowed deployment/alert/log correlation with Cypher provenance",
+      "files": ["backend/app/graph/query.py", "backend/app/services/investigation.py"],
+      "symbols": ["get_recent_deployments", "get_correlated_alerts", "get_correlated_logs", "cypher_query_provenance"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher with epoch-ms windows; every response returns the list of executed Cypher strings as provenance."
+    },
+    {
+      "capability": "Ground-truth isolated benchmark (10 synthetic incident scenarios)",
+      "files": ["backend/app/evaluation/ground_truth.py", "backend/app/graph/seeder.py", "backend/scripts/evaluate_investigation.py", "backend/tests/test_evaluation_benchmark.py"],
+      "symbols": ["GROUND_TRUTH_DATASET", "seed_incident_graph", "test_ground_truth_isolation"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Seeds 10 hand-authored incident topologies via Python MERGE helpers; benchmark scores the heuristic against hand-authored ground truth (README claims 9/9 top-1, 8/8 distractor demotion). Because scenarios and scoring weights were authored together, results are demonstrative, not independent validation."
+    },
+    {
+      "capability": "LLM provider abstraction",
+      "files": ["backend/app/ai/provider.py"],
+      "symbols": ["BaseLLMProvider", "OpenAIProvider", "AnthropicProvider", "StubProvider", "get_llm_provider"],
+      "real_or_stub": "STUB",
+      "notes": "Only implements check_health() (reports whether an API key is configured). No call to any LLM is made anywhere in the investigation path; all reasoning text is templated Python f-strings."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph 'causaltrace'. Labels: Service{id,name,tier,team,language,status}, Deployment{id,version,commit_sha,timestamp,status,deployed_by}, Alert{id,name,severity,timestamp,metric_name,metric_value}, LogEvent{id,level,message,timestamp,trace_id}, Incident{id,title,severity,status,started_at,summary}. Edges: DEPENDS_ON{critical,protocol,latency_p99_ms}, DEPLOYED_TO{environment}, TRIGGERED_ON, EMITTED_BY, AFFECTS, CORRELATED_WITH{time_delta_sec}. Plain openCypher (variable-length paths, nodes()/relationships() comprehension, MERGE, indexes). No APOC/GDS, no FalkorDB algo.* procedures. Queries are parameterized except the f-string depth interpolation and index creation strings built from literals.",
+  "algorithms": [
+    "Depth-capped (4) variable-length upstream path enumeration with per-hop criticality (query.py:traverse_upstream_paths)",
+    "Composite scoring 0.45 topology + 0.25 temporal + 0.30 telemetry with 0.9^(hops-1) decay and softmax(0.25) confidence normalization (investigation.py:investigate)",
+    "Distractor detection: non-critical path plus high alert or deployment within 10 min (investigation.py)",
+    "Evidence-sufficiency abstention threshold 0.60 (investigation.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI GET /api/health, GET /api/incidents (and /scenarios), GET /api/incidents/{id}/investigation?window_ms=, POST /api/incidents/seed",
+    "Offline: backend/scripts/evaluate_investigation.py"
+  ],
+  "frontend_interfaces": [
+    "React/Vite/TS: InvestigationWorkbench, CausalGraphVisualizer, SchemaOverview, HealthStatus, Header"
+  ],
+  "agent_or_memory_mechanisms": null,
+  "tests_present": "backend/tests: test_investigation.py (10), test_evaluation_benchmark.py (3 incl. parametrized), test_falkordb_connectivity.py (3) - about 16 functions (README says 25 passing via parametrization). Tests require a reachable FalkorDB and a seeded graph; no frontend tests.",
+  "dependency_requirements": ["fastapi>=0.110.0", "uvicorn[standard]>=0.28.0", "pydantic>=2.6.0", "pydantic-settings>=2.2.0", "falkordb>=1.0.8", "httpx>=0.27.0", "python-dotenv>=1.0.1", "pytest>=8.0.0"],
+  "security_findings": [
+    "backend/app/api/routes/incidents.py:~66 - POST /api/incidents/seed is unauthenticated and writes (MERGE) to the production graph; any caller can re-seed",
+    "backend/app/core/config.py:~10,~22 - APP_HOST defaults to 0.0.0.0 and CORS allow_credentials=True with configurable origins; no authentication on any API route",
+    "backend/app/graph/query.py:~96 - f-string interpolates max_depth into variable-length pattern (currently only called with constant 4; unsafe if ever user-controlled)",
+    "backend/app/graph/seeder.py:~39 - index creation built with f-string from literal tuples (not user-controlled)",
+    "backend/app/api/routes/incidents.py:~36,~55 - exception text including FalkorDB host/port detail is returned to the client (information disclosure)",
+    "No hard-coded secrets; LLM_API_KEY read from env only for a health check; no eval/exec/subprocess/pickle"
+  ],
+  "duplicates_or_overlaps": "Overlaps Incident & Root Cause Analysis family (AgentAhmed/blast-radius ROOT_CAUSE_CANDIDATES, rootcause-agent, patchpath) with a deployment-correlation scoring variant.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "LOW - provides evidence paths, supporting/contradictory/missing evidence lists and Cypher provenance for hypotheses, but has no supersession, temporal validity of facts, approval gating or decision lineage.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/services/investigation.py",
+    "symbols": ["IncidentInvestigationService.investigate", "GraphQueryService.traverse_upstream_paths", "get_recent_deployments", "get_correlated_alerts"],
+    "why": "Self-contained, explainable deployment-correlation scorer that outputs supporting/contradictory/missing evidence, distractor flags and abstention - a useful reference for explainable RCA output schema.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB with seeded Service/Deployment/Alert/LogEvent graph; no LLM needed"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Heuristic weights are hand-tuned against self-authored synthetic scenarios and the 'AI' provider is a health-check stub; the explainable evidence schema and abstention logic are worth borrowing as a pattern but there is no license file and little unique engine value over blast-radius.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

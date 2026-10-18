@@ -1,0 +1,144 @@
+{
+  "repository": "Rakesh9742/relayops",
+  "url": "https://github.com/Rakesh9742/relayops",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Rakesh9742__relayops",
+  "commit_sha": "6f49a11b2a2e1f6f4b5e679708866d9fbb84c5da",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "package.json",
+    ".env.example",
+    "docs/queries.md (head)",
+    "server/engine.ts",
+    "server/store.ts",
+    "server/graph.ts",
+    "server/falkor.ts",
+    "server/app.ts",
+    "server/agents.ts (head, tool specs)",
+    "server/model.ts (provider and fetch sections)",
+    "tests/engine.test.ts (head)",
+    "tests/ (file list and test counts)"
+  ],
+  "languages_frameworks": [
+    "TypeScript on Node.js >= 22.13 (tsx)",
+    "Express 5",
+    "falkordb npm client 6.8.0",
+    "React 19 + Vite + d3-force",
+    "zod 3",
+    "node:test and Playwright"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Version-guarded atomic multi-entity commit (optimistic concurrency) in one Cypher query",
+      "files": ["server/falkor.ts", "server/store.ts"],
+      "symbols": ["FalkorStore.commit", "Guard", "props", "labelOf", "relationOf"],
+      "real_or_stub": "REAL",
+      "notes": "commit() builds a single query: MATCH (gN {id:$g}) WHERE gN.version = $v for each guard, WITH *, then MERGE/SET of each node and MERGE of each edge, ending in RETURN 1. If any guard version differs, no row survives and nothing is written; the caller sees false. Node labels and relationship types are checked against closed allow-lists."
+    },
+    {
+      "capability": "Memory supersession with automatic plan invalidation",
+      "files": ["server/engine.ts"],
+      "symbols": ["Engine.migrate", "Engine.planIsCurrent", "nextVersion"],
+      "real_or_stub": "REAL",
+      "notes": "migrate() creates a new Memory node with supersedes=<old id> and version old+1, marks the old node status='superseded' with supersededBy, links fresh -[:SUPERSEDES]-> old, clears incident.plan, rewinds the incident to stage 1 and re-queues the planning task, all in one guarded commit. Old memory is preserved, not deleted."
+    },
+    {
+      "capability": "Approval gate that rejects stale plans",
+      "files": ["server/engine.ts"],
+      "symbols": ["Engine.action", "Engine.planIsCurrent"],
+      "real_or_stub": "REAL",
+      "notes": "A plan records memoryIds and memoryVersions. On approve, planIsCurrent re-reads each cited memory and refuses if it is not status 'active' or its version differs, returning a 409 'plan uses outdated memory'. Stage 2 (apply) re-checks that the cited fact is still active and still names the same database."
+    },
+    {
+      "capability": "Multi-agent staged workflow with task leases and hand-offs",
+      "files": ["server/engine.ts"],
+      "symbols": ["Engine.step", "Engine.claim", "Engine.release", "Engine.task", "agentFor", "Engine.create"],
+      "real_or_stub": "REAL",
+      "notes": "Four stages (investigate, plan, apply, verify) handled by agents atlas, sage and echo as Task nodes with status/leaseUntil (60 s) claimed through a version-guarded write and linked HANDS_OFF_TO. Pause, resume and checkpoint events are persisted; each step guards the incident, the task and every memory it relied on, so a concurrent memory change aborts the step."
+    },
+    {
+      "capability": "Graph tools for incident triage",
+      "files": ["server/falkor.ts", "server/graph.ts", "server/agents.ts"],
+      "symbols": ["FalkorGraph.blastRadius", "FalkorGraph.suspects", "FalkorGraph.similarIncidents", "FalkorGraph.whoKnows", "FalkorGraph.decisions", "FalkorGraph.memoriesFor", "FalkorGraph.path", "FalkorGraph.searchMemory", "FalkorGraph.criticalServices", "GRAPH_TOOLS"],
+      "real_or_stub": "REAL",
+      "notes": "Native Cypher traversals over DEPENDS_ON|ROUTES_TO (variable length, head(collect(p)) shortest path per node), pattern comprehensions for active memories and root-cause incidents, shortestPath, full-text search via db.idx.fulltext.queryNodes, and algo.betweenness for critical services. Every tool returns the path steps that produced each hit."
+    },
+    {
+      "capability": "Episodic learning after verified recovery",
+      "files": ["server/engine.ts"],
+      "symbols": ["Engine.step (stage 3 branch)"],
+      "real_or_stub": "REAL",
+      "notes": "After the simulated health check passes, writes an episodic Memory linked LEARNED_FROM the incident and HAS_MEMORY from the root-cause service, and bumps the procedure's verifiedRuns and lastVerifiedAt version so the next incident reuses it."
+    },
+    {
+      "capability": "LLM reasoning client with deterministic fallback",
+      "files": ["server/model.ts", "server/agents.ts"],
+      "symbols": ["ReasoningClient", "modelConfigFromEnv", "investigate", "plan", "answer"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Optional OpenAI Responses or Anthropic Messages tool-calling over a fixed read-only tool set; with no key it runs a deterministic policy over the same graph tools. The engine verifies the model's chosen procedure/fact are active memories and not in a forbidden list before building a plan, so model output cannot bypass memory state."
+    },
+    {
+      "capability": "Simulated sandbox and fixed scenarios",
+      "files": ["server/engine.ts", "server/seed.ts"],
+      "symbols": ["SCENARIOS", "signalsOf", "Engine.step"],
+      "real_or_stub": "STUB",
+      "notes": "Recovery 'applies' a pool-size change to a field on the incident document and flips hard-coded after-metrics; four preset scenarios (pool, worker, cache, migration) and a fictional two-workspace seed (acme, orbit) are authored data. Nothing is executed against a real system."
+    }
+  ],
+  "graph_models_and_cypher": "One graph per tenant: relayops_<tenant>. Labels: Service, Incident, Memory, Person, Team, Decision, Task, Event, Message. Relations (closed allow-list): DEPENDS_ON, ROUTES_TO, OWNS, MEMBER_OF, ON_CALL_FOR, RESOLVED, AFFECTS, ROOT_CAUSE, SIMILAR_TO, HAS_MEMORY, LEARNED_FROM, SUPERSEDES, ABOUT, MADE_BY, BASED_ON, HAS_EVENT, HAS_TASK, HAS_MESSAGE, HANDS_OFF_TO, USES. Each node stores id, kind, version, a full JSON payload and a set of lifted scalar properties. Notable Cypher: guarded multi-statement MERGE with WITH *; pattern comprehensions [(s)-[:DEPENDS_ON|ROUTES_TO*1..2]->(u:Service) | u]; head(collect(p)) after ORDER BY length(p); shortestPath((a)-[*..N]->(b)); db.idx.fulltext.queryNodes with a CREATE FULLTEXT INDEX; CALL algo.betweenness({nodeLabels, relationshipTypes}) (FalkorDB algorithm procedure, not Neo4j GDS). Memory nodes carry status (active, superseded) and version. No APOC.",
+  "algorithms": [
+    "Optimistic-concurrency version guards on every write path (falkor.ts:commit, engine.ts guards arrays)",
+    "Supersession chain with status flip and SUPERSEDES edge (engine.ts:migrate)",
+    "Plan-currency check by re-reading cited memory id and version (engine.ts:planIsCurrent)",
+    "Reverse-dependency blast radius via variable-length DEPENDS_ON|ROUTES_TO paths (falkor.ts:blastRadius)",
+    "Suspect ranking: upstream services plus siblings sharing a dependency, ordered by depth and prior root-cause count (falkor.ts:suspects)",
+    "Betweenness centrality via FalkorDB algo.betweenness (falkor.ts:criticalServices)",
+    "Full-text memory search with light stemming and prefix OR query (falkor.ts:searchMemory)",
+    "Task lease claim with expiry (engine.ts:claim)"
+  ],
+  "backend_interfaces": [
+    "Express 5 (server/app.ts): GET /api/health, POST /api/session, GET /api/state, POST /api/model/check, POST /api/workspace, POST /api/incidents, GET /api/scenarios, GET /api/graph/:tool/:serviceId, GET /api/graph/critical, GET /api/graph/search, GET /api/graph/path, POST /api/incidents/:id/action (start|pause|resume|approve|migrate), POST /api/incidents/:id/messages, GET /api/export",
+    "Scripts: scripts/run-scenario.ts, scripts/benchmark.ts"
+  ],
+  "frontend_interfaces": [
+    "React single-page app src/App.tsx (3560 lines) with a d3-force ForceGraph.tsx graph view, incident timeline, shared-memory inspector, approval and evidence-correction controls, and a chat box"
+  ],
+  "agent_or_memory_mechanisms": "Shared graph memory with categories (semantic facts, procedural procedures, episodic outcomes) and statuses active or superseded; agents atlas, sage and echo hand work off through Task nodes (HANDS_OFF_TO) with leases; tool traces are persisted on events; decisions can forbid procedures; incident state machine open -> investigating -> awaiting_approval -> resolving -> resolved with paused and error states; evidence correction (migrate) supersedes a memory and invalidates the pending plan.",
+  "tests_present": "27 node:test cases (api 3, engine 9, graph 8, model 7) plus 2 Playwright specs. By default the tests run against an in-memory SQLite test double in tests/doubles.ts; npm run test:falkordb sets TEST_FALKORDB=1 to check that the Cypher matches the double. Not run by this audit.",
+  "dependency_requirements": [
+    "falkordb 6.8.0",
+    "express 5.2.1",
+    "zod 3.25.76",
+    "react / react-dom 19.2.4",
+    "d3-force, d3-zoom, d3-drag, d3-selection, d3-transition ^3",
+    "tsx 4.22.4, typescript 5.9.3, vite 6.4.3",
+    "Node.js >= 22.13.0",
+    "optional OPENAI_API_KEY or ANTHROPIC_API_KEY"
+  ],
+  "security_findings": [
+    "server/model.ts:320-345 and 396-420 - outbound fetch to api.openai.com and api.anthropic.com with keys from environment; fixed hosts, timeout 40 s; provider error bodies are deliberately not exposed to clients",
+    "server/falkor.ts:299,317,474,530,545 - depth, max and limit are interpolated into Cypher with template strings; callers pass numbers from code defaults (depth/max/limit), not from request input, and request-supplied ids go through parameters (low risk, but validate if exposed)",
+    "server/falkor.ts:160,174 - CREATE INDEX with labels and fields from constant lists (low risk)",
+    "server/app.ts:20-26 - session HMAC secret written to .data/session-secret with mode 0600; sessions are signed with timingSafeEqual and carry hard-coded memberships ['acme','orbit'] (line 33), so tenancy is demo-grade",
+    "server/app.ts:75-87 - local login is allowed from loopback without a code; remote use requires DEMO_ACCESS_CODE, compared with !== (not constant time)",
+    "server/app.ts:238 - /api/export returns every node and edge for the session tenant to any authenticated session",
+    "server/app.ts:45-60 - origin check on non-GET requests blocks cross-origin writes; JSON body limit 32 kb",
+    "No shell, eval or exec in the files read; no hard-coded secrets found",
+    "No LICENSE file: reuse rests on the user-attested owner permission"
+  ],
+  "duplicates_or_overlaps": "Incident root cause and blast radius (reverse DEPENDS_ON traversal), agent memory with handoffs, decision lineage, and above all supersession plus stale-plan invalidation, which is the core of an Evidence Drift Cascade. Overlaps with other incident/RCA repos on traversal and with agent-memory repos on task handoff.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - explicit supersession (status superseded, supersededBy, SUPERSEDES edge, preserved history), version-pinned plan citations that fail approval when a cited memory changed, cascade that clears the dependent plan and re-queues planning, and write guards that abort an in-flight step if any memory it used changed.",
+  "strongest_reusable_unit": {
+    "file": "server/engine.ts",
+    "symbols": ["Engine.migrate", "Engine.planIsCurrent", "Engine.action", "nextVersion"],
+    "why": "About 100 lines that together implement supersede-then-invalidate-dependent-plan with an approval gate that re-verifies cited evidence versions, backed by server/falkor.ts:FalkorStore.commit, a reusable single-query guarded write. This is the most direct existing model of the Evidence Drift Cascade in the audited set.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (the guarded-commit Cypher is plain openCypher and ports to the Python client 1.8); TypeScript source must be re-implemented in Python; LLM keys optional"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The supersession, version-guarded commit and stale-plan approval gate are domain-neutral and should be re-implemented in Python as a shared evidence-lifecycle engine, using this repo as the behavioral spec and tests/engine.test.ts as acceptance cases. The incident simulation, seed data and UI are not worth importing.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

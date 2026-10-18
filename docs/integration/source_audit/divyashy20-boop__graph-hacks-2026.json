@@ -1,0 +1,137 @@
+{
+  "repository": "divyashy20-boop/graph-hacks-2026",
+  "url": "https://github.com/divyashy20-boop/graph-hacks-2026",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\divyashy20-boop__graph-hacks-2026",
+  "commit_sha": "7913afd7a5ebced7f5d15f82658593e9cfdb58f8",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "pyproject.toml",
+    "compose.yaml",
+    "README_FIRST.md",
+    "DATA_LICENSES.md",
+    "ugi/models.py",
+    "ugi/store.py",
+    "ugi/engine.py",
+    "ugi/identity.py",
+    "ugi/resolution.py",
+    "ugi/api.py",
+    "ugi/mcp_server.py",
+    "ugi/agent_integration.py",
+    "ugi/memory/core.py",
+    "ugi/memory/bridge.py",
+    "ugi/agent_policy/controller.py",
+    "ugi/agent_policy/rulebook.py",
+    "UGI_All_In_One_Test/ugi_krish_validation_v2/freshness.py",
+    "UGI_Memory_Receipts_Lab/p5memory/core.py (diffed against ugi/memory/core.py)",
+    "ugi/provider.py (grep)",
+    "tests/*.py (counted)"
+  ],
+  "languages_frameworks": ["Python 3.11+/FastAPI", "pydantic v2 / pydantic-settings", "redis-py raw GRAPH.QUERY against FalkorDB (pinned image digest)", "stdlib sqlite3 (memory ledger)", "Vanilla JS UI (ugi/assets/app.js, guided.js)", "boto3 (optional Bedrock)", "MCP JSON-RPC stdio"],
+  "implemented_capabilities": [
+    {
+      "capability": "Source-grounded claim ledger with evidence quotes and temporal validity",
+      "files": ["ugi/engine.py", "ugi/models.py", "ugi/store.py"],
+      "symbols": ["Engine.ingest", "Engine.usable", "active", "same_interval", "Candidate", "Store.commit", "Store._check_immutable"],
+      "real_or_stub": "REAL",
+      "notes": "Every Claim carries an Evidence record (quote, start/end offsets, chunk, source), polarity, modality, valid_from/valid_to, event_time, historical flag and review_status. Immutable record kinds are enforced on commit (canonical-JSON compare), so evidence cannot be rewritten."
+    },
+    {
+      "capability": "Relationship adjudication with contradiction detection and rule-derived inference",
+      "files": ["ugi/engine.py"],
+      "symbols": ["Engine.relationship", "Engine.paths", "Engine.resolution_gap", "Engine.derived_resolution", "Engine.final_relationship_response"],
+      "real_or_stub": "REAL",
+      "notes": "Statuses SOURCE_ASSERTED / SOURCE_NEGATED / CONTRADICTED / RULE_DERIVED / CONNECTED_ONLY / HYPOTHESIS / UNKNOWN. CONTRADICTED requires overlapping validity intervals. Only two hard-coded rules exist (dependency_reachability_v1 and shared_employer_temporal_overlap_v1); no learned scoring."
+    },
+    {
+      "capability": "Bounded reverse-dependency traversal (blast-radius preview) with budgets and idempotent action gate",
+      "files": ["ugi/engine.py"],
+      "symbols": ["Engine.paths", "Engine.investigate", "InvestigationRequest"],
+      "real_or_stub": "REAL",
+      "notes": "BFS over RELATES edges with max_hops (<=6), max_expansions and 20-path cap, as_of filtering and DEPENDS_ON-only reverse mode. investigate() is read-only preview unless authorise_action=true; writes are idempotency-keyed and create ReviewTasks plus an AgentAction record."
+    },
+    {
+      "capability": "Immutable identity ledger with dependency invalidation (DerivedArtifact -> KnowledgeRevision 'stale' notices)",
+      "files": ["ugi/identity.py", "ugi/store.py"],
+      "symbols": ["IdentityLedger.stage", "IdentityLedger.revise", "IdentityLedger.artifact", "IdentityLedger.freshness", "IdentityLedger._dependent_artifacts", "IdentityLedger.assignment", "IdentityLedger.card", "DEPENDENCY_QUERY"],
+      "real_or_stub": "REAL",
+      "notes": "Append-only MentionSnapshot/EntityCard/IdentityRevision/IdentityAssignment records with as_known_at (bitemporal) reads. A provisional merge/split/revert looks up DerivedArtifacts via USES_IDENTITY edges and emits KnowledgeRevision{state:stale}. freshness() compares consumed vs current revision ids. Explicitly never reports 'fresh', only 'current_inputs_only'."
+    },
+    {
+      "capability": "Receipt-based memory with read-set fingerprints, VALID/STALE/UNKNOWN lattice, cascade, protected-action gate and sweep (P5 memory)",
+      "files": ["ugi/memory/core.py", "ugi/memory/bridge.py", "ugi/memory/registry.py", "ugi/agent_integration.py"],
+      "symbols": ["Memory.batch_publish", "Memory.open_read", "Reader.read", "Reader.scan", "Memory.seal", "Memory._state", "Memory._status", "Memory._cascade", "Memory._recheck", "Memory.protected_action", "Memory.sweep", "Memory.state_as_known", "CapturingMCP", "publish_observations", "refresh_receipt", "receipt_read_differences"],
+      "real_or_stub": "REAL",
+      "notes": "stdlib SQLite ledger: facts(scope,key,field,source,valid_from,valid_to,record_seq), receipts, reads(fingerprint), receipt_links(parent->child), invalidations. A write that changes a fact fingerprint marks dependent receipts STALE (or UNKNOWN on multi-source CONFLICT) and cascades to child receipts; status is monotone (never auto-revalidates). protected_action re-checks the read set inside the same BEGIN IMMEDIATE transaction and blocks. Local SQLite atomicity only; no external-effect fencing (stated in docstring)."
+    },
+    {
+      "capability": "Deterministic policy-state-machine agent controller over allow-listed MCP tools with fail-closed schema checks",
+      "files": ["ugi/agent_policy/controller.py", "ugi/agent_policy/rulebook.py", "ugi/mcp_server.py"],
+      "symbols": ["run_controller", "interpret_request", "determine_step", "expected_args", "validate_arguments", "inspect_claims", "check_claim_detail", "UNSAFE_QUERY", "call_tool", "handle_message"],
+      "real_or_stub": "REAL",
+      "notes": "Tool arguments are constructed from validated state, never from an LLM; optional advisor can only suggest a phase and its agreement is merely counted. Regex-based NL interpreter (narrow: exactly two known entity names, DEPENDS_ON/TRANSITIVELY_DEPENDS_ON). Abstains on causal/temporal/negation/destructive phrasing."
+    },
+    {
+      "capability": "Identity resolution policy (blocking, authority observations, cluster manifests) - dry-run only",
+      "files": ["ugi/resolution.py", "ugi/identity_policy.py", "ugi/identity.py"],
+      "symbols": ["IdentityResolver", "AuthorityObservation", "IdentityPolicy", "IdentityLedger.plan_projection", "IdentityLedger.cluster_manifest"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Flag-gated (identity_resolution=dry_run); output is calibrated=False and eligible_for_inference=False. Not an external registry check."
+    },
+    {
+      "capability": "Schema packs / open predicates / n-ary relation events and LLM-or-grammar extraction",
+      "files": ["ugi/schema.py", "ugi/nary.py", "ugi/extract.py", "ugi/clauses.py", "ugi/open_relations.py", "ugi/provider.py", "ugi/packs/it.json", "ugi/packs/research.json", "ugi/packs/supply.json"],
+      "symbols": ["SchemaRuntime", "DomainPack", "PredicateSpec", "event_records", "verify_event", "discover", "verify", "verify_local_batch", "Bedrock", "Ollama"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Offline grammar extractor is real but narrow; LLM extraction (Bedrock/Ollama) is behind quotas and cost limits and every candidate must pass a quote-grounding check plus a verifier prompt. Several eval/milestone reports claim metrics; those are self-reported JSON files."
+    }
+  ],
+  "graph_models_and_cypher": "Single generic 'Record' node (id, kind, payload JSON string) with secondary labels per kind: Source, Chunk, Entity, Claim, Evidence, Mention, MergeDecision, Hypothesis, Investigation, ReviewTask, AgentAction, RelationEvent, MentionSnapshot, EntityCard(Head), IdentityAssignment, IdentityRevision, DerivedArtifact, KnowledgeRevision, IdentityProfile/Posting/Evidence/Assessment/Cluster/Run, DomainPack, PredicateDefinition, SchemaBinding(Head), SchemaMappingRevision. Edges: RELATES{claim_id}, HAS_CHUNK, SUPPORTS, CITES, HAS_TASK, ACTED_ON, HAS_PARTICIPANT{role}, USES_IDENTITY. Graph is a payload store; traversal logic is in Python, not Cypher. Cypher is plain (CREATE INDEX FOR (n:Label) ON (n.prop), UNWIND/FOREACH/MERGE batch writes, MATCH ... WHERE x IN $ids). No APOC, no GDS. Uses 'GRAPH.QUERY <graph> \"CYPHER k=v ...\" TIMEOUT 5000' via raw redis execute_command with a custom literal() serializer (not the falkordb client); FOREACH-based batch writes were tuned for a specific FalkorDB build (comment about mixed pending/persisted node pools).",
+  "algorithms": [
+    "BFS dependency traversal with hop cap, expansion budget, path cap and interval-intersection pruning in ugi/engine.py:Engine.paths",
+    "Temporal validity filter active(claim, as_of) with year/month/day precision handling in ugi/engine.py:active",
+    "Contradiction detection requiring overlapping validity intervals in ugi/engine.py:Engine.relationship",
+    "Rule-derived inference (dependency_reachability_v1, shared_employer_temporal_overlap_v1) in ugi/engine.py:Engine.relationship",
+    "Read-set fingerprint comparison (sha256 over canonical JSON) with monotone VALID<STALE<UNKNOWN lattice and BFS receipt cascade in ugi/memory/core.py:Memory._status/_cascade/batch_publish",
+    "Bitemporal as_known_at walk over IdentityRevision previous_revision_id chain in ugi/identity.py:IdentityLedger._assignment",
+    "Dependent-artifact fan-out lookup (USES_IDENTITY) bounded to 200 in ugi/identity.py:_dependent_artifacts"
+  ],
+  "backend_interfaces": [
+    "FastAPI app factory ugi/api.py:create_app - /api/uploads, /api/graph, /api/events, /api/entities, /api/records/{id}, /api/identity/cards/{id}, /api/identity/revisions, /api/identity/artifacts[/{id}], health/ready (X-API-Key header with compare_digest, X-Dataset header, per-minute quota)",
+    "MCP stdio server ugi/mcp_server.py: search_entities, evaluate_relationship, get_claim_evidence, investigate_dependency_incident (writes need UGI_MCP_ALLOW_WRITES=1)",
+    "Guided read-only agent endpoint with receipt bridge: ugi/agent_integration.py (feature-flagged)",
+    "CLI demos/evals: ugi/demo.py, ugi/evaluate.py, ugi/eval_*.py, ugi/benchmark_*.py"
+  ],
+  "frontend_interfaces": ["ugi/index.html with ugi/assets/app.js, guided.js, style.css (vanilla JS graph/guided-investigation UI served by FastAPI)"],
+  "agent_or_memory_mechanisms": "Deterministic policy state machine (resolve_subject -> resolve_object -> evaluate_relationship -> retrieve:<claim> -> preview -> DONE) with 12-call cap; optional LLM 'advisor' cannot supply arguments. Persistent receipt memory in SQLite (ugi/memory/core.py): facts are append-only with valid_from/valid_to and record_seq; agent answers are sealed as receipts bound to the exact tool reads (fingerprints); mandatory MCP re-read via refresh_receipt; protected_action blocks stale/unknown receipts. Idempotency keys on every write.",
+  "tests_present": "tests/ has 27 files with ~196 test functions (engine, identity ledger, resolution, schema, n-ary, MCP stdio subprocess, HTTP integration marked 'integration: requires real FalkorDB', guided memory HTTP). UGI_Memory_Receipts_Lab/tests has ~83 tests (test_memory.py 46, test_adversarial.py 16, test_ingest.py 18, test_runtime.py 3). UGI_All_In_One_Test and UGI_Final_Qualification contain additional packaged test labs (some tests use exec/compile on patch fixtures). Not executed by auditor.",
+  "dependency_requirements": ["fastapi>=0.115", "pydantic>=2.8", "pydantic-settings>=2.4", "python-multipart>=0.0.9", "redis>=5,<8", "uvicorn>=0.30", "boto3>=1.34 (declared in core deps even though Bedrock is optional)", "pypdf>=5", "requires-python >=3.11", "memory ledger itself needs only stdlib sqlite3"],
+  "security_findings": [
+    "ugi/store.py:30-37,69 - custom Cypher parameter serialization (literal()) builds a 'CYPHER k=v' prefix from json.dumps; keys regex-validated, values JSON-escaped. Reasonable but non-standard; not the driver's native parameterization.",
+    "ugi/store.py:107,243-250 - f-string Cypher with kind/relationship names; both are validated against KINDS / a fixed edge allow-list first, so not exploitable as written; limit is range-checked int.",
+    "ugi/store.py:299 - Redis EVAL Lua quota script with fixed text (no injection).",
+    "ugi/api.py:57-63 - API-key auth is optional: if UGI_API_KEYS is empty every caller is owner 'local' with no auth.",
+    "ugi/provider.py:~167 - urllib.request.urlopen to Ollama, restricted by Settings validator to http localhost/127.0.0.1/host.docker.internal:11434; boto3 Bedrock requires explicit paid opt-in.",
+    "ugi/agent_policy/rulebook.py:26-32 - regex denylist (UNSAFE_QUERY) is a heuristic guard, not a security boundary; real guard is that tool args are constructed by rulebook and MCP schemas are additionalProperties:false.",
+    "UGI_All_In_One_Test/ugi_agent_fix/tests/test_patch_and_agent.py:26,49 (and the UGI_Final_Qualification/aio copy) - exec(compile(...)) on patched engine source in tests only.",
+    "UGI_All_In_One_Test/ugi_krish_validation_v2/full_audit.py:53 - subprocess.Popen([sys.executable,'-m','ugi.mcp_server']) test harness only.",
+    "tests/test_mcp.py:66-79 - subprocess.run of the MCP server in a test.",
+    "No hard-coded secrets found by grep; compose.yaml binds FalkorDB to 127.0.0.1 only.",
+    "No LICENSE file; DATA_LICENSES.md states FewRel-derived eval data is CC BY-SA 4.0 (share-alike) - do not copy evaluation data into Kairos without handling that."
+  ],
+  "duplicates_or_overlaps": "Overlaps with blast-radius/dependency traversal (Engine.paths + investigate), RCA preview (explicitly refuses causation), identity/entity resolution, and heavily with Evidence Drift / provenance / decision lineage (receipts, DerivedArtifact staleness, as_known_at). Many hackathon repos duplicate the 'reverse DEPENDS_ON BFS' idea; the receipt ledger and immutable identity ledger are unique within this batch.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - ugi/memory/core.py implements read-set fingerprinting, VALID/STALE/UNKNOWN monotone lattice, receipt-to-receipt cascade invalidation, bitemporal state_as_known, sweep-on-clock-advance and an atomic protected_action approval gate, and ugi/identity.py adds immutable revision history plus DerivedArtifact->KnowledgeRevision staleness notices: almost exactly the primitives of an Evidence Drift Cascade engine.",
+  "strongest_reusable_unit": {
+    "file": "ugi/memory/core.py",
+    "symbols": ["Memory", "Reader", "Memory.batch_publish", "Memory.seal", "Memory._status", "Memory._cascade", "Memory._recheck", "Memory.protected_action", "Memory.sweep", "Memory.state_as_known", "PolicyError"],
+    "why": "Self-contained 378-line module (stdlib sqlite3/hashlib/json only) that already implements evidence-dependency capture, temporal validity (valid_from/valid_to), supersession by source, conflict -> UNKNOWN, cascade through parent/child receipts and an approval/action gate that re-validates inside one transaction. Backed by ~83 tests in UGI_Memory_Receipts_Lab/tests. Can be ported behind a Kairos FastAPI service or re-implemented over FalkorDB.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none (stdlib SQLite file; optional FalkorDB only for the surrounding UGI graph store)"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The receipt/staleness ledger and identity-revision ledger are domain-neutral engines that Kairos' Evidence Drift Cascade can adopt directly (port core.py as an engine and adapt the Redis-payload FalkorDB store pattern). The rest of UGI (extraction, schema packs, UI) is a separate product best treated as reference.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

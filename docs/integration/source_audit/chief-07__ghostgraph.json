@@ -1,0 +1,130 @@
+{
+  "repository": "chief-07/ghostgraph",
+  "url": "https://github.com/chief-07/ghostgraph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\chief-07__ghostgraph",
+  "commit_sha": "835379f900bcd09114140578ad5d6366bc806dad",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/mcp_tools/falkor_client.py",
+    "backend/mcp_tools/cypher_tools.py",
+    "backend/agents/topology_agent.py",
+    "backend/agents/reconstruction_agent.py",
+    "backend/agents/supervisor_agent.py",
+    "backend/harness/compiler.py",
+    "backend/harness/differential.py",
+    "backend/app.py",
+    "backend/tests/test_truthful_execution.py",
+    "ground_truth/README.md",
+    "requirements.txt",
+    ".env.example"
+  ],
+  "languages_frameworks": ["Python/FastAPI + SSE (sse-starlette)", "falkordb>=1.0.8", "capstone / pefile (x86 disassembly)", "Gemini API via urllib", "vanilla JS + Cytoscape-style graph front end", "C ground-truth sources"],
+  "implemented_capabilities": [
+    {
+      "capability": "Binary disassembly ingestion into a function/memory call graph in FalkorDB",
+      "files": ["backend/agents/topology_agent.py", "backend/app.py"],
+      "symbols": ["TopologyAgent.ingest_binary", "TopologyAgent.ensure_schema_indices", "upload_custom_binary"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Uses real Capstone disassembly (ELF PT_LOAD handling, call targets, RIP-relative memory refs) and UNWIND batch writes; the /api/upload path only inspects the first 8 KB and 120 instructions and then registers a canned target config."
+    },
+    {
+      "capability": "Multi-hop memory provenance and call-chain queries (WRITES -> GlobalMemory, CALLS*1..6, shortestPath)",
+      "files": ["backend/mcp_tools/cypher_tools.py"],
+      "symbols": ["resolve_memory_source", "find_memory_consumers", "get_call_chain", "find_shortest_call_path", "get_function_context", "compute_function_pagerank", "detect_subsystem_clusters"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterised Cypher tools over Function/GlobalMemory nodes incl. CALL algo.pageRank with a degree-count fallback; detect_subsystem_clusters is a simple degree-threshold heuristic labelled as role clustering."
+    },
+    {
+      "capability": "Episodic memory of candidate reconstructions and test outcomes",
+      "files": ["backend/mcp_tools/cypher_tools.py", "backend/harness/differential.py"],
+      "symbols": ["record_candidate", "record_test_outcome", "fetch_failure_memory"],
+      "real_or_stub": "REAL",
+      "notes": "Writes Candidate nodes (RECONSTRUCTS->Function) and PASSED / FAILED_ON {diff,timestamp} edges to TestCase; fetch_failure_memory reads prior failures to feed the next prompt."
+    },
+    {
+      "capability": "LLM function reconstruction with graph context",
+      "files": ["backend/agents/reconstruction_agent.py"],
+      "symbols": ["ReconstructionAgent.reconstruct_function", "_call_gemini_api", "_synthesize_from_graph_context"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real Gemini call when a key is set, but the no-key/failure fallback _synthesize_from_graph_context returns pre-written correct implementations (progressive tax brackets, lunar throttle curve) or a stub returning True, i.e. canned answers presented as graph-grounded synthesis."
+    },
+    {
+      "capability": "Differential verification harness",
+      "files": ["backend/harness/differential.py", "backend/harness/compiler.py"],
+      "symbols": ["DifferentialTester.run_tests", "evaluate_billing_test", "evaluate_telemetry_test", "evaluate_lunar_lander_test", "CCompiler.compile"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Billing path genuinely exec()s the candidate and compares against vectors (test_truthful_execution.py). For telemetry/pacman/snake/keygen/lunar the has_graph_memory flag selects a pre-baked pass or fail branch (e.g. zeroed CRC table when False), so the 'graph vs flat LLM' contrast is largely scripted."
+    },
+    {
+      "capability": "Supervisor pipeline and SSE playback",
+      "files": ["backend/agents/supervisor_agent.py", "backend/app.py"],
+      "symbols": ["SupervisorAgent.run_reconstruction_pipeline", "TARGET_CONFIGS", "stream_reconstruction"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Single-iteration (max_iterations=1) orchestration; TARGET_CONFIGS embeds hand-written disassembly, decompiled and reconstructed C for each demo target, and the stream inserts sleep delays between events for theatrical pacing."
+    },
+    {
+      "capability": "In-memory Cypher fallback engine",
+      "files": ["backend/mcp_tools/falkor_client.py"],
+      "symbols": ["FalkorClient._execute_in_memory"],
+      "real_or_stub": "STUB",
+      "notes": "Described as an 'authentic in-memory Cypher engine' but is substring matching on known query text with a hard-coded FlightTelemetry struct; any other Cypher returns an empty list."
+    },
+    {
+      "capability": "Symbol grounding guardrail",
+      "files": ["backend/mcp_tools/cypher_tools.py"],
+      "symbols": ["verify_synthesized_symbols"],
+      "real_or_stub": "STUB",
+      "notes": "Substring check of allowed symbols in code; 'unresolved' is never populated and status is VERIFIED if any symbol appears, so it does not detect hallucination."
+    },
+    {
+      "capability": "Demo game engines",
+      "files": ["backend/app.py"],
+      "symbols": ["SpaceInvadersGameEngine", "active_snake", "lunar endpoints"],
+      "real_or_stub": "STUB",
+      "notes": "Snake, Space Invaders, lunar-lander and telemetry downlink simulators used only for the visual demo; synthesized candidates are hot-loaded into them."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Program, Function {name,address,signature,pseudocode,raw_asm}, GlobalMemory {address,label,data_type}, Struct/StructField, Candidate {id,function_name,source_code,version,status,timestamp}, TestCase. Edges: CALLS, READS, WRITES, EXERCISES, RECONSTRUCTS, PASSED, FAILED_ON {diff,timestamp}, HAS_FIELD. Multigraph isolation per target via select_target_graph (name sanitised with a regex). Cypher uses $params, UNWIND batch ingestion, variable-length CALLS*1..6, shortestPath, and FalkorDB CALL algo.pageRank. No APOC/GDS. WARNING: POST /api/cypher passes caller-supplied Cypher straight to graph.query (write-capable).",
+  "algorithms": [
+    "Capstone x86-64 disassembly with ELF PT_LOAD discovery and call/RIP-relative memory reference extraction (topology_agent.py:ingest_binary)",
+    "Multi-hop provenance: GlobalMemory<-[:WRITES]-Function<-[:CALLS]-caller (cypher_tools.py:resolve_memory_source)",
+    "PageRank over CALLS with degree-based fallback (cypher_tools.py:compute_function_pagerank)",
+    "shortestPath over CALLS (cypher_tools.py:find_shortest_call_path)",
+    "Differential parity percentage over test vectors (differential.py:run_tests)",
+    "Degree-threshold function role labelling (cypher_tools.py:detect_subsystem_clusters)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/targets, /api/target/details, /api/graph, /api/reconstruct/stream (SSE), /api/telemetry/downlink, /api/export, game-state routes; POST /api/ingest, /api/cypher, /api/upload, /api/snake/*, /api/invaders/*, /api/lunar/*",
+    "No actual MCP server: 'mcp_tools' is a Python module of functions"
+  ],
+  "frontend_interfaces": ["Static JS front end (frontend/app.js, graph_engine.js, index.html) with graph visualisation, SSE agent timeline and in-browser games"],
+  "agent_or_memory_mechanisms": "Three named agents (Topology, Reconstruction, Supervisor) coordinated by a generator pipeline emitting typed events; FalkorDB used as episodic memory (Candidate / FAILED_ON) fed back into prompts via fetch_failure_memory, though the pipeline runs a single iteration; no persistent cross-session learning beyond graph writes.",
+  "tests_present": "backend/tests/test_truthful_execution.py (1 real pytest function exercising billing differential execution) plus 5 verify_*.py scripts and backend/test_*.py smoke scripts that need live FalkorDB/Gemini. No CI. Not executed by auditor.",
+  "dependency_requirements": ["fastapi>=0.110.0", "uvicorn[standard]>=0.28.0", "sse-starlette>=2.0.0", "falkordb>=1.0.8", "capstone>=5.0.0", "pefile>=2023.2.7", "google-genai>=0.1.0 (Gemini via urllib actually used)", "GEMINI_API_KEY", "gcc/clang (optional)"],
+  "security_findings": [
+    "backend/app.py:220-231 - POST /api/cypher executes arbitrary caller-supplied Cypher via falkor_client.query (write-capable, unauthenticated); full graph read/write/delete exposure",
+    "backend/harness/differential.py:760-761 - compile()+exec() of LLM/candidate Python in a bare dict scope (builtins available); arbitrary code execution if candidate text is influenced by an attacker",
+    "backend/app.py:417-424 - exec() of synthesized candidate code hot-loaded into the live game engine",
+    "backend/harness/compiler.py:~70 - subprocess.run of gcc/clang on LLM-generated C source written to disk (arguments fixed; source untrusted); 15 s timeout but no sandbox",
+    "backend/agents/reconstruction_agent.py:280 - Gemini API key sent as URL query parameter (?key=), so it can appear in logs/proxies",
+    "backend/app.py:761-800 - unauthenticated file upload, 2 MB cap, first 8 KB disassembled; low risk but no content-type or auth checks",
+    "backend/mcp_tools/falkor_client.py:52-56 - graph name derived from target name sanitised with re.sub, acceptable",
+    "No hard-coded secrets: .env.example contains placeholders only"
+  ],
+  "duplicates_or_overlaps": "Overlaps generic binary / code reverse-engineering demos and graph-grounded LLM synthesis patterns; the CALLS/WRITES provenance query overlaps lineage/provenance traversal in other repos.",
+  "capability_family": "Scientific & Technical Analysis",
+  "evidence_drift_relevance": "LOW - Candidate to TestCase PASSED/FAILED_ON edges with timestamps give a small episodic verification lineage, but there is no supersession, temporal validity, dependency invalidation or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "backend/mcp_tools/cypher_tools.py",
+    "symbols": ["resolve_memory_source", "get_call_chain", "find_shortest_call_path", "record_candidate", "record_test_outcome", "fetch_failure_memory"],
+    "why": "Small parameterised Cypher helpers for producer-of-state provenance and a candidate/test episodic-memory pattern; everything else is demo scaffolding.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; Capstone only for the ingestion path; Gemini key for synthesis"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Most of the apparent capability is scripted demo behaviour (canned fallback code, flag-driven pass/fail, game simulators) and the API exposes unauthenticated arbitrary Cypher plus exec() of generated code, so only the provenance query idea and the candidate/test episodic memory shape are worth borrowing.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

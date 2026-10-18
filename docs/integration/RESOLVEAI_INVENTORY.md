@@ -18,9 +18,9 @@ Kairos remains the canonical product and owns the user experience, authenticatio
 
 ## Licensing and provenance gate
 
-The ResolveAI root contains no `LICENSE` file. The repository README credits its author, and the frontend contains `LICENSE_PROPRIETARY.md`, which states all rights reserved and prohibits copying, modification, and derivative works without prior written permission. Treat source reuse as **not authorized** unless the owner grants written permission covering the intended integration and redistribution. Do not copy source code, prompts, corpus files, or assets into Kairos before that review. A clean-room adapter built from independently specified behavior can be considered separately, with provenance recorded.
+No `LICENSE` or `NOTICE` file was found in the ResolveAI checkout, including its frontend. Its README credits the author but does not state reuse terms. On 2026-10-17, the user explicitly confirmed that full permission has already been granted and directed implementation to proceed. Work may proceed under that authorization; preserve source attribution and keep the written grant with project records before distributing combined artifacts. No ResolveAI source code has been copied in the current implementation slice.
 
-Kairos includes a proprietary license as well. Any distribution of the combined product must preserve both projects' ownership notices and comply with both licenses; this inventory does not grant rights to either codebase.
+Kairos has its own proprietary license. Any distribution of the combined product must preserve Kairos ownership notices and follow the user's ResolveAI authorization and attribution terms.
 
 ## Integration conflicts
 
@@ -34,10 +34,10 @@ Kairos includes a proprietary license as well. Any distribution of the combined 
 
 ## Recommended next gate
 
-1. Obtain written authorization for the exact ResolveAI code/assets/data intended for reuse.
+1. Keep the user's authorization associated with the exact code, assets and data selected for reuse.
 2. Select one narrowly defined investigative use case that fits Kairos users and operating context.
 3. Specify Kairos-owned request, response, identity, tenant and provenance contracts before implementation.
 4. Build an isolated adapter and tests without touching cloud stores; preserve Kairos's existing routes and UI.
-5. Evaluate FalkorDB as an optional graph infrastructure change only after a local compatibility and migration assessment. Kairos currently uses Neo4j and the ResolveAI plan does not authorize a production migration.
+5. Evaluate FalkorDB as an additional graph infrastructure only after local compatibility and migration assessment. Kairos currently uses Neo4j as its graph of record; no production migration is authorized or implemented.
 
 No ResolveAI source code has been copied or modified as part of this inventory.

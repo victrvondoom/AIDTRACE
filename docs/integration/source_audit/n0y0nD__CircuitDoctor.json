@@ -1,0 +1,98 @@
+{
+  "repository": "n0y0nD/CircuitDoctor",
+  "url": "https://github.com/n0y0nD/CircuitDoctor",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\n0y0nD__CircuitDoctor",
+  "commit_sha": "c7bf91662589a47610a3d95eb846475bf35ebe80",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["circuitdoctor/storage.py", "circuitdoctor/parser.py", "circuitdoctor/review.py", "circuitdoctor/power.py", "circuitdoctor/tools.py", "circuitdoctor/parts.py", "circuitdoctor/parts.json (head)", "circuitdoctor/api.py", "circuitdoctor/chat.py", "circuitdoctor/configure_gemini.py", "tests/test_storage.py (head)", "tests/test_* (counts)", "frontend/src/main.ts, chat-panel.ts (innerHTML scan)", "requirements.txt", "requirements-dev.txt", "compose.yaml", "Dockerfile"],
+  "languages_frameworks": ["Python 3.12 / FastAPI", "FalkorDB (falkordb==1.8.0)", "sexpdata (KiCad S-expression parsing)", "TypeScript + Vite frontend", "Gemini API via urllib (optional chat)"],
+  "implemented_capabilities": [
+    {
+      "capability": "KiCad netlist (.net S-expression) strict parser",
+      "files": ["circuitdoctor/parser.py"],
+      "symbols": ["parse_netlist", "load_netlist", "NetlistParseError", "_NetlistSexpParser"],
+      "real_or_stub": "REAL",
+      "notes": "Parses components, libparts and nets into a dict while keeping all identifiers as strings; rejects duplicates, unknown component references, pins in two nets, XML, non-export forms, and >10 MiB input. No electrical interpretation."
+    },
+    {
+      "capability": "Circuit-per-graph storage with atomic 'ready' publication",
+      "files": ["circuitdoctor/storage.py"],
+      "symbols": ["CircuitStore.save", "CircuitStore.read", "CircuitStore.graph_name", "get_store"],
+      "real_or_stub": "REAL",
+      "notes": "Each uploaded circuit becomes its own FalkorDB graph circuitdoctor_<uuid hex> (Circuit, Component, Pin, Net nodes; HAS_PIN, ON_NET edges) written in UNWIND batches of 500; Circuit.ready=false until all batches succeed, failed imports delete only their own graph, and reads require ready:true. Stores a sha256 fingerprint of the parsed circuit. Reads always re-traverse the graph, never a cache."
+    },
+    {
+      "capability": "Parameterized connection explorer returning the Cypher it ran",
+      "files": ["circuitdoctor/storage.py", "circuitdoctor/tools.py"],
+      "symbols": ["CircuitStore.connection_facts", "CircuitStore.review_facts", "explain_net", "describe_connection"],
+      "real_or_stub": "REAL",
+      "notes": "ro_query-based lookups by net code/name or exact component+pin; every result includes {cypher, parameters} entries plus an evidence block of nodes, edges and paths; ambiguous names raise a 409-style error instead of guessing."
+    },
+    {
+      "capability": "Conservative rule review (single-pin net, empty net, unassigned pin, power-to-ground short, voltage-rail conflict)",
+      "files": ["circuitdoctor/review.py", "circuitdoctor/parts.py"],
+      "symbols": ["check_rules", "electrical_review", "pin_spec", "identify"],
+      "real_or_stub": "REAL",
+      "notes": "Deterministic checks over graph-derived facts; electrical rules apply only to exact KiCad library identities for Arduino Uno R3 and classic Nano from a small sourced catalog (parts.json with verified_on date and source URLs). Findings carry severity, evidence, sources and an explicit cannot_verify list; conflicting library-vs-export pin metadata is excluded rather than guessed."
+    },
+    {
+      "capability": "Direct power-rail tracing",
+      "files": ["circuitdoctor/power.py"],
+      "symbols": ["trace_power"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Lists pins directly sharing a net with an identified Uno/Nano power pin and warns on ground or mixed-voltage nets; explicitly does not traverse resistors, regulators or shared ground, so it is a one-net adjacency check, not a dependency propagation."
+    },
+    {
+      "capability": "Bounded Gemini tool loop with server-assigned evidence IDs",
+      "files": ["circuitdoctor/chat.py"],
+      "symbols": ["ask_circuit", "execute_tool", "overview", "generate", "TOOLS", "SYSTEM", "CHAT_LOCK"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Gemini may call circuit_overview/explain_net/check_rules/trace_power (max 8 calls, 5 rounds, 150 s deadline, 180k-char context cap); the server fixes the circuit id, validates tool args, labels each tool result E0..En and returns the evidence list with the answer. Citation use by the model is requested in the prompt but not machine-verified."
+    },
+    {
+      "capability": "REST API and TypeScript workspace UI",
+      "files": ["circuitdoctor/api.py", "frontend/src/main.ts", "frontend/src/graph.ts", "frontend/src/chat-panel.ts"],
+      "symbols": ["POST /api/circuits", "POST /api/circuits/{id}/explain", "POST /api/circuits/{id}/review", "POST /api/circuits/{id}/power-trace", "POST /api/circuits/{id}/chat"],
+      "real_or_stub": "REAL",
+      "notes": "Upload, store, explain, review, power-trace and chat endpoints with strict pydantic request models (extra=forbid); front end renders findings and graph with an esc() helper on dynamic values."
+    }
+  ],
+  "graph_models_and_cypher": "One graph per circuit named circuitdoctor_<uuid>. Labels: Circuit(id,version,design,libparts,filename,sample,fingerprint,ready), Component(ref,value,position,metadata JSON), Pin(id,number,name,type,pinfunction,pintype), Net(code,name,position). Edges: (Component)-[:HAS_PIN]->(Pin)-[:ON_NET {position}]->(Net). Cypher is parameterized with UNWIND $rows batch writes, ro_query for reads, OPTIONAL MATCH to find unassigned pins, WHERE n.code IN $codes; index DDL f-string uses constant labels. No APOC/GDS or algo.* procedures.",
+  "algorithms": [
+    "Atomic import via ready flag + per-request graph cleanup in storage.py:CircuitStore.save",
+    "Net-membership classification (connected, single_pin_net, empty_net, marked_unused) in tools.py:describe_connection",
+    "Catalog-backed rail/ground role resolution with conflict exclusion in parts.py:pin_spec/electrical_review",
+    "Bounded tool-calling loop with budget, deadline and per-call validation in chat.py:ask_circuit"
+  ],
+  "backend_interfaces": ["FastAPI: GET /api/status, GET /api/samples/{name}, POST /api/parse, POST /api/circuits, POST /api/circuits/samples/{name}, GET /api/circuits/{id}, POST /api/circuits/{id}/explain, POST /api/circuits/{id}/review, POST /api/circuits/{id}/power-trace, GET /api/chat/status, POST /api/circuits/{id}/chat", "python -m circuitdoctor (uvicorn launcher), python -m circuitdoctor.configure_gemini (key setup)"],
+  "frontend_interfaces": ["Vite/TypeScript workspace (frontend/src/main.ts, graph.ts, board-art.ts, circuit-art.ts, chat-panel.ts, explanation.ts) with node tests under frontend/tests"],
+  "agent_or_memory_mechanisms": "Single-agent bounded tool loop (Gemini) over deterministic tools with an evidence ledger; no persistent agent memory beyond stored circuits. Conversation history is client-supplied (max 8 messages) and treated as untrusted in the system prompt.",
+  "tests_present": "About 72 Python unittest/pytest tests across tests/test_api.py (8), test_chat.py (15), test_parser.py (13), test_parts.py (7), test_power.py (6), test_review.py (7), test_storage.py (7, FalkorDB integration tests opt-in via CIRCUITDOCTOR_TEST_DB=1), test_tools.py (8), test_workflow.py (1); KiCad .net fixtures under tests/fixtures/kicad; 2 node tests for the front end.",
+  "dependency_requirements": ["sexpdata==1.0.2", "fastapi==0.143.2", "uvicorn==0.54.0", "falkordb==1.8.0", "httpx==0.28.1 (dev)", "falkordb/falkordb:6.0.2 image in compose.yaml (tag differs from Kairos's FalkorDB 4.22 target)", "node 24 for front-end build"],
+  "security_findings": [
+    "circuitdoctor/chat.py:16,42-53 - Gemini API key read from GEMINI_API_KEY or a key file (.gemini-api-key / GEMINI_API_KEY_FILE); no hard-coded key; configure_gemini.py:21-26 writes it via mkstemp+os.replace (note: docstring promises owner-only permissions; mkstemp creates 0600 files)",
+    "circuitdoctor/chat.py:69-71 - outbound HTTPS to generativelanguage.googleapis.com with key in x-goog-api-key header; circuit data (components, nets) is sent to Google; model name validated by regex (chat.py:56-60)",
+    "circuitdoctor/api.py:73-85 - upload and chat endpoints have no authentication; uploads are bounded (10 MiB) and graph names are generated server-side UUIDs validated by ^[0-9a-f]{32}$ (storage.py:70-72), so graph-name injection is not possible",
+    "circuitdoctor/storage.py:125 - f-string index DDL with constant label/prop pairs (not injectable)",
+    "circuitdoctor/api.py:76 - client-supplied filename stored (truncated to 255 chars) as a graph property; rendered by front end through esc() only where inspected",
+    "frontend/src/main.ts:54,123,141,305-331 and chat-panel.ts:81 - many innerHTML assignments; dynamic values inspected pass through esc(), but not every template was reviewed line by line",
+    "compose.yaml:25-34 - FalkorDB published on 127.0.0.1 only (good); no password set by default; no unrestricted network calls other than the Gemini endpoint",
+    "No eval/exec/pickle/subprocess found in circuitdoctor/ (Python)"
+  ],
+  "duplicates_or_overlaps": "Netlist-as-graph connectivity review overlaps general infrastructure/topology validation (PathGuard exposure paths, blast-radius reachability) but in an electronics domain; the evidence-ID chat loop overlaps FraudTrace-AI's evidence references.",
+  "capability_family": "Scientific & Technical Analysis",
+  "evidence_drift_relevance": "MEDIUM - source-URL-backed spec catalog with a verified_on date, content fingerprint per stored circuit, atomic 'ready' publication so partial data is never read, server-labelled evidence IDs with the executed Cypher, and explicit cannot_verify lists; it has no versioned supersession or invalidation of earlier findings.",
+  "strongest_reusable_unit": {
+    "file": "circuitdoctor/storage.py",
+    "symbols": ["CircuitStore.save", "CircuitStore.read", "CircuitStore.connection_facts", "CircuitStore.review_facts"],
+    "why": "A clean, tested pattern for graph-per-artifact import with batched UNWIND writes, a ready-flag commit, fingerprinting and read paths that return the Cypher/parameters used; the chat.py evidence-labelled tool loop is a second reusable unit.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; sexpdata (for the KiCad parser); Gemini key only for chat"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Self-contained Python module with tests and exact version pins matching the falkordb 1.8 client, usable as an electronics/technical-netlist analysis pack; the generic ready-flag import and evidence-ID loop can also be lifted into shared code. No license file, so confirm owner permission before copying.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

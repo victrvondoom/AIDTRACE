@@ -1,0 +1,122 @@
+{
+  "repository": "Rakesh9742/blast-radius",
+  "url": "https://github.com/Rakesh9742/blast-radius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Rakesh9742__blast-radius",
+  "commit_sha": "15d1bdbdc9af017872ca36ffc9179439fbd34cd1",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "requirements.txt",
+    ".env.example",
+    "Makefile",
+    "docker-compose.yml",
+    "core/db.py",
+    "docs/queries.md",
+    "ingest/*.py (symbol listing; deps.py and git_history.py headers)",
+    "agent/tools.py (symbols; reachability, run_cypher, live_app_status, data_exposure, probe_endpoints, plan_fix, verify_fix, apply_dependency_fix, open_pull_request, record_triage_decision, past_decisions)",
+    "agent/loop.py (head, SYSTEM prompt)",
+    "agent/mcp_bridge.py",
+    "agent/mcp_server.py",
+    "server/app.py (route list; discover, upload, cypher endpoints)",
+    "server/replay.py (head)",
+    "tests/test_parse.py (head)"
+  ],
+  "languages_frameworks": ["Python/FastAPI", "falkordb Python client 1.7.1", "Anthropic SDK (Claude tool-use loop, MCP stdio transport)", "tree-sitter (JS/TS parsing)", "GitPython/git CLI", "OSV.dev API", "Vanilla HTML + Cytoscape.js (vendored) frontend"],
+  "implemented_capabilities": [
+    {
+      "capability": "Python and JS/TS source parsing into a function call graph with HTTP entrypoint discovery",
+      "files": ["ingest/parse_python.py", "ingest/parse_js.py", "ingest/models.py"],
+      "symbols": ["parse_repo", "parse_repo_js", "FunctionInfo", "ParseResult", "_decorator_entrypoints", "_router_includes", "_route_prefixes", "python_models", "js_models", "function_table_uses"],
+      "real_or_stub": "REAL",
+      "notes": "Uses ast for Python (FastAPI router prefixes/includes, Depends chains, Django route normalization, inherited deps) and tree-sitter for JS/TS (Next routes, Express-style). Call edges carry a 'how' label (self/import/local/unique/name-match/Depends); name-match edges are flagged lower confidence. Heuristic static analysis, not a type-resolved call graph."
+    },
+    {
+      "capability": "Dependency inventory from lockfiles and OSV vulnerability enrichment",
+      "files": ["ingest/deps.py"],
+      "symbols": ["load_dependencies", "parse_poetry_lock", "parse_uv_lock", "parse_requirements", "parse_package_lock", "parse_yarn_lock", "parse_pnpm_lock", "fetch_vulnerabilities", "_fixed_version", "_severity", "_cached_get"],
+      "real_or_stub": "REAL",
+      "notes": "Parses poetry/uv/requirements/npm/yarn/pnpm lockfiles into Package nodes and DEPENDS_ON edges and queries OSV for advisories with fixed versions and CVSS severity (cached HTTP). Needs outbound network to OSV."
+    },
+    {
+      "capability": "Vulnerability reachability / blast radius from public endpoint to vulnerable package sink with call path and confidence",
+      "files": ["agent/tools.py", "docs/queries.md"],
+      "symbols": ["GraphTools.reachability", "GraphTools.transitive_exposure", "GraphTools.impact_radius", "GraphTools.choke_points", "GraphTools.shortest_attack_paths", "GraphTools.data_exposure"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher variable-length path MATCH (h)-[:CALLS*0..N]->(sink)-[:USES]->(Package) joined to EXPOSES->Entrypoint, ranked by live/auth/confidence/hops; choke points via path-count aggregation plus FalkorDB algo.betweenness / algo.pageRank; impact radius via algo.BFS; shortest paths via algo.SPpaths. N hops are clamped to 0..6 before f-string interpolation."
+    },
+    {
+      "capability": "Live deployment vs code drift (OpenAPI/GraphQL/JS-bundle discovery, optional LLM endpoint extraction)",
+      "files": ["ingest/discover.py", "ingest/llm_extract.py", "server/app.py"],
+      "symbols": ["discover", "fetch_openapi", "graphql_introspect", "scan_bundles", "endpoints_from_openapi", "apply_to_graph", "extract_endpoints", "GraphTools.live_app_status", "GraphTools.probe_endpoints", "discover_live"],
+      "real_or_stub": "REAL",
+      "notes": "Compares the Entrypoints declared in code with those the deployed app exposes (live, openapi-only, only_in_code, live_unauthenticated counts), flags unknown-auth sensitive paths, and can send benign HEAD/GET/OPTIONS probes. Relies on regex/LLM extraction from minified bundles for non-OpenAPI sites (best-effort)."
+    },
+    {
+      "capability": "Git blame ownership graph (Author-OWNS->Function, Commit-MODIFIED->File)",
+      "files": ["ingest/git_history.py", "ingest/load.py"],
+      "symbols": ["commits", "ownership", "Loader", "load_all"],
+      "real_or_stub": "REAL",
+      "notes": "Batches (500) UNWIND/MERGE loads of Repo/File/Function/Class/Package/Vulnerability/Commit/Author/Table nodes; author email is hashed to an id."
+    },
+    {
+      "capability": "Claude triage agent with write-back memory, fix planning, branch commit and PR creation",
+      "files": ["agent/loop.py", "agent/tools.py", "agent/mcp_server.py", "agent/mcp_bridge.py", "agent/cli.py"],
+      "symbols": ["GraphTools.plan_fix", "GraphTools.verify_fix", "GraphTools.apply_dependency_fix", "GraphTools.open_pull_request", "GraphTools.write_triage_report", "GraphTools.record_triage_decision", "GraphTools.past_decisions", "TOOL_DEFS", "dispatch", "McpBridge"],
+      "real_or_stub": "REAL",
+      "notes": "Manual tool-use loop (model name taken from BLAST_MODEL env) with every step traced; decisions are persisted as (:Vulnerability)-[:TRIAGED]->(:Decision {status,reason,decided_at,by}) with fixed status enum and consulted in later sessions. The fix tool edits pyproject/requirements/package.json via regex and commits on a new branch of the analysed repo; PR creation needs GITHUB_TOKEN and a fork."
+    },
+    {
+      "capability": "Web UI with graph visualisation, run replay ('story mode') and report export",
+      "files": ["server/app.py", "server/replay.py", "server/report.py", "web/index.html"],
+      "symbols": ["render (replay)", "analyze", "upload", "ask", "overview", "funnel"],
+      "real_or_stub": "REAL",
+      "notes": "Single-file HTML UI with vendored cytoscape.min.js and marked.min.js; SSE-style ingest streaming; self-contained replay pages."
+    }
+  ],
+  "graph_models_and_cypher": "One graph per analysed repo. Nodes: Repo, File, Class, Function, Entrypoint, Package, Vulnerability, Commit, Author, Decision, Table. Edges: CONTAINS, HAS_METHOD, CALLS{how}, EXPOSES, USES, IMPORTS, DEPENDS_ON, AFFECTS{installed_version,fixed_version}, MODIFIED, AUTHORED, OWNS{lines,share,last_touched}, TRIAGED, DEFINES, TOUCHES. Documented in docs/queries.md (12 query families). Reads use GRAPH.RO_QUERY ($params); the only write tool is record_triage_decision plus the bulk loaders. FalkorDB-native procedures used: algo.SPpaths, algo.betweenness, algo.pageRank, algo.BFS, db.idx.fulltext.queryNodes - all FalkorDB-specific (no APOC/GDS). NOTE: algo.SPpaths is used on call graphs; LastLift's docs report SPpaths on FalkorDB 4.22.0 can run for hours and ignore query timeouts, so shortest_attack_paths is a risk on Kairos' 4.22 server (requirements pin FalkorDB==1.7.1; compose uses falkordb/falkordb:latest).",
+  "algorithms": [
+    "Bounded variable-length call-path reachability (CALLS*0..N, N<=6) with edge-resolution confidence in agent/tools.py:GraphTools.reachability",
+    "Choke-point ranking by endpoints-per-function path aggregation plus algo.betweenness/algo.pageRank in GraphTools.choke_points",
+    "algo.BFS bounded impact radius in GraphTools.impact_radius",
+    "Fixed-version selection as max(Version(fixed)) across advisories in GraphTools.plan_fix",
+    "Rolling git-blame ownership shares per function in ingest/git_history.py:ownership",
+    "Code-vs-deployment route set comparison (norm_path normalisation) in ingest/discover.py and server/app.py:discover_live"
+  ],
+  "backend_interfaces": [
+    "FastAPI server/app.py: GET /, /api/health, /api/overview, /api/funnel, POST /api/discover, GET /api/graphs, POST /api/graph/select, POST /api/upload, POST /api/analyze, GET /api/feed, /api/graph/seed, /api/endpoint, /api/graph/neighborhood, POST /api/ask, GET /api/report/{run_id}, /replay/{run_id}, /api/cypher",
+    "MCP stdio server agent/mcp_server.py exposing every GraphTools method (usable from Claude Desktop/Code)",
+    "CLI: python -m agent.cli, python -m ingest.run, Makefile targets"
+  ],
+  "frontend_interfaces": ["web/index.html (single 71 KB HTML+JS app with Cytoscape graph view, funnel headline numbers, agent chat and replay)"],
+  "agent_or_memory_mechanisms": "Claude tool-use loop (manual, traced) that selects tools through the project's own MCP server or in-process; persistent graph memory via Decision nodes (EXPLOITABLE/NOT_REACHABLE/MITIGATED/NEEDS_REVIEW/FIX_PROPOSED) read back by past_decisions so later sessions build on earlier triage. Sessions are held in an in-process SESSIONS dict.",
+  "tests_present": "tests/test_parse.py - a single parser unit test on a synthetic FastAPI project (1 test); tests/scenarios.py is a live agent scenario runner that needs ANTHROPIC_API_KEY and a FalkorDB with the mealie graph. No unit tests for the Cypher, tools or drift logic. Not executed by auditor.",
+  "dependency_requirements": ["anthropic==1.13.0", "FalkorDB==1.7.1", "fastapi==0.143.0", "GitPython==3.2.0", "httpx==0.28.1", "httpx2==2.13.1", "mcp==2.3.0", "mcp-types==2.3.0", "packaging==26.3", "pydantic==2.14.0", "python-dotenv==1.2.4", "PyYAML==6.0.3", "tree-sitter==0.26.0", "tree-sitter-javascript==0.25.0", "tree-sitter-typescript==0.23.2", "uvicorn==0.54.0", "python-multipart==0.0.32"],
+  "security_findings": [
+    "server/app.py:537-542 - GET /api/cypher runs caller-supplied Cypher via ro_query with no authentication; server-enforced read-only, but arbitrary reads and expensive queries (DoS) of any loaded graph.",
+    "agent/tools.py:193-199 - run_cypher tool uses a regex denylist for write keywords and runs through ro_query (server-side read-only), so the denylist is defence-in-depth rather than the only barrier.",
+    "agent/tools.py:93-100 - Cypher built with f-string for the hop bound; value is clamped with max(0, min(int(max_hops), 6)) before use. Package/endpoint values are $params.",
+    "agent/mcp_server.py:56 - exec(_src, _ns) to synthesise typed MCP tool functions from TOOL_DEFS (name/description/parameter names come from static in-repo definitions, not from user input); a description containing triple quotes would break the generated source.",
+    "agent/tools.py:255-283 - probe_endpoints performs outbound HTTP to a stored live URL and is gated only by an LLM-supplied boolean i_am_authorized (model can self-attest); sleeps 0.3s, max 15 endpoints.",
+    "server/app.py:129-165 and ingest/discover.py - POST /api/discover fetches an arbitrary user-supplied http(s) URL plus up to 14 scripts/16 MB (SSRF to internal hosts is not blocked; only github/gitlab hosts are special-cased).",
+    "server/app.py:311-338 - /api/upload extracts an uploaded zip (checks '..' / absolute names and 2 GB total size) then runs git commands (git init/add/commit, and ingest runs git blame/log) inside it; an uploaded repo containing a crafted .git directory/config could execute attacker-chosen commands (e.g. core.fsmonitor), and the destination is rmtree'd if it already exists.",
+    "agent/tools.py:371-423 - apply_dependency_fix rewrites files in the analysed repo via regex and creates/commits a branch (subprocess git with list args, no shell).",
+    "agent/tools.py:426-447 - open_pull_request embeds GITHUB_TOKEN in the git remote URL (x-access-token:...@github.com) and force-pushes (-f); token is scrubbed from stderr output but is visible in the process argument list.",
+    "docker-compose.yml - publishes FalkorDB 6379 and 3000 on all interfaces with no password and image tag 'latest'.",
+    "No hard-coded secrets found; ANTHROPIC_API_KEY / GITHUB_TOKEN come from env. server/app.py has no CORS or auth middleware found by grep."
+  ],
+  "duplicates_or_overlaps": "Core overlap with the 'blast-radius traversal' family (function-level call graph + dependency reachability), attack-path / choke-point analysis and CVE triage; also overlaps Reet24-del/supply-chain-blast-radius in this batch (package-level only) and the generic reverse-DEPENDS_ON BFS found in other entries.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "MEDIUM - live-vs-code Entrypoint drift counts, confidence-labelled call edges, advisory fixed_version tracking and persisted TRIAGED Decision records with timestamps give a working 'conclusion memory', but decisions are not invalidated when the underlying code/advisory changes and nothing is versioned or superseded.",
+  "strongest_reusable_unit": {
+    "file": "agent/tools.py (reachability / choke_points / impact_radius) with ingest/parse_python.py and ingest/deps.py",
+    "symbols": ["GraphTools.reachability", "GraphTools.choke_points", "GraphTools.impact_radius", "GraphTools.record_triage_decision", "parse_repo", "load_dependencies", "fetch_vulnerabilities"],
+    "why": "A working end-to-end pipeline from lockfile + AST into a graph and a documented set of Cypher queries (docs/queries.md) for advisory -> package -> function -> endpoint reachability with call-path confidence, plus a persisted triage-decision memory. ingest/deps.py lockfile parsers are pure Python and independently reusable.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (algo.BFS/betweenness/pageRank/SPpaths); OSV.dev network; ANTHROPIC_API_KEY only for the agent; git for ownership"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Fits a Software Dependency Intelligence pack inside Kairos: reuse the parsers, loaders and documented Cypher, but gate or replace algo.SPpaths for FalkorDB 4.22, harden the unauthenticated /api/cypher, /api/discover and upload paths, and swap the Claude loop for Kairos' own agent layer.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "MEDIUM"
+}

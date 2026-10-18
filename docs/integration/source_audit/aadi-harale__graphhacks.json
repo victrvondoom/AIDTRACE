@@ -1,0 +1,124 @@
+{
+  "repository": "aadi-harale/graphhacks",
+  "url": "https://github.com/aadi-harale/graphhacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\aadi-harale__graphhacks",
+  "commit_sha": "fd50ca2b1a5a873ec713694e5c85ba06a4eb7103",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "app/graph.py",
+    "app/agent.py",
+    "app/baseline.py",
+    "app/models.py",
+    "app/demo_data.py",
+    "app/resolve.py",
+    "app/track1_agent.py",
+    "app/track1_mcp.py",
+    "app/track1_mcp_loop.py",
+    "app/server.py (route list and env gates)",
+    "tests/test_graph_safety.py",
+    "tests/ (counts)",
+    ".github/workflows/ci.yml",
+    "SECURITY.md",
+    "README.md",
+    "requirements.txt",
+    "requirements-mcp.txt"
+  ],
+  "languages_frameworks": ["Python/FastAPI", "falkordb>=1.0,<3", "pydantic v2", "OpenAI SDK (chat.completions tool calling)", "MCP SDK >=2 (stdio ClientSession and server)", "networkx (declared in requirements, not used in files read)", "static HTML/JS front end", "Playwright UI checks"],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence-gap decision policy (deterministic status: ASK_SUPPLIER, REVIEW_SETTLEMENT, ASK_RETAILER, DISPUTE, UNKNOWN, NO_OPEN_CLAIMS, ALREADY_ALLOCATED)",
+      "files": ["app/agent.py", "app/models.py", "app/resolve.py"],
+      "symbols": ["investigate", "Decision", "ResolveStore.investigate"],
+      "real_or_stub": "REAL",
+      "notes": "Pure rule cascade over graph-fetched context: unit unverified, receipt not confirmed, capacity exhausted, competing active statements, missing evidence reference, then the suggested allocation min(available, outstanding). The model prose cannot authorise settlement."
+    },
+    {
+      "capability": "Version-checked, evidence-gated, approval-recorded settlement written atomically in one Cypher statement",
+      "files": ["app/graph.py", "app/resolve.py"],
+      "symbols": ["Q_SETTLE", "Q_APPROVE", "FalkorStore.commit", "ResolveStore.approve"],
+      "real_or_stub": "REAL",
+      "notes": "A single MATCH...WHERE...CREATE query only creates Allocation + RetailerApproval nodes and decrements quantities if receipt/obligation versions match, receipt is confirmed with known unit, a supported active Statement targets that obligation, quantities suffice, and no competing active statement exists; versions are bumped for optimistic concurrency. The API layer first repeats the decision and requires explicit demo approval."
+    },
+    {
+      "capability": "Supersession of supplier statements (previous active statements are deactivated when a new attribution arrives)",
+      "files": ["app/graph.py", "app/resolve.py"],
+      "symbols": ["FalkorStore.clarify", "ResolveStore.attribute"],
+      "real_or_stub": "REAL",
+      "notes": "OPTIONAL MATCH of old active Statements then SET active=false, create new Statement + Document, bump receipt version; stale-version updates are rejected. Old statements are retained (not deleted), giving a supersession trail."
+    },
+    {
+      "capability": "Eligibility gating from documented promotional terms and unit match, then graph discovery of POTENTIALLY_FULFILLS candidates",
+      "files": ["app/resolve.py"],
+      "symbols": ["CaseIn", "ClaimIn", "Terms", "scheme_eligible", "ResolveStore.import_case", "fingerprint"],
+      "real_or_stub": "REAL",
+      "notes": "Pydantic-validated synthetic case import with SHA-256 content fingerprint (same case id with different content is rejected), rollback of half-built cases, date-window and purchase-threshold checks, and Cypher that links receipts to obligations only when created_on <= received_on and units match."
+    },
+    {
+      "capability": "Model-selected bounded tool loop over MCP stdio with guard rails",
+      "files": ["app/track1_agent.py", "app/track1_mcp.py", "app/track1_mcp_loop.py"],
+      "symbols": ["TOOL_SCHEMAS", "GraphTools.dispatch", "run_agent", "run_agent_mcp", "GraphTools.create_followup_draft"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real OpenAI tool-calling loop (max 7 rounds), strict argument allow-listing, ordering constraints (investigate before trace before draft), ids injected from the validated request not the model, API key stripped from the MCP child environment, draft action must equal the action authorised by current graph policy. Real-model quality is untested (CI uses a fake model client) per the README."
+    },
+    {
+      "capability": "SQLite control baseline",
+      "files": ["app/baseline.py"],
+      "symbols": ["sqlite_roundtrip"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Round-trips the same Context through an in-memory SQLite join then applies the same decision policy; it demonstrates equivalence rather than a graph advantage, and the code is honest about it."
+    },
+    {
+      "capability": "Cross-delivery and evidence-path tracing",
+      "files": ["app/track1_agent.py", "app/graph.py"],
+      "symbols": ["GraphTools.trace_claim_evidence", "GraphTools.inspect_cross_delivery", "FalkorStore.fetch"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher returns receipt -> obligation -> source document paths and per-obligation allocation totals across receipts; paths are string-labelled chains for display."
+    },
+    {
+      "capability": "Synthetic demo scenarios and fixtures",
+      "files": ["app/demo_data.py", "examples/fictional_second_supplier_case.json", "examples/fictional_two_delivery_case.json"],
+      "symbols": ["scenario_context", "SHORT", "PROMO"],
+      "real_or_stub": "STUB",
+      "notes": "Hard-coded fictional supplier/SKU/receipt (RCP-52, SHORT-41, PROMO-17) with nine scripted scenarios; explicitly labelled synthetic."
+    }
+  ],
+  "graph_models_and_cypher": "Preset graph (sahiaaya_proof): Supplier, SKU, Receipt, Obligation, SourceRecord, Document, Promise, Statement {active,target_id}, Allocation, RetailerApproval with edges FROM_SUPPLIER, FOR_SKU, OWED_BY, AROSE_FROM, SUPPORTED_BY, PROMISED_FOR, ABOUT_RECEIPT, USES_RECEIPT, SETTLES, APPROVES. Intake graph (sahiaaya_resolve): ResolveCase {fingerprint,ready}, ResolveReceipt {version,available}, ResolveObligation {version,remaining,eligible}, ResolveDocument, ResolveStatement {active}, ResolveAllocation, ResolveApproval, ResolveFollowUp {status:'draft'} with HAS_RECEIPT, HAS_OBLIGATION, POTENTIALLY_FULFILLS, SUPPORTED_BY, ABOUT, FROM, SETTLES, CONFIRMS, FOR_RECEIPT. Every query is parameterised and tenant-scoped; reads use ro_query; the atomic guarded write is the key pattern. Plain OpenCypher; no APOC/GDS.",
+  "algorithms": [
+    "Rule-cascade evidence-gap verdict (app/agent.py:investigate, app/resolve.py:ResolveStore.investigate)",
+    "Optimistic-concurrency guarded allocation via version fields and a single MATCH-WHERE-CREATE statement (app/graph.py:Q_SETTLE, app/resolve.py:Q_APPROVE)",
+    "Active-statement supersession and contradiction counting (app/graph.py:clarify; Q_SETTLE OPTIONAL MATCH other statements)",
+    "Content fingerprint idempotency for imported cases (app/resolve.py:fingerprint)"
+  ],
+  "backend_interfaces": [
+    "FastAPI (app/server.py): GET /api/health, /api/investigate/{receipt_id}, /api/resolve/cases, /api/resolve/cases/{id}/receipts[/{rid}[/followups]]; POST /api/demo/reset (ALLOW_DEMO_RESET=1), /api/investigate/{id}/simulate-supplier-response and /approve-demo-settlement (ALLOW_DEMO_MUTATIONS=1), /api/resolve/cases, /attribute, /approve, /api/agent/investigate (needs OPENAI_API_KEY)",
+    "MCP stdio server (app/track1_mcp.py): list_case_receipts, investigate_receipt, trace_claim_evidence, inspect_cross_delivery, create_followup_draft (write tool gated by ALLOW_DEMO_MUTATIONS=1)"
+  ],
+  "frontend_interfaces": ["Single static page app/static/index.html (guided Check delivery / Follow up / Resolve flow, reopen-case form, JSON fixture upload); Vercel browser-only synthetic walkthrough"],
+  "agent_or_memory_mechanisms": "Tool-calling agent bounded to five tools with a per-run AgentSession (inspected, evidence_traced, decision, trace). Graph is the persistent memory: ResolveFollowUp drafts, Statement history (inactive ones retained), Allocation + Approval nodes; versioned entities detect stale reads. No LLM-written settlements; the follow-up question text comes from the policy.",
+  "tests_present": "tests/: 6 files, about 27 pytest tests (decisions 3, baseline 2, resolve intake 8, track1 agent 7 with fake model and real MCP transport, graph safety 4 and falkor integration 3 which need RUN_FALKOR_TESTS=1 and a live FalkorDB); GitHub Actions runs policy tests, live FalkorDB integration and Playwright UI checks. Not executed by auditor.",
+  "dependency_requirements": ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "falkordb>=1.0,<3", "httpx>=0.27,<1", "openai>=1.50,<3", "mcp>=2,<3", "networkx>=3.2,<4", "pytest>=8,<10", "OPENAI_API_KEY (for real agent run)", "FalkorDB server"],
+  "security_findings": [
+    "app/server.py:55-60,71-75,91-95,133 - mutation routes (demo reset, simulate supplier response, approve settlement, case import) are protected only by environment flags (ALLOW_DEMO_RESET, ALLOW_DEMO_MUTATIONS), not authentication; SECURITY.md states the service must not be deployed publicly",
+    "app/graph.py:~150 - destructive seed() deletes the graph but guards with graph_name.startswith('sahiaaya_')",
+    "app/graph.py:20-60 and app/resolve.py - all Cypher is parameterised with a tenant filter; no string-concatenated user input in queries",
+    "app/track1_mcp_loop.py:~30 - subprocess started via mcp stdio_client with sys.executable -m app.track1_mcp; OPENAI_* variables are removed from the child environment (positive control)",
+    "scripts/check_frontend.py:32 - subprocess.run(['node','--check','-']) on embedded JS from a local HTML file; CI-only utility",
+    "No hard-coded secrets, eval/exec or pickle found; docker-compose binds ports to 127.0.0.1"
+  ],
+  "duplicates_or_overlaps": "Overlaps consumer-dispute / evidence-reconciliation agents and approval-gated agent patterns (kalp-cg actions); statement supersession and versioned guarded writes overlap provenance and decision-lineage engines.",
+  "capability_family": "Consumer Justice",
+  "evidence_drift_relevance": "HIGH - implements supersession of active statements with retained history, optimistic version checks that reject writes based on stale evidence, evidence-gated and human-approval-recorded allocations, and a policy that downgrades to ASK/DISPUTE when evidence conflicts or is missing.",
+  "strongest_reusable_unit": {
+    "file": "app/graph.py",
+    "symbols": ["Q_SETTLE", "FalkorStore.clarify", "FalkorStore.commit", "FalkorStore.fetch"],
+    "why": "A compact, tested pattern for atomic, version-checked, evidence-gated graph writes with approval nodes and statement supersession, plus app/agent.py:investigate as a deterministic evidence-sufficiency verdict that Kairos can adapt for approval gating in drift cascades.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (falkordb Python client); OpenAI key only for the optional agent loop"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "The domain (shop receipts vs supplier obligations) is narrow and synthetic, but the guarded-write Cypher, statement supersession and decision cascade are small and pure Python; adopt them as a Consumer Justice pack and extract the guarded-write idiom into shared approval-gating code.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

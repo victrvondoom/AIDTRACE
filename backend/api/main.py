@@ -29,6 +29,7 @@ from api.routers import (
     governance,
     health,
     search,
+    resolveai,
 )
 from api.services import tenant
 from api.services.search_engine import SearchEngineService
@@ -88,6 +89,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     from api.services.http import close_shared_client
 
     await close_shared_client()
+    from api.dependencies import close_falkor_drift_store
+
+    close_falkor_drift_store()
     log.info("kairos.shutdown")
 
 
@@ -160,6 +164,8 @@ def create_app() -> FastAPI:
     app.include_router(elicitation.router, prefix="/elicitation", tags=["Elicitation (Layer 6)"])
     app.include_router(annotations.router, prefix="/annotations", tags=["Annotations (Layer 3)"])
     app.include_router(audit_log.router, prefix="/audit-log", tags=["Audit Log"])
+    app.include_router(resolveai.router, prefix="/resolveai", tags=["ResolveAI"])
+    app.include_router(drift.router, prefix="/drift", tags=["Evidence Drift Cascade"])
 
     # -------------------------------------------------------------------------
     # Global exception handler

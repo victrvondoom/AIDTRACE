@@ -1,0 +1,118 @@
+{
+  "repository": "CARLEELTECH0/scout-falkordb",
+  "url": "https://github.com/CARLEELTECH0/scout-falkordb",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\CARLEELTECH0__scout-falkordb",
+  "commit_sha": "9cb2b4bda7e2383c2d08add7564b55e3a6913164",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "scout/db.py",
+    "scout/config.py",
+    "scout/agent.py",
+    "scout/brain.py",
+    "scout/memory.py",
+    "scout/mcp_server.py",
+    "scout/simulator.py",
+    "scout/seed.py (first 80 lines)",
+    "scout/exporter.py",
+    "scout/audio.py",
+    "scout/api.py (routes, middleware, seed/directive handlers; remainder is embedded dashboard HTML)",
+    "tests/test_scout.py (count)",
+    "requirements.txt",
+    ".env.example",
+    "README.md"
+  ],
+  "languages_frameworks": ["Python/FastAPI", "falkordb>=1.0.10 client", "falkordblite / redislite embedded FalkorDB", "hand-rolled stdio JSON-RPC MCP server", "single-file embedded dashboard (Vis.js style) in scout/api.py", "pytest"],
+  "implemented_capabilities": [
+    {
+      "capability": "Multi-hop blast radius from an asset through employees, projects and documents with a heuristic risk score",
+      "files": ["scout/brain.py"],
+      "symbols": ["CompanyBrain.compute_blast_radius", "CompanyBrain.get_employee_context", "CompanyBrain.audit_access_path", "CompanyBrain.get_project_provenance"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real parameterised OPTIONAL MATCH/collect Cypher (REPORTS_TO*1..3, [*1..3] undirected path audit), but the risk score is a hand-weighted linear formula (employees*10 + projects*25 + documents*20 + tier bonus) with arbitrary thresholds, not an algorithm."
+    },
+    {
+      "capability": "Incident investigation 'agent' (hop trace, tool choice, auto-quarantine)",
+      "files": ["scout/agent.py"],
+      "symbols": ["ScoutActionAgent.investigate_incident", "ScoutActionAgent.quarantine_asset", "ScoutActionAgent.ingest_and_triage_log"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Despite the docstring about dynamic tool selection there is no LLM or planner: concept is chosen by keyword match on the incident title, TOOL-02 FirewallQuarantine is hard-coded for any High/Critical severity, and log suspiciousness is a keyword list. Quarantine is executed autonomously with no approval gate; it only mutates graph properties (status, QUARANTINED_BY edge)."
+    },
+    {
+      "capability": "Graph agent memory (sessions, interactions, concepts, procedural recall, agent handoff edges)",
+      "files": ["scout/memory.py"],
+      "symbols": ["AgentMemory.start_session", "AgentMemory.record_interaction", "AgentMemory.recall_concepts", "AgentMemory.recall_procedural_memory", "AgentMemory.handoff_agent_task", "AgentMemory.get_session_history"],
+      "real_or_stub": "REAL",
+      "notes": "Straightforward episodic/semantic memory over Session, Interaction, Concept and Agent nodes with RECORDED_IN, RECALLS, USED_TOOL, HANDED_OFF_TO edges and ISO timestamps; recall is substring/lowercase match, not embedding similarity."
+    },
+    {
+      "capability": "Incident evidence export bundle with SHA-256 integrity checksum",
+      "files": ["scout/exporter.py"],
+      "symbols": ["EvidenceExporter.generate_incident_bundle", "EvidenceExporter.export_markdown"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Compiles incident, logs, blast radius and precedents into a JSON/Markdown bundle with a plain SHA-256 checksum (no signature or key, so it only detects accidental change). Hard-codes the recalled concept in the same way as the agent."
+    },
+    {
+      "capability": "Operator directive endpoint with simulated dual-agent reply",
+      "files": ["scout/api.py"],
+      "symbols": ["human_directive"],
+      "real_or_stub": "STUB",
+      "notes": "Returns canned strings and fixed latency badges ('14ms', '18ms') and claims a Cypher traversal and a SEC-402 compliance check that are never executed."
+    },
+    {
+      "capability": "Synthetic attack simulator and tactical audio script generator",
+      "files": ["scout/simulator.py", "scout/audio.py", "scout/seed.py"],
+      "symbols": ["AttackSimulator.trigger_attack", "ATTACK_SCENARIOS", "TacticalAudioSynthesizer.generate_cue", "seed_enterprise_graph"],
+      "real_or_stub": "STUB",
+      "notes": "Four scripted attack scenarios and template-string voice cues over hard-coded seed data (10 employees, 3 teams, 2 projects, 3 assets); not an analytic capability."
+    },
+    {
+      "capability": "Stdio MCP-style server exposing five tools",
+      "files": ["scout/mcp_server.py"],
+      "symbols": ["TOOLS_SPEC", "handle_call", "main"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Hand-written JSON-RPC loop supporting only tools/list and tools/call (no initialize handshake, so strict MCP clients may fail); exposes scout_quarantine_asset as a write tool with no approval step."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Employee, Team, Project, Asset {tier, status, ip}, Document, Agent, Session, Interaction, Concept, Incident {severity,status}, Tool, Log. Edges: REPORTS_TO, MEMBER_OF, ASSIGNED_TO, ACCESSED, CONTAINS, AFFECTS, TRIGGERED_BY, INVESTIGATED, USED_TOOL, QUARANTINED_BY, HAS_SESSION, RECORDED_IN, RECALLS, HANDED_OFF_TO. Query values are parameterised, but scout/db.py builds labels, relationship types and the visualisation LIMIT by f-string (create_node/get_node/update_node/create_edge/get_graph_visualization). Indexes created per label on id. Uses MERGE ... SET n += $props upserts. No APOC/GDS or FalkorDB algo.* calls.",
+  "algorithms": [
+    "Collect-based multi-hop blast radius (scout/brain.py:compute_blast_radius)",
+    "Hand-weighted linear risk score with fixed severity thresholds (scout/brain.py)",
+    "Keyword-matching incident triage and fixed severity-to-tool policy (scout/agent.py)",
+    "Substring concept recall over graph memory (scout/memory.py)",
+    "SHA-256 integrity checksum on export bundle (scout/exporter.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI (scout/api.py): GET /api/health, /api/stats, /api/incidents, /api/assets, /api/graph, /api/brain/blast-radius/{id}, /api/brain/employee/{id}, /api/brain/access-path, /api/memory/session/{id}, /api/memory/recall, /api/simulate/scenarios, /api/incidents/{id}/evidence, /; POST /api/seed, /api/memory/session, /api/agent/investigate, /api/agent/triage-log, /api/agent/directive, /api/simulate/attack, /api/audio/synthesize",
+    "Stdio JSON-RPC MCP-like server (scout/mcp_server.py) with 5 tools",
+    "run.py launcher; scripts/benchmark.py"
+  ],
+  "frontend_interfaces": ["Large inline HTML/JS dashboard served from scout/api.py (3-panel graph, incident feed, directive console, tactical audio via browser speech)"],
+  "agent_or_memory_mechanisms": "Graph-persisted sessions/interactions/concepts with procedural recall of tools used per concept and HANDED_OFF_TO edges for multi-agent handoff (audit edges only; no second agent actually runs). Investigation results are written back as an Interaction linked to a Concept. No LLM is involved anywhere in the code read.",
+  "tests_present": "tests/test_scout.py: 9 pytest tests against the (embedded) graph; scripts/benchmark.py for latency. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.0.10", "falkordblite>=0.1.3 (embedded, imports redislite)", "fastapi>=0.115.0", "uvicorn>=0.30.0", "pydantic>=2.8.0", "python-dotenv>=1.0.1"],
+  "security_findings": [
+    "scout/api.py:29-35 - CORS allow_origins=['*'] with allow_credentials=True and all methods/headers",
+    "scout/api.py:141-145 - unauthenticated POST /api/seed deletes and rebuilds the whole graph",
+    "scout/api.py:180-190, scout/mcp_server.py:~70 - unauthenticated and unapproved write actions (investigate triggers quarantine; scout_quarantine_asset MCP tool)",
+    "scout/db.py:55-100 and 120-130 - f-string interpolation of node label, relationship type and visualisation LIMIT into Cypher (create_node, get_node, update_node, create_edge, get_graph_visualization); values are parameterised but label/rel names are caller-supplied in principle (currently only fixed internal strings)",
+    "scout/api.py:~190 - /api/agent/directive reflects user text into a response claiming verified compliance checks that never ran (integrity/misrepresentation concern)",
+    "scout/exporter.py:~75 - integrity_checksum is an unkeyed SHA-256, offering no tamper-evidence against an attacker who can rewrite both bundle and checksum",
+    "No eval/exec/subprocess/pickle; .env.example holds empty values; no hard-coded secrets found"
+  ],
+  "duplicates_or_overlaps": "Company-brain blast radius and incident triage overlap kalp-cg/graph-hacks and other SOC/RCA repos; graph agent memory overlaps other Agent Memory & Provenance repos but is simpler than them.",
+  "capability_family": "Enterprise Knowledge",
+  "evidence_drift_relevance": "LOW - timestamps on quarantine edges and a checksummed evidence export give minimal audit trail, but there is no provenance chain, supersession, temporal validity, dependency invalidation or approval gating (the quarantine is autonomous).",
+  "strongest_reusable_unit": {
+    "file": "scout/memory.py",
+    "symbols": ["AgentMemory.record_interaction", "AgentMemory.recall_procedural_memory", "AgentMemory.handoff_agent_task"],
+    "why": "Small, readable graph schema for sessions, interactions, concepts and handoffs that could seed an Agent Memory pack; the rest is scripted demo logic.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (or embedded falkordblite); no LLM needed"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The 'agent' is a keyword/rule script with a fake directive endpoint, autonomous quarantine without approval and simulated data; only the memory/session schema is worth borrowing, and richer equivalents exist in other repos.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

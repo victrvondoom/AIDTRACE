@@ -1,0 +1,105 @@
+{
+  "repository": "chapaevv123/patchpath-falkordb-agent",
+  "url": "https://github.com/chapaevv123/patchpath-falkordb-agent",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\chapaevv123__patchpath-falkordb-agent__RECOVERED",
+  "commit_sha": "be87e9f1c72ad19c4886cee2989895973f3f766f",
+  "license": "MIT",
+  "copyright_holder": "PatchPath contributors (LICENSE); git author of HEAD is 'MagnatSV', which differs from the GitHub owner chapaevv123 - recovered copy, authorship should be confirmed with the owner",
+  "source_files_inspected": [
+    "LICENSE",
+    "CREDITS.md",
+    "SECURITY.md",
+    "pyproject.toml",
+    "requirements.lock",
+    "graph/schema.cypher",
+    "src/patchpath/graph.py",
+    "src/patchpath/engine.py",
+    "src/patchpath/agent.py",
+    "src/patchpath/api.py",
+    "src/patchpath/config.py",
+    "tests/test_integration.py",
+    "scripts/evaluate.py",
+    "scripts/ai_agent_proof.py (head)",
+    "scripts/render_supervisor.py (subprocess grep)",
+    "fixtures/scenarios.json (scenario/node/edge counts)",
+    "artifacts/evaluation.json (head)"
+  ],
+  "languages_frameworks": ["Python 3.11-3.12/FastAPI", "falkordb==1.8.0", "Pydantic 2.12", "Playwright (QA scripts only)", "vanilla JS frontend", "Docker/Render"],
+  "implemented_capabilities": [
+    {
+      "capability": "Transitive vulnerability blast radius over a dependency graph",
+      "files": ["src/patchpath/engine.py", "graph/schema.cypher"],
+      "symbols": ["PatchPathEngine.trace_dependency_paths", "PatchPathEngine.calculate_blast_radius", "PatchPathEngine.find_affected_services", "PatchPathEngine.find_responsible_teams"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher MATCH p=(Service)-[:DEPENDS_ON*1..6]->(Package)-[:USES_VERSION]->(PackageVersion)<-[:AFFECTS]-(Vulnerability {id:$id}) with OPTIONAL MATCH to Application and Team; returns service, hops and full node-id path. Depth capped at 6; FalkorDB paths do not repeat edges so cycles are bounded (tested on a cyclic fixture)."
+    },
+    {
+      "capability": "Constraint-checked remediation planning with abstention",
+      "files": ["src/patchpath/engine.py"],
+      "symbols": ["generate_remediation_candidates", "evaluate_remediation_plan", "choose_plan", "simulate_counterfactual"],
+      "real_or_stub": "REAL",
+      "notes": "Each candidate is checked for COMPATIBILITY_BLOCK (BLOCKS edges), RESIDUAL_VULNERABLE_SERVICES (scope vs affected set) and OWNER_EVIDENCE_MISSING; selects min over (violations, residual, breaking_risk, cost_proxy) among safe plans, otherwise ABSTAIN. Counterfactual is a deterministic projection that never mutates the source graph. Pure rule engine; no LLM in the decision."
+    },
+    {
+      "capability": "Hash-based audit receipts and replay reproducibility",
+      "files": ["src/patchpath/engine.py", "src/patchpath/graph.py", "src/patchpath/api.py"],
+      "symbols": ["stable_hash", "PatchPathEngine.persist_audit_receipt", "ToolCall", "replay (POST /api/replay)"],
+      "real_or_stub": "REAL",
+      "notes": "Every graph tool call records its input and sha256 of its rows; the receipt (decision, selected candidate, analysis_hash, tool call hashes, receipt_hash) is stored as a Decision node with DECIDED_FROM and SUPPORTED_BY edges. /api/replay re-runs the analysis and compares analysis_hash to detect non-reproducible results. Decisions are append-only within a fixture run."
+    },
+    {
+      "capability": "Policy-bounded agent step trace",
+      "files": ["src/patchpath/agent.py"],
+      "symbols": ["PolicyBoundedAgent.run", "STEPS"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The 11-step 'agent' (OBSERVE ... PERSIST_DECISION) is a labelled trace of the deterministic engine calls; each step is marked VERIFIED by construction. Optional local Ollama (qwen3:8b) tool-calling proof exists in scripts/ai_agent_proof.py only and cannot choose safety. The code itself states it is not an LLM-autonomy claim."
+    },
+    {
+      "capability": "Allowlisted fixture loader and public-demo guards",
+      "files": ["src/patchpath/graph.py", "src/patchpath/api.py"],
+      "symbols": ["FalkorGraphStore.load_fixture", "ALLOWED_LABELS", "ALLOWED_RELATIONSHIPS", "GRAPH_NAME", "public_safety middleware"],
+      "real_or_stub": "REAL",
+      "notes": "Labels/relationship types validated against allowlists before being interpolated into CREATE statements; graph name regex-validated; 16 KB body cap, 90 req/min per-IP in-memory rate limit, security headers."
+    }
+  ],
+  "graph_models_and_cypher": "FalkorDB graph '<prefix>_demo'. Labels: Repository, Application, Service, Package, PackageVersion, Vulnerability{severity,advisory_range,synthetic}, Team, RemediationCandidate{kind,target_version,scope,cost_proxy,breaking_risk}, Decision{receipt_hash,decision,payload}, Evidence. Edges: DEPENDS_ON, USES_VERSION, AFFECTS, RUNS, OWNED_BY, INTRODUCES, PATCHES, BLOCKS, MITIGATES, SUPPORTED_BY, DECIDED_FROM. Plain openCypher (variable-length path, OPTIONAL MATCH, collect, list comprehension); no APOC/GDS/algo procedures. All runtime values are bound parameters; the only f-string Cypher interpolates allowlisted label/relationship names. Writes use graph.query; reads also use graph.query (not ro_query).",
+  "algorithms": [
+    "Depth-capped (1..6) variable-length path enumeration with path-id evidence (engine.py:trace_dependency_paths)",
+    "Lexicographic score tuple selection (violations, residual services, breaking_risk, cost) among constraint-safe plans (engine.py:choose_plan)",
+    "Deterministic counterfactual projection of residual risk (engine.py:simulate_counterfactual)",
+    "Canonical-JSON sha256 receipts and replay comparison (engine.py:stable_hash, persist_audit_receipt)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /, /api/health, /api/live, /api/status, /api/scenarios, /api/graph, /api/analysis; POST /api/scenarios/{id}/load, /api/analyze, /api/reset, /api/replay"
+  ],
+  "frontend_interfaces": [
+    "Vanilla JS/HTML/CSS single page (frontend/index.html, app.js, styles.css, v2/v3.css) with graph view and remediation cards"
+  ],
+  "agent_or_memory_mechanisms": "Explicit step-list agent over deterministic graph tools with an abstain outcome; decision memory is the Decision node plus receipt hash within the demo graph (graph is ephemeral and reset on scenario load). No cross-session memory or learning.",
+  "tests_present": "tests/test_integration.py: 5 test functions (one parametrized over 4 gold scenarios, so about 8 cases) covering gold blast radius/plan selection, unsafe upgrade rejection plus receipt replay equality, unknown-vulnerability abstention, cycle boundedness/partial-plan rejection, API readiness and request-size guard. All require a live FalkorDB. scripts/evaluate.py + artifacts/evaluation.json report 4/4 scenarios correct versus a direct-dependency baseline (synthetic fixtures authored with the gold answers).",
+  "dependency_requirements": ["falkordb==1.8.0", "fastapi==0.143.1", "starlette==1.8.0", "uvicorn==0.37.0", "pydantic==2.12.0", "dev: pytest==9.1.1, httpx==0.28.1", "optional: playwright==1.55.0, Ollama qwen3:8b"],
+  "security_findings": [
+    "src/patchpath/api.py:~97-103 and ~108-114 - POST /api/reset and /api/scenarios/{id}/load wipe and reload the shared graph (MATCH (n) DETACH DELETE n in graph.py:~42) with no authentication; acceptable for an ephemeral synthetic demo, not for a shared Kairos graph",
+    "src/patchpath/api.py - single global state dict (scenario_id, analysis) guarded by a process-local Lock; not multi-tenant or multi-worker safe",
+    "src/patchpath/api.py:~34-36,~64-72 - per-IP rate limiter is an in-memory dict keyed on request.client.host (spoofable behind proxies, unbounded key growth)",
+    "src/patchpath/graph.py:~54-66 - f-string Cypher with label/rel type, but both validated against fixed allowlists first (safe)",
+    "scripts/render_supervisor.py:62,83 - subprocess.Popen with list args launching redis/uvicorn for the Render deployment; deployment-only",
+    "scripts/ai_agent_proof.py:44 - urlopen to a local Ollama URL; dev proof script only",
+    "No eval/exec/pickle; no hard-coded secrets (env-driven PATCHPATH_FALKOR_* settings)"
+  ],
+  "duplicates_or_overlaps": "Same sweep contains MaybeSomeone-arc18/patchpath and HusseinAdeiza/graphhacks-patchweaver (same family: dependency blast radius + remediation). Overlaps blast-radius traversal (AgentAhmed/blast-radius, ProthamD/graph-hacks) and Security & Vulnerability remediation-path repos.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "MEDIUM - audit receipts with canonical sha256 of every tool result, replay-based drift detection (analysis_hash mismatch), Evidence-backed candidates, OWNER_EVIDENCE_MISSING constraint and abstention are directly reusable for decision lineage; no supersession, temporal validity or human approval gate.",
+  "strongest_reusable_unit": {
+    "file": "src/patchpath/engine.py",
+    "symbols": ["PatchPathEngine.trace_dependency_paths", "evaluate_remediation_plan", "choose_plan", "simulate_counterfactual", "persist_audit_receipt", "stable_hash"],
+    "why": "About 200 lines of deterministic, parameterized FalkorDB-1.8-compatible logic: transitive impact paths, constraint-violating-candidate rejection, abstain-on-no-safe-plan, and a replayable hashed Decision receipt.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB server (4.x) only; no LLM required"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "A small, MIT-licensed, tested engine whose blast-radius + constraint + hashed-receipt pattern slots directly into Kairos dependency invalidation and decision lineage on FalkorDB; take engine.py/graph.py and the receipt scheme, and treat the 11-step agent wrapper as presentation.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

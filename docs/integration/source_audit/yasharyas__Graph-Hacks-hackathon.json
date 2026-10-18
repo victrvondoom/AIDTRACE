@@ -1,0 +1,150 @@
+{
+  "repository": "yasharyas/Graph-Hacks-hackathon",
+  "url": "https://github.com/yasharyas/Graph-Hacks-hackathon",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\yasharyas__Graph-Hacks-hackathon",
+  "commit_sha": "0c583faf66a10ded1db09475b1c64d24a35d5d7a",
+  "license": "MIT",
+  "copyright_holder": "yasharyas (Copyright (c) 2026 yasharyas)",
+  "source_files_inspected": [
+    "LICENSE",
+    "package.json",
+    ".env.example",
+    "start.sh",
+    "server/ingest/build.ts",
+    "server/ingest/admits.ts",
+    "server/ingest/lockfile.ts",
+    "server/ingest/guest.ts",
+    "server/tools/cypher.ts",
+    "server/tools/registry.ts",
+    "server/graph/client.ts",
+    "server/graph/schema.ts",
+    "server/agent/guard.ts",
+    "server/agent/llm.ts",
+    "server/agent/triage.ts",
+    "server/agent/replay.ts",
+    "server/security.ts",
+    "server/mcp.ts",
+    "server/index.ts",
+    "shared/clock.ts",
+    "scripts/oracle.ts",
+    "test/ (file list and test counts)"
+  ],
+  "languages_frameworks": ["TypeScript (Node >=24, native TS execution)", "Hono HTTP server", "falkordb npm client 6.8.0 (FalkorDB)", "semver 7.8.5", "MCP server SDK (@modelcontextprotocol/server, stdio)", "React 19 + Vite + Tailwind + react-force-graph-2d (web UI)", "node:test"],
+  "implemented_capabilities": [
+    {
+      "capability": "npm package-lock parsing into dependency graph (Node resolution semantics, depth BFS, hostile-input limits)",
+      "files": ["server/ingest/lockfile.ts"],
+      "symbols": ["parseLockfile", "safeRange", "LIMITS"],
+      "real_or_stub": "REAL",
+      "notes": "Converts lockfileVersion 2/3 into Dep nodes and REQUIRES edges mirroring npm arborist/Node resolution, computes shortest depth from root, and sanitises names/ranges/versions with size and entry caps (6000 entries, 50k edges)."
+    },
+    {
+      "capability": "Temporal exposure window for a semver range admitting a malicious version (ADMITS fromT/toT)",
+      "files": ["server/ingest/admits.ts", "server/ingest/build.ts", "server/tools/cypher.ts"],
+      "symbols": ["admitWindow", "safeVersion", "writeAdmits", "EXPOSURE_ADMITS", "FIRST_EXPOSURE"],
+      "real_or_stub": "REAL",
+      "notes": "admitWindow computes [fromT,toT) during which a declared range would have resolved to the bad version, closing the window when a higher satisfying version is published or the bad one is removed. Stored as ADMITS edge properties and queried with 'at' time travel."
+    },
+    {
+      "capability": "Tiered incident exposure at a point in time (LOCKED / WOULD_PULL / MAINTAINER / CLEAN)",
+      "files": ["server/tools/registry.ts", "server/tools/cypher.ts"],
+      "symbols": ["incidentExposure", "filterExposures", "maintainerBlastRadius", "EXPOSURE_LOCKED", "EXPOSURE_ADMITS", "MAINTAINER_BLAST_RADIUS", "EXPOSURE_CARRIERS"],
+      "real_or_stub": "REAL",
+      "notes": "Runs parameterised Cypher via GRAPH.RO_QUERY and merges tiers per repo, honouring a 'lockfile cannot predate the version it locks' rule; also computes 'minutes ahead of advisory'."
+    },
+    {
+      "capability": "Dependency path explanation (shortest lockfile chain from repo root to locked/admitting entry)",
+      "files": ["server/tools/cypher.ts", "server/tools/registry.ts"],
+      "symbols": ["EXPLAIN_PATH", "explainPath"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher shortestPath((root)-[:REQUIRES*0..]->(x)) limited to 3 shallowest entries and memoised for the demo graphs; returns chain, range, hops."
+    },
+    {
+      "capability": "Remediation drafting (npm overrides pinning to highest clean version live at time T)",
+      "files": ["server/tools/registry.ts", "server/ingest/admits.ts"],
+      "symbols": ["draftRemediation", "safeVersion", "REMEDIATION_VERSIONS", "REMEDIATION_RANGES"],
+      "real_or_stub": "REAL",
+      "notes": "Computes version-qualified overrides satisfying every affected range, orders steps differently for LOCKED vs WOULD_PULL, and emits a PR body; deterministic code, not an LLM."
+    },
+    {
+      "capability": "Maintainer concentration risk via PageRank",
+      "files": ["server/ingest/build.ts", "server/tools/cypher.ts", "server/tools/registry.ts"],
+      "symbols": ["writeAdmits", "CONCENTRATION_RISK", "concentrationRisk"],
+      "real_or_stub": "REAL",
+      "notes": "Builds a PKG_DEPENDS package projection and runs FalkorDB's built-in CALL algo.pageRank, then sums pagerank per maintainer."
+    },
+    {
+      "capability": "LLM narrative claim guard (verifies entities, numbers and evidence citations in LLM text against tool evidence)",
+      "files": ["server/agent/guard.ts", "server/agent/replay.ts", "server/agent/triage.ts"],
+      "symbols": ["guard", "Evidence", "Claim", "guardEvent"],
+      "real_or_stub": "REAL",
+      "notes": "A linear-time single-pass tokenizer extracts npm@version, owner/repo, counts and [E1] citations, then marks each claim ok/flagged against a graph-derived evidence set. The LLM only picks an observation id; narrative text is deterministic."
+    },
+    {
+      "capability": "Deterministic triage playbook with session memory",
+      "files": ["server/agent/triage.ts", "server/tools/registry.ts", "server/tools/cypher.ts"],
+      "symbols": ["triage", "recordTriage", "recallTriage", "RECORD_TRIAGE", "RECALL_TRIAGE", "PRUNE_TRIAGE"],
+      "real_or_stub": "REAL",
+      "notes": "Async-generator pipeline of registry tools (find_target, suspect_versions, incident_exposure, explain_path, route_owners, draft_remediation, concentration_risk, scanner_view) whose branching depends on graph output; writes :Triage nodes with ASSESSED edges (tier, action remediated/notified/accepted-risk) per anonymous session."
+    },
+    {
+      "capability": "Read-only MCP server exposing graph tools",
+      "files": ["server/mcp.ts", "server/tools/registry.ts"],
+      "symbols": ["TOOLS", "make", "render"],
+      "real_or_stub": "REAL",
+      "notes": "Stdio MCP server registering all tools except session-scoped recall_triage with readOnlyHint; no raw Cypher tool; results include the exact Cypher that ran."
+    },
+    {
+      "capability": "Multi-provider LLM client with fallback chain, daily cap and outbound allowlist",
+      "files": ["server/agent/llm.ts", "server/security.ts"],
+      "symbols": ["chat", "safeFetch", "AllProvidersFailed", "limited", "forPrompt"],
+      "real_or_stub": "REAL",
+      "notes": "OpenAI-compatible calls to Groq and Gemini with ordered fallback, 800 calls/day cap, https-only host allowlist, redirect refusal and prompt sanitisation."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Package, Version, Maintainer, Incident, Advisory, Org, Team, Repo, Dep (one per lockfile entry), Triage. Edges: OF, MAINTAINS, INVOLVES, COMPROMISED, PUBLISHED_BY, FLAGS, PULLS_IN, IN_ORG, OWNED_BY, ROOT, REQUIRES{range,kind}, RESOLVES_TO, ADMITS{range,fromT,toT} (temporal validity window), PKG_DEPENDS, FOR, ASSESSED{tier,action}. Cypher is parameterised ($params) and executed with GRAPH.RO_QUERY for reads; GRAPH.COPY clones a registry graph per scenario; indexes + UNIQUE constraints via CREATE INDEX / constraintCreate; shortestPath with variable-length REQUIRES*0..; UNWIND-batched CREATE; UNION; collect(DISTINCT ...). Uses FalkorDB built-in CALL algo.pageRank (not Neo4j GDS/APOC), so it is FalkorDB-native.",
+  "algorithms": [
+    "admitWindow in server/ingest/admits.ts: semver range admission window [published(bad), min(removedAt, first higher satisfying release)) closing on supersession",
+    "safeVersion in server/ingest/admits.ts: highest non-malicious version live at time T satisfying all ranges",
+    "parseLockfile in server/ingest/lockfile.ts: Node-style resolve() walking up node_modules, BFS depth from root",
+    "EXPLAIN_PATH Cypher shortestPath over REQUIRES edges (server/tools/cypher.ts)",
+    "CALL algo.pageRank('Package','PKG_DEPENDS') summed per maintainer for concentration risk (server/ingest/build.ts, CONCENTRATION_RISK)",
+    "guard() claim tokenizer and evidence verification (server/agent/guard.ts)",
+    "incidentExposure tier merge with LOCKED-since gating (server/tools/registry.ts)"
+  ],
+  "backend_interfaces": [
+    "Hono routes in server/index.ts: GET /api/health, /api/scenarios, /api/timeline, /api/exposure, /api/plan, /api/stats; POST /api/triage (SSE), /api/ask, /api/analyze, /api/remediate",
+    "MCP stdio server (server/mcp.ts) exposing find_target, suspect_versions, incident_exposure, maintainer_blast_radius, explain_path, route_owners, concentration_risk, draft_remediation, scanner_view, filter_exposures",
+    "CLI: npm run triage, build:graph, mcp"
+  ],
+  "frontend_interfaces": [
+    "React 19 SPA in web/src: PasteBox, ExposureTable, PathGraph/PathGraphCanvas (react-force-graph-2d), TimelineScrubber, ScenarioControl, NarrativePanel, FixDrawer, AskBox, ToolFeed/ToolCard, GraphStatsSheet, ExecSummary, ContrastCard"
+  ],
+  "agent_or_memory_mechanisms": "Deterministic tool-sequencing triage generator (not an LLM planner); an Ask loop (server/agent/ask.ts) lets an LLM call registry tools, with args coerced and capped (str/strs/time) and the server overwriting session. Session memory is persisted as :Triage nodes with ASSESSED edges carrying remediation actions and recalled via recall_triage; recorded LLM picks are replayed from data/replays/*.json. Guard checks every LLM claim against tool evidence before display.",
+  "tests_present": "11 files under test/ (admits, api, data, graph, guard, llm, lockfile, mcp, narrate, readme, security) with roughly 124 test()/it() cases, plus ~25 co-located web/src/**/*.test.ts files. Graph tests require a live FalkorDB. Not executed by auditor.",
+  "dependency_requirements": ["Node >=24", "falkordb 6.8.0", "hono 4.13.13", "@hono/node-server 2.1.3", "@modelcontextprotocol/server 2.3.1", "semver 7.8.5", "FalkorDB server with GRAPH.COPY and algo.pageRank", "Optional GROQ_API_KEY / GEMINI_API_KEY / GH_TOKEN"],
+  "security_findings": [
+    "scripts/oracle.ts:18 - execFileSync('npm', [...], {shell: true}) dev-only oracle script; arguments are static but shell:true on a path-derived cwd",
+    "server/security.ts:72-100 - outbound fetch is allowlisted (github, npm registry, osv, groq, gemini); redirects refused. Positive control, not a finding",
+    "server/graph/client.ts:13 - falls back to hard-coded dev password 'devpass' when REDIS_PASSWORD is unset and NODE_ENV is not production (dev default, not a real secret)",
+    ".env.example:8-10 - placeholder passwords only ('change-me'); no real secrets found",
+    "server/graph/client.ts:80-83 - explain() builds a 'CYPHER k=v' prefix with JSON.stringify of server-chosen sample values (documented as server-only); falkordb client inlines params so assertSafeParams guards map keys",
+    "No eval/exec/pickle/unsafe deserialisation found in server code; all Cypher values travel as $params; graph names are built only from fixed parts plus a hash",
+    "start.sh uses redis ACL users pz_ro/pz_rw and hashed default password; no secrets in argv"
+  ],
+  "duplicates_or_overlaps": "Supply-chain blast-radius traversal (maintainer/package -> repos), dependency-path explanation, remediation drafting. Overlaps other npm supply-chain / blast-radius repos in the hackathon set (e.g. blast-radius, ghostgraph variants) but is unusually complete on time-windowed exposure.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "HIGH - ADMITS edges with fromT/toT implement temporal validity closed by supersession (higher release or removal), incidentExposure answers 'as of time T', and guard.ts verifies narrative claims against graph evidence with citation ids.",
+  "strongest_reusable_unit": {
+    "file": "server/ingest/admits.ts",
+    "symbols": ["admitWindow", "safeVersion"],
+    "why": "Small, pure, well-specified temporal-validity and supersession logic (window opens at bad publish and closes on removal or a higher satisfying release) with a companion claim-vs-evidence guard in server/agent/guard.ts; both map directly to evidence-drift windows and claim verification.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "TypeScript source with semver dependency; algorithms are trivially portable to Python (packaging/semver). Query layer needs FalkorDB (already native). No LLM key needed for admits/guard."
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "FalkorDB-native Cypher query set and schema for dependency exposure can be ported as a Software Dependency pack; admitWindow and guard should be re-implemented in Python as shared temporal-validity and claim-verification helpers. The TypeScript server and UI should not be merged directly.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

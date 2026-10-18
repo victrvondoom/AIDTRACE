@@ -1,0 +1,129 @@
+{
+  "repository": "aryangorde6/shaky-ground",
+  "url": "https://github.com/aryangorde6/shaky-ground",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\aryangorde6__shaky-ground",
+  "commit_sha": "c93321af38fb9ab113641a7fe4d600c489f5a968",
+  "license": "MIT",
+  "copyright_holder": "ARYAN GORDE (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "LICENSE",
+    "pyproject.toml",
+    ".env.example",
+    ".github/workflows/tests.yml",
+    "docs/ARCHITECTURE.md",
+    "shaky/reliance.py",
+    "shaky/risk.py",
+    "shaky/carry.py",
+    "shaky/judge.py",
+    "shaky/foundation.py",
+    "shaky/db.py",
+    "shaky/llm.py",
+    "shaky/config.py",
+    "shaky/web.py",
+    "shaky/mcp_server.py",
+    "shaky/views.py",
+    "shaky/snapshot.py",
+    "tests/test_rules.py"
+  ],
+  "languages_frameworks": ["Python >=3.12 (stdlib http.server, no web framework)", "falkordb>=1.7", "httpx", "python-dotenv", "redis (via falkordb)", "hand-rolled MCP JSON-RPC server", "vanilla JS UI"],
+  "implemented_capabilities": [
+    {
+      "capability": "Reliance-weighted dependency-risk propagation along citation chains to a retracted root (proven vs possible risk)",
+      "files": ["shaky/risk.py", "shaky/reliance.py"],
+      "symbols": ["propagate", "chain", "tiers", "check", "VARIANTS", "PROPAGATE", "CHAIN", "BUILDS_ON", "MAX_HOPS", "WEIGHTS"],
+      "real_or_stub": "REAL",
+      "notes": "Iterative Cypher passes (one per hop) write Paper.risk (possible, UNKNOWN edges at 0.3) and Paper.risk_proven (evidence only); a reduce()-based CHAIN query returns the riskiest path with per-link evidence; check() cross-verifies propagate against brute-force path enumeration; import-time assert keeps the weight tiers consistent."
+    },
+    {
+      "capability": "Per-citation reliance classification from citation sentences (LLM answers, fixed rules decide class and weight)",
+      "files": ["shaky/judge.py", "shaky/reliance.py"],
+      "symbols": ["classify", "count_refs", "judge_citations", "_checked", "SYSTEM", "VERSION"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The LLM answers yes/no questions plus a sentence index; classify() maps them to CRITICAL/FOUNDATIONAL/SUPPORTING/BACKGROUND/UNKNOWN with deterministic rules (3+ reference lists demote to BACKGROUND), and the evidence sentence is copied verbatim; judged_by records provider:model:version and judged_at. Quality depends on LLM answers."
+    },
+    {
+      "capability": "Carry check: does dependence survive a hop (two-model agreement that the next paper relies on the part taken from the retracted root)",
+      "files": ["shaky/carry.py"],
+      "symbols": ["settle", "judge_carry", "judge_groups", "_combine", "TO_JUDGE", "UPSTREAM", "SAVE"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Two independent model families vote; carries=true only if both say yes, false only if both no, else null; links not shown to carry count at most as a passing mention in risk_proven. Results stored on edges with carry_votes, carry_evidence, carry_by, carry_at and versioned (c5) so re-judging is idempotent."
+    },
+    {
+      "capability": "Foundation check verdicts with evidence-bounded tiers and coverage accounting",
+      "files": ["shaky/foundation.py"],
+      "symbols": ["check", "check_list", "_tier", "_record", "VERDICTS", "dois_in"],
+      "real_or_stub": "REAL",
+      "notes": "Verdicts RESTS ON RETRACTED WORK / NOT PROVEN / CITES RETRACTED WORK / NO RETRACTED WORK FOUND / CLEAN . DEPTH 2 / NO DATA; never claims clean when references could not be checked; whole BibTeX/reference lists supported within a credit budget; results stored as :Investigation nodes with the full JSON for later replay."
+    },
+    {
+      "capability": "Retraction ingestion and citation graph loading (OpenAlex, Semantic Scholar sentences, Retraction Watch)",
+      "files": ["shaky/load.py", "shaky/openalex.py", "shaky/semanticscholar.py", "shaky/retractionwatch.py", "shaky/evidence.py", "shaky/fetch.py"],
+      "symbols": ["load_neighbourhood", "upsert_papers", "link_citations", "link_retractions", "attach_s2"],
+      "real_or_stub": "REAL",
+      "notes": "Cached, rate-limited, retrying HTTP fetchers; UNWIND/MERGE batch upserts of Paper nodes and CITES edges; Retraction nodes linked via RETRACTS; citation context sentences stored on edges."
+    },
+    {
+      "capability": "Read-only serving layer: web UI API and MCP server with ALLOW_RUNS gate",
+      "files": ["shaky/web.py", "shaky/mcp_server.py", "shaky/views.py"],
+      "symbols": ["Handler", "check_foundations", "retraction_blast_radius", "explain_chain", "views.blast", "views.check_list"],
+      "real_or_stub": "REAL",
+      "notes": "Three MCP tools over a hand-written JSON-RPC stdio loop; web API with request semaphore, body-size caps and Cache-Control no-store; any write path (new checks, re-propagation) is refused when ALLOW_RUNS=0."
+    },
+    {
+      "capability": "Autonomous exploration agent and human-agreement scoring",
+      "files": ["shaky/agent.py", "shaky/humancheck.py", "shaky/report.py", "examples/cite_check_agent.py"],
+      "symbols": ["investigate", "sample", "score", "build"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Agent expands papers whose possible risk >= EXPLORE (0.05) and records Investigation/EXPLORED edges; humancheck samples links for manual labels and scores model agreement; not read in full by the auditor."
+    },
+    {
+      "capability": "Graph snapshot export/restore",
+      "files": ["shaky/snapshot.py", "shaky/preflight.py"],
+      "symbols": ["export", "restore", "KINDS"],
+      "real_or_stub": "REAL",
+      "notes": "Pages nodes and edges by internal ID into a gzip JSONL with a count manifest and replays them into another FalkorDB; preflight runs 13 deployment checks."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Paper {id, doi, title, year, retracted, risk, risk_proven, risk_root, refs, type}, Retraction {record_id}, Investigation {id, mode, root, verdict, result(JSON)}; transient label :Contaminated for papers proven to build on the root. Edges: CITES {cls, reliance, evidence, why, contexts, judged_by, judged_at, carries, carry_root, carry_votes, carry_evidence, carry_why, carry_by, carry_at}, RETRACTS, EXPLORED. Cypher patterns: iterative max(prop*weight) relaxation per hop, variable-length CITES*1..3 with all(c IN relationships(p)) filters and reduce() path scoring, UNWIND batch SET, CALL db.indexes(). Pure OpenCypher plus FalkorDB ro_query timeouts; no APOC/GDS. Property names are interpolated by f-string from internal constants (risk/risk_proven) only.",
+  "algorithms": [
+    "Max-product risk relaxation over CITES, one pass per hop up to MAX_HOPS=3 (shaky/risk.py:propagate)",
+    "Riskiest chain extraction with deterministic tie-breaking via reduce() and ORDER BY risk DESC, length, id string (shaky/risk.py:chain)",
+    "Brute-force verification of propagate vs all chains (shaky/risk.py:check)",
+    "Two-model consensus carry decision with unclear handling (shaky/carry.py:_combine)",
+    "Citation-class rules incl. reference-list-size demotion via regex count_refs (shaky/judge.py)",
+    "Evidence-bounded verdict tiering with coverage completeness (shaky/foundation.py:_tier, check)"
+  ],
+  "backend_interfaces": [
+    "stdlib HTTP server (shaky/web.py): GET /api/config, /api/blast, /api/paper, /api/edge, /api/checks, /api/check; POST /api/check, /api/list (write paths need ALLOW_RUNS=1)",
+    "MCP stdio server (shaky/mcp_server.py): check_foundations, retraction_blast_radius, explain_chain",
+    "CLI modules: db, load, evidence, judge, carry, risk, agent, report, foundation, snapshot, preflight, bench, humancheck"
+  ],
+  "frontend_interfaces": ["web/index.html + app.js + style.css: blast-radius graph view, paper/edge evidence panels, foundation-check tab with reference-list upload"],
+  "agent_or_memory_mechanisms": "Investigation nodes persist full foundation-check results (replayable, listed by /api/checks); agent.py expands the graph autonomously and records EXPLORED edges; LLM judgments are cached on disk by prompt hash and versioned on edges (judge v3, carry c5) so judgments are reproducible and re-run only when the version bumps. Not a conversational memory.",
+  "tests_present": "tests/test_rules.py: 17 offline unittest cases (no network, no database) covering DOI/ID resolution, reference-list parsing, reliance classification order, BUILDS_ON threshold separation, carry vote combination, crosscheck rules, MCP protocol handshake/errors; GitHub Actions runs them via uv. The Cypher propagation itself is only verified by risk.check() against a live FalkorDB. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.7", "httpx>=0.27", "python-dotenv>=1.0", "Python>=3.12", "FalkorDB server", "OPENALEX_API_KEY, S2_API_KEY, GROQ_API_KEY, GEMINI_API_KEY (data and judging stages only)"],
+  "security_findings": [
+    "shaky/config.py:23 - ALLOW_RUNS defaults to 1, so by default the unauthenticated web API and MCP server can trigger graph writes and spend OpenAlex/LLM credits; public deployments must set ALLOW_RUNS=0",
+    "shaky/web.py:131-146 - POST endpoints have size caps but no authentication or rate limiting beyond a request semaphore; binds 127.0.0.1 by default (HOST env can widen)",
+    "shaky/db.py:40, shaky/risk.py:140, shaky/snapshot.py:47-49,116, shaky/views.py:69 - f-string Cypher; interpolated parts are constants (labels, property names, patterns) while user values travel as $params; not injectable as written",
+    "shaky/llm.py:42-60 - API keys sent as Bearer headers; error text is scrubbed with replace(key, '<key>'); LLM responses cached on disk (data/cache/llm) including full model output",
+    "shaky/fetch.py:~10 - httpx logger lowered to WARNING because it would log URLs with keys (positive mitigation)",
+    "examples/cite_check_agent.py:78 - subprocess.Popen starts the MCP server as a child with a fixed command; example only",
+    "No eval/exec/pickle; no hard-coded secrets (.env.example is empty); outbound hosts limited to OpenAlex, Semantic Scholar, Retraction Watch CSV and Gemini/Groq endpoints"
+  ],
+  "duplicates_or_overlaps": "Overlaps ibnweb3/bedrock (retracted-citation exposure) but goes much further with reliance-weighted multi-hop risk; family overlap with lineage / provenance and supersession engines; chain extraction overlaps blast-radius traversal.",
+  "capability_family": "Research & Legal Evidence",
+  "evidence_drift_relevance": "HIGH - implements dependency invalidation with edge-level provenance: invalidation of an upstream root propagates through reliance-weighted chains, every link carries verbatim evidence plus judged_by/judged_at/version, a proven-vs-possible split refuses to overstate, and carry votes require two-model agreement before dependence passes a hop.",
+  "strongest_reusable_unit": {
+    "file": "shaky/risk.py",
+    "symbols": ["propagate", "chain", "tiers", "check", "VARIANTS", "BUILDS_ON", "WEIGHTS"],
+    "why": "A self-contained, FalkorDB-native engine for propagating invalidation along evidence-weighted dependency edges with two honesty levels (possible vs proven), deterministic chain explanation and a brute-force self-check; the weights table and tier invariants map directly onto an Evidence Drift Cascade (swap CITES for DERIVED_FROM / RELIES_ON and retracted for superseded).",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (falkordb Python client); no LLM needed for propagation itself, LLM only for reliance/carry judgments in judge.py and carry.py"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "risk.py plus reliance.py is a generic weighted invalidation-propagation core that Kairos can adopt as a shared engine for evidence drift; judge/carry become optional pluggable judges. The OpenAlex/Retraction Watch loaders stay in a Research Evidence capability pack.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

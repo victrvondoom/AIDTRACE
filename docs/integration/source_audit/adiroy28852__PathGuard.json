@@ -1,0 +1,118 @@
+{
+  "repository": "adiroy28852/PathGuard",
+  "url": "https://github.com/adiroy28852/PathGuard",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\adiroy28852__PathGuard",
+  "commit_sha": "7120081f645c675beae4b1ebbb715d21166c8035",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["graph_api/store.py", "graph_api/main.py", "backend/agent.py", "backend/graph_client.py", "backend/main.py", "backend/scanner.py", "frontend/src/App.jsx (symbol scan)", "frontend/package.json", "requirements.txt", ".env.example", "docker-compose.yml", "README.md"],
+  "languages_frameworks": ["Python/FastAPI (two services)", "FalkorDB (falkordb client)", "Playwright (headless Chromium pass)", "React 19 + Vite frontend"],
+  "implemented_capabilities": [
+    {
+      "capability": "Internet-to-restricted-data attack path query",
+      "files": ["graph_api/store.py"],
+      "symbols": ["PATH_QUERY", "GraphStore.attack_paths", "SEED_CYPHER", "GraphStore.ensure_seeded"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A real variable-length Cypher query (CAN_ACCESS*1..8 with all(access IN relationships(path) WHERE access.active = true), ORDER BY hops LIMIT 50) over a hard-coded 11-node synthetic cloud graph seeded by SEED_CYPHER. The engine pattern is real; the cloud data is demo-only and no cloud ingest exists."
+    },
+    {
+      "capability": "What-if remediation by deactivating edges and re-querying",
+      "files": ["graph_api/store.py", "backend/agent.py"],
+      "symbols": ["GraphStore.simulate_revocation", "GraphStore.reset_scenario", "REMEDIATION_EDGE_IDS", "PathguardAgent.simulate", "PathguardAgent._recommend", "FIXES"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Sets CAN_ACCESS.active=false on one of two allow-listed edges then reruns the path query to show residual risk; recommendations are filtered to edges present in active paths. Only two hard-coded fixes are modeled."
+    },
+    {
+      "capability": "Public website discovery scan with SSRF controls",
+      "files": ["backend/scanner.py"],
+      "symbols": ["scan_website", "_origin", "_assert_public_host", "_fetch", "_NoFollowRedirectHandler", "_same_origin", "_PageParser", "_source_observations"],
+      "real_or_stub": "REAL",
+      "notes": "Bounded same-origin crawler (12 pages, 1 MB cap, 20 first-party scripts, ports 80/443 only) with public-IP DNS check, manual redirect handling that never follows off-origin hops, passive security-header findings, and route extraction from JS source."
+    },
+    {
+      "capability": "Runtime page-load behaviour pass (Playwright) with request blocking",
+      "files": ["backend/scanner.py"],
+      "symbols": ["_runtime_observations", "handle_request", "handle_response", "handle_new_page"],
+      "real_or_stub": "REAL",
+      "notes": "Headless Chromium route interception blocks off-origin, XHR/WebSocket and non-GET/HEAD requests and records popup/navigation signals; degrades to status 'unavailable' if Playwright is missing."
+    },
+    {
+      "capability": "Traffic-signal classification and HAR/OpenAPI/SARIF evidence import",
+      "files": ["backend/scanner.py"],
+      "symbols": ["_classify_interaction", "_ROLE_PATTERNS", "_redact_url_secrets", "_parse_artifact", "_registrable_domain"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Host/path substring heuristics label advertising/analytics/payment etc. with low or medium confidence and an honest 'not proof' reason string; credential-like query params are redacted before persistence. Compound-TLD list is a tiny hard-coded set, not the public suffix list."
+    },
+    {
+      "capability": "Per-site persisted scan graphs with scan-to-scan diff",
+      "files": ["graph_api/store.py"],
+      "symbols": ["GraphStore.ingest_site_scan", "GraphStore._site_inventory", "GraphStore.load_site_scan", "GraphStore.site_history", "GraphStore.site_graph_name", "GraphStore._route_key"],
+      "real_or_stub": "REAL",
+      "notes": "Each host gets its own FalkorDB graph (pathguard_site_<sha256[:20]>); every scan creates Scan nodes chained with (old)-[:PRECEDES]->(new) and Route/ApiEndpoint/Dependency/Interaction/Finding nodes whose edges carry scan_id, active, mechanism and evidence strings. changes = set difference (added/removed) of routes, APIs, findings, interactions versus the previous scan."
+    },
+    {
+      "capability": "Evidence-path Q&A and finding-dismissal simulation",
+      "files": ["graph_api/store.py", "backend/agent.py"],
+      "symbols": ["GraphStore.answer_site_question", "GraphStore._site_paths", "GraphStore.simulate_site_remediation", "PathguardAgent.answer_site_question"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Question category is chosen by keyword matching (finding/popup/dependency/api); summaries are template strings with optional OpenAI rewrite. simulate_site_remediation flips Finding.active and its HAS_FINDING edge to false."
+    },
+    {
+      "capability": "Optional LLM summary of graph evidence",
+      "files": ["backend/agent.py"],
+      "symbols": ["PathguardAgent._optional_model_summary", "PathguardAgent._optional_site_model_summary"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Calls the OpenAI Responses API only to paraphrase path evidence in 3 sentences. The site variant references an undefined name 'result' (agent.py:216) and would raise NameError when OPENAI_API_KEY is set."
+    },
+    {
+      "capability": "Two-tier service split (app API -> Graph API -> FalkorDB)",
+      "files": ["backend/graph_client.py", "graph_api/main.py", "backend/main.py"],
+      "symbols": ["GraphAPIClient", "graph_call", "GET /v1/analysis", "POST /v1/remediate", "POST /v1/sites/scan"],
+      "real_or_stub": "REAL",
+      "notes": "Only graph_api imports falkordb; the application backend talks HTTP via urllib to a separate service and returns 503 with no fallback store."
+    }
+  ],
+  "graph_models_and_cypher": "Demo graph 'pathguard': Principal, Endpoint, Workload, Identity, Secret, DataStore, DataAsset(classification) with CAN_ACCESS{id,mechanism,evidence,active}. Site graphs 'pathguard_site_<hash>': Site, Scan, Route, ApiEndpoint, Dependency, Interaction, Finding, Principal; edges HAS_SCAN, PRECEDES, HAS_ROUTE, CONTAINS, CAN_REACH, OBSERVED_PUBLIC, CALLS, LOADS, OBSERVED_INTERACTION, HAS_FINDING (all with id, scan_id, active, mechanism, evidence). Cypher is built by string interpolation using a json.dumps-based literal escaper (store.py:_literal) instead of query parameters. Patterns: variable-length path with all() predicate on relationships, list comprehensions over nodes/relationships, MERGE upserts with SET, SET ... active=false for simulated removal. No APOC/GDS; pure openCypher so FalkorDB-compatible.",
+  "algorithms": [
+    "Bounded variable-length reachability CAN_ACCESS*1..8 filtered on active edges, ordered by hop count in graph_api/store.py:PATH_QUERY",
+    "Edge-deactivation what-if with recomputation of residual paths in store.py:simulate_revocation and agent.py:simulate",
+    "Snapshot diff (set difference of routes/APIs/findings/interactions between consecutive scans) in store.py:ingest_site_scan/_site_inventory",
+    "Bounded same-origin BFS crawl with public-IP check and manual redirect hop recording in scanner.py:scan_website/_fetch",
+    "Heuristic role classification via substring patterns with confidence labels in scanner.py:_classify_interaction"
+  ],
+  "backend_interfaces": [
+    "App API: GET /api/health, GET /api/overview, POST /api/investigate, POST /api/remediate, POST /api/reset, POST /api/sites/scan, POST /api/sites/question, GET /api/sites/history, GET /api/sites/scan, POST /api/sites/remediate, /graph-api/docs proxy",
+    "Graph API: GET /v1/health, GET /v1/analysis, GET /v1/query, POST /v1/remediate, POST /v1/reset, POST /v1/sites/scan, POST /v1/sites/question, GET /v1/sites/history, GET /v1/sites/scan, POST /v1/sites/remediate"
+  ],
+  "frontend_interfaces": ["React/Vite single-page console (frontend/src/App.jsx): Sidebar, GraphView (subgraph from paths), PathCard, TrafficSignals, SummaryCards, WebsiteScanView, EmptyGraphState"],
+  "agent_or_memory_mechanisms": "PathguardAgent is a constrained pipeline (keyword guard on the question -> graph query -> template summary -> optional LLM paraphrase); no autonomous loop and no persistent agent memory beyond the stored scan history graph.",
+  "tests_present": "none (no test files in repository)",
+  "dependency_requirements": ["fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1", "playwright>=1.50,<2", "falkordb>=1,<2 (graph_api/requirements.txt)", "react 19.3.0", "vite ^8.3.0", "falkordb/falkordb:latest image"],
+  "security_findings": [
+    "graph_api/store.py:113-115,155-308,333-352,401-471 - Cypher built by f-string concatenation with a custom json.dumps literal escaper rather than parameters; site_host is regex-limited (store.py:148) but scan_id/finding_id/question-derived values rely solely on _literal escaping",
+    "graph_api/store.py:542-545 - f-string Cypher with edge_id, protected by REMEDIATION_EDGE_IDS allow-list (not injectable)",
+    "graph_api/store.py:352 and :468 - f-string relationship type/label from fixed internal dict/tuple (not injectable)",
+    "graph_api/main.py:114-117 - POST /v1/sites/scan accepts an arbitrary dict[str, Any] snapshot and indexes it with hard keys (KeyError -> 500); no authentication on the Graph API (intended as internal, bound to 127.0.0.1 in docker-compose.yml)",
+    "backend/main.py:115-117 and :161-163 - /api/reset and /api/sites/remediate mutate graph state with no authentication",
+    "backend/scanner.py:54-63,154 - SSRF guard resolves DNS then urllib resolves again at connect time (DNS-rebinding TOCTOU window); only 80/443 and public IPs allowed, off-origin redirects never followed",
+    "backend/scanner.py:288-495 - launches headless Chromium that executes first-party JavaScript from an arbitrary user-supplied public URL (browser-escape/resource risk; compensated by request interception and container hardening in docker-compose.yml)",
+    "backend/agent.py:216 - undefined variable 'result' inside static method _optional_site_model_summary: NameError when OPENAI_API_KEY is set (functional bug)",
+    "backend/agent.py:142,170-175,193,229-234 - OPENAI_API_KEY read from env; scan evidence (URLs, paths) sent to api.openai.com; no hard-coded secrets found",
+    "backend/graph_client.py:20-32 - unauthenticated urllib calls to GRAPH_API_URL (default http://graph-api:8100)"
+  ],
+  "duplicates_or_overlaps": "Overlaps attack-path / exposure-to-sensitive-data analysis (same family as Argus-SOC attack paths), what-if remediation simulation, and web-surface dependency inventory. Snapshot diffing overlaps supply/dependency drift ideas.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "MEDIUM - every edge carries evidence text, scan_id and an active flag, scans are chained with PRECEDES and diffed run-to-run, and edge deactivation re-derives residual paths (a primitive form of dependency invalidation), but there is no supersession model, validity intervals or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "graph_api/store.py",
+    "symbols": ["PATH_QUERY", "GraphStore.simulate_revocation", "GraphStore.ingest_site_scan", "GraphStore._site_inventory", "GraphStore._literal"],
+    "why": "Compact FalkorDB-compatible pattern for evidence-bearing reachability, active-flag what-if invalidation, and PRECEDES-chained snapshot diffing that can be generalized to evidence-drift scans.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; Playwright/Chromium only for the optional runtime scan; OpenAI key optional"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "The attack-path and what-if remediation queries plus snapshot diff form a self-contained security capability, but the seed data is a hard-coded demo and Cypher is string-built, so port the patterns with parameterized queries rather than the module. No license file and no tests.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

@@ -1,0 +1,148 @@
+{
+  "repository": "anandharshit712/Argus-SOC",
+  "url": "https://github.com/anandharshit712/Argus-SOC",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\anandharshit712__Argus-SOC",
+  "commit_sha": "6160258e536934b33fea21411fabfbcb1af750fd",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["src/argus_soc/graph/graph_schema.py", "src/argus_soc/graph/write_queries.py", "src/argus_soc/graph/read_queries.py", "src/argus_soc/graph/algorithm_queries.py", "src/argus_soc/graph/falkor_client.py", "src/argus_soc/graph/mcp_server.py", "src/argus_soc/graph/index_setup.py (head)", "src/argus_soc/graph/__init__.py (head)", "src/argus_soc/agents/triage_agent.py", "src/argus_soc/agents/investigator_agent.py", "src/argus_soc/agents/responder_agent.py", "src/argus_soc/agents/decision_table.py", "src/argus_soc/agents/learning_service.py", "src/argus_soc/agents/graph_tool_client.py", "src/argus_soc/agents/llm_client.py", "src/argus_soc/ingestor/talos_client.py", "backend/src/argus_backend/session_tokens.py", "backend/src/argus_backend/auth_routes.py", "backend/src/argus_backend/api_settings.py", "backend/src/argus_backend/access_guard.py", "demo/attack_bot/bot.py (head)", "demo/attack_bot/ssh_campaign.py (head)", "demo/shipper/ship.py (head)", "pyproject.toml", ".env.example", "docker-compose.yml (image/port lines)", "tests (file list and counts)"],
+  "languages_frameworks": ["Python 3.11+ (asyncio)", "FalkorDB async client (falkordb>=1.8.0,<2)", "FastAPI backend (argus_backend)", "pydantic v2 / pydantic-settings", "MCP (mcp>=1.2) stdio server and client", "Anthropic and OpenAI SDKs (optional, behind one llm_client)", "React + TypeScript + Vite UI", "pytest + pytest-asyncio", "PostgreSQL only for the external Talos service"],
+  "implemented_capabilities": [
+    {
+      "capability": "Frozen graph schema contract with allow-listed edges and typed write inputs",
+      "files": ["src/argus_soc/graph/graph_schema.py"],
+      "symbols": ["Label", "Rel", "EDGES", "NODE_KEYS", "CaseStatus", "Priority", "AlertInput", "DecisionInput", "PlaybookRef", "SemanticFactsInput", "SCHEMA_VERSION"],
+      "real_or_stub": "REAL",
+      "notes": "StrEnum labels/relationships, an explicit (from, rel, to) allow-list, MERGE key tuples per label, case status machine (new, triaged, investigated, awaiting_approval, closed, auto_closed) and pydantic extra=forbid frozen inputs with evidence length caps; SCHEMA_VERSION bumped when Decision.previous_priority was added. Tests (test_graph_contract, test_graph_schema) enforce the contract."
+    },
+    {
+      "capability": "Atomic single-query graph writes: idempotent upsert, case open-or-join, lease-based claim, status handoff",
+      "files": ["src/argus_soc/graph/write_queries.py", "src/argus_soc/agents/handoff_service.py"],
+      "symbols": ["upsert_alert_from_report", "open_or_join_case", "close_case_auto", "claim_case", "set_case_status", "record_findings", "record_agent_run"],
+      "real_or_stub": "REAL",
+      "notes": "Each write is one parameterized Cypher statement (MERGE + FOREACH) relying on FalkorDB's per-graph write serialization; claim_case selects the oldest case in a status whose claimed_by is null or claim older than a TTL and stamps it in the same statement; alerts already in a closed case are excluded by a shared eligibility clause; record_agent_run links consecutive runs with HANDED_OFF_TO. record_findings is read-then-write and relies on holding the claim."
+    },
+    {
+      "capability": "Approval-gated decisions with simulated action effects",
+      "files": ["src/argus_soc/graph/write_queries.py", "src/argus_soc/agents/responder_agent.py", "src/argus_soc/agents/decision_table.py"],
+      "symbols": ["record_decision", "record_feedback", "RULES (R1-R4)", "decide", "Responder.run", "targets"],
+      "real_or_stub": "REAL",
+      "notes": "Deterministic decision table (first matching rule over succeeded x path-to-crown-jewel) picks actions and needs_approval; targets come from graph rankings, never the LLM. Decisions needing approval are created PENDING and the host-isolation/user-disable side effects (properties on nodes, i.e. simulated) run only when an analyst feedback verdict approves; one decision per case (MERGE on HAS_DECISION). Decision stores rule_id, evidence (findings + ranking JSON), previous_priority."
+    },
+    {
+      "capability": "Versioned learned playbooks with supersession of earlier versions",
+      "files": ["src/argus_soc/graph/write_queries.py", "src/argus_soc/agents/learning_service.py", "src/argus_soc/graph/read_queries.py"],
+      "symbols": ["create_playbook_version", "on_feedback", "matching_playbook", "list_playbooks", "playbook_matches", "close_case_auto"],
+      "real_or_stub": "REAL",
+      "notes": "After enough benign analyst verdicts on the same category+IOC pattern, a Playbook version N+1 is created LEARNED_FROM the feedback and every older version with the same condition gets active=false (supersession); retried calls are idempotent. Triage auto-closes matching alerts citing the playbook via APPLIED. Learned condition matching is exact category plus IOC overlap, not generalizing."
+    },
+    {
+      "capability": "Decision lineage query (explain_decision)",
+      "files": ["src/argus_soc/graph/read_queries.py"],
+      "symbols": ["explain_decision", "get_case", "_decision"],
+      "real_or_stub": "REAL",
+      "notes": "Q6 walks Decision <- Case -> Alerts, ACTED_ON targets, findings.shortest_path, the applied Playbook and the Case the playbook was learned from (Playbook-LEARNED_FROM->Feedback-ON->Case), giving end-to-end provenance for an automated closure."
+    },
+    {
+      "capability": "Blast radius, crown-jewel attack paths and betweenness host ranking",
+      "files": ["src/argus_soc/graph/read_queries.py", "src/argus_soc/graph/algorithm_queries.py", "src/argus_soc/agents/investigator_agent.py"],
+      "symbols": ["blast_radius", "paths_to_crown_jewels", "rank_hosts", "_PATHS", "_BETWEENNESS", "Investigator.investigate"],
+      "real_or_stub": "REAL",
+      "notes": "Q1 blast radius via IOC->Alert->Host and User->LOGGED_INTO; Q2 uses CALL algo.SPpaths over CONNECTS_TO|LOGGED_INTO (both directions, max 10 hops, 3 paths) to hosts tagged crown-jewel; Q3 uses CALL algo.betweenness then ranks by (score+1) x criticality. Written to avoid shortestPath() limits; all through GRAPH.RO_QUERY."
+    },
+    {
+      "capability": "Episodic and semantic memory recall for triage",
+      "files": ["src/argus_soc/graph/read_queries.py", "src/argus_soc/graph/write_queries.py", "src/argus_soc/agents/triage_agent.py"],
+      "symbols": ["recall", "entity_facts", "record_semantic_facts", "memory_reasons", "linked_alerts", "Triage.step"],
+      "real_or_stub": "REAL",
+      "notes": "Closed cases touching the same IOC/host/user (UNION query) with verdict and latest analyst note, plus node-level facts (targeted_case_ids lists instead of counters so rewrites are idempotent, suspected_compromised, IOC verdict/owner). Memory can raise a case priority by one step; alert correlation uses a shared IOC/user within a time window and never reopens closed cases."
+    },
+    {
+      "capability": "Three-stage agent pipeline with graph handoffs, workers and claim TTL",
+      "files": ["src/argus_soc/agents/agent_runner.py", "src/argus_soc/agents/triage_agent.py", "src/argus_soc/agents/investigator_agent.py", "src/argus_soc/agents/responder_agent.py"],
+      "symbols": ["agent_runner.main", "Triage.step", "Investigator.run", "Responder.run", "hand_off"],
+      "real_or_stub": "REAL",
+      "notes": "Triage -> Investigator -> Responder poll the same graph by claiming cases per status with TTL so several workers can run concurrently; correctness does not depend on the LLM (decisions are deterministic code, LLM only explains and optionally adds deep-dive evidence)."
+    },
+    {
+      "capability": "LLM gateway with untrusted-data fencing and schema-validated replies",
+      "files": ["src/argus_soc/agents/llm_client.py", "src/argus_soc/agents/prompts/responder_explain_v1.md", "src/argus_soc/agents/prompts/investigator_deepdive_v1.md"],
+      "symbols": ["complete", "untrusted", "render", "parse_reply", "provider"],
+      "real_or_stub": "REAL",
+      "notes": "Single entry point for Anthropic/OpenAI; returns None on any failure so templates take over; attacker-controlled text is wrapped in <untrusted_data> blocks truncated to 500 chars with delimiter stripping; replies must validate against a pydantic schema."
+    },
+    {
+      "capability": "LLM-driven read-only tool selection over an MCP server (deep dive)",
+      "files": ["src/argus_soc/agents/graph_tool_client.py", "src/argus_soc/graph/mcp_server.py"],
+      "symbols": ["deep_dive", "_for_llm", "READ_TOOLS", "blast_radius", "paths_to_crown_jewels", "rank_hosts", "recall", "linked_alerts", "entity_facts"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The model picks one of six read-only tools per step (max DEEP_DIVE_MAX_CALLS, default 4); tenant is stripped from the LLM-visible schema and forced by code; results are truncated to 4000 chars and stored as evidence but never read by the decision table."
+    },
+    {
+      "capability": "Ingestion from an external Talos detection service and per-tenant inventory seeding",
+      "files": ["src/argus_soc/ingestor/ingest_loop.py", "src/argus_soc/ingestor/talos_client.py", "src/argus_soc/ingestor/report_mapper.py", "src/argus_soc/ingestor/tenant_resolver.py", "src/argus_soc/graph/inventory_seed.py"],
+      "symbols": ["TalosClient.list_reports", "ingest_loop.main", "report_mapper", "inventory_seed"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Polls Talos GET /reports with retry/backoff and maps incident reports to Alerts routed to a tenant by inventory host; Talos itself is a separate image/service not contained in this checkout, so end-to-end behavior cannot be reproduced from this repo alone."
+    },
+    {
+      "capability": "Authenticated multi-tenant REST API and analyst UI",
+      "files": ["backend/src/argus_backend/api_server.py", "backend/src/argus_backend/auth_routes.py", "backend/src/argus_backend/access_guard.py", "backend/src/argus_backend/session_tokens.py", "backend/src/argus_backend/case_routes.py", "backend/src/argus_backend/dashboard_service.py", "ui/src/pages/CaseDetailPage.tsx", "ui/src/components/CasePathGraph.tsx"],
+      "symbols": ["create_token", "verify_token", "tenant_access", "current_user", "login"],
+      "real_or_stub": "REAL",
+      "notes": "Hard-coded demo users from env, stateless HMAC-SHA256 bearer tokens (no JWT library), per-tenant authorization on every /api/{tenant} route, constant-time password comparison; React UI with case queue, decision/feedback panels, attack-path graph, playbooks page and activity feed."
+    },
+    {
+      "capability": "In-memory stub graph backend and scenario replay harness",
+      "files": ["src/argus_soc/graph/graph_stubs.py", "src/argus_soc/graph/graph_stub_data.py", "scripts/replay_scenario.py", "scripts/generate_scenarios.py", "data/scenarios/"],
+      "symbols": ["ARGUS_GRAPH_BACKEND=stub", "graph_stubs"],
+      "real_or_stub": "STUB",
+      "notes": "A second implementation of the same CONTRACT functions on fixed sample data lets UI and agents be built without FalkorDB; scenario replay drives seven scripted demo scenarios through the stack (requires docker compose)."
+    }
+  ],
+  "graph_models_and_cypher": "One graph per tenant (tenant_<id>). Labels: Host(criticality,isolated), User(disabled,suspected_compromised), Service, Endpoint, AssetTag(crown-jewel), Alert, IOC(verdict,owner,seen_case_ids), Technique, Case(status,priority,findings JSON,claimed_by,claimed_at), Decision(rule_id,needs_approval,outcome,previous_priority,evidence JSON), Feedback, Playbook(name,version,active,condition,action), AgentRun. Edges: LOGGED_INTO, CONNECTS_TO, RUNS, SERVED_BY, TAGGED, ON_HOST, INVOLVES, TARGETED, MAPS_TO, CONTAINS, HAS_DECISION, ACTED_ON, ON, LEARNED_FROM, WROTE, HANDED_OFF_TO, APPLIED. Cypher is fully parameterized; f-strings only splice enum constants. Notable patterns: MERGE with ON CREATE SET, FOREACH(... | MERGE/SET) used both for fan-out and as a conditional (CASE WHEN cond THEN [1] ELSE [] END), UNION across entity kinds, UNWIND for batch lookups, GRAPH.RO_QUERY for reads. FalkorDB-native procedures: algo.SPpaths (sourceNode/targetNode/relTypes/relDirection/maxLen/pathCount) and algo.betweenness with config map. No APOC/GDS. COMPATIBILITY: compose pins an exact FalkorDB image digest (documented only as 'Redis 8.10.2, tested Oct 15 2026'); the heavy use of FOREACH containing MERGE and algo.SPpaths/betweenness needs verification against Kairos's FalkorDB 4.22 server (not tested here).",
+  "algorithms": [
+    "algo.SPpaths shortest attack paths (both directions, <=10 hops, 3 paths) from case hosts to crown-jewel hosts in algorithm_queries.py:paths_to_crown_jewels",
+    "algo.betweenness x criticality host ranking, normalized to the top host in algorithm_queries.py:rank_hosts",
+    "Ordered first-match decision table (4 rules) over investigator findings in decision_table.py:decide",
+    "Lease-based atomic claim with TTL for multi-worker agent coordination in write_queries.py:claim_case",
+    "Versioned playbook learning with deactivation of superseded versions in write_queries.py:create_playbook_version and learning_service.on_feedback",
+    "Correlated-alert grouping through shared IOC/user within a time window excluding closed cases in read_queries.py:linked_alerts",
+    "Memory-driven priority escalation (one step) in triage_agent.py:memory_reasons"
+  ],
+  "backend_interfaces": ["FastAPI argus_backend: POST /api/auth/login, GET /api/auth/me, POST /api/auth/logout, GET /api/tenants, GET /api/health, /api/{tenant}/cases (list/detail/feedback), /api/{tenant}/dashboard, /api/{tenant}/activity, playbooks routes", "MCP stdio server python -m argus_soc.graph.mcp_server (6 read-only tools)", "CLIs argus-ingest, argus-agents, argus-api; scripts/replay_scenario.py"],
+  "frontend_interfaces": ["React/TypeScript SPA: AppShell, LoginForm, DashboardPage + DashboardCharts, CaseQueuePage, CaseDetailPage, CasePanels, CasePathGraph, CaseDecisionPanel, CaseFeedbackForm, PlaybooksPage, ActivityPage"],
+  "agent_or_memory_mechanisms": "Graph-as-blackboard multi-agent pipeline (Triage, Investigator, Responder) coordinated by status transitions and TTL claims; every step appended as AgentRun with HANDED_OFF_TO chaining. Memory: episodic (closed Cases with verdict and Feedback notes), semantic (node facts on Host/User/IOC as case-id lists), procedural (versioned Playbooks learned from analyst feedback, older versions deactivated). Human-in-the-loop approval before simulated containment actions.",
+  "tests_present": "Substantial: about 229 test functions under tests/ (agents: decision table, triage, runner, learning, graph tool client, LLM client; graph: schema, contract, read/write queries, learning queries, algorithms, MCP server, concurrency burst, scenarios, stubs, inventory seed, index setup; ingestor; core settings/tenant registry; e2e demo scenarios and concurrency burst) plus about 35 under backend/tests (auth, case routes, dashboard). Tests marked 'falkordb' need a live FalkorDB; stub-backend tests run without one.",
+  "dependency_requirements": ["anthropic>=1.15,<2", "falkordb>=1.8.0,<2", "httpx>=0.27,<1", "pydantic>=2.7,<3", "pydantic-settings>=2.3,<3", "pyyaml>=6.0,<7", "mcp>=1.2,<2", "openai>=3.31,<4", "pytest>=8.2 / pytest-asyncio>=0.23 / ruff (dev)", "falkordb image pinned by digest sha256:b0bdcac2...", "external Talos detection service image (not in repo), postgres:16-alpine for Talos, nginx:1.27-alpine", "paramiko in demo attack-bot"],
+  "security_findings": [
+    "src/argus_soc/agents/graph_tool_client.py:39-44 - spawns the MCP server subprocess from the configurable MCP_SERVER_COMMAND via shlex.split and passes env=dict(os.environ) (the whole environment, including LLM_API_KEY, goes to the child); command is operator-config only, not request-controlled",
+    "src/argus_soc/agents/graph_tool_client.py:93-96 - LLM-chosen tool name is allow-checked against the server's tool list, tenant is forced by code overriding any LLM-supplied value, tools are read-only and results truncated (good mitigation of tool-injection)",
+    "src/argus_soc/agents/llm_client.py:68-77,150 - attacker-controlled log text is fenced in <untrusted_data> blocks (delimiter stripping, 500-char cap) and the LLM never selects actions, Cypher or targets; case summaries and evidence are nonetheless sent to Anthropic/OpenAI when LLM_ENABLED=true",
+    "backend/src/argus_backend/api_settings.py:26-37 and auth_routes.py:36-38 - demo users and plaintext passwords come from ARGUS_DEMO_USERS in the environment (hard-coded login by design, HLD D13); comparison is constant-time and unknown usernames take the same code path",
+    "backend/src/argus_backend/session_tokens.py:1-57 - custom stateless HMAC token without server-side revocation (logout is client-side only); secret must be >=32 chars (enforced), tokens carry only username and expiry",
+    "backend/src/argus_backend/access_guard.py:36-56 - every /api/{tenant} route requires a valid token and tenant membership (401/404/403) - tenant isolation is enforced at the API layer",
+    "src/argus_soc/graph/falkor_client.py:51-56,72-83 - values travel only as query parameters, reads use GRAPH.RO_QUERY so FalkorDB rejects writes; graph names come only from tenant_registry (validated allow-list)",
+    "src/argus_soc/graph/index_setup.py:30-38 and write_queries.py:43-45,74,175,291-304 - f-string Cypher splices only enum/constant labels and values (not injectable)",
+    "src/argus_soc/graph/falkor_client.py:99-104 - delete_graph drops a tenant graph (used by reset_demo only)",
+    "scripts/replay_scenario.py:16,67-68 - subprocess.run(['docker','compose',...]) in an operator script (not executed here)",
+    "demo/attack_bot/ssh_campaign.py:12-40 and demo/attack_bot/bot.py:36-39 - bundled offensive-simulation tooling (SSH brute-force with paramiko AutoAddPolicy, web attack campaigns); targets default to the compose-internal demo containers but are env-configurable (DEMO_SSH_HOST, DEMO_SHOP_URL), so it is dual-use and must never be run against non-owned hosts",
+    "docker-compose.yml:43-46 - FalkorDB has no password but is published on 127.0.0.1 only (documented as must stay private)",
+    "src/argus_soc/ingestor/talos_client.py:25-30 - outbound HTTP only to the configured TALOS_URL(s) with timeouts and bounded retries"
+  ],
+  "duplicates_or_overlaps": "Overlaps attack-path / blast-radius (PathGuard, ThreatPath, blastradius) and agent memory/approval patterns (hound-aml, Safecortex), but it is the cleanest implementation of lease-claimed multi-agent workflow, approval gating and versioned procedural memory on FalkorDB in this batch.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "HIGH - it implements approval-gated decisions whose side effects run only after analyst approval, explicit decision lineage (explain_decision back to the learned playbook and its source case), versioned playbooks where new versions supersede older ones via active=false, idempotent case-id-list facts, stored evidence/findings per decision, and TTL claims; missing are validity intervals and automatic re-evaluation of old decisions when upstream facts change.",
+  "strongest_reusable_unit": {
+    "file": "src/argus_soc/graph/write_queries.py",
+    "symbols": ["claim_case", "record_decision", "record_feedback", "create_playbook_version", "record_agent_run", "record_semantic_facts", "open_or_join_case", "graph_schema.EDGES / NODE_KEYS contract"],
+    "why": "A tested, parameterized, async FalkorDB write layer implementing lease-based claiming, approval-gated decisions, supersession-by-version and handoff lineage, guarded by a frozen schema contract; closely matches what an Evidence Drift Cascade needs (approval gating, decision lineage, supersession) and already uses the same falkordb 1.x async client and Python 3.11+.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (verify FOREACH+MERGE, algo.SPpaths, algo.betweenness on 4.22); LLM key only for optional explanations; Talos only if its ingestor is reused"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Lift the graph_schema contract plus the claim/decision/approval/playbook-versioning write layer into a shared Kairos agent-workflow engine, and keep the security triage rules as a Security capability pack. No LICENSE file exists (pyproject.toml merely declares Apache-2.0), so confirm owner permission and license terms before copying.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

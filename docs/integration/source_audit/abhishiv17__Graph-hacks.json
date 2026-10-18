@@ -1,0 +1,174 @@
+{
+  "repository": "abhishiv17/Graph-hacks",
+  "url": "https://github.com/abhishiv17/Graph-hacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\abhishiv17__Graph-hacks",
+  "commit_sha": "db95e35bad54c32eec515960a67d12782ce8a776",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/swapnet/graph/db.py",
+    "backend/swapnet/optimiser/solver.py",
+    "backend/swapnet/agents/core.py",
+    "backend/swapnet/agents/recall.py",
+    "backend/swapnet/mcp/server.py",
+    "backend/swapnet/access.py",
+    "backend/swapnet/programs.py",
+    "backend/swapnet/graph/publish.py",
+    "backend/swapnet/voice.py",
+    "backend/swapnet/api/main.py",
+    "backend/swapnet/agents/ask.py",
+    "backend/pyproject.toml",
+    "backend/queries/Q00_schema.cypher",
+    "backend/queries/Q02_build_edges_for_pair.cypher",
+    "backend/queries/Q03_virtual_crossmatch.cypher",
+    "backend/queries/Q04_two_way_loops.cypher",
+    "backend/queries/Q05_three_way_loops.cypher",
+    "backend/queries/Q10_record_failure.cypher",
+    "backend/queries/Q13_explain_loop.cypher",
+    "backend/queries/Q14_decision_trail.cypher",
+    "backend/queries/Q18_events_since.cypher",
+    "backend/queries/Q26_loop_evidence.cypher",
+    "backend/queries/Q27_integrity_shared.cypher",
+    "backend/queries/Q32_withdrawal_impact.cypher",
+    "backend/queries/Q33_reachable_within.cypher",
+    "backend/queries/Q35_failure_memory.cypher",
+    "backend/queries/Q37_remember_answer.cypher",
+    "backend/queries/Q42_current_facts.cypher",
+    "backend/queries/Q45_remember_finding.cypher",
+    "backend/queries/Q46_update_fact.cypher",
+    "backend/queries/Q58_why_no_link.cypher",
+    "backend/tests/conftest.py",
+    "backend/tests/test_guards.py",
+    ".env.example"
+  ],
+  "languages_frameworks": [
+    "Python 3.10+/FastAPI",
+    "FalkorDB (falkordb client >=1.7) with 59 named .cypher query files",
+    "Google OR-Tools CP-SAT",
+    "MCP FastMCP (mcp>=1.2,<2)",
+    "Next.js/React/TypeScript frontend (web/)",
+    "LLM adapters: Anthropic, Ollama, Groq (tool-calling loop)",
+    "Sarvam TTS/translate (optional)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Cycle (loop) enumeration over compatibility graph",
+      "files": ["backend/queries/Q04_two_way_loops.cypher", "backend/queries/Q05_three_way_loops.cypher", "backend/queries/Q33_reachable_within.cypher"],
+      "symbols": ["Q04", "Q05", "Q33 (variable-length CAN_GIVE_TO*1..3 with all(e IN relationships(path) ...))"],
+      "real_or_stub": "REAL",
+      "notes": "Pure Cypher 2-way and 3-way cycle matching with id(a)<id(b) rotation dedupe and edge-status filters; bounded multi-hop reach with a depth cap. Cycle length is hard-capped at 3."
+    },
+    {
+      "capability": "Expected-value loop selection (CP-SAT) and repair ranking",
+      "files": ["backend/swapnet/optimiser/solver.py"],
+      "symbols": ["Candidate", "expected_transplants", "best_fallback", "solve", "rank_repairs"],
+      "real_or_stub": "REAL",
+      "notes": "Set-packing CP-SAT model with one-loop-per-pair constraint, success probability product, 2-way fallback value, and lexicographic priority bonus; repair ranking is a deterministic sort. Real, not an LLM."
+    },
+    {
+      "capability": "Decision lineage graph (Decision -BASED_ON-> facts, MADE_BY, APPROVED_BY) with human approval gate",
+      "files": ["backend/swapnet/agents/core.py", "backend/queries/Q14_decision_trail.cypher"],
+      "symbols": ["decide", "MatchingAgent.on_failure", "MatchingAgent.approve", "MatchingAgent.decline", "MatchingAgent._task"],
+      "real_or_stub": "REAL",
+      "notes": "Every agent action writes a Decision node with BASED_ON edges to the Loop/Failure/Offer it used and the memories read; repairs become an open Task assigned to a human and only execute on approve(); Loop -REPLACED_BY-> Loop records supersession."
+    },
+    {
+      "capability": "Failure memory and local re-planning (invalidate edge, release nodes, repair only around the break)",
+      "files": ["backend/queries/Q10_record_failure.cypher", "backend/queries/Q35_failure_memory.cypher", "backend/queries/Q11_local_repair_candidates.cypher", "backend/swapnet/agents/recall.py"],
+      "symbols": ["Q10_record_failure", "recall.failures", "recall.item", "MatchingAgent.rematch"],
+      "real_or_stub": "REAL",
+      "notes": "A failed link is set e.status='failed', remembered as a (:Pair)-[:FAILED]->(:Pair) edge with a Failure node EVIDENCED_BY the Crossmatch test, the loop is marked broken, and pairs are released; later queries skip FAILED links. Dependency-invalidation pattern."
+    },
+    {
+      "capability": "Supersedable semantic memory (Fact SUPERSEDES old Fact)",
+      "files": ["backend/queries/Q46_update_fact.cypher", "backend/queries/Q42_current_facts.cypher", "backend/queries/Q45_remember_finding.cypher", "backend/queries/Q37_remember_answer.cypher", "backend/queries/Q38_recall.cypher"],
+      "symbols": ["Fact.current flag", "SUPERSEDES", "Finding-BASED_ON->Reading", "Question-ABOUT->Pair/Loop"],
+      "real_or_stub": "REAL",
+      "notes": "Old belief is kept with current=false behind a SUPERSEDES edge; findings link to the readings they used; answered questions are stored and recalled with dates."
+    },
+    {
+      "capability": "Graph integrity / approval-gap checks",
+      "files": ["backend/queries/Q27_integrity_shared.cypher", "backend/queries/Q28_integrity_kidney.cypher", "backend/queries/Q29_integrity_liver.cypher", "backend/swapnet/programs.py"],
+      "symbols": ["Q27 (missing_approval, broken_link, missing_evidence, status_mismatch, awaiting_human_review)", "programs.integrity", "programs.evidence"],
+      "real_or_stub": "REAL",
+      "notes": "UNION query flags a REPLACED_BY chain with no recorded human approval Decision, links with no recorded reasons, and stale status mismatches. Directly an approval-gating audit."
+    },
+    {
+      "capability": "Withdrawal blast radius (what breaks if a node withdraws)",
+      "files": ["backend/queries/Q32_withdrawal_impact.cypher", "backend/queries/Q57_loops_through.cypher"],
+      "symbols": ["Q32_withdrawal_impact"],
+      "real_or_stub": "REAL",
+      "notes": "Lists every live loop a pair belongs to, co-members, and whether the stored FALLBACK_FOR loop survives without that pair; read-only Cypher."
+    },
+    {
+      "capability": "Tool-calling Ask agent restricted to read-only named queries + MCP server",
+      "files": ["backend/swapnet/agents/ask.py", "backend/swapnet/mcp/server.py", "backend/swapnet/graph/db.py"],
+      "symbols": ["ToolBox", "ask", "ClaudeLLM", "OllamaLLM", "GroqLLM", "db.is_read_only", "db.run (ro_query path)", "mcp tools: virtual_crossmatch, find_loops, explain_evidence, integrity_checks, add_pair"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real LLM tool loop but answers are constrained to graph-returned facts; write-detection is a regex over the .cypher text and FalkorDB GRAPH.RO_QUERY enforces it server-side. LLM quality depends on external provider."
+    },
+    {
+      "capability": "Simulated lab, simulated hospital intake, synthetic personas and health watch",
+      "files": ["backend/swapnet/sim/lab.py", "backend/swapnet/agents/health.py", "backend/swapnet/agents/watch.py", "backend/swapnet/gen/generator.py", "backend/swapnet/personas.py"],
+      "symbols": ["CrossmatchCoordinator.run_lab", "organ.run_test", "gen.generator.Pair"],
+      "real_or_stub": "PARTIAL",
+      "notes": "All patient/donor data and lab results are synthetic or simulated (stated in pyproject description and data/params); logic around them is real but domain data is demo."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Pair, Donor, Patient, Hospital, HLAAntigen, Antibody, BloodGroup, Loop, Offer, Crossmatch, Failure, Decision, Agent, Task, Plan, Event, Person, Fact, Finding, Reading, Playbook, Question, LiverProfile. Edges: CAN_GIVE_TO (status/p_success/reasons/vxm), FAILED, IN_LOOP{pos}, FALLBACK_FOR, REPLACED_BY, BASED_ON, MADE_BY, APPROVED_BY, ABOUT, ASSIGNED_TO, EVIDENCED_BY, BROKE, SUPERSEDES, KNOWS, HAS_FINDING, TRIGGERED, ABO_OK, REACTS_WITH. Cypher uses FalkorDB-native features only (id(), ro_query, FOREACH, UNION, reduce, none/all, variable-length paths, timestamp()); no APOC or GDS. Per-tenant graphs via name prefix (db.real). Schema index creation in Q00_schema.cypher.",
+  "algorithms": [
+    "2-way/3-way directed cycle enumeration with id()-ordering dedupe (queries/Q04, Q05)",
+    "Bounded variable-length reachability, depth<=3, live edges only (queries/Q33_reachable_within.cypher)",
+    "CP-SAT weighted set packing with expected-value objective and priority tie-break (optimiser/solver.py:solve)",
+    "Expected value of a 3-cycle with embedded 2-cycle fallback (solver.py:expected_transplants, best_fallback)",
+    "Local repair ranking: keep-families-together then expected value then priority (solver.py:rank_repairs)",
+    "Edge invalidation + node release on failure, repair search only around released nodes (core.py:MatchingAgent.on_failure/rematch)",
+    "Weakly connected components via Cypher (queries/Q07_components.cypher)"
+  ],
+  "backend_interfaces": [
+    "FastAPI app backend/swapnet/api/main.py with ~58 routes (e.g. /api/plan/run, /api/loops/{id}/evidence, /api/integrity, /api/audit, /api/tasks/{id}/approve, /api/tasks/{id}/decline, /api/ask, /api/agents/graph)",
+    "MCP stdio server backend/swapnet/mcp/server.py (FastMCP 'swapnet') exposing add_pair, virtual_crossmatch, components, find_loops, find_exchange_candidates, explain_evidence, program_rules, integrity_checks, run_lab_tests"
+  ],
+  "frontend_interfaces": [
+    "Next.js app router console pages: agents, ask, audit, committee, graph, impact, integrity, lab, patients, pool, swaps, case/[pair], families/[pair]",
+    "Components: AgentNetwork.tsx, ExchangeGraph.tsx, FamilyExplorer.tsx, FromMemory.tsx, PoolMap.tsx, TrendChart.tsx, StoryTour.tsx, Walkthrough.tsx"
+  ],
+  "agent_or_memory_mechanisms": "Multi-agent coordination exclusively through graph state: Agent nodes (Matching agent, Crossmatch coordinator, Committee clerk, Patient liaison, per-hospital Intake agents, human coordinator). Hand-offs via Offer/Crossmatch/Task/Decision/Event nodes; Event feed with monotonic seq (db.event). Memory taxonomy (episodic/semantic/procedural/shared) with recall.item stored on each Decision/Finding showing which memories were read. Human-in-the-loop gate: Task(kind=approve_repair) must be approved by person before Loop REPLACED_BY edge is created. Chase ladder escalation in CommitteeClerk.chase.",
+  "tests_present": "13 pytest files under backend/tests (~79 test functions: test_agents, test_ask, test_chat, test_concurrency, test_demo_flow, test_explore, test_guards, test_liver_flow, test_personas, test_programs, test_reasoning, test_worlds_and_mcp, test_agents_page). Integration-style via FastAPI TestClient and require a live FalkorDB (test_guards.py docstring). Plus loadtest/ (artillery-style yml).",
+  "dependency_requirements": [
+    "falkordb>=1.7",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "ortools>=9.10",
+    "pyyaml>=6",
+    "mcp>=1.2,<2",
+    "anthropic>=1.0",
+    "httpx>=0.27",
+    "hiredis>=3",
+    "Next.js frontend (web/package.json)"
+  ],
+  "security_findings": [
+    "backend/swapnet/api/main.py:45 - CORSMiddleware allow_origins=['*'], allow_methods=['*'], allow_headers=['*']",
+    "backend/swapnet/access.py:51-59 - no authentication; identity is trusted from X-KindRed-User header (documented as demo only)",
+    "backend/swapnet/agents/core.py:51 - f-string builds Cypher with label and key interpolated (values are parameterised; label/key come from code constants, so low injection risk but pattern is unsafe if ever user-driven)",
+    "backend/swapnet/graph/db.py:133-139 - raw() executes arbitrary Cypher strings; used for write paths. Read-only enforcement for the Ask agent relies on regex at db.py:85-92 plus FalkorDB ro_query",
+    "backend/swapnet/voice.py:28-52 and backend/swapnet/agents/ask.py:436,504 - outbound HTTP to configurable URLs (SARVAM_URL, Ollama URL, Groq) with no allowlist (SSRF surface if env is attacker-controlled)",
+    "backend/swapnet/agents/core.py:499-503 - Task payload stored as json.dumps and re-read with json.loads (safe JSON, no pickle)",
+    "No hard-coded secrets found; keys read from env (.env.example has empty GROQ_API_KEY/SARVAM_API_KEY/FALKORDB_PASSWORD). No subprocess/eval/exec/pickle in backend/*.py."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal (Q32 withdrawal impact, Q33 bounded reach), decision lineage / agent memory & provenance (Decision/BASED_ON/APPROVED_BY, SUPERSEDES), cycle detection (fraud rings / lineage cycles use the same Cypher cycle pattern), and operational optimisation (CP-SAT set packing).",
+  "capability_family": "Operational Optimization",
+  "evidence_drift_relevance": "HIGH - implements decision lineage with BASED_ON/MADE_BY/APPROVED_BY, a human approval gate on Tasks, REPLACED_BY loop supersession, SUPERSEDES fact history with a current flag, failure edges that invalidate downstream loops, and an integrity query that flags replacements lacking recorded approval.",
+  "strongest_reusable_unit": {
+    "file": "backend/swapnet/agents/core.py (+ backend/queries/Q14_decision_trail.cypher, Q27_integrity_shared.cypher, Q46_update_fact.cypher)",
+    "symbols": ["decide", "MatchingAgent._task", "MatchingAgent.approve", "MatchingAgent.decline", "Q27 missing_approval check", "Q46_update_fact SUPERSEDES pattern", "Q10_record_failure"],
+    "why": "A compact, working pattern for decision provenance + human approval gate + supersession + invalidation-on-failure, all on FalkorDB, which maps directly onto an Evidence Drift Cascade (evidence -> decision -> approval -> replaced-by).",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB only for the provenance/approval Cypher; OR-Tools only if the CP-SAT solver is reused; no LLM key needed for the lineage primitives"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The kidney/liver swap domain is out of scope for Kairos, but the decision-lineage, approval-gate, supersession and integrity-audit primitives are domain-agnostic and FalkorDB-native, so they should be lifted into a shared provenance engine. No license file: use only under the attested owner permission.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

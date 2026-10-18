@@ -21,6 +21,7 @@ from supabase import Client, create_client
 from temporalio.client import Client as TemporalClient
 
 from api.config import Settings, get_settings
+from api.services.drift.store import FalkorDriftStore
 from api.services import tenant
 
 log = structlog.get_logger(__name__)
@@ -54,6 +55,38 @@ async def get_neo4j_driver(settings: SettingsDep) -> AsyncDriver:
 
 
 Neo4jDep = Annotated[AsyncDriver, Depends(get_neo4j_driver)]
+
+
+# =============================================================================
+# FalkorDB — decision dependency graph (kept separate from Neo4j's asset graph)
+# =============================================================================
+
+_falkor_drift_store: FalkorDriftStore | None = None
+
+
+def get_falkor_drift_store(settings: SettingsDep) -> FalkorDriftStore:
+    """Lazily create the shared drift store; graph selection remains per token-derived site."""
+    global _falkor_drift_store
+    if _falkor_drift_store is None:
+        _falkor_drift_store = FalkorDriftStore(
+            settings.FALKORDB_URL,
+            graph_prefix=settings.FALKORDB_GRAPH_PREFIX,
+            query_timeout_ms=settings.FALKORDB_QUERY_TIMEOUT_MS,
+            max_depth=settings.DRIFT_MAX_DEPTH,
+            max_edges=settings.DRIFT_MAX_EDGES,
+        )
+    return _falkor_drift_store
+
+
+FalkorDriftDep = Annotated[FalkorDriftStore, Depends(get_falkor_drift_store)]
+
+
+def close_falkor_drift_store() -> None:
+    """Release the shared FalkorDB connection pool at application shutdown."""
+    global _falkor_drift_store
+    if _falkor_drift_store is not None:
+        _falkor_drift_store.close()
+        _falkor_drift_store = None
 
 
 # =============================================================================
@@ -151,6 +184,11 @@ _supabase_client: Client | None = None
 
 def get_supabase(settings: SettingsDep) -> Client:
     global _supabase_client
+    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Data service is not configured. Configure Supabase URL and service credentials.",
+        )
     if _supabase_client is None:
         _supabase_client = create_client(
             settings.SUPABASE_URL,

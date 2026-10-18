@@ -1,0 +1,140 @@
+{
+  "repository": "pintu544/blastradius",
+  "url": "https://github.com/pintu544/blastradius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\pintu544__blastradius",
+  "commit_sha": "af807b84cf0c9ae3104f656f7052a3cfe20d525c",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "server/src/graph/cypher.ts",
+    "server/src/graph/memory.ts",
+    "server/src/graph/types.ts",
+    "server/src/graph/store.ts",
+    "server/src/graph/snapshot.ts",
+    "server/src/detect/analyze.ts",
+    "server/src/detect/rules.ts",
+    "server/src/agent/tools.ts",
+    "server/src/agent/loop.ts",
+    "server/src/ingest/parser.ts",
+    "server/src/ingest/resolve.ts",
+    "server/src/ingest/scanner.ts",
+    "server/src/ingest/git.ts",
+    "server/src/app.ts",
+    "server/package.json",
+    "server/.env.example",
+    "README.md",
+    "client/src/api.ts"
+  ],
+  "languages_frameworks": [
+    "TypeScript/Node >=20 (ESM)",
+    "Express 4",
+    "web-tree-sitter (WASM) with tree-sitter-javascript/typescript",
+    "FalkorDB Node driver (falkordb ^6.8.0)",
+    "Vitest + supertest",
+    "React + Vite + Tailwind client"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "JS/TS code graph ingestion (functions, classes, imports, calls) via tree-sitter",
+      "files": ["server/src/ingest/parser.ts", "server/src/ingest/resolve.ts", "server/src/ingest/scanner.ts"],
+      "symbols": ["parseSource", "resolveModuleFile", "functionNodeId", "scanRepo", "ensureLanguages"],
+      "real_or_stub": "REAL",
+      "notes": "Real AST parsing for JS/TS only. Resolves same-file, named/default/namespace imports and this/class method calls into CALLS edges; unresolved (stdlib, npm, dynamic) calls are deliberately dropped."
+    },
+    {
+      "capability": "Downstream blast radius over CALLS edges with impact ranking",
+      "files": ["server/src/agent/tools.ts"],
+      "symbols": ["reachableFunctions", "blast_radius", "blastRadiusCypher", "impact_rank"],
+      "real_or_stub": "REAL",
+      "notes": "BFS in TypeScript via store.neighbors (depth cap 5, visited set, Function nodes only). impact_rank score = blastSize * severityWeight * (1 + avg CALLS degree of affected functions). The equivalent Cypher string (MATCH p=(src)-[:CALLS*1..N]->(affected:Function)) is returned for display but the analysis itself does not run in FalkorDB."
+    },
+    {
+      "capability": "Static security rule detection",
+      "files": ["server/src/detect/rules.ts", "server/src/detect/analyze.ts"],
+      "symbols": ["RULES", "detectHardcodedSecrets", "detectDangerousEval", "detectShellExec", "detectSqlConcat", "detectInsecureRandom", "detectUnsafeInnerHTML", "detectWeakHash", "analyzeGraph"],
+      "real_or_stub": "PARTIAL",
+      "notes": "8 line-based regex rules (acknowledged conservative heuristics, no data flow). analyzeGraph turns hits into Finding nodes with FLAGGED_IN and REACHES edges."
+    },
+    {
+      "capability": "Finding status carry-over and episodic Note/Session memory across scans",
+      "files": ["server/src/detect/analyze.ts", "server/src/agent/tools.ts", "server/src/graph/snapshot.ts"],
+      "symbols": ["analyzeGraph (carriedStatus)", "mark_fixed", "recall", "findingKey", "findingNodeId"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Statuses are carried by key ruleId+file+line from the previous JSON snapshot; mark_fixed writes status/fixedAt/fixCommit and a Note linked from the latest Session via REMEMBERS; recall is token-overlap keyword search. Weakness: a carried 'fixed' status is applied even if the rule still fires on that line (analyze.ts:134-135), and a line shift creates a new finding with no link to the old one."
+    },
+    {
+      "capability": "Git ownership (OWNS/TOUCHED/AUTHORED) and suggested reviewer",
+      "files": ["server/src/ingest/git.ts", "server/src/agent/tools.ts"],
+      "symbols": ["owner_of"],
+      "real_or_stub": "REAL",
+      "notes": "Top committer on the owning file from git log history via execFile (no shell)."
+    },
+    {
+      "capability": "FalkorDB Cypher write path and guarded read-only cypher_query",
+      "files": ["server/src/graph/cypher.ts", "server/src/agent/tools.ts"],
+      "symbols": ["CypherGraphStore", "probeEndpoint", "assertReadOnlyCypher", "cypher_query", "sanitizeGraphName"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Generates parameterised MERGE statements and executes them when FALKORDB_URL is reachable; one graph per repo. The README and cypher.ts header state live FalkorDB execution was UNVERIFIED by the author. Default store is the in-memory InMemoryGraphStore and analysis reads from a JSON snapshot hydrated into memory, so FalkorDB is effectively a write-through mirror."
+    },
+    {
+      "capability": "REST API (scan, findings, blast-radius, ask)",
+      "files": ["server/src/app.ts"],
+      "symbols": ["createApp", "/api/scan", "/api/findings", "/api/blast-radius/:findingId", "/api/ask", "findBestFunction"],
+      "real_or_stub": "PARTIAL",
+      "notes": "/api/ask is keyword matching of a question to a function/file name, not an LLM; LLM_API_KEY env vars exist but no LLM code path was found."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: File, Function, Class, Import, Commit, Author, Finding, Session, Note. Edges: DEFINES, CALLS, IMPORTS, AUTHORED, TOUCHED, OWNS, FLAGGED_IN, REACHES, REMEMBERS. Writes: MERGE (n:`Label` {id: $id}) SET n += $props and MATCH (a {id:$from}),(b {id:$to}) MERGE (a)-[r:`TYPE`]->(b). Read: MATCH (n {id:$id}) RETURN n; blast radius Cypher MATCH p=(src)-[:CALLS*1..N]->(affected:Function) is generated for display. Labels/types interpolated from fixed TS enums, values parameterised. No APOC/GDS; graph-per-repo naming 'blastradius_<slug>'.",
+  "algorithms": [
+    "BFS downstream over CALLS with depth cap 5 and visited set (server/src/agent/tools.ts:reachableFunctions)",
+    "Impact score = blast size * severity weight * (1 + mean CALLS degree) (tools.ts:impact_rank)",
+    "Smallest-enclosing-function attribution of a finding line (detect/analyze.ts:flagTargetId)",
+    "Cross-file call resolution via import/export maps (ingest/resolve.ts)",
+    "Top-committer ownership tally (tools.ts:owner_of)",
+    "Fail-closed read-only Cypher guard: leading-keyword allowlist plus write-keyword scan after stripping string literals (tools.ts:assertReadOnlyCypher)"
+  ],
+  "backend_interfaces": [
+    "Express routes: GET /health, GET /api/stats, GET /api/findings, GET /api/blast-radius/:findingId, POST /api/scan, GET /api/ask",
+    "CLI: npm run scan -- <repo-url-or-path> (server/src/scan.ts)"
+  ],
+  "frontend_interfaces": [
+    "React/Vite client: client/src/App.tsx, client/src/components/GraphView.tsx, client/src/api.ts (VITE_API_URL, default http://localhost:4000)"
+  ],
+  "agent_or_memory_mechanisms": "Deterministic orchestrator (agent/loop.ts:runScan: scan -> detect -> rank -> report); no LLM tool-calling loop is implemented despite the 'agent' naming. Memory = Session and Note nodes with REMEMBERS edges plus carried finding statuses, persisted as JSON snapshots (graph/snapshot.ts) rather than read back from FalkorDB.",
+  "tests_present": "8 Vitest files under server/test (~90 it/test cases: api, detect, loop, parser, scan, seed, store, tools) using in-memory store and fixture repos; Cypher statement generation is unit-tested without a live DB. Nothing exercises live FalkorDB.",
+  "dependency_requirements": [
+    "node >=20",
+    "express ^4.19.2",
+    "cors ^2.8.6",
+    "dotenv ^18.0.8",
+    "falkordb ^6.8.0",
+    "web-tree-sitter ^0.27.1",
+    "tree-sitter-javascript ^0.25.0",
+    "tree-sitter-typescript ^0.23.2",
+    "vitest ^5.0.4 (dev)"
+  ],
+  "security_findings": [
+    "server/src/ingest/scanner.ts:111-114 - execFile('git',['clone','--depth','1',target,tmp]) with no '--' separator; app.ts:261-266 accepts any string ending in '.git' even if it begins with '-', so a crafted value like '--upload-pack=...<x>.git' is git option injection (potential command execution)",
+    "server/src/app.ts:257-282 - POST /api/scan, unauthenticated, clones arbitrary remote URLs (SSRF/outbound git) or scans any local path on the server (path read), then writes snapshots",
+    "server/src/app.ts:122 - cors() with default allow-all origin and no auth on any route",
+    "server/src/graph/cypher.ts:279-296 - temporarily installs a process-level 'uncaughtException' handler and a custom RESP socket probe (probeEndpoint) to connect to a user-supplied FALKORDB_URL; connects to arbitrary host:port from env (outbound TCP)",
+    "server/src/agent/tools.ts:139-165 - cypher_query read-only guard is regex-based (documented limitation); only reachable when a live Cypher store is configured",
+    "server/src/detect/rules.ts:77-123 - rule file itself includes secret regex patterns (detector, not a leak); excerpts are masked via maskSecret",
+    "No eval/exec/pickle in the product code; child_process use is execFile (no shell) in scanner.ts:79,114 and git.ts:46. No hard-coded secrets (FALKORDB_URL and LLM_* from env)."
+  ],
+  "duplicates_or_overlaps": "Direct overlap with blast-radius traversal (code call-graph reachability), software dependency intelligence, static-security findings, and agent memory of resolved findings. Same title 'blastradius' appears in several other batch repos (986036734, NishaadG, Rakesh9742, kushalkumarcs372, sevenhiremath, AgentAhmed).",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "LOW - carries finding status across scans and records Note/Session memory, but statuses are keyed on file+line, there is no supersession, temporal validity or invalidation (and a stale 'fixed' flag can mask a still-firing rule).",
+  "strongest_reusable_unit": {
+    "file": "server/src/agent/tools.ts",
+    "symbols": ["reachableFunctions", "blast_radius", "impact_rank", "assertReadOnlyCypher"],
+    "why": "Small, clean, tested BFS blast-radius with depth cap plus a severity-times-reach-times-centrality ranking formula and a reusable read-only Cypher guard; trivially portable to Python (about 60 lines of logic). The tree-sitter ingest (parser.ts, resolve.ts) is the larger real asset but is JS/TS-specific.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "Node >=20 (TypeScript); FalkorDB optional; no LLM key"
+  },
+  "integration_strategy": "ISOLATED_SERVICE",
+  "strategy_rationale": "The code is real and tested but is a TypeScript/Node project, so it cannot be merged into the Python/FastAPI Kairos tree; run as a sidecar code-graph scanner or re-implement reachableFunctions/impact_rank in Python. Fix the git option-injection and add auth before exposing /api/scan.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

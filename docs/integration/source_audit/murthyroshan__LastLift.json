@@ -1,0 +1,143 @@
+{
+  "repository": "murthyroshan/LastLift",
+  "url": "https://github.com/murthyroshan/LastLift",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\murthyroshan__LastLift",
+  "commit_sha": "0730b402f7eb6bd0f47fe1badf2f75d0fd7c3c36",
+  "license": "MIT",
+  "copyright_holder": "murthyroshan (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "LICENSE",
+    "requirements.txt",
+    "requirements-dev.txt",
+    ".env.example",
+    "docs/falkordb-maxflow-note.md",
+    "docs/falkordb-sppaths-note.md",
+    "lastlift/db.py",
+    "lastlift/config.py",
+    "lastlift/queries.py",
+    "lastlift/flow.py",
+    "lastlift/cuts.py",
+    "lastlift/checker.py",
+    "lastlift/redundancy.py",
+    "lastlift/state.py",
+    "lastlift/verdict.py",
+    "lastlift/network.py (header)",
+    "lastlift/sequence.py (header)",
+    "lastlift/incidents.py",
+    "lastlift/tools.py (tool list, draft_action)",
+    "lastlift/main.py (route list)",
+    "lastlift/agent/loop.py",
+    "lastlift/agent/grounding.py",
+    "lastlift/agent/replay.py",
+    "lastlift/agent/llm.py (network section)",
+    "scripts/verify_claims.py (header)",
+    "scripts/secret_scan.py (header)",
+    "claims.json",
+    "web/package.json",
+    "tests/ (function counts)"
+  ],
+  "languages_frameworks": ["Python/FastAPI", "FastMCP 4.1.0", "falkordb Python client 1.8.0", "React 18 + TypeScript + Vite (web/)", "Playwright + axe-core a11y tests", "NetworkX (dev/test oracle only)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Certified max-flow with exact Dinic repair, min-cut extraction, flow decomposition",
+      "files": ["lastlift/flow.py"],
+      "symbols": ["certify", "repair", "exact_maxflow", "min_cut", "decompose", "Certificate", "_Dinic"],
+      "real_or_stub": "REAL",
+      "notes": "Pure Python. Validates a FalkorDB algo.maxFlow result for feasibility, conservation and residual-maximality; if it fails, re-solves with Dinic. Written specifically because FalkorDB 4.22 algo.maxFlow returned non-maximal flow in a documented repro."
+    },
+    {
+      "capability": "Independent proof checker (Menger: k disjoint routes + k-edge cut)",
+      "files": ["lastlift/checker.py"],
+      "symbols": ["check", "Verdict"],
+      "real_or_stub": "REAL",
+      "notes": "Never computes a flow; verifies claimed path set and cut. claims.json reports 333 checker accepts, 0 rejects, 734 FalkorDB first-pass-exact sweeps (self-reported)."
+    },
+    {
+      "capability": "Single points of failure, all minimum cuts, critical pairs (N-2), N-1 table, reliability polynomial, Monte Carlo with Wilson CI",
+      "files": ["lastlift/cuts.py", "lastlift/redundancy.py"],
+      "symbols": ["all_min_cuts", "brute_min_cuts", "Failures", "Failures.reliability", "Failures.nines", "Failures.singles", "Failures.pairs", "monte_carlo", "wilson", "relevant_edges", "direction", "platform", "complex_edges"],
+      "real_or_stub": "REAL",
+      "notes": "Picard-Queyranne enumeration of every min cut with Tarjan SCC + topo order; exhaustive failure-set search capped at 2^16 facility subsets; k==1 SPOF identified by removing each on-route lift and re-running exact max-flow."
+    },
+    {
+      "capability": "Network-wide N-1 impact via dominator trees (Cooper-Harvey-Kennedy) on contracted zone graph, plus repair sequencing by exact DP over subsets",
+      "files": ["lastlift/network.py", "lastlift/sequence.py", "lastlift/cuts.py"],
+      "symbols": ["Net", "Net.idom", "Net.n1", "Net.witness", "Impact", "PlatformAccess", "plan"],
+      "real_or_stub": "REAL",
+      "notes": "network.py claims it cross-checks the dominator result against a plain search witness(); sequence.py does DP over 2^C repair orders (C<=10) and reports greedy gap. Only header/docstrings were read in full detail, bodies sampled."
+    },
+    {
+      "capability": "What-if closure simulation on graph copies (GRAPH.COPY) with idempotent desired-state sync",
+      "files": ["lastlift/state.py", "lastlift/verdict.py"],
+      "symbols": ["ensure_scope", "sync", "recompute", "what_if", "sweep_stale_what_ifs", "assess"],
+      "real_or_stub": "REAL",
+      "notes": "Closure is a relationship-type swap SF <-> SF_CLOSED; base/demo/live/wi_* graphs; what-if copies are LRU-limited (2) and deleted at exit. assess() returns LOSS / ENTRANCE_ONLY / NO_LOSS / CANNOT_ASSESS."
+    },
+    {
+      "capability": "Dijkstra reroute with per-edge live-graph certificate (deliberately avoids algo.SPpaths)",
+      "files": ["lastlift/routing.py", "lastlift/queries.py"],
+      "symbols": ["Topology", "Topology.shortest", "topology", "describe", "certify_route", "route", "Q_ROUTE_CHECK_SF", "Q_ROUTE_CHECK_RIDE"],
+      "real_or_stub": "REAL",
+      "notes": "Documents that FalkorDB 4.22 SPpaths ran ~8h and ignored TIMEOUT; routes in Python and re-verifies each edge with indexed MATCH."
+    },
+    {
+      "capability": "Incident memory with first_seen/last_seen/ongoing/ended_by and alert version counts; frozen demo scope",
+      "files": ["lastlift/incidents.py", "lastlift/alerts.py", "lastlift/live.py", "data/alerts/accessibility_alert_versions.jsonl"],
+      "symbols": ["build", "sync", "_versions", "Q_WRITE_INCIDENTS", "Q_LIFT_HISTORY"],
+      "real_or_stub": "REAL",
+      "notes": "(:Lift)-[:CLOSED_IN]->(:Incident) from captured MBTA alert versions; demo scope is as-of a frozen_at cutoff; explicitly states nothing is inferred about actual lift status."
+    },
+    {
+      "capability": "Grounded LLM agent over MCP tools with deterministic router fallback and replay-digest verification",
+      "files": ["lastlift/agent/loop.py", "lastlift/agent/grounding.py", "lastlift/agent/replay.py", "lastlift/agent/router.py", "lastlift/agent/templates.py", "lastlift/agent/llm.py", "lastlift/mcp_server.py", "lastlift/tools.py", "lastlift/wording.py"],
+      "symbols": ["ask", "check (grounding rules G1-G6)", "digest", "verify (replay drift)", "parse_traceparent", "resolve_place", "platform_redundancy", "what_if_close", "step_free_route", "repair_priority", "network_impact", "repair_order", "lift_history", "draft_action"],
+      "real_or_stub": "REAL",
+      "notes": "LLM only chooses tools and phrases the answer; answer is rejected unless every id/number appears in tool results; replay.verify re-executes recorded tool calls and reports digest drift. draft_action only drafts a ticket (filed=false)."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Node (with sub-labels Platform, Lift, Street), Station, Lift, Incident, Meta. Edges: SF (single step-free relationship type; parallel edges merged because algo.maxFlow in 4.22 accepts exactly one relationshipTypes entry and rejects parallel edges), SF_CLOSED (closure swap), STEP, RIDE, DEPENDS_ON (baseline sole-lift dependency), DEPENDS_NOW (recomputed under closures), CRITICAL_PAIR, CLOSED_IN. All Cypher is fixed named constants in lastlift/queries.py with $params; the single dynamic one is Q_CREATE_DEPENDS.format(rel='DEPENDS_NOW') with a code constant. Uses FalkorDB-specific procedures: algo.maxFlow (certified afterwards), db.idx.fulltext.queryNodes, GRAPH.COPY, ro_query. Does NOT use APOC/GDS. Pinned to FalkorDB 4.22 behaviours (comment notes pattern predicate inside CASE failing on 4.22).",
+  "algorithms": [
+    "Dinic max-flow with super source/sink and residual-reachability certificate in lastlift/flow.py:exact_maxflow/certify/repair",
+    "Min-cut extraction and unit-path flow decomposition in lastlift/flow.py:min_cut/decompose",
+    "Picard-Queyranne all-min-cuts via SCC condensation + closed-set enumeration in lastlift/cuts.py:all_min_cuts",
+    "Exhaustive minimal failure-set search (SPOF, critical pairs, N-2) and exact reliability polynomial in lastlift/cuts.py:Failures",
+    "Dominator-tree N-1 journey-break analysis in lastlift/network.py",
+    "Exact DP repair-order optimiser (2^C subsets, C<=10) with greedy gap in lastlift/sequence.py",
+    "Dijkstra reroute + edge-by-edge certificate in lastlift/routing.py",
+    "Menger-theorem proof verification in lastlift/checker.py:check"
+  ],
+  "backend_interfaces": [
+    "FastAPI lastlift/main.py: GET /healthz, /v1/health, /v1/queries, /v1/queries/{id}/plan, /v1/tools, POST /v1/tools/{name}, GET /v1/stations/{id}/graph, /v1/live, /v1/disclaimers, POST/GET /api/ask (SSE events per contracts/ask_events.schema.json)",
+    "MCP server mounted at /mcp (FastMCP) exposing the tool registry",
+    "scripts/*.py CLI sweeps (network_sweep, backtest, history_replay, verify_claims, smoke)"
+  ],
+  "frontend_interfaces": ["React 18/TS/Vite app web/src: pages Landing, Station, Network, Repairs, About; components AgentDrawer, ProofPanel, XRay, KState, HistoryPanel, Announcer (screen-reader), axe-core Playwright a11y spec"],
+  "agent_or_memory_mechanisms": "Tool-calling agent loop (max 3 tool rounds, then tool_choice none) with provider failover chain (Groq qwen -> gpt-oss-120b -> Gemini flash-lite), daily call/token caps, W3C traceparent spans, rule-based router fallback when no LLM, grounding validator G1-G6, recorded replays with canonical SHA-256 digests re-verifiable against the live graph. 'Memory' is the incident log (CLOSED_IN) not conversational memory.",
+  "tests_present": "tests/ 17 files, ~114 test functions (flow, checker/chain, routing, network, tools, agent, snapshot, history, memory, guard, wording, preregistration, web). Includes an expected-failure live repro of the FalkorDB maxFlow bug and NetworkX oracles. Also web/tests/a11y.spec.ts and CI workflow (.github/workflows/ci.yml, runs secret_scan). Not executed by auditor.",
+  "dependency_requirements": ["fastapi==0.143.2", "uvicorn==0.54.0", "fastmcp==4.1.0", "falkordb==1.8.0", "httpx==0.28.1", "pydantic==2.14.1", "dev: networkx==3.7, pytest==8.4.2, jsonschema==4.26.0, pyyaml==6.0.3, pyarrow==26.0.0 (history ingest only)"],
+  "security_findings": [
+    "lastlift/queries.py:~Q_CREATE_DEPENDS and lastlift/state.py:71 - Cypher built with str.format(rel=...) but the relationship name is a code constant ('DEPENDS_NOW'), not user input.",
+    "lastlift/agent/llm.py:84 - outbound httpx.post with Authorization: Bearer from env keys (GROQ/GEMINI); keys come from env or ../.env (config.py _load_env_file), none hard-coded.",
+    "lastlift/live.py:37 - outbound httpx.get to MBTA API (optional x-api-key).",
+    "lastlift/config.py:42,72 - GITHUB_TOKEN setting is loaded but grep found no use in lastlift/ (draft_action never files); dormant credential plumbing.",
+    "lastlift/main.py:198-208 - POST /v1/tools/{name} executes any registered tool with caller args; arg names are allow-listed, no auth in this file (ALLOWED_ORIGINS CORS only). what_if creates server-side graph copies (resource-exhaustion vector, mitigated by LRU of 2).",
+    "docs/falkordb-sppaths-note.md - algo.SPpaths ignores TIMEOUT on 4.22 and can pin all server threads; any Kairos code must not call it.",
+    "No eval/exec/pickle/subprocess in lastlift/ runtime; subprocess only in scripts/secret_scan.py (git hooks tooling).",
+    "No hard-coded secrets found; .env.example has empty values; scripts/secret_scan.py actively blocks secret-shaped strings."
+  ],
+  "duplicates_or_overlaps": "Overlaps with blast-radius / single-point-of-failure analysis (generic network-resilience engine), what-if contingency simulation and repair prioritisation (Operational Optimization). The certified-flow + proof-checker approach is unique in this batch and directly relevant to making FalkorDB 4.22 graph-algorithm results trustworthy.",
+  "capability_family": "Mobility & Accessibility",
+  "evidence_drift_relevance": "MEDIUM - agent/replay.py re-executes recorded tool calls and flags digest drift, incidents.py keeps versioned alerts with first_seen/last_seen/ended_by under a frozen as-of cutoff, and DEPENDS_ON vs DEPENDS_NOW exposes newly-single dependencies; however there is no dependency-invalidation cascade, supersession model or approval gate.",
+  "strongest_reusable_unit": {
+    "file": "lastlift/flow.py (with lastlift/cuts.py and lastlift/checker.py)",
+    "symbols": ["certify", "repair", "exact_maxflow", "min_cut", "decompose", "all_min_cuts", "Failures", "check"],
+    "why": "Three small, dependency-free Python modules that turn any directed capacity graph into certified min-cuts, single points of failure, critical pairs, reliability numbers and a machine-checkable proof, and that defend against the documented FalkorDB 4.22 algo.maxFlow defect - exactly the server version Kairos targets.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for flow/cuts/checker (edges are plain (eid,u,v,cap) tuples); FalkorDB 4.22 only if you also want to cross-check algo.maxFlow"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "flow.py/cuts.py/checker.py are domain-neutral resilience algorithms that can be lifted into a Kairos shared engine (blast radius, SPOF, critical-pair, N-1/N-2). The MBTA data model, ingest and UI are domain-specific and should stay as a reference/optional pack.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

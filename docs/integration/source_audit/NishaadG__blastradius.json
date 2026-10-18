@@ -1,0 +1,162 @@
+{
+  "repository": "NishaadG/blastradius",
+  "url": "https://github.com/NishaadG/blastradius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\NishaadG__blastradius",
+  "commit_sha": "56fd8e0ec2708b24111b361ae0327cc7656303e6",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/blastradius/db.py",
+    "backend/blastradius/queries.py",
+    "backend/blastradius/triage.py",
+    "backend/blastradius/reach.py",
+    "backend/blastradius/memory.py",
+    "backend/blastradius/security.py",
+    "backend/blastradius/watch.py",
+    "backend/blastradius/vex.py",
+    "backend/blastradius/tenants.py",
+    "backend/blastradius/brain.py",
+    "backend/blastradius/agent.py",
+    "backend/blastradius/ingest.py",
+    "backend/blastradius/api.py",
+    "backend/blastradius/ci.py",
+    "backend/blastradius/mcp_server.py",
+    "backend/blastradius/jobs.py",
+    "backend/blastradius/config.py",
+    "backend/requirements.txt",
+    "action.yml"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "FalkorDB (falkordb>=1.0)",
+    "MCP (mcp>=1.12,<2; FastMCP streamable HTTP mounted at /mcp)",
+    "Gemini REST via httpx (optional)",
+    "Next.js/React web UI (web/)",
+    "GitHub composite Action + SARIF output",
+    "OSV.dev + deps.dev + GitHub APIs; govulncheck (Go) via docker"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Dependency-path blast radius: advisory -> package -> service shortestPath, upstream callers, internet exposure path",
+      "files": ["backend/blastradius/queries.py", "backend/blastradius/triage.py"],
+      "symbols": ["Q_PATHS/affected_paths", "Q_CALLERS/upstream_callers", "Q_CALL_PATH/exposure_path", "all_findings", "run_triage", "risk_board", "_priority"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher shortestPath((s:Service)-[:DEPENDS_ON*1..15]->(p:Package)) from advisory AFFECTS packages, variable-length (:Service)-[:CALLS*0..6] upstream traversal and shortest exposed-entry path. Verdict (AFFECTED / NOT_AFFECTED / NEEDS_HUMAN) comes from a deterministic judge; LLM cannot alter it. Priority P0/P1/P2/DEV = severity x exposure, demoted when govulncheck proves the function is not called."
+    },
+    {
+      "capability": "Function-level reachability for Go via govulncheck, ingested as REACHES edges",
+      "files": ["backend/blastradius/reach.py"],
+      "symbols": ["collect", "parse", "ingest", "compact", "RANK", "SCRIPT"],
+      "real_or_stub": "REAL",
+      "notes": "Runs govulncheck inside a golang docker container (collect, subprocess docker run), compacts the JSON stream to called/imported/required levels and stores (Service)-[:REACHES {level,symbol,stack}]->(Advisory). Go only; npm/PyPI/Maven have no reachability. Committed snapshot lets the demo run offline."
+    },
+    {
+      "capability": "Service topology discovered from Kubernetes/compose manifests, lockfile parsers, CODEOWNERS ownership",
+      "files": ["backend/blastradius/discover.py", "backend/blastradius/parsers.py", "backend/blastradius/ingest.py", "backend/blastradius/depsdev.py", "backend/blastradius/osv.py"],
+      "symbols": ["discover.compose", "discover.kubernetes", "parsers.PARSERS", "parsers.LOCKFILES", "parse_npm_lock", "parse_go_mod", "parse_uv_lock", "parse_pom", "parse_cargo_lock", "ingest.parse_codeowners", "ingest.discover_repo", "ingest.fetch"],
+      "real_or_stub": "REAL",
+      "notes": "Parses npm/uv/requirements/go.mod/pom lockfiles (Maven expanded via deps.dev), resolves env-var service URLs in manifests into CALLS edges and exposure flags; curated tenants (otel, boutique, anthos) are real public projects with a committed raw snapshot; 'bring your repo' ingests any public GitHub repo with size/count caps."
+    },
+    {
+      "capability": "Decision memory with SUPERSEDES edges (knowledge currency) and precedent recall",
+      "files": ["backend/blastradius/brain.py", "backend/blastradius/memory.py", "backend/blastradius/discussions.py", "backend/blastradius/queries.py"],
+      "symbols": ["_decisions", "ingest (brain)", "record_decision", "find_precedents", "mark_reused", "Q_DECISIONS", "Q_PRECEDENT"],
+      "real_or_stub": "REAL",
+      "notes": "Heuristic regex over dependency-manifest commit messages creates (:Decision)-[:DOCUMENTED_IN]->(:Commit) and (:Decision)-[:CONCERNS]->(:Package|:Service); within a service, a newer decision about the same package SUPERSEDES the previous one (computed by date ordering, brain.py:82-91). Human decisions (patched / not_affected / accepted_risk) become (:Case)-[:ABOUT]->(:Advisory) per session and are recalled as precedents; exact not_affected VEX precedent short-circuits triage."
+    },
+    {
+      "capability": "Session-scoped episodic/semantic/procedural memory and agent handoff trace graph",
+      "files": ["backend/blastradius/memory.py"],
+      "symbols": ["Case", "Playbook", "save_run", "brain_timeline", "reset_session", "prune", "PLAYBOOKS", "HANDS_OFF_TO"],
+      "real_or_stub": "REAL",
+      "notes": "(:Run)-[:HAS_STEP]->(:Step) with (:Step)-[:HANDS_OFF_TO]->(:Step) records the Triage -> Investigator -> Judge -> Remediator handoff; playbook success/failure counts are derived from cases linked by USED. 'Agents' are labelled stages of one deterministic function, not independent LLM agents."
+    },
+    {
+      "capability": "Advisory watcher / rescan for new advisories since the graph was built",
+      "files": ["backend/blastradius/watch.py"],
+      "symbols": ["rescan", "Busy"],
+      "real_or_stub": "REAL",
+      "notes": "Re-queries OSV for every Package, writes only advisories not already known (first_seen timestamp), runs risk_board and reports new P-ranked findings; a global lock prevents concurrent rescans. It detects new evidence but does not re-open earlier Cases/precedents."
+    },
+    {
+      "capability": "OpenVEX export of human decisions and CI gate with SARIF",
+      "files": ["backend/blastradius/vex.py", "backend/blastradius/ci.py", "action.yml", "docs/ci/blastradius.yml"],
+      "symbols": ["build_vex", "discover_local", "ci main (--fail-on, --baseline, --sarif)"],
+      "real_or_stub": "REAL",
+      "notes": "VEX maps patched->fixed, not_affected->not_affected(+impact statement), accepted_risk->affected(+action_statement). CI mode builds the graph from the working tree in a throwaway FalkorDB container and fails the build on new P0/P1 findings relative to a baseline."
+    },
+    {
+      "capability": "Conversational layer: Gemini tool-calling with deterministic offline router",
+      "files": ["backend/blastradius/agent.py", "backend/blastradius/toolkit.py", "backend/blastradius/llm.py", "backend/blastradius/mcp_server.py"],
+      "symbols": ["TOOLS", "call_tool", "_offline", "ask", "toolkit.*"],
+      "real_or_stub": "PARTIAL",
+      "notes": "LLM only picks tools and phrases answers; tools are read-only and validated; with no GEMINI_API_KEY a regex router answers. MCP server (stdio and /mcp HTTP) exposes the same toolkit, strictly read-only when BR_PUBLIC=1."
+    },
+    {
+      "capability": "Centrality and concurrency benchmark",
+      "files": ["backend/blastradius/queries.py", "backend/blastradius/bench.py", "BENCH.md"],
+      "symbols": ["service_centrality (algo.pageRank)", "run_bench", "_with_backoff"],
+      "real_or_stub": "REAL",
+      "notes": "CALL algo.pageRank('Service','CALLS') for service criticality; bench fires N concurrent agent-style triage loops against FalkorDB and counts 'Max pending queries exceeded' backpressure retries (db.py handles them with jittered backoff)."
+    }
+  ],
+  "graph_models_and_cypher": "One graph per tenant named br_<tenant> (db.py:graph_name). Labels: Meta{k:'tenant',repo,exposure_known,kind,built_at,last_scan}, Service{name,exposed,kind,reach_analyzed}, Package{key,eco,name,version,dev}, Advisory{id,cve,severity,summary,first_seen}, Alias, Owner{kind person|bot|team}, Commit, Decision{text,rationale,kind,date,author}, Discussion, Case{sid,decision,rationale,actor,outcome,reused}, Playbook, Run{sid}, Step. Edges: DEPENDS_ON, CALLS, AFFECTS{fixed}, ALIAS_OF, OWNS, COMMITTED{count,last}, TOUCHED, DOCUMENTED_IN, CONCERNS, SUPERSEDES, DISCUSSED_IN, REACHES{level,symbol,stack}, ABOUT, IN, USED, HAS_STEP, HANDS_OFF_TO. Patterns: shortestPath with *1..15, *0..6, OPTIONAL MATCH superseding decision, UNWIND bulk MERGE, UNION, CALL algo.pageRank (FalkorDB-native; no Neo4j GDS/APOC). Agent/read path uses ro_query with regex write-keyword rejection and timeout; every query returns a trace {cypher, params, ms, rows} shown in the UI.",
+  "algorithms": [
+    "shortestPath over DEPENDS_ON*1..15 to enumerate service-to-vulnerable-package chains (queries.py:Q_PATHS, Q_FINDINGS)",
+    "Bounded upstream traversal CALLS*0..6 with min path length per caller (queries.py:Q_CALLERS) and shortest exposed-entry path (Q_CALL_PATH)",
+    "algo.pageRank over Service CALLS graph (queries.py:service_centrality)",
+    "Deterministic priority matrix: severity rank x exposure x runtime-vs-dev x govulncheck reachability demotion (triage.py:_priority/risk_board)",
+    "Decision supersession by chronological ordering per (service, package) (brain.py:_decisions)",
+    "Precedent matching by advisory id or shared package names within session (memory.py:Q_PRECEDENT)",
+    "Sliding-window rate limiter (security.py:Limiter) and jittered exponential backoff on FalkorDB queue-full errors (db.py:_with_backoff)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/config, /api/evals, /api/tenants, /api/{tenant}/graph|risk|brain|decisions|vex|bench|service/{service}; POST /api/{tenant}/triage|decide|ask|rescan|reset-memory; POST /api/ingest + GET /api/ingest/{job_id}",
+    "MCP: stdio (python -m blastradius.mcp_server) and streamable HTTP mounted at /mcp",
+    "CLI: python -m blastradius.ingest|brain|discussions|watch|reach|ci; GitHub Action (action.yml) with SARIF output"
+  ],
+  "frontend_interfaces": [
+    "Next.js app (web/src/app/page.tsx) with components GraphCanvas, RepoAnalyzer, ResultPanel, Views, Bench, ui"
+  ],
+  "agent_or_memory_mechanisms": "Triage -> Investigator -> Judge (no LLM) -> Remediator pipeline whose steps are persisted as Run/Step with HANDS_OFF_TO edges; Gemini only chooses tools and phrases answers. Session-scoped Case memory (episodic), Advisory/Package facts (semantic), Playbook nodes with derived success/failure counts (procedural); MAX_CASES/MAX_RUNS retention pruning. Remediator actions are 'pending_approval' proposals only; nothing is executed.",
+  "tests_present": "backend/tests/test_core.py (13 tests) and test_features.py (25 tests), ~38 total, requiring a live FalkorDB; backend/evals/run.py + EVALS.md cross-check discovered topology against hand-written reference_calls from project docs.",
+  "dependency_requirements": [
+    "falkordb>=1.0",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "pyyaml>=6",
+    "mcp>=1.12,<2",
+    "FalkorDB server image falkordb/falkordb:v4.14.10 in action.yml (older than 4.22)",
+    "docker + golang image for govulncheck collection"
+  ],
+  "security_findings": [
+    "NO LICENSE FILE in repository: reuse relies solely on the user-attested owner permission",
+    "backend/blastradius/reach.py:55 - subprocess.run(['docker','run',...]) with REPO and DIRS env derived from the static TENANTS table, executes `go install ...@latest`, `git clone` and `govulncheck` inside a container; only invoked by the offline 'collect' CLI, not from the API",
+    "backend/blastradius/db.py:12,57-62 - agent read path relies on a regex deny-list over Cypher with string literals stripped plus ro_query; server-side read-only is the real control",
+    "action.yml:22-30 - GitHub Action interpolates ${{ inputs.path }}, ${{ inputs.fail-on }} and ${{ inputs.baseline }} directly into a bash run script (workflow script-injection risk if inputs are attacker-controlled); also starts falkordb container without auth on localhost",
+    "backend/blastradius/security.py:23-28 - client_ip trusts the last X-Forwarded-For hop only when BR_PUBLIC is set (acceptable behind own proxy)",
+    "backend/blastradius/api.py:49-51 - CORS allow_origins defaults to '*' when not public",
+    "backend/blastradius/api.py:252-262 - POST /api/ingest is unauthenticated, triggers outbound GitHub fetches for arbitrary public repos (mitigated by REPO_RE, MAX_FILE_BYTES, MAX_SERVICES, one-job lock, 3/hour rate rule)",
+    "backend/blastradius/agent.py:187, llm.py:14 - GEMINI_API_KEY read from environment; brain.py/ingest.py read optional GITHUB_TOKEN; no hard-coded secrets found; advisory and commit text are sent to Gemini",
+    "backend/blastradius/ingest.py:39-46 - local-root file reads are realpath/commonpath-confined (good)",
+    "backend/blastradius/discover.py - uses yaml.safe_load/safe_load_all (not unsafe load)",
+    "No eval/exec/pickle found in backend"
+  ],
+  "duplicates_or_overlaps": "Directly overlaps the blast-radius / dependency-vulnerability triage family (Software Dependency Intelligence): reachable (DevAnuragT), blast-radius (kushalkumarcs372, AgentAhmed, sevenhiremath) and Blastradius siblings. Distinct for decision supersession, VEX export, CI/SARIF gate and Go govulncheck reachability.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "MEDIUM - has explicit (:Decision)-[:SUPERSEDES]->(:Decision), per-session Case precedents, first_seen on advisories, a rescan watcher and VEX statements with timestamps, but supersession is a chronological commit heuristic and a rescan does not invalidate or re-open dependent Cases or precedents.",
+  "strongest_reusable_unit": {
+    "file": "backend/blastradius/brain.py + backend/blastradius/memory.py + backend/blastradius/watch.py",
+    "symbols": ["_decisions (SUPERSEDES construction)", "Q_DECISIONS", "record_decision", "find_precedents", "save_run", "rescan", "build_vex"],
+    "why": "Small, readable FalkorDB patterns for decision supersession, precedent recall, step-level handoff trace and rescan-for-new-evidence; the dependency shortestPath + exposure + reachability priority matrix in queries.py/triage.py is a ready dependency-blast-radius pack.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; network to OSV/deps.dev/GitHub for ingestion; docker only for optional govulncheck collection; Gemini key optional"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Best taken as a Software Dependency Intelligence pack (queries, triage judge, VEX export, watcher) behind Kairos's shared engine, with the decision-supersession and precedent patterns borrowed for the evidence graph. Because there is no license file, any code lift depends on the attested permission and should be recorded.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

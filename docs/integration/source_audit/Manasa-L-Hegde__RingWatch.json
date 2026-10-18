@@ -1,0 +1,130 @@
+{
+  "repository": "Manasa-L-Hegde/RingWatch",
+  "url": "https://github.com/Manasa-L-Hegde/RingWatch",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Manasa-L-Hegde__RingWatch",
+  "commit_sha": "c855b87e7cccad8e6714a44852eedd232a8f3126",
+  "license": "MIT",
+  "copyright_holder": "Manasa L Hegde",
+  "source_files_inspected": [
+    "tools.py",
+    "verdict.py",
+    "memory.py",
+    "agent.py",
+    "api.py",
+    "db.py",
+    "build_graph.py",
+    "test_memory_verdict.py",
+    "requirements.txt",
+    "requirements-dev.txt",
+    ".env.example",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "FalkorDB (falkordb, unpinned)",
+    "Google Gemini function calling via google-genai (optional)",
+    "Vanilla JS + Cytoscape-style UI (static/)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Fraud ring detection over shared Device/Card/Address",
+      "files": ["tools.py"],
+      "symbols": ["find_linked_accounts", "detect_ring", "explain_path", "find_rings", "ring_stats", "ring_subgraph"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterised read-only Cypher: 2-hop shared-entity join, variable-length undirected USED_DEVICE|PAID_WITH*1..12 reachability, shortestPath(...*..15), and FalkorDB algo.WCC for weakly connected components filtered by user count. Each tool returns outcome (path_found/not_linked/unknown_entity), data, evidence strings and a timing trace."
+    },
+    {
+      "capability": "Deterministic fraud verdict engine (no LLM)",
+      "files": ["verdict.py"],
+      "symbols": ["verdict", "THRESHOLD_FRAUD_RING", "SCORE_CONFIRMED_CASE_BOOST", "SCORE_REJECTED_CASE_PENALTY"],
+      "real_or_stub": "REAL",
+      "notes": "Additive named-constant score (ring size >=3 +35, >=6 +10, shared device +10, card +10, address(>=3 members) +5, flagged share >=30% +20, avg order >= $3000 +10, confirmed past case +15, rejected past case -25), clamp 0..100, >=70 FRAUD_RING else SUSPICIOUS; NO_LINKS_FOUND when unlinked and always worded as 'does not mean the account is safe'. Thresholds are hand-tuned, not learned."
+    },
+    {
+      "capability": "Per-analyst episodic memory with confirm/reject feedback",
+      "files": ["memory.py"],
+      "symbols": ["save_case", "record_feedback", "recall_similar", "reset_analyst", "is_memory_cap_reached", "MemoryCapExceeded"],
+      "real_or_stub": "REAL",
+      "notes": "One FalkorDB graph per analyst (memory_<id>): (:Case)-[:INVOLVES]->(:Entity), (:Case)-[:MATCHES]->(:Pattern {confirmed_count, rejected_count}). recall_similar ranks past cases by entity overlap (max 5) and feeds the verdict as boost/penalty. Weaknesses: record_feedback overwrites c.status and increments pattern counters on every call (not idempotent, no history of earlier status), and cases have no expiry."
+    },
+    {
+      "capability": "Memory short-circuit (answer from a confirmed overlapping case)",
+      "files": ["agent.py"],
+      "symbols": ["investigate"],
+      "real_or_stub": "PARTIAL",
+      "notes": "If a CONFIRMED past case overlaps >=3 entities, skips the tool loop, runs only order_facts and find_linked_accounts, boosts confidence by +15 and saves a new pending case with verdict FRAUD_RING. This means an unreviewed new case inherits a FRAUD_RING label from memory alone, and it fabricates order_count=max(len(users),3) for the stats (agent.py:455-461)."
+    },
+    {
+      "capability": "LLM sentence grounding check",
+      "files": ["agent.py"],
+      "symbols": ["check_sentence", "extract_id_tokens", "accepts", "build_template_sentence", "_run_llm_pipeline"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Gemini (optional, up to 6 tool calls, 3 retries) writes ONE explanation sentence; every id-like token must exist in known ids from tool results and the sentence cannot claim links when none were found, otherwise a template sentence replaces it. Token regex is tuned to this repo's id shapes (u12, dA1, cB). Without GEMINI_API_KEY it runs a fixed deterministic pipeline in template mode."
+    },
+    {
+      "capability": "Public-demo guardrails and analyst isolation",
+      "files": ["api.py"],
+      "symbols": ["validate_analyst_id", "check_public_demo_rate_limit", "MAX_MEMORY_GRAPHS"],
+      "real_or_stub": "REAL",
+      "notes": "Analyst ids restricted to ^[a-z0-9_-]{1,20}$ before use in graph names, in-memory rate limit (20 LLM calls/hour global, 3/min/IP) in PUBLIC_DEMO mode, cap of 200 memory graphs."
+    },
+    {
+      "capability": "Synthetic graph builder",
+      "files": ["build_graph.py", "demo_scenario.py"],
+      "symbols": [],
+      "real_or_stub": "STUB",
+      "notes": "Generates 200 users, ~600 orders and three planted rings (A: shared devices, B: shared card/address, C: 7-user device chain needing multi-hop) with random.seed(42). Demo data only; ground_truth.json is written for verification."
+    }
+  ],
+  "graph_models_and_cypher": "Fraud graph labels: User, Device, Card, Address, Order; edges USED_DEVICE, PAID_WITH, PLACED, SHIPPED_TO. Memory graph (per analyst): Case{id,at,order_id,verdict,confidence,status,shape}, Entity{id,kind}, Pattern{name,confirmed_count,rejected_count}, Meta; edges INVOLVES, MATCHES. Cypher features: multi-type variable-length [r:A|B*1..12], shortestPath, algo.WCC (FalkorDB native procedure, not Neo4j GDS), UNWIND/MERGE with ON CREATE/ON MATCH, collect/DISTINCT aggregation. Indexes on id for each label. All parameters bound; only index creation interpolates labels from a fixed list.",
+  "algorithms": [
+    "Weakly connected components via FalkorDB algo.WCC for ring discovery (tools.py:find_rings)",
+    "Variable-length reachability up to 12 hops with user exclusion (tools.py:detect_ring)",
+    "Shortest evidence path between two accounts, up to 15 hops (tools.py:explain_path)",
+    "Transparent additive scoring with hard-coded thresholds (verdict.py:verdict)",
+    "Entity-overlap case recall with confirm/reject-weighted score adjustment (memory.py:recall_similar + verdict.py)",
+    "Id-token whitelist grounding of LLM text (agent.py:check_sentence)"
+  ],
+  "backend_interfaces": [
+    "FastAPI api.py: GET /api/health, /api/examples, /api/memory/{analyst}, /api/rings, /api/ring/{component}/graph, /api/join-vs-graph; POST /api/investigate, /api/feedback, /api/memory/{analyst}/reset",
+    "CLI: python agent.py investigate --order <id> [--no-llm] / feedback --case <id> --confirm|--reject"
+  ],
+  "frontend_interfaces": [
+    "Static SPA static/index.html + static/app.js + static/style.css: investigate form, verdict card with reasons, evidence path, interactive ring graph, analyst memory panel, feedback buttons, join-vs-graph comparison"
+  ],
+  "agent_or_memory_mechanisms": "Hybrid agent: fixed cheap tools first, then either Gemini function-calling loop (max 6 tool calls, per-investigation result cache) or deterministic pipeline; verdict is always produced by verdict.py, never the LLM. Episodic memory per analyst with confirm/reject feedback that alters later scores (feedback loop). No supersession of older cases, no temporal decay, no approvals.",
+  "tests_present": "4 pytest files, ~23 test functions at repo root (test_agent 4, test_api 10, test_memory_verdict 2, test_tools 7) plus ui_check.py (Playwright script) and verify_graph.py. Tests connect to a live FalkorDB on localhost:6379 and the seeded 'fraud' graph.",
+  "dependency_requirements": [
+    "falkordb (unpinned)",
+    "python-dotenv",
+    "google-genai (optional)",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "playwright (dev)"
+  ],
+  "security_findings": [
+    "api.py:33-39 - CORSMiddleware allow_origins=['*'] with allow_credentials=True; no authentication on any route including POST /api/memory/{analyst}/reset and /api/feedback (any caller can wipe or poison any analyst's memory graph by id)",
+    "api.py:42-83 - rate limiting is in-process and keyed on request.client.host (spoofable behind proxies, not shared across workers); only applied to LLM calls",
+    "memory.py:285-294 and api.py:318-323 - reset_analyst deletes graph memory_<id>; id validated by regex ^[a-z0-9_-]{1,20}$ so graph-name injection is not possible",
+    "agent.py:455-461 - fabricated stats (order_count=max(users,3)) fed into the verdict on memory short-circuit; integrity issue rather than injection",
+    "tools.py:223-228 - detect_ring runs undirected variable-length path enumeration up to 12 hops; on dense graphs this is combinatorial (DoS risk) even though max_hops is capped at 12",
+    "build_graph.py:51-56 - f-string CREATE INDEX with labels from a fixed list; deletes the entire 'fraud' graph on run (destructive seed script)",
+    "db.py:17-85 - FalkorDB credentials from env or Streamlit secrets; password is never logged. No hard-coded secrets, eval/exec, pickle or subprocess in the source files."
+  ],
+  "duplicates_or_overlaps": "Core overlap with fraud-ring / shared-identifier community detection (ShaktiEighteen Financial_Crime_Agent, gagan-gag FraudTrace-AI, manav-Mnv hound-aml, akachi11 fraud-graph, Mihir-Rabari ledgerlens, priyanshu499 Scam-Graph-AI, mirah227 walletrace). Memory-with-feedback overlaps agent memory & provenance repos (abhishiv17 recall memory).",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "MEDIUM - analyst confirm/reject outcomes are stored per case, recalled by entity overlap and change later verdicts (a feedback-driven reweighting of prior evidence), but statuses are overwritten without history, there is no temporal validity or supersession, and the memory short-circuit can propagate a stale confirmation to a new case.",
+  "strongest_reusable_unit": {
+    "file": "verdict.py (+ memory.py, agent.py:check_sentence)",
+    "symbols": ["verdict", "memory.record_feedback", "memory.recall_similar", "check_sentence"],
+    "why": "Small, pure-Python, transparent scoring function with named constants and reasons list, paired with a per-analyst confirm/reject memory graph and an id-token grounding check; all three are domain-light and easy to lift. The find_rings WCC/detect_ring Cypher is the graph reusable piece for ring-style grouping.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (algo.WCC for find_rings); no LLM key required"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "A compact, tested fraud-ring capability (shared-entity rings, WCC, deterministic verdict, analyst memory) that fits as a Financial Fraud pack in Kairos with its own graph schema. Fix the non-idempotent feedback counters and the memory short-circuit before reuse; MIT-licensed.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

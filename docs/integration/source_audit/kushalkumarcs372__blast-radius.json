@@ -1,0 +1,141 @@
+{
+  "repository": "kushalkumarcs372/blast-radius",
+  "url": "https://github.com/kushalkumarcs372/blast-radius",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\kushalkumarcs372__blast-radius",
+  "commit_sha": "d49a65e3e5b1760980bf953e7bfd56b9d5d2f296",
+  "license": "MIT",
+  "copyright_holder": "kushalkumarcs372 (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "blast_radius/tools/graph_tools.py",
+    "blast_radius/memory.py",
+    "blast_radius/agents/orchestrator.py",
+    "blast_radius/agents/triage.py",
+    "blast_radius/agents/investigator.py",
+    "blast_radius/agents/responder.py",
+    "blast_radius/agents/ask.py",
+    "blast_radius/agents/base.py",
+    "blast_radius/api.py",
+    "blast_radius/db.py",
+    "blast_radius/schema.py",
+    "blast_radius/llm.py",
+    "blast_radius/mcp_server.py",
+    "blast_radius/seed/generator.py",
+    "blast_radius/seed/reference.py",
+    "requirements.txt",
+    ".env.example",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "FalkorDB (falkordb>=1.0.10)",
+    "MCP (mcp>=1.2, FastMCP tools)",
+    "Gemini + Groq free-tier REST via urllib",
+    "Single-file web/index.html UI",
+    "pytest"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Parameterised graph tool library: blast radius, dependencies, recent deploys, PageRank criticality, connection path, owners/on-call, fix history, similar incidents, runbook, decision trace",
+      "files": ["blast_radius/tools/graph_tools.py"],
+      "symbols": ["blast_radius", "dependencies", "recent_deploys", "critical_services", "connection_path", "owners", "fix_history", "open_alerts", "similar_incidents", "runbook", "decision_trace", "ToolResult", "_hops", "TOOLS"],
+      "real_or_stub": "REAL",
+      "notes": "Every tool returns rows, supporting graph paths (evidence) and the exact Cypher that ran. Variable-length traversals (DEPENDS_ON*1..N) use an int()-validated bound (max 6) while all values are bound parameters; recent_deploys windows on d.ts; critical_services calls CALL algo.pageRank('Service','DEPENDS_ON') and a transitive-dependent count; connection_path uses shortestPath with direction fallbacks; similar_incidents is a hand-weighted score (3 signal match + 2 same-service cause + 2 x Jaccard word overlap)."
+    },
+    {
+      "capability": "Three-agent incident response (Triage -> Investigator -> Responder) with state handed off only through the graph",
+      "files": ["blast_radius/agents/orchestrator.py", "blast_radius/agents/triage.py", "blast_radius/agents/investigator.py", "blast_radius/agents/responder.py"],
+      "symbols": ["handle_alert", "triage.run", "investigator.run", "responder.run", "score_suspect", "ROLLBACK_THRESHOLD", "WINDOW_MIN"],
+      "real_or_stub": "REAL",
+      "notes": "Each agent reads the previous agent's Episode from FalkorDB (memory.latest_episode), not from Python state. Suspect-cause confidence is a fixed linear formula (0.35 recency + 0.25 proximity + 0.40 history) - a heuristic, not a causal model. Rollback is only proposed when confidence >= 0.5; the 'agents' are deterministic Python functions with optional LLM wording."
+    },
+    {
+      "capability": "Graph-resident agent memory: Episode / Agent nodes, CITES edges, HANDED_OFF_TO, SUSPECTED_CAUSE{confidence}, SIMILAR_TO{score}",
+      "files": ["blast_radius/memory.py"],
+      "symbols": ["record_episode", "latest_episode", "incident_memory", "open_incident", "ensure_agents", "list_incidents", "CITE_LABELS"],
+      "real_or_stub": "REAL",
+      "notes": "Episodic (Episode with findings JSON, ts, session, confidence), semantic (company graph) and procedural (Runbook, SIMILAR_TO) memory; episodes cite typed nodes via MERGE (e)-[:CITES]->(n); open_incident is idempotent via MERGE on inc-<alert>. incident_memory reconstructs the ordered episode timeline with citations."
+    },
+    {
+      "capability": "Citation guard that rejects LLM output citing ids not present in the facts",
+      "files": ["blast_radius/agents/base.py", "blast_radius/agents/ask.py"],
+      "symbols": ["summarize", "known_ids", "_CITE", "ask (MAX_STEPS)"],
+      "real_or_stub": "REAL",
+      "notes": "Regex extracts [id] citations from the model summary and compares against ids found in the structured facts; any invented id forces fallback to a deterministic template ('template (LLM output rejected)'). The ask agent picks one tool at a time from a fixed list (max 5 steps) and never writes Cypher; tests cover invented ids and unknown tools."
+    },
+    {
+      "capability": "Tenant isolation by one named FalkorDB graph per company",
+      "files": ["blast_radius/db.py", "blast_radius/api.py", "blast_radius/mcp_server.py"],
+      "symbols": ["graph_name", "graph", "list_tenants", "_TENANT_RE"],
+      "real_or_stub": "REAL",
+      "notes": "tenant_<name> graphs validated by ^[a-z][a-z0-9_]{1,30}$; all API and MCP calls take a tenant argument."
+    },
+    {
+      "capability": "Synthetic company data generator with a pure-Python reference oracle used to verify the Cypher tools",
+      "files": ["blast_radius/seed/generator.py", "blast_radius/seed/reference.py", "blast_radius/seed/catalog.py", "blast_radius/seed/loader.py"],
+      "symbols": ["generate", "TENANTS (acme, globex, initech)", "CompanyData", "reference._bfs", "load"],
+      "real_or_stub": "STUB",
+      "notes": "All services, deployments, incidents, people and ADR-style documents are deterministic synthetic data (seeded RNG); the reference module recomputes BFS answers without the database so tests can compare them with FalkorDB output. The oracle pattern is reusable; the data is demo only."
+    },
+    {
+      "capability": "Decision trace (why is X built this way) joined to source documents",
+      "files": ["blast_radius/tools/graph_tools.py"],
+      "symbols": ["decision_trace"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Returns (Decision)-[:ABOUT]->(Service) plus (Decision)-[:SOURCED_FROM]->(Document) ordered by date, with whole-word service-name matching done in Python; no SUPERSEDES, validity window or staleness handling."
+    }
+  ],
+  "graph_models_and_cypher": "Per-tenant graph tenant_<name>. Nodes: Service{name,tier}, Deployment{ts,version,summary}, Alert{signal,severity,ts}, Incident{status,severity,started,resolved,service}, Runbook{steps}, Person{role,on_call}, Team{channel}, Decision{date,summary}, Document{source}, Agent{role}, Episode{session,kind,ts,summary,findings(JSON),confidence}. Edges: MEMBER_OF, OWNS, DEPENDS_ON, AUTHORED, CHANGED, FIRED_ON, AFFECTED, CAUSED_BY, TRIGGERED_BY, RESOLVED, FOR, ABOUT, SOURCED_FROM, MENTIONS, RECORDED, HANDED_OFF_TO, CITES, SUSPECTED_CAUSE{confidence}, SIMILAR_TO{score}, AT_RISK{hops}. Patterns: MATCH p=(up)-[:DEPENDS_ON*1..N]->(s) with [n IN nodes(p)|n.name], shortestPath((a)-[:DEPENDS_ON*]->(b)), UNWIND $rows MERGE, OPTIONAL MATCH chains, CALL algo.pageRank (FalkorDB-native, not Neo4j GDS). f-string Cypher appears only for the validated hop count and the label in memory.record_episode (label checked against CITE_LABELS).",
+  "algorithms": [
+    "Reverse variable-length DEPENDS_ON traversal for blast radius with minimum-hop dedupe (graph_tools.py:blast_radius)",
+    "PageRank criticality + transitive dependent count (graph_tools.py:critical_services)",
+    "Time-window deploy correlation within radius 2 of the alerting service (graph_tools.py:recent_deploys)",
+    "Weighted incident similarity score (graph_tools.py:similar_incidents) and weighted suspect confidence (investigator.py:score_suspect)",
+    "Citation-set membership test for hallucination rejection (agents/base.py:summarize/known_ids)",
+    "Independent pure-Python BFS oracle for test verification (seed/reference.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /, /api/health, /api/tenants, /api/graph, /api/alerts, /api/incidents, /api/incidents/{incident}, /api/tools/{name}; POST /api/respond, /api/ask, /api/reset",
+    "MCP FastMCP tools: tenants, open_alerts, blast_radius, dependencies, recent_deploys, critical_services, connection_path, owners, fix_history, similar_incidents, runbook, decision_trace, incident_memory, list_incidents, incident_memory, list_incidents and respond_to_alert (runs the three agents with llm=None)",
+    "CLI: python -m blast_radius.cli (seed, demo, tool, respond, memory, ask, llm-check)"
+  ],
+  "frontend_interfaces": [
+    "web/index.html single-page UI (alerts, graph view, incident timeline of agent episodes, ask box)"
+  ],
+  "agent_or_memory_mechanisms": "Sequential multi-agent handoff persisted as Episode nodes (RECORDED, ABOUT, HANDED_OFF_TO, CITES) so a later session or process can resume; assistant agent runs a bounded tool-selection loop (max 5 steps, 4000-char result cap) with memory of Q&A as Episodes; LLM output is validated against cited ids; fallbacks to deterministic template text when LLM is unavailable.",
+  "tests_present": "tests/: test_graph_tools.py (15), test_agents.py (12), test_generator.py (10), test_llm.py (8), test_api.py (7) ~52 tests; graph tests compare Cypher results with the reference oracle on synthetic data and need a live FalkorDB; agent tests verify handoffs stored in the graph, episodes cite real nodes, memory readable from a new connection, invented ids flagged.",
+  "dependency_requirements": [
+    "falkordb>=1.0.10",
+    "python-dotenv>=1.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "httpx>=0.27",
+    "mcp>=1.2",
+    "pytest>=8.0",
+    "Optional GEMINI_API_KEY / GROQ_API_KEY for LLM wording"
+  ],
+  "security_findings": [
+    "blast_radius/api.py:22,166-171 - ALLOW_RESET defaults to 'true' and POST /api/reset is unauthenticated: it reloads (replaces) all synthetic tenant graphs; must be disabled in any shared deployment",
+    "blast_radius/api.py:144-153 - GET /api/tools/{name} forwards every query-string parameter as keyword arguments to the tool function (digit strings coerced to int); tool set is a fixed allow-list and bounds are validated by _hops, but arbitrary kwargs are accepted and only TypeError/ValueError are caught",
+    "blast_radius/api.py:43-52 - per-IP hourly rate limit kept in process memory (not shared across workers) protecting free LLM quota; no authentication on any route",
+    "blast_radius/memory.py:96 and tools/graph_tools.py:54,77,107 - f-string Cypher; label is validated against CITE_LABELS and hop counts are range-checked ints (not injectable)",
+    "blast_radius/llm.py:27-92,129-132 - GEMINI_API_KEY / GROQ_API_KEY read from environment and sent as headers (x-goog-api-key, Authorization); facts and user questions are sent to third-party LLMs; no hard-coded keys found",
+    "blast_radius/llm.py - outbound urllib requests only to the two fixed provider endpoints",
+    "blast_radius/agents/ask.py - user question goes into an LLM prompt that selects tools; mitigations are the fixed tool list, 5-step cap and citation check",
+    "No subprocess, eval/exec or pickle found"
+  ],
+  "duplicates_or_overlaps": "Incident blast-radius / root-cause family (Incident & Root Cause Analysis): overlaps LENGND123/clearpath (also FalkorDB incident + memory), AgentAhmed/blast-radius, NishaadG/blastradius (blast-radius vocabulary but supply-chain domain) and reachable. Distinct for its episode/handoff memory graph and citation guard.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - persists agent findings as timestamped Episodes that CITE the exact graph nodes they rest on and rejects LLM text citing ids outside the evidence set, plus SUSPECTED_CAUSE confidence edges, but there is no staleness, supersession or invalidation when cited nodes change.",
+  "strongest_reusable_unit": {
+    "file": "blast_radius/memory.py + blast_radius/agents/base.py",
+    "symbols": ["record_episode", "latest_episode", "incident_memory", "summarize", "known_ids", "ToolResult"],
+    "why": "A compact, FalkorDB-native pattern for agent provenance: every agent output is a node linked to the typed nodes it cites and to the next agent, and any generated prose that cites ids not in the structured facts is thrown away. Direct fit for a Kairos agent-memory/provenance layer; the ToolResult(rows, evidence paths, executed Cypher) envelope is also reusable.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (algo.pageRank only for criticality); LLM key optional"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Best taken as an Incident & Root Cause pack (graph tools + triage/investigate/respond) with the Episode memory and citation guard factored into the shared provenance layer; the synthetic acme/globex/initech data, demo UI and unauthenticated reset endpoint should not be merged.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

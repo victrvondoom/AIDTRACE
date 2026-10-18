@@ -1,0 +1,134 @@
+{
+  "repository": "ionfwsrijan/BatchZero",
+  "url": "https://github.com/ionfwsrijan/BatchZero",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\ionfwsrijan__BatchZero",
+  "commit_sha": "cf214d518204e416ef5e5bbce92f4935987c8d74",
+  "license": "MIT",
+  "copyright_holder": "ApexCoders (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "README.md",
+    "docs/GRAPH_MODEL.md",
+    "backend/pyproject.toml",
+    ".env.example",
+    "backend/batchzero/db.py",
+    "backend/batchzero/queries/base.py",
+    "backend/batchzero/queries/epidemiology.py",
+    "backend/batchzero/queries/supply.py",
+    "backend/batchzero/queries/actions.py",
+    "backend/batchzero/queries/memory.py",
+    "backend/batchzero/queries/protocol.py (symbol index)",
+    "backend/batchzero/tools.py",
+    "backend/batchzero/mcp_server.py",
+    "backend/batchzero/mcp_client.py",
+    "backend/batchzero/agent/loop.py",
+    "backend/batchzero/agent/scripts.py",
+    "backend/batchzero/agent/llm.py (symbol index)",
+    "backend/batchzero/api/app.py",
+    "backend/batchzero/seed.py (header)",
+    "backend/tests/conftest.py"
+  ],
+  "languages_frameworks": ["Python >=3.11/FastAPI", "falkordb>=1.8.0 client", "MCP python SDK (mcp>=2.0.0) over stdio", "openai SDK (Groq OpenAI-compatible)", "sse-starlette", "React + Vite + cytoscape.js frontend"],
+  "implemented_capabilities": [
+    {
+      "capability": "Evidence provenance chain Hypothesis -> Evidence -> ToolCall -> Session",
+      "files": ["backend/batchzero/queries/actions.py", "backend/batchzero/tools.py"],
+      "symbols": ["attach_evidence", "record_tool_call", "ToolContext.log", "add_hypothesis", "update_hypothesis", "record_session", "handoff"],
+      "real_or_stub": "REAL",
+      "notes": "Every MCP tool call is timed and persisted as a ToolCall node under the Session; evidence is attached with SUPPORTED_BY/CONTRADICTED_BY and DERIVED_FROM->ToolCall so any conclusion can be walked back to the Cypher that produced it. update_hypothesis overwrites status/confidence in place (no history or supersession)."
+    },
+    {
+      "capability": "Role-scoped MCP tool servers (capability = protocol step)",
+      "files": ["backend/batchzero/mcp_server.py", "backend/batchzero/mcp_client.py", "backend/batchzero/tools.py", "backend/batchzero/agent/loop.py", "backend/batchzero/agent/orchestrator.py"],
+      "symbols": ["build_server", "ROLE_TOOLSETS", "tools_for_role", "MCPToolSession", "run_role_session"],
+      "real_or_stub": "REAL",
+      "notes": "Each of 4 roles (intake, cluster, tracer, briefing) runs a separate stdio MCP server subprocess exposing only its tool subset (40 @tool-decorated tools total); session/tenant injected via env vars. Agent runtime never touches FalkorDB directly."
+    },
+    {
+      "capability": "Temporal-validity hygiene (reject exposure records after symptom onset / outside incubation window)",
+      "files": ["backend/batchzero/queries/epidemiology.py", "backend/batchzero/queries/base.py"],
+      "symbols": ["temporal_fit", "valid_exposures", "onset_window", "incubation_window", "MAX_INCUBATION_DAYS"],
+      "real_or_stub": "REAL",
+      "notes": "Computes [onset - max_incubation, onset] in Python and passes date params into Cypher to flag meal_after_onset and within_incubation_window. Incubation ceilings are a small hard-coded dict (Salmonella 3d, Norovirus 3d, E. coli 10d, Listeria 28d)."
+    },
+    {
+      "capability": "FalkorDB graph-algorithm tools (chokepoints, communities, WCC, shortest link)",
+      "files": ["backend/batchzero/queries/supply.py", "backend/batchzero/queries/epidemiology.py"],
+      "symbols": ["find_chokepoints (algo.betweenness)", "cluster_by_exposure (algo.labelPropagation)", "connected_components (algo.WCC)", "shortest_link (algo.SPpaths)", "trace_supply_chain", "find_common_ingredients", "find_common_suppliers"],
+      "real_or_stub": "REAL",
+      "notes": "Uses FalkorDB-native algo.* procedures; shared-exposure intersections done as Cypher patterns; every query returns QueryOutcome carrying the Cypher text, params, ms and algorithm name for evidence."
+    },
+    {
+      "capability": "Agent memory: institutional Fact nodes, prior incidents, protocol-in-graph",
+      "files": ["backend/batchzero/queries/actions.py", "backend/batchzero/queries/memory.py", "backend/batchzero/queries/protocol.py"],
+      "symbols": ["remember_fact", "recall_facts", "prior_incidents", "get_protocol", "next_step", "current_session_step", "link_protocol_step"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Fact/ProtocolStep nodes are real graph writes; recall is substring CONTAINS matching, no vector or temporal decay. Seven ProtocolStep nodes chained by NEXT are seeded data."
+    },
+    {
+      "capability": "Action drafting (tasks, recalls) with human-gate status",
+      "files": ["backend/batchzero/queries/actions.py"],
+      "symbols": ["create_task", "draft_recall", "assign_inspectors"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Recall is written with status 'drafted' (not executed) and tasks 'open'; there is no approval workflow or state transition code beyond the initial status."
+    },
+    {
+      "capability": "Offline scripted demo brain (MockLLM)",
+      "files": ["backend/batchzero/agent/scripts.py", "backend/batchzero/agent/llm.py", "backend/batchzero/demo/replay.py"],
+      "symbols": ["intake_plan", "MockLLM", "ScriptStep"],
+      "real_or_stub": "STUB",
+      "notes": "With no LLM key the 'agent' replays pre-written plans with hard-coded case/lot ids (C-101..C-111, MG-4417) against the seeded fictional Port Meridian fixture. Tool calls are real, but decisions and narrative text are pre-scripted. Groq-driven mode uses the same tool loop."
+    },
+    {
+      "capability": "FastAPI + SSE streaming API and cytoscape UI",
+      "files": ["backend/batchzero/api/app.py", "frontend/src/App.jsx", "frontend/src/components/GraphCanvas.jsx", "frontend/src/components/AgentStream.jsx", "frontend/src/components/InvestigationPanel.jsx"],
+      "symbols": ["/api/investigations/stream", "/api/investigations/{inv_id}/graph", "GraphCanvas"],
+      "real_or_stub": "REAL",
+      "notes": "Streams role/tool events as SSE; subgraph extraction returns nodes/edges for cytoscape."
+    }
+  ],
+  "graph_models_and_cypher": "One FalkorDB graph per tenant (default pmph_ops). Domain labels: Person, Case, ExposureEvent, Facility, MenuItem, Ingredient, Lot, Supplier, Farm, Shipment, TemperatureReading, Lab, Isolate, Inspection, WastewaterSite, PriorIncident. Agent labels: Investigation, Hypothesis, Evidence, Task, Recall, Session, Message, ToolCall, Fact, ProtocolStep. Key edges: HAS_CASE, PARTICIPATED, INVOLVES, CONTAINS, CONSUMED, SUPPLIED_BY, SHIPPED_IN, MATCHES{snp_distance}, HAS_HYPOTHESIS, SUPPORTED_BY, CONTRADICTED_BY, DERIVED_FROM, LOGGED, HANDOFF, AT_STEP, NEXT, FACT_ABOUT, FACT_SUPPORTED_BY, COVERS. FalkorDB-native procedures: algo.betweenness, algo.labelPropagation, algo.WCC, algo.SPpaths; fulltext and range indexes created in schema.py. Not Neo4j GDS/APOC. Cypher is parameterized except f-string integer hops and relationship type names chosen internally.",
+  "algorithms": [
+    "Betweenness chokepoint ranking over the supply graph (queries/supply.py:find_chokepoints, algo.betweenness)",
+    "Label-propagation exposure communities (epidemiology.py:cluster_by_exposure)",
+    "Shared-exposure intersection across all cases (find_common_ingredients/facilities/suppliers) - count ties broken by genomic SNP match",
+    "algo.SPpaths shortest link between entities (supply.py:shortest_link)",
+    "Incubation-window temporal plausibility filter (epidemiology.py:temporal_fit)",
+    "Bounded subgraph extraction (memory.py:subgraph, evidence_subgraph)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/config, /api/cases, /api/investigations, /api/investigations/{id}, /api/investigations/{id}/graph, /api/graph/summary, /api/agents/roles; POST /api/search, /api/seed, /api/investigations/stream (SSE), /api/investigations/{id}/chat/stream (SSE)",
+    "MCP server over stdio: python -m batchzero.mcp_server (role-scoped, up to ~25 tools per role, 40 total)",
+    "Console scripts: batchzero-api, batchzero-mcp, batchzero-seed"
+  ],
+  "frontend_interfaces": [
+    "React 18 + Vite + cytoscape: App.jsx, GraphCanvas.jsx (provenance/evidence canvas), AgentStream.jsx (live tool calls), InvestigationPanel.jsx"
+  ],
+  "agent_or_memory_mechanisms": "Four-role protocol-ordered agent (Intake -> Cluster Analyst -> Supply Chain Tracer -> Briefing) with Session HANDOFF edges, AT_STEP protocol anchoring, per-call ToolCall logging, hypothesis/evidence graph as working memory, Fact nodes as long-term semantic memory, PriorIncident as episodic memory. LLM: Groq via OpenAI SDK with MockLLM/FallbackLLM.",
+  "tests_present": "backend/tests: test_queries.py (16), test_agent.py (10), test_api.py (5), test_mcp.py (5) = ~36 tests; all need a live FalkorDB (conftest seeds a throwaway tenant graph) and force LLM_PROVIDER=mock. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.8.0", "fastapi>=0.115.0", "uvicorn[standard]>=0.30.0", "pydantic>=2.8.0", "pydantic-settings>=2.4.0", "mcp>=2.0.0 (imports mcp.server.mcpserver.MCPServer and private _tool_manager, tightly version-coupled)", "openai>=1.50.0", "sse-starlette>=2.1.0", "httpx>=0.27.0", "Python >=3.11"],
+  "security_findings": [
+    "backend/batchzero/api/app.py:170-175 - POST /api/seed is unauthenticated, accepts an arbitrary 'tenant' graph name, calls db.delete_graph() then reseeds: any caller can wipe any graph on the FalkorDB instance.",
+    "backend/batchzero/api/app.py:47-48,127-151 - 'tenant' query/body parameter selects any FalkorDB graph by name with no authn/authz (tenant isolation is by name only; cross-tenant read possible).",
+    "backend/batchzero/api/app.py:89 - CORS falls back to allow_origins ['*'] when cors_origins is empty.",
+    "backend/batchzero/queries/memory.py:75 (subgraph; reached via evidence_subgraph:118-129 and api/app.py:142-146) - subgraph interpolates user-controlled integer 'hops' into a variable-length Cypher pattern f\"[*1..{hops}]\" with no upper cap (FastAPI int-validates, but a huge value is a DoS vector).",
+    "backend/batchzero/queries/actions.py:44-51 - label/key interpolated into Cypher; label is looked up in PRIMARY_ID (allow-list) and rel type is internal, so low risk.",
+    "backend/batchzero/mcp_client.py:40-60 - spawns a subprocess [sys.executable, -m, batchzero.mcp_server] with env built from get_default_environment(); fixed arg list (no shell).",
+    "backend/batchzero/agent/llm.py - outbound calls to Groq / OPENAI_BASE_URL (env-configured); keys read from env only; .env.example holds placeholders only.",
+    "docker-compose.yml - no FalkorDB password configured in compose (local demo default)."
+  ],
+  "duplicates_or_overlaps": "Overlaps incident/outbreak root-cause analysis, supply-chain lot traceability (upstream/downstream), and agent provenance logging. The Hypothesis/Evidence/ToolCall provenance pattern overlaps Agent Memory & Provenance repos; chokepoint/community use overlaps blast-radius repos.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - Implements provenance (Evidence DERIVED_FROM ToolCall LOGGED Session), temporal-validity filtering of records, and contradiction handling via CONTRADICTED_BY with refuted decoys, but hypothesis status/confidence are overwritten in place with no supersession, invalidation cascade or approval gate.",
+  "strongest_reusable_unit": {
+    "file": "backend/batchzero/queries/actions.py + backend/batchzero/tools.py",
+    "symbols": ["attach_evidence", "record_tool_call", "ToolContext.log", "QueryOutcome (queries/base.py)", "temporal_fit/onset_window"],
+    "why": "Small, working pattern that auto-logs every tool call as a graph node and forces evidence to cite the tool_call_id (and Cypher) that produced it; QueryOutcome carries cypher+params+algorithm so evidence is replayable. Could be lifted to give Kairos evidence nodes machine-checkable lineage. MIT licensed.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (falkordb>=1.8); MCP SDK only if keeping the MCP transport; no LLM key required (MockLLM)"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Lift the ToolCall/Evidence provenance writers and QueryOutcome tracing as a shared provenance helper and optionally the role-scoped MCP toolset pattern; keep outbreak epidemiology as a reference domain pack. MIT license and same falkordb 1.8 client make reuse low-friction.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

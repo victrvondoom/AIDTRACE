@@ -1,0 +1,124 @@
+{
+  "repository": "AjaySingh-a/firstdomino",
+  "url": "https://github.com/AjaySingh-a/firstdomino",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\AjaySingh-a__firstdomino",
+  "commit_sha": "9f266603f6bb21f0c9f2e1ae1b3c24cc21907245",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "AGENTS.md",
+    "pyproject.toml",
+    "docker-compose.yml",
+    ".env.example",
+    "engine/rules.py",
+    "engine/evaluate.py",
+    "engine/cypher.py",
+    "engine/db.py",
+    "engine/loaders/seed.py",
+    "engine/queries/q1_candidate_match.cypher",
+    "engine/queries/q3_affected.cypher",
+    "engine/queries/q5_history.cypher",
+    "engine/queries/admin/fact_versions.cypher",
+    "engine/queries/write/evidence_apply.cypher",
+    "engine/queries/write/evidence_pending.cypher",
+    "engine/queries/write/evidence_done.cypher",
+    "engine/queries/write/revision.cypher",
+    "engine/queries/write/revision_next.cypher",
+    "engine/queries/write/review.cypher",
+    "engine/queries/write/finding.cypher",
+    "api/main.py",
+    "api/graph_store.py",
+    "api/store.py (function index)",
+    "agent/llm.py",
+    "agent/tools.py",
+    "agent/review_agent.py (header and symbol index)",
+    "data/patterns/pat-ccb-edema-loop.json",
+    "tests/test_graph.py (header)"
+  ],
+  "languages_frameworks": ["Python 3.11/FastAPI", "falkordb>=1.0 client", "Pydantic v2", "uv", "Next.js 15 + TypeScript + Tailwind + shadcn/ui + framer-motion", "Docker Compose (FalkorDB + API + web)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Versioned facts: FactVersion chain with SUPERSEDES and compare-and-set on case_version",
+      "files": ["engine/queries/write/evidence_apply.cypher", "engine/queries/admin/fact_versions.cypher", "api/graph_store.py"],
+      "symbols": ["GraphStore.submit_evidence", "GraphStore._finish", "_version_props", "evidence_apply.cypher"],
+      "real_or_stub": "REAL",
+      "notes": "One atomic Cypher: MATCH patient WHERE p.case_version=$case_version, SET case_version+1, keep old FactVersion (superseded_at), CREATE new FactVersion with (new)-[:SUPERSEDES]->(old), create EvidenceEvent. No returned row means stale case_version (HTTP 409). Event ids are idempotent and resumable (status pending/applying/applied)."
+    },
+    {
+      "capability": "Dependency-driven re-evaluation cascade (affected findings by cited/needed fact)",
+      "files": ["engine/queries/q3_affected.cypher", "engine/evaluate.py", "api/graph_store.py"],
+      "symbols": ["reevaluate", "GraphStore.affected", "q3_affected.cypher"],
+      "real_or_stub": "REAL",
+      "notes": "Q3 finds only Findings that CITES|FROM|TO the changed fact or NEEDS an EvidenceRequirement ABOUT it; only those are re-run through engine/rules.py; unaffected findings are untouched (tests assert that editing atorvastatin creates no revision)."
+    },
+    {
+      "capability": "Immutable finding revisions with review-decision lineage and needs_reassessment",
+      "files": ["engine/queries/write/revision.cypher", "engine/queries/write/revision_next.cypher", "engine/queries/write/review.cypher", "engine/queries/q5_history.cypher"],
+      "symbols": ["FindingRevision (PREVIOUS, BECAUSE->EvidenceEvent)", "ReviewDecision (ON->revision)", "GraphStore.review", "_revision_for_event"],
+      "real_or_stub": "REAL",
+      "notes": "When evidence changes under a reviewed finding a new FindingRevision n+1 is linked PREVIOUS to n and BECAUSE to the EvidenceEvent with status needs_reassessment; the clinician ReviewDecision stays on the revision it was made on. Review writes are compare-and-set on both case_version and revision_n (409 stale_revision)."
+    },
+    {
+      "capability": "Deterministic rule engine for candidate-pattern status with explicit unknown handling",
+      "files": ["engine/rules.py", "engine/queries/q1_candidate_match.cypher"],
+      "symbols": ["evaluate", "evaluate_rows", "Evaluation", "Point", "EVAL_VERSION"],
+      "real_or_stub": "REAL",
+      "notes": "Pure-Python rule precedence (not_matched > competing_explanation > needs_evidence > candidate) over Q1 rows; unknown never becomes no; one EvidenceRequirement per gap; eval_version tracked. Domain is medication prescribing cascades with one curated cited pattern (data/patterns/pat-ccb-edema-loop.json)."
+    },
+    {
+      "capability": "Bounded allowlisted review agent with deterministic fallback",
+      "files": ["agent/review_agent.py", "agent/tools.py", "agent/llm.py"],
+      "symbols": ["ReviewPass", "run_review_agent", "TOOL_MAP", "ALLOWLIST", "Seen.absorb", "OpenAICompatLLM"],
+      "real_or_stub": "REAL",
+      "notes": "LLM only picks one of six allowlisted tools and phrases text; replies are validated (allowed tool, IDs must have been seen in earlier tool results, no invented days/medicines, copy-rule check) and fall back to templates. Every tool call is persisted as an AgentStep. LLM optional (no LLM_API_KEY means templates)."
+    },
+    {
+      "capability": "Timeline/evidence-pack/packet APIs and Next.js UI",
+      "files": ["api/main.py", "api/graph_store.py", "web/components/*.tsx", "web/lib/api.ts"],
+      "symbols": ["GET /patients/{pid}/timeline", "GET /findings/{fid}/investigation", "POST /patients/{pid}/evidence", "POST /findings/{fid}/review", "POST /questions", "GET /patients/{pid}/facts/{fact_id}/affected", "POST /findings/{fid}/review-agent", "GET /patients/{pid}/packet"],
+      "real_or_stub": "REAL",
+      "notes": "FD_STORE=graph uses FalkorDB; default fixtures mode serves in-memory FixtureStore (api/store.py) mirrored by data/snapshots/fixtures.json for the web demo."
+    }
+  ],
+  "graph_models_and_cypher": "One FalkorDB graph per family (family_<id>) plus kb_template. Nodes (from the .cypher files): Patient{case_version}, MedicationEpisode, Observation, Ingredient, DrugClass, Effect, Pattern, Source, Finding{status,revision_n,eval_version}, FindingRevision{n}, ReviewDecision, EvidenceEvent{status,case_version,change,before,after}, EvidenceRequirement, FactVersion{n,superseded_at,event_id}, Question, AgentStep. Edges: HAS, OF, IN_CLASS, INDEX, MARKER, VIA, OF_EFFECT, FROM, TO, MATCHES, CITES, NEEDS, ABOUT, VERSION, SUPERSEDES, PREVIOUS, BECAUSE, RECORDED, ON. All Cypher lives in named, parameterized .cypher files loaded via engine.cypher.load(); contracts test enforces every traversal starts at Patient {id:$pid}. FalkorDB 4.22-compatible (uses [:A|B|C], UNION, collect over OPTIONAL MATCH); no APOC/GDS; graph.copy() used for family fork with MERGE-load fallback.",
+  "algorithms": [
+    "Affected-subgraph computation: Q3 = UNION of (Finding)-[:CITES|FROM|TO]->(fact) and (Finding)-[:NEEDS]->(:EvidenceRequirement)-[:ABOUT]->(fact) (engine/queries/q3_affected.cypher)",
+    "Optimistic concurrency: compare-and-set case_version/revision_n in a single write query (write/evidence_apply.cypher, write/review.cypher)",
+    "Idempotent resumable event application: pending -> applying -> applied with stored before/after/findings_before (api/graph_store.py:320-423)",
+    "Rule precedence status engine over temporal ordering (index start < effect onset < marker start) with unknown-as-gap semantics (engine/rules.py)",
+    "Sliding-window per-IP rate limiter for LLM passes (api/main.py:RateLimit)"
+  ],
+  "backend_interfaces": [
+    "FastAPI (api/main.py): GET /health, /patients, /patients/{pid}/timeline, /patients/{pid}/findings, /findings/{fid}/investigation, /patients/{pid}/packet, /patients/{pid}/agent-steps, /patients/{pid}/facts/{fact_id}/affected; POST /patients/{pid}/evidence, /findings/{fid}/review, /questions, /agent-steps, /findings/{fid}/review-agent, /sandbox/reset",
+    "mcp/ directory is only a .gitkeep (reserved, not implemented)"
+  ],
+  "frontend_interfaces": [
+    "Next.js app router: app/page.tsx, app/patients/[pid], app/packet/[id], app/states; components: workspace, medication-river (timeline), investigation-drawer, change-card (before/after diff), state-notice, dominoes, next-question, agent-panel, packet, sandbox-panel, fact-states, source-list"
+  ],
+  "agent_or_memory_mechanisms": "Persistent AgentStep log per tool call; FindingRevision/ReviewDecision lineage; EvidenceEvent journal with replay; bounded one-pass review agent with allowlist and ID-grounding validator; LLM (OpenAI-compatible, default Groq) optional with model fallback; no free-form long-term memory.",
+  "tests_present": "tests/: ~112 test functions across test_agent.py (23), test_graph.py (29, requires a real FalkorDB), test_rules.py (16, pure-Python), test_api.py (15), test_deploy.py (11), test_golden.py (8), test_contracts.py (5, includes copy-rule scan and first-MATCH enforcement), test_stack.py (5, docker restart durability). Not executed by auditor.",
+  "dependency_requirements": ["fastapi>=0.115", "uvicorn[standard]>=0.30", "pydantic>=2.7", "falkordb>=1.0", "dev: pytest>=8, httpx>=0.27, ruff>=0.6", "Python >=3.11,<3.12 (pyproject requires-python); uv.lock present", "LLM: stdlib urllib only (no SDK)"],
+  "security_findings": [
+    "agent/llm.py:80-91 - outbound urllib POST to LLM_BASE_URL (default api.groq.com); base URL is env-controlled, so SSRF only via deployer config. Key sent in Authorization header, never logged (good).",
+    "api/main.py:215 - POST /sandbox/reset is unauthenticated and drops and reseeds the family graph (destructive); no authn/authz anywhere in the API (patient scoping is by id only).",
+    "api/main.py:187-196 - client_ip trusts X-Real-IP / X-Forwarded-For so the rate limit is spoofable outside Railway.",
+    "docker-compose.yml - FalkorDB port exposed with no password by default; FalkorDB Browser exposed on 3000.",
+    "No eval/exec/pickle/subprocess found; all Cypher is parameterized named files (no string-built Cypher); no hard-coded secrets (tests/test_deploy.py:18 uses a dummy value asserted never to leak)."
+  ],
+  "duplicates_or_overlaps": "Core mechanics overlap evidence provenance/supersession/decision lineage (the Evidence Drift Cascade family). Domain (medication prescribing cascades, synthetic patients) is not a Kairos industrial domain, so only the engine pattern is reusable, not the clinical rules.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - Implements fact versioning with SUPERSEDES, dependency-targeted re-evaluation (Q3), immutable FindingRevision lineage with BECAUSE->EvidenceEvent, needs_reassessment gating that preserves prior human ReviewDecision, idempotent evidence events and optimistic-concurrency 409s: nearly a reference implementation of an Evidence Drift Cascade.",
+  "strongest_reusable_unit": {
+    "file": "engine/queries/write/evidence_apply.cypher + engine/queries/q3_affected.cypher + engine/queries/write/revision_next.cypher + api/graph_store.py",
+    "symbols": ["GraphStore.submit_evidence", "GraphStore._finish", "reevaluate", "q3_affected", "FactVersion SUPERSEDES chain", "FindingRevision PREVIOUS/BECAUSE", "ReviewDecision ON revision"],
+    "why": "Domain-neutral supersession + cascade pattern in FalkorDB-native Cypher with atomic compare-and-set; swap Patient for Case/Claim and MedicationEpisode/Observation for Evidence to get an Evidence Drift engine. Rules (engine/rules.py) are domain-specific and should be replaced by Kairos validity rules.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB (falkordb>=1.0 client; server 4.x features used); no LLM required (optional OpenAI-compatible key for the agent)"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Extract the versioned-fact / affected-set / revision / decision-lineage Cypher and the compare-and-set + idempotent-event logic as a domain-neutral Evidence Drift engine inside Kairos; keep the medication rules and UI as reference only. Same stack (FastAPI + FalkorDB client), so little porting friction.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

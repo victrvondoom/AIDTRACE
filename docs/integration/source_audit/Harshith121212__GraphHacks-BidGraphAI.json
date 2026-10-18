@@ -1,0 +1,119 @@
+{
+  "repository": "Harshith121212/GraphHacks-BidGraphAI",
+  "url": "https://github.com/Harshith121212/GraphHacks-BidGraphAI",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Harshith121212__GraphHacks-BidGraphAI",
+  "commit_sha": "fc6aea85b2476084ed7eeea2515a48a1c3a39616",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "requirements.txt",
+    ".env.example",
+    "config.py",
+    "db/connection.py",
+    "db/schema.py",
+    "db/seed_graph.py (head)",
+    "mcp_server/server.py (tool list; lines 150-440, 754-800, 881-1115, 1516-1560)",
+    "agent/langgraph_workflow.py (build_graph/run)",
+    "agent/mcp_agent.py (_init_dual_nemotron_agents, symbol list)",
+    "agent/models.py (symbol list)",
+    "pipeline/enricher_ingestor.py (head, symbol list)",
+    "pipeline/cron_runner.py (symbol list)",
+    "tenderscrape/base.py (network section)",
+    "tests/test_phase2_agent_and_api.py (head)",
+    "tests/*.py (counted)"
+  ],
+  "languages_frameworks": ["Python", "FalkorDB Python client (falkordb>=1.0.8)", "MCP Python SDK (mcp>=1.2,<2) FastMCP stdio server", "LangGraph/LangChain StateGraph", "OpenAI SDK pointed at OpenRouter (NVIDIA Nemotron free model)", "pydantic-settings", "httpx + BeautifulSoup scrapers", "FastAPI (referenced by tests but api/ package is absent)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Eligible-bidder matching with hard filters, cooldown, direct capability coverage and 5-hop lookalike-peer traversal",
+      "files": ["mcp_server/server.py"],
+      "symbols": ["discover_direct_and_lookalike_matches", "get_tender_requirements", "check_client_coverage", "find_peer_clients", "get_department_lineage", "explore_paths"],
+      "real_or_stub": "REAL",
+      "notes": "Real OpenCypher against FalkorDB: filters on blacklist, GST validity per region, turnover/net worth/solvency/staff, 2-day alert cooldown on MATCHED_TENDER, certification/brand-authorisation/enlistment validity via valid_until > $now, plus a lookalike path Client->shared capability<-Peer-[BID_HISTORY WON]->past Tender<-Department->Tender. The final score is a hand-set heuristic (0.55 base + 0.25*spec_ratio + 0.10/0.20 lookalike boost + affinity), not a learned or calibrated model."
+    },
+    {
+      "capability": "JV / consortium partner discovery",
+      "files": ["mcp_server/server.py"],
+      "symbols": ["discover_jv_consortium_matches", "record_jv_outcome_and_learn"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Large (~320 line) function pairing lead and partner clients with complementary coverage; PARTNERSHIP_AFFINITY update on outcome sets hard-coded scores (0.98 on WON, 0.65 on LOST)."
+    },
+    {
+      "capability": "Outcome feedback learning loop (idempotent, correctable) updating DEPARTMENT_AFFINITY / CATEGORY_AFFINITY",
+      "files": ["mcp_server/server.py"],
+      "symbols": ["record_bid_outcome_and_learn"],
+      "real_or_stub": "REAL",
+      "notes": "Duplicate outcomes are ignored (prev_status check); WON<->LOST corrections apply +/-1 deltas; Laplace-smoothed affinity_weight = ((wins+1)/(total+2)-0.5)*0.5 clipped at zero counts. Memory is just relationship properties in the graph."
+    },
+    {
+      "capability": "Alert dispatch with Cypher-enforced cooldown and AgentDecision audit nodes",
+      "files": ["mcp_server/server.py", "agent/langgraph_workflow.py", "agent/models.py"],
+      "symbols": ["dispatch_tender_alert_with_trace", "get_alerts_and_agent_memory", "BidGraphLangGraphOrchestrator", "BidGraphLangGraphOrchestrator.build_graph", "AgentDecisionRecord", "LangGraphAgentState"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Linear 4-node LangGraph (triage_procurement -> graph_matching -> cognitive_reasoning -> dispatch_alerts) that calls MCP tools; 'dispatch' writes MATCHED_TENDER/AgentDecision nodes in the graph, no outbound email transport was found in the code (smtplib grep empty)."
+    },
+    {
+      "capability": "Dual-LLM reasoning over matches (Agent Alpha / Beta via OpenRouter Nemotron free model)",
+      "files": ["agent/mcp_agent.py", "agent/langgraph_workflow.py"],
+      "symbols": ["BidGraphMCPAgent", "_init_dual_nemotron_agents", "_synthesize_candidate_reasoning", "_synthesize_lookalike_peer_reasoning", "_synthesize_jv_reasoning", "_synthesize_jv_partner_reasoning"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "The 'two agents' are two API keys calling the same free model with different prompts to narrate already-computed Cypher results; the ranking itself is deterministic Cypher+Python. Reasoning text is LLM prose over graph facts."
+    },
+    {
+      "capability": "Tender scraping, LLM/heuristic enrichment and graph ingestion",
+      "files": ["tenderscrape/base.py", "tenderscrape/gem.py", "tenderscrape/cppp.py", "tenderscrape/cpwd.py", "tenderscrape/ireps.py", "tender_enrich/generator.py", "tender_enrich/seeds.py", "pipeline/enricher_ingestor.py", "pipeline/cron_runner.py"],
+      "symbols": ["EnricherIngestor.enrich_tender", "EnricherIngestor._heuristic_enrichment", "EnricherIngestor.upsert_tender", "EnricherIngestor.scrape_and_ingest_live", "run_ingestion_cycle"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Scrapers fetch GeM/CPPP/CPWD listing pages (robots.txt check present in base.py); tender_enrich fills missing financial/BOQ/brand/product requirement fields from seed JSON tables (tender_enrich/seed/*.json), i.e. synthetic enrichment, not source data. Client roster in db/seed_graph.py is 12 invented contractors."
+    },
+    {
+      "capability": "Graph schema bootstrap (indexes) and demo seeding",
+      "files": ["db/schema.py", "db/seed_graph.py", "db/connection.py"],
+      "symbols": ["initialize_schema", "INDEX_SPECIFICATIONS", "seed_database", "FalkorDBConnection", "test_connection"],
+      "real_or_stub": "REAL",
+      "notes": "Idempotent CREATE INDEX FOR (n:Label) ON (n.prop) over 15 label/prop pairs; seed_database can graph.delete() the target graph (clear_existing=True default)."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Ministry, Department, Tender, Client, WorkCategory, Specialization, Certification, Brand, Product, EnlistmentClass, Region, AgentDecision, SystemMeta, JVConsortium. Edges: ISSUED, HAS_DEPARTMENT, LOCATED_IN, IN_CATEGORY, REQUIRES_SPECIALIZATION/REQUIRES_CERT/PREFERS_BRAND/REQUIRES_PRODUCT/REQUIRES_ENLISTMENT, OPERATES_IN{gst_valid}, WORKS_IN, HAS_SPECIALIZATION, HOLDS_CERT{valid_until}, AUTHORIZED_FOR{territory,valid_until}, SUPPLIES{is_oem}, ENLISTED_AS|HOLDS_ENLISTMENT, MATCHED_TENDER{status,last_alert_sent,alert_count}, BID_HISTORY{outcome}, DEPARTMENT_AFFINITY/CATEGORY_AFFINITY{wins,losses,win_rate,affinity_weight}, PARTNERSHIP_AFFINITY, FORMED_FOR_TENDER, FOR_CLIENT, EVALUATED_TENDER. Cypher uses $params throughout for matching/learning queries, pattern comprehensions ([(t)-[:X]->(n) | n.name]), OPTIONAL MATCH + collect(DISTINCT), multi-type relationship alternation, MERGE + SET counters. No APOC/GDS. Uses graph.query for everything (not ro_query), including the 'read-only' diagnostic tools. Seed code interpolates ids into trace strings only (not into Cypher).",
+  "algorithms": [
+    "Hard-eligibility Cypher filter with time-bounded validity (valid_until > $now) and alert cooldown (172800s) in mcp_server/server.py:discover_direct_and_lookalike_matches",
+    "Direct capability coverage ratio and heuristic composite score (0.55 base + 0.25*spec ratio + lookalike boost + learned affinity) in the same function",
+    "5-hop lookalike peer traversal through shared capability nodes and department win history",
+    "Laplace-smoothed win-rate affinity with idempotent correction deltas in mcp_server/server.py:record_bid_outcome_and_learn",
+    "Linear LangGraph pipeline orchestration in agent/langgraph_workflow.py:build_graph"
+  ],
+  "backend_interfaces": [
+    "FastMCP stdio server mcp_server/server.py with ~20 tools (get_active_tenders_and_sync_status, discover_direct_and_lookalike_matches, discover_jv_consortium_matches, dispatch_tender_alert_with_trace, record_bid_outcome_and_learn, execute_read_cypher, execute_cypher_traversal, get_alerts_and_agent_memory, record_jv_outcome_and_learn, get_graph_visualization_snapshot, enrich_and_ingest_tender, scrape_and_ingest_live_tenders, delete_all_active_tenders_mcp, reset_and_seed_demo_graph, get_tender_requirements, check_client_coverage, get_department_lineage, find_peer_clients, explore_paths, get_client_and_tender_for_email)",
+    "tenderscrape CLI (python -m tenderscrape) and tender_enrich CLI, pipeline/cron_runner.py",
+    "FastAPI app api/main.py is imported by tests but the api/ directory is NOT present in this checkout, so the HTTP layer cannot be audited"
+  ],
+  "frontend_interfaces": ["none present (no UI files in the checkout)"],
+  "agent_or_memory_mechanisms": "MCP client agent (BidGraphMCPAgent) launching the MCP server as a stdio subprocess, plus a linear LangGraph state machine. Graph-resident memory: AgentDecision nodes (with outcome_feedback), MATCHED_TENDER alert state, and win/loss affinity edges updated by record_bid_outcome_and_learn. LLM is used only to narrate reasoning.",
+  "tests_present": "tests/ has 3 files with ~17 test functions (phase1 MCP+graph, phase2 agent+API incl. an AST test forbidding falkordb imports in agent/ and api/, phase4 JV+LangGraph). Phase 2/4 tests import api.main which is missing from the checkout, so they would fail as shipped. Tests need a live FalkorDB. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.0.8 (unpinned upper bound)", "mcp>=1.2.0,<2.0.0", "pydantic>=2.7.0", "pydantic-settings>=2.2.0", "openai>=1.30.0", "fastapi>=0.111.0", "uvicorn>=0.30.0", "httpx>=0.27.0", "beautifulsoup4>=4.12.0", "langchain>=1.4.0", "langgraph>=1.2.0", "langchain-google-genai>=4.4.0", "google-generativeai>=0.8.0", "huggingface-hub>=0.23.0", "pytest>=8, pytest-asyncio"],
+  "security_findings": [
+    "mcp_server/server.py:1094-1100 - execute_read_cypher 'read-only' guard is a space-delimited substring denylist (CREATE/MERGE/SET/DELETE/REMOVE/DROP) and then runs graph.query (a write-capable call), so it is bypassable (e.g. 'CREATE(' or newline/tab delimited keywords, CALL procedures, GRAPH.DELETE-style via procedures). Should use ro_query.",
+    "mcp_server/server.py:1516-1535 - execute_cypher_traversal guard splits on whitespace and compares uppercase words; a token like 'SET' glued to punctuation (e.g. 'DELETE(n)', 'n)SET') evades it; executes via graph.query. LLM-supplied Cypher is run verbatim.",
+    "mcp_server/server.py:1484-1515 - delete_all_active_tenders_mcp and reset_and_seed_demo_graph are exposed as MCP tools and can wipe the graph (seed_database(clear_existing=True) calls graph.delete()).",
+    "db/connection.py:~40-48 - FALKORDB_SSL path sets ssl_cert_reqs=None and ssl_check_hostname=False, disabling TLS verification.",
+    "agent/mcp_agent.py:71-110 - OpenRouter API keys read from env/settings; no hard-coded key found (grep for sk-/nvapi-/AIza/hf_ patterns returned nothing in .py/.json/.md files).",
+    "tenderscrape/base.py:14,53-123 - outbound httpx scraping of third-party government portals (robots.txt check implemented); data/raw/ commits ~40 raw scraped HTML pages from GeM/CPPP/CPWD, whose re-use terms are not stated in the repo.",
+    "mcp_server/server.py:387-401 - trace strings interpolate ids/names into text (not Cypher); low risk.",
+    "No eval/exec/pickle/shell=True in non-test code. Only subprocess use is the MCP server launch via StdioServerParameters (agent/mcp_agent.py:190)."
+  ],
+  "duplicates_or_overlaps": "Procurement / bidder-to-tender matching with learned affinities; generic overlap with recommendation or lead-matching engines and with other 'agent memory in the graph' hackathon entries (outcome-feedback weights on edges). Not a blast-radius, RCA or provenance engine.",
+  "capability_family": "Other",
+  "evidence_drift_relevance": "LOW - valid_until-gated credentials, cooldown state and idempotent WON/LOST correction deltas show a little temporal validity and reversal handling, but there is no provenance chain, supersession model or dependency invalidation of derived conclusions.",
+  "strongest_reusable_unit": {
+    "file": "mcp_server/server.py",
+    "symbols": ["record_bid_outcome_and_learn", "dispatch_tender_alert_with_trace", "discover_direct_and_lookalike_matches"],
+    "why": "The outcome-feedback pattern (idempotent status transition, +/-1 correction deltas, Laplace-smoothed affinity edges, cooldown enforced in Cypher) is a compact reference for graph-resident agent memory, and the time-validity-filtered capability match query is a reusable Cypher idiom. Everything is tightly bound to the Indian tender schema and to a single 1900-line module.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; OpenRouter key only for the narration step"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Domain-specific tender matching with heuristic scores, an unsafe pseudo-read-only Cypher tool and a missing api/ package; worth mining for the affinity-learning and validity-filter Cypher idioms but not for direct merge.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "MEDIUM"
+}

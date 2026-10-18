@@ -1,0 +1,127 @@
+{
+  "repository": "sdkharade12/blast-shield-graph-hacks",
+  "url": "https://github.com/sdkharade12/blast-shield-graph-hacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\sdkharade12__blast-shield-graph-hacks",
+  "commit_sha": "f7c9cee6c95ad9556418faa9924c9d3a486a644c",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/app/graph/queries.py",
+    "backend/app/services/graph_service.py",
+    "backend/app/integration.py",
+    "backend/app/main.py",
+    "backend/app/agent/gemini_service.py",
+    "backend/app/mcp/server.py",
+    "backend/app/graph/connection.py",
+    "backend/app/graph/seed.py",
+    "backend/tests/test_integration.py",
+    "test_falkordb_connection.py",
+    "requirements.txt",
+    "README.md",
+    "frontend/src/App.jsx"
+  ],
+  "languages_frameworks": [
+    "Python 3.11/FastAPI",
+    "FalkorDB (FalkorDB==1.8.0, redis==8.1.0)",
+    "MCP server and client (mcp, unpinned)",
+    "Google Gemini via google-genai",
+    "React + Vite (frontend/)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Cloud access-path investigation (identity -> session -> workload -> role -> role -> critical data asset)",
+      "files": ["backend/app/graph/queries.py", "backend/app/services/graph_service.py"],
+      "symbols": ["FIND_SENSITIVE_RESOURCE_PATHS_QUERY", "FIND_EXCESSIVE_PERMISSION_PATHS_QUERY", "FIND_WORKLOAD_BLAST_RADIUS_QUERY", "_investigate_paths", "find_sensitive_resource_paths", "find_workload_blast_radius"],
+      "real_or_stub": "REAL",
+      "notes": "Fixed-shape, parameterised read-only Cypher (ro_query) over five relationship types. Distinguishes path_found / no_path / unknown entity / invalid_input / query_error explicitly. Paths are fixed-arity patterns, not generic traversal."
+    },
+    {
+      "capability": "Bounded generic shortest access path",
+      "files": ["backend/app/graph/queries.py", "backend/app/services/graph_service.py"],
+      "symbols": ["FIND_SHORTEST_ACCESS_PATH_QUERY", "find_shortest_access_path", "MAX_ACCESS_PATH_HOPS"],
+      "real_or_stub": "PARTIAL",
+      "notes": "MATCH p=(s)-[*1..6]->(t) with an all() filter on allowed rel types and non-blocked sessions, ORDER BY hop_count LIMIT 1. This enumerates every path up to 6 hops and then sorts, rather than using a shortest-path algorithm, so it will not scale; the code says it is the portable fallback because graph algorithm procedures differ between FalkorDB installs."
+    },
+    {
+      "capability": "Simulated containment with before/after re-verification",
+      "files": ["backend/app/integration.py", "backend/app/services/graph_service.py"],
+      "symbols": ["simulate_containment", "get_containment_route_statuses", "find_remaining_containment_paths", "SIMULATE_CONTAINMENT_QUERY", "_ACTION_HISTORY"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Sets route.containment_status='BLOCKED' on one synthetic HAS_SESSION edge (idempotent) and then re-queries remaining active paths to report alternative_path_remains vs no_qualifying_path_in_modeled_graph. Requires confirmed=true. Action history is an in-process list lost on restart. Only 'primary'/'alternate' route ids are accepted."
+    },
+    {
+      "capability": "Deterministic transparent demo risk score",
+      "files": ["backend/app/integration.py"],
+      "symbols": ["_assess_risk"],
+      "real_or_stub": "STUB",
+      "notes": "Rule 'demo-rules-v1': +35 base, +30 public workload, +30 EXCESSIVE flag, small increments for extra paths, capped at 100. Self-described as demonstration logic; not a computed risk model. The 'EXCESSIVE' classification is a pre-seeded edge property, not evaluated."
+    },
+    {
+      "capability": "Gemini + MCP grounded explanation with fallback",
+      "files": ["backend/app/agent/gemini_service.py", "backend/app/mcp/server.py"],
+      "symbols": ["run_gemini_investigation", "_ground_answer", "_deterministic_summary", "TOOL_TRACE", "_traced", "get_tool_trace"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Spawns the MCP server over stdio and lets Gemini call 5 read-only tools; _ground_answer rejects model text that names unknown entity ids, relationship types, a different risk score, or claims containment while paths remain, and falls back to a canonical summary. The grounding check is regex-based and heuristic (ids must contain a hyphen/underscore and a digit). Requires a Gemini API key; otherwise the endpoint returns 503."
+    },
+    {
+      "capability": "Synthetic graph seeding and four scripted scenarios",
+      "files": ["backend/app/graph/seed.py", "backend/app/graph/scenario4_seed.py", "backend/app/integration.py"],
+      "symbols": ["seed_blastshield_graph", "ALERT_CATALOG"],
+      "real_or_stub": "STUB",
+      "notes": "Alerts BH-1042, BH-IAM-2001, BH-WORKLOAD-3001, BH-CONTAINMENT-4001 are a hard-coded 4-entry catalog mapped to fixed target ids; the data is a ~27-node synthetic graph (README). No ingestion of real cloud data."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Identity, Session, Workload, IAMRole, DataAsset. Edges: HAS_SESSION{route_id, containment_status}, CAN_ACCESS, RUNS_AS, CAN_ASSUME{assessment, granted_actions, granted_resource_scope, intended_scope, reason}, CAN_READ. Cypher: fixed-arity path matches returning list comprehensions of nodes(p)/relationships(p); one variable-length [*1..6] with all(rel IN relationships(p) WHERE type(rel) IN [...]); SET on a single relationship property for containment. All reads via ro_query, parameters only. No APOC/GDS. Graph name via FALKORDB_GRAPH_NAME (default 'blastshield').",
+  "algorithms": [
+    "Fixed-pattern attack-path matching with property filters (queries.py)",
+    "Bounded depth-6 path enumeration with relationship-type allowlist and blocked-edge exclusion (queries.py:FIND_SHORTEST_ACCESS_PATH_QUERY)",
+    "Containment verification by re-running reachability after a state change (integration.py:simulate_containment)",
+    "Additive demo risk rules (integration.py:_assess_risk)",
+    "LLM-output grounding validation by id/relationship/score cross-check (gemini_service.py:_ground_answer)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, GET /api/alerts, POST /api/investigations, POST /api/agent/investigate, GET /api/containment/{alert_id}, POST /api/containment/simulate, GET /api/containment/{alert_id}/history",
+    "MCP stdio server backend/app/mcp/server.py (uses mcp.server.MCPServer): investigate_alert, find_shortest_access_path, get_blast_radius, get_containment_route_statuses, get_tool_trace"
+  ],
+  "frontend_interfaces": [
+    "React single-file dashboard frontend/src/App.jsx (alert picker, outcome badge, path/evidence view, risk breakdown, MCP trace, containment simulator with confirmation)"
+  ],
+  "agent_or_memory_mechanisms": "One-shot Gemini tool-calling session over MCP with a per-process TOOL_TRACE (last 30 calls) and a stored CANONICAL_INVESTIGATION used for grounding. No persistent memory, no approval workflow beyond a confirmed=true boolean on the containment request.",
+  "tests_present": "backend/tests/test_integration.py (17 test functions, unittest, mock-based) and backend/tests/test_live_falkordb.py (4 tests needing a live FalkorDB); plus test_falkordb_connection.py (connectivity script). The mock source file mock_graph_service.py is absent; only a compiled mock_graph_service.cpython-311.pyc is committed.",
+  "dependency_requirements": [
+    "FalkorDB==1.8.0",
+    "redis==8.1.0",
+    "async-timeout==5.0.1",
+    "python-dateutil==2.9.0.post0",
+    "fastapi (unpinned)",
+    "uvicorn[standard] (unpinned)",
+    "python-dotenv (unpinned)",
+    "google-genai (unpinned)",
+    "mcp (unpinned; code imports mcp.server.MCPServer which is not the mcp 1.x FastMCP API used by the other repos in this batch)"
+  ],
+  "security_findings": [
+    "backend/app/agent/__pycache__/*.pyc, backend/app/__pycache__/*.pyc and backend/tests/__pycache__ - compiled bytecode committed to the repository, including mock_graph_service.cpython-311.pyc whose source is not present; do not import or execute it, delete before merging",
+    "backend/app/main.py:73-99 - /api/agent/investigate spawns a Python subprocess MCP server (sys.executable -m app.mcp.server) and sends data to the Gemini API; child env copies the full process environment including GEMINI_API_KEY and any other secrets",
+    "backend/app/agent/gemini_service.py:153 - prints the model name to stdout; no key logged. The key is read from environment/.env (not committed)",
+    "backend/app/main.py:24-30 - CORS limited to localhost:5173 with allow_credentials=True (reasonable); no authentication on any route, including POST /api/containment/simulate which mutates the graph",
+    "backend/app/graph/queries.py:243-249 - unbounded path enumeration [*1..6] can be made expensive by a caller choosing well-connected source/target ids (DoS risk), though ids are length-limited to 128 characters and parameterised",
+    "backend/app/graph/connection.py:19 - FalkorDB connection has no password/TLS option; unauthenticated Redis-protocol connection",
+    "backend/app/mcp/server.py:20-21 - module-level mutable TOOL_TRACE and CANONICAL_INVESTIGATION shared across calls (not safe for concurrent sessions)",
+    "No hard-coded secrets, eval/exec or pickle found in the source files."
+  ],
+  "duplicates_or_overlaps": "Overlaps attack-path/identity-to-data reachability (ThreatPath, exploit-path, ExploitReach, other security repos), blast radius of exposed workloads, and simulated containment. Its distinguishing piece is the LLM grounding validator and re-verification after containment.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "LOW - provenance block (dataset_version, coverage, updated_at), canonical-vs-model grounding and post-action re-verification are useful patterns, but there is no temporal validity, supersession, invalidation or real approval workflow.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/agent/gemini_service.py + backend/app/integration.py",
+    "symbols": ["_ground_answer", "simulate_containment", "_investigate_paths", "FIND_SHORTEST_ACCESS_PATH_QUERY"],
+    "why": "A small guard that rejects LLM explanations containing entities, relationships or scores not present in the canonical graph result, and a before/after re-query verification of a state-changing action; both are pattern-reusable for Kairos agents without copying the cloud-IAM domain.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; Gemini API key and an MCP 2.x-style server only for the agent path"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The domain logic is a four-scenario synthetic demo with fixed patterns and a stub risk score, and the security space is already covered by the more complete ThreatPath. Borrow the grounding validator and re-verification pattern as reference.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

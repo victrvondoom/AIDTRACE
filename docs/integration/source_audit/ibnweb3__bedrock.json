@@ -1,0 +1,133 @@
+{
+  "repository": "ibnweb3/bedrock",
+  "url": "https://github.com/ibnweb3/bedrock",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\ibnweb3__bedrock",
+  "commit_sha": "e25a574b03cc662ad9320d0256df54d241939fcf",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "src/bedrock/audit.py",
+    "src/bedrock/agent.py",
+    "src/bedrock/graph.py",
+    "src/bedrock/config.py",
+    "src/bedrock/hashing.py",
+    "src/bedrock/llm.py",
+    "src/bedrock/server.py",
+    "src/bedrock/ratelimit.py",
+    "src/bedrock/retraction_watch.py",
+    "queries/00_schema.cypher",
+    "queries/05_cited_n.cypher",
+    "queries/10_derive_coauthor.cypher",
+    "queries/11_derive_bib_coupled.cypher",
+    "queries/audit/10_resolve.cypher",
+    "queries/audit/20_indexed_refs.cypher",
+    "queries/audit/21_direct.cypher",
+    "queries/audit/22_two_hop.cypher",
+    "queries/audit/30_citers.cypher",
+    "queries/audit/31_alternatives.cypher",
+    "queries/audit/40_venue_retractions.cypher",
+    "queries/features/*.cypher (all 15)",
+    "scripts/compute_features.py",
+    "scripts/evaluate.py",
+    "scripts/derive_edges.py",
+    "scripts/load_graph.py",
+    "scripts/snapshot.py",
+    "deploy/entrypoint.sh",
+    "docs/RESULTS.md",
+    "requirements.txt",
+    ".env.example"
+  ],
+  "languages_frameworks": ["Python 3.13 (stdlib http.server)", "falkordb==1.8.0", "httpx==0.28.1", "python-dotenv", "Cypher", "vanilla JS frontend"],
+  "implemented_capabilities": [
+    {
+      "capability": "Citation-provenance audit: retracted works reachable by 0, 1 and 2 citation hops from a bibliography",
+      "files": ["src/bedrock/audit.py", "queries/audit/10_resolve.cypher", "queries/audit/21_direct.cypher", "queries/audit/22_two_hop.cypher", "queries/audit/20_indexed_refs.cypher", "queries/audit/30_citers.cypher", "queries/audit/40_venue_retractions.cypher"],
+      "symbols": ["Auditor.audit", "extract_dois", "RETRACTED", "DIRECT", "TWO_HOP", "CLEAN", "UNKNOWN"],
+      "real_or_stub": "REAL",
+      "notes": "Resolves DOIs, then runs parameterised Cypher via ro_query to classify each work as RETRACTED, CITES_RETRACTED, TWO_HOP, NO_EXPOSURE_FOUND or NOT_IN_CORPUS with coverage (refs_indexed vs refs_total) and explicit caveats; output is deterministically ordered."
+    },
+    {
+      "capability": "Human-approval-gated remediation proposals",
+      "files": ["src/bedrock/audit.py", "src/bedrock/server.py"],
+      "symbols": ["build_proposals", "apply_approved", "Handler.do_POST"],
+      "real_or_stub": "REAL",
+      "notes": "Proposals (REMOVE_OR_REPLACE, SUGGEST_ALTERNATIVE, REVIEW) are only applied for ids the user approves; the server re-runs the audit from submitted text and never trusts client-supplied results; emits a markdown audit report."
+    },
+    {
+      "capability": "Co-citation replacement suggestion for retracted works",
+      "files": ["queries/audit/31_alternatives.cypher"],
+      "symbols": [],
+      "real_or_stub": "PARTIAL",
+      "notes": "Ranks non-retracted papers co-cited with the retracted work; explicitly a heuristic and topical fit is not verified."
+    },
+    {
+      "capability": "Tool-calling LLM audit agent with grounding checks",
+      "files": ["src/bedrock/agent.py", "src/bedrock/llm.py"],
+      "symbols": ["AuditAgent.run", "AuditAgent._tool_audit", "AuditAgent._tool_explain", "compact_audit", "deterministic_summary", "_with_verified_counts", "GroqClient.chat"],
+      "real_or_stub": "REAL",
+      "notes": "Read-only tools; allow-list of DOIs the model may query (pasted text or earlier tool output); every DOI in the final answer is checked against tool results (verification.ungrounded); structured audit is computed independently of the LLM; deterministic fallback when no key; opening counts overwritten with verified numbers; completeness retry."
+    },
+    {
+      "capability": "As-of-T0 temporal feature extraction and backtest (author contamination, bibliographic coupling, label-propagation communities)",
+      "files": ["scripts/compute_features.py", "scripts/evaluate.py", "queries/features/20_candidates.cypher", "queries/features/30_g_contam1.cypher", "queries/features/31_g_contam2.cypher", "queries/features/38_community.cypher", "queries/10_derive_coauthor.cypher", "queries/11_derive_bib_coupled.cypher"],
+      "symbols": ["main", "pct_rank", "weighted_metrics"],
+      "real_or_stub": "REAL",
+      "notes": "Real as-of-cutoff Cypher (retracted_at <= $t0), COAUTHOR/BIB_COUPLED derived edges, CALL algo.labelPropagation, and a venue-clustered bootstrap evaluation. docs/RESULTS.md honestly reports the pre-registered success criterion was NOT met (no predictive lift), so this is research scaffolding not a predictor."
+    },
+    {
+      "capability": "Retraction Watch ingestion and author pseudonymisation",
+      "files": ["src/bedrock/retraction_watch.py", "src/bedrock/hashing.py", "src/bedrock/openalex.py", "scripts/pull_retraction_watch.py", "scripts/pull_openalex.py"],
+      "symbols": ["iter_records", "download", "parse_date", "hash_author_id", "norm_doi"],
+      "real_or_stub": "REAL",
+      "notes": "Column-minimised CSV parsing, resumable download with SHA-256 provenance metadata, HMAC-SHA256 author id hashing (min 32-char salt)."
+    },
+    {
+      "capability": "Public-demo rate limiting",
+      "files": ["src/bedrock/ratelimit.py"],
+      "symbols": ["SlidingWindow", "Limits"],
+      "real_or_stub": "REAL",
+      "notes": "In-memory sliding window per IP plus global daily budget for LLM calls; active only when BEDROCK_PUBLIC=1."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Paper {id, doi, pub_date, retracted_at, retraction_reasons, ref_total, refs_indexed, candidate, full, cited_n}, Author (hashed id), Venue {id, name, stratum}. Edges: CITES, PUBLISHED_IN, WROTE, COAUTHOR {n, first}, BIB_COUPLED {shared}. Indexes on Paper.id/doi/pub_date/retracted_at/candidate, Author.id, Venue.id. Cypher patterns: UNWIND $ids with WITH-barrier anchoring for planner control, 1-hop and 2-hop CITES traversal with NOT (p)-[:CITES]->(r) exclusion, as-of date filters, scratch labels (RetAuth, AsOf) with cleanup. Uses FalkorDB-native CALL algo.labelPropagation (not Neo4j GDS/APOC). Queries are plain files run as ro_query with params; no string-built user Cypher.",
+  "algorithms": [
+    "1-hop and 2-hop retracted-ancestor exposure over CITES (queries/audit/21_direct.cypher, 22_two_hop.cypher, called by Auditor.audit in src/bedrock/audit.py)",
+    "Co-citation alternative ranking (queries/audit/31_alternatives.cypher)",
+    "Bibliographic coupling edge derivation with citation-frequency cap and sliced execution (queries/11_derive_bib_coupled.cypher, scripts/derive_edges.py)",
+    "CALL algo.labelPropagation community detection over BIB_COUPLED for as-of populations (queries/features/38_community.cypher)",
+    "Venue-clustered bootstrap, AP and recall@k evaluation (scripts/evaluate.py: weighted_metrics, pct_rank)",
+    "Deterministic sorting of results so identical input yields identical output (Auditor.audit)"
+  ],
+  "backend_interfaces": [
+    "stdlib HTTP server (src/bedrock/server.py): GET /api/health; POST /api/audit, /api/apply, /api/agent; static UI; CSP and nosniff headers; 1 MB body cap",
+    "CLI scripts: serve.py, load_graph.py, derive_edges.py, compute_features.py, evaluate.py, snapshot.py (export/restore FalkorDB graph via DUMP/RESTORE)"
+  ],
+  "frontend_interfaces": ["Static vanilla JS UI in src/bedrock/web (index.html, app.js, style.css, examples.json) and a marketing site in site/"],
+  "agent_or_memory_mechanisms": "Bounded tool-calling loop (MAX_STEPS=6, explain_finding limit 3) over Groq with read-only tools audit_bibliography, explain_finding, find_dois. DOI allow-list prevents the model steering the audit; post-hoc verification flags ungrounded DOIs; human-in-the-loop approval gate for any action. No persistent memory.",
+  "tests_present": "9 test files in tests/ (agent, audit, evaluate, hashing, openalex, ratelimit, retraction_watch, server, venues) with about 90 test_ functions using a fixture module and fake graph/transport; no tests run against a live FalkorDB except scripts/smoke_test.py and verify_slim_graph.py. Not executed by auditor.",
+  "dependency_requirements": ["falkordb==1.8.0", "httpx==0.28.1", "python-dotenv==1.2.4", "FalkorDB server with algo.labelPropagation (feature scripts only)", "Optional GROQ_API_KEY, OPENALEX_API_KEY, AUTHOR_HASH_SALT"],
+  "security_findings": [
+    "scripts/derive_edges.py:121 - f-string builds MATCH ()-[e:{rel}]->() DELETE e, but rel iterates a hard-coded tuple (COAUTHOR, BIB_COUPLED); not injectable",
+    "scripts/load_graph.py:189-191 - f-string label/rel interpolation from internal constants; not user input",
+    "scripts/verify_slim_graph.py:37 - f-string WHERE clause assembled in a verification script; internal use only",
+    "scripts/snapshot.py:55-80 - Redis DUMP/RESTORE of a binary graph blob; restoring an untrusted .rdb.gz would be unsafe, the repo ships its own deploy/bedrock_slim.rdb.gz with a SHA-256 manifest",
+    "src/bedrock/server.py:100-110 - trusts last X-Forwarded-For entry only when BEDROCK_PUBLIC=1; reasonable; binds 127.0.0.1 by default",
+    "src/bedrock/retraction_watch.py:~85-100 - download follows redirects to a fixed gitlab.com URL; outbound calls limited to OpenAlex, Groq and gitlab",
+    "No hard-coded secrets found; keys come from .env/environment (.env.example has empty values); no eval/exec/pickle/subprocess found in src or scripts"
+  ],
+  "duplicates_or_overlaps": "Upstream-invalidates-downstream provenance (retracted paper -> citing works), overlapping research-integrity / citation-graph tools; conceptually overlaps dependency blast-radius traversal and lineage/provenance repos.",
+  "capability_family": "Research & Legal Evidence",
+  "evidence_drift_relevance": "HIGH - a retraction event with a date invalidates dependents 1 and 2 hops away, results are given as-of a date, proposals require explicit human approval before apply, and LLM answers are grounded against tool-returned DOIs.",
+  "strongest_reusable_unit": {
+    "file": "src/bedrock/audit.py",
+    "symbols": ["Auditor.audit", "build_proposals", "apply_approved", "extract_dois"],
+    "why": "Small, pure-Python, FalkorDB-native engine that turns an upstream invalidation event into a ranked list of downstream exposures (direct and 2-hop with explicit paths, coverage and caveats) with an approval-gated action layer; the Cypher in queries/audit/ is directly reusable, and the WITH-barrier planner trick is useful in Kairos.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB with a Paper/CITES graph (Retraction Watch + OpenAlex data for the original domain); no LLM key needed for the audit itself"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The invalidation-propagation plus approval-gating pattern generalises beyond citations to any Kairos evidence graph (swap Paper/CITES for Evidence/DERIVED_FROM and retracted_at for superseded_at). The corpus-specific loaders and backtest should stay reference-only.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

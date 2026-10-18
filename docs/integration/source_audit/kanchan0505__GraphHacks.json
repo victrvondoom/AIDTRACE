@@ -1,0 +1,175 @@
+{
+  "repository": "kanchan0505/GraphHacks",
+  "url": "https://github.com/kanchan0505/GraphHacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\kanchan0505__GraphHacks",
+  "commit_sha": "5587e9c0425b1cd73f20411d92013c4debfbbb8b",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "edl/policy.py",
+    "edl/evidence.py",
+    "edl/gate.py",
+    "edl/queries.py",
+    "edl/memory.py",
+    "edl/models.py",
+    "edl/review.py",
+    "edl/engine.py",
+    "edl/agent.py",
+    "edl/falkor.py",
+    "edl/graph_reader.py",
+    "edl/config.py",
+    "edl/api.py",
+    "edl/mcp_server.py",
+    "edl/tools.py",
+    "edl/ingest.py",
+    "edl/change.py",
+    "edl/eval/harness.py",
+    "edl/eval/scenarios.py",
+    "policies/policies.yaml",
+    "requirements.txt",
+    "README.md",
+    "tests/test_gate.py",
+    "tests/test_review.py"
+  ],
+  "languages_frameworks": [
+    "Python 3 (stdlib-heavy)/FastAPI",
+    "PyYAML policy file",
+    "Typer CLI (edl/__main__.py)",
+    "FalkorDB (falkordb==1.1.2 pinned) plus a custom HTTP 'FalkorDB Browser' client",
+    "Hand-written MCP JSON-RPC stdio server (no mcp SDK)",
+    "Vanilla JS single-page UI (web/)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Deterministic evidence-sufficiency policy engine with fixed precedence (HOLD > INSUFFICIENT_EVIDENCE > NEEDS_REVIEW > PROCEED_WITH_GUARDS > PROCEED)",
+      "files": ["edl/policy.py", "edl/models.py", "policies/policies.yaml"],
+      "symbols": ["decide", "_state_for", "load_policy", "PRECEDENCE", "STATE_FOR", "STATES"],
+      "real_or_stub": "REAL",
+      "notes": "Pure function over an evidence bundle: 14 named rules (P1-P8, R1-R4, G-TEST, G-HOP) with thresholds in YAML (ci_hours 24, deploy_hours 6, owner_days 90, hop_limit 3, incident_window_days 7, hub_caller_min 6). No LLM in the decision path; missing or stale evidence yields INSUFFICIENT_EVIDENCE (abstention)."
+    },
+    {
+      "capability": "Evidence catalog with claim-to-evidence contract (reject uncited claims)",
+      "files": ["edl/evidence.py"],
+      "symbols": ["make_evidence", "assemble_evidence", "catalog_ids", "reject_claim", "validate_evidence_record", "validate_decision_record", "REQUIRED_DECISION_FIELDS"],
+      "real_or_stub": "REAL",
+      "notes": "Each evidence record carries source_system, source_ref, entity_id, version_ref, observed_at, freshness_ok, evidence_type (observed/inferred/synthetic), role (supports/contradicts/missing/context), limitations and policy id. Claims whose evidence_id is not in the assembled catalog are moved to rejected_claims; decision records are contract-validated."
+    },
+    {
+      "capability": "Freshness and temporal validity of evidence (stale owner/deploy/CI detection)",
+      "files": ["edl/queries.py", "edl/policy.py", "edl/graph_reader.py"],
+      "symbols": ["owner_of", "_edge_stale", "FalkorReader._edge_rows", "decide (P5)"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Edges are read with observed_at and valid_until; an OWNS edge is stale if valid_until < now or observed_at is older than owner_days. The ingest step always writes valid_until=None (edl/ingest.py:267,391), so stale-edge logic is exercised only by fixtures, not by real ingestion. 'now' is a fixed constant (models.NOW 2026-10-15 12:00Z) in eval/review."
+    },
+    {
+      "capability": "Dependency blast radius for a code change (consumers via reverse DEPENDS_ON BFS with hop limit and truncation flag)",
+      "files": ["edl/queries.py", "edl/graph_reader.py", "edl/review.py"],
+      "symbols": ["queries.consumers", "FalkorReader.consumers", "review._evaluate"],
+      "real_or_stub": "REAL",
+      "notes": "Hop-limited BFS with cycle protection returns {service: hops} plus truncated=True when a further dependent was cut off (feeds guard G-HOP). The FalkorDB variant issues one parameter-escaped read query per node (client-side BFS), not a single variable-length Cypher path."
+    },
+    {
+      "capability": "Decision record persisted as graph node with provenance (policy_version, graph_revision hash)",
+      "files": ["edl/review.py", "edl/engine.py", "edl/memory.py"],
+      "symbols": ["review_change", "Engine._remember", "MemoryGraph.revision", "_write_back"],
+      "real_or_stub": "PARTIAL",
+      "notes": "DecisionRecord -[:DECIDES]-> Change nodes carry state, policy_version, graph_revision (sha256 prefix of node/edge ids), evidence_count. Records are kept in an in-process dict and appended to a JSONL trace; no supersession chain between successive decisions on the same change."
+    },
+    {
+      "capability": "Action gate (issue creation only when state allows; idempotent; authorization flag)",
+      "files": ["edl/gate.py"],
+      "symbols": ["assess", "execute", "ALLOWED"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Blocks unless state is PROCEED or PROCEED_WITH_GUARDS; idempotent per change id; simulates ticketing outcomes (timeout/401/429) from a flag on the change; 'issue' is only recorded locally. Approval is a boolean designated_approval on the change input, not a verified human identity."
+    },
+    {
+      "capability": "Prompt-injection marker detection in change description",
+      "files": ["edl/review.py"],
+      "symbols": ["INJECTION_MARKERS", "_injection"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Five hard-coded phrases ('ignore policy', 'approve this', ...) are reported on the record; they do not change the decision (policy ignores text)."
+    },
+    {
+      "capability": "Repository ingest into service/function/test/deploy/incident graph",
+      "files": ["edl/ingest.py", "edl/change.py"],
+      "symbols": ["ingest", "build_graph", "detect_local", "detect_github", "parse_codeowners", "_scan_functions", "list_changed_files"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Infers services from folder layout, docker-compose, proto and CODEOWNERS and extracts function names with regexes (not an AST); local git diff via subprocess, GitHub via REST/raw fetch. CI results, deploys and incidents do not exist in a git tree, so real repos intentionally land in INSUFFICIENT_EVIDENCE."
+    },
+    {
+      "capability": "Evaluation harness scoring unjustified PROCEED and graph lift (full vs one_hop vs graph_off)",
+      "files": ["edl/eval/harness.py", "edl/eval/scenarios.py"],
+      "symbols": ["run_eval", "_unjustified_proceed", "all_scenarios"],
+      "real_or_stub": "REAL",
+      "notes": "Runs labelled synthetic scenarios (e.g. missing_ci_must_abstain, graph_necessary_incident_hold, payment_path_needs_review, multi_owner_needs_graph) in three graph modes and measures safety failures. Fixtures are hand-built graphs, so scores demonstrate policy consistency, not real-world accuracy."
+    },
+    {
+      "capability": "Named-tool agent loop and MCP surface",
+      "files": ["edl/agent.py", "edl/tools.py", "edl/mcp_server.py"],
+      "symbols": ["run_agent", "call_tool", "list_tools", "McpServer.handle"],
+      "real_or_stub": "PARTIAL",
+      "notes": "agent.run_agent is a fixed script of tool calls (impact_analysis, nearest_owner, find_similar_incidents, get_deploy_state, centrality_rank, get_test_coverage, decide_change, propose_action), not an LLM planner. 'centrality_rank' is just a caller count."
+    },
+    {
+      "capability": "FalkorDB publish (replace graph) and live read handle",
+      "files": ["edl/falkor.py", "edl/graph_reader.py"],
+      "symbols": ["publish", "replace_graph", "node_groups", "edge_groups", "FalkorReader", "qid", "_BrowserClient"],
+      "real_or_stub": "REAL",
+      "notes": "Deletes and recreates the whole graph on each publish, bulk-loads via UNWIND with inline literal maps (labels and rel types allowlisted), reads back through ro_query. Fails closed to INSUFFICIENT_EVIDENCE when FalkorDB is not ready unless EDL_ALLOW_MEMORY_GRAPH/pytest."
+    }
+  ],
+  "graph_models_and_cypher": "Labels (falkor.py LABELS): Repository, Team, Engineer, Service, Function, Test, Deployment, Incident, Fix, Policy, Change, UnresolvedPath, DecisionRecord, Outcome, EvidenceSource. Edges: MEMBER_OF, IN_REPO, OWNS, PART_OF, COVERS, DEPLOYED_AS, DEPENDS_ON, AFFECTED, RESOLVED_BY, MODIFIES, CALLS, TOUCHES, UNRESOLVED, DECIDES, SUPPORTED_BY, GOVERNS; edges carry observed_at and valid_until. Cypher is built by string composition with allowlisted labels/rel types and an escaped id literal (graph_reader.qid enforces ^[A-Za-z0-9_.:/@+-]+$); reads use ro_query. No APOC/GDS, no variable-length paths (BFS is in Python).",
+  "algorithms": [
+    "Reverse DEPENDS_ON BFS with hop limit, visited set and truncation flag (edl/queries.py:consumers; edl/graph_reader.py:FalkorReader.consumers)",
+    "Fixed-precedence rule evaluation to a decision state (edl/policy.py:decide/_state_for)",
+    "Freshness/staleness test on edges from valid_until and observed_at (edl/queries.py:_edge_stale)",
+    "Deterministic graph revision fingerprint sha256 over sorted node ids and edges (edl/memory.py:MemoryGraph.revision)",
+    "Claim-to-evidence-catalog validation (edl/evidence.py:reject_claim, validate_decision_record)",
+    "Graph-lift evaluation: full vs one_hop vs graph_off (edl/eval/harness.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI edl/api.py: GET /, /api/health, /api/bootstrap, /api/suggest-files; POST /api/ingest, /api/change, /api/review, /api/actions",
+    "MCP stdio JSON-RPC server (edl/mcp_server.py) exposing 11 named tools: ingest_repository, scope_change, list_changes, impact_analysis, nearest_owner, find_similar_incidents, get_test_coverage, get_deploy_state, centrality_rank, decide_change, propose_action",
+    "CLI (python -m edl serve|ingest|review|eval|agent|mcp)"
+  ],
+  "frontend_interfaces": [
+    "Single-page vanilla JS UI: web/index.html, web/app.js, web/styles.css (repo input, state badge, evidence list, blast-radius graph, action button)"
+  ],
+  "agent_or_memory_mechanisms": "No LLM. A scripted tool-using agent (agent.run_agent) calls named graph tools then decide_change and a gated propose_action. Memory is in-process: Engine.records dict, DecisionRecord nodes in the working graph and JSONL traces under logs/. No cross-session memory, supersession, or approval handoff beyond the designated_approval flag.",
+  "tests_present": "tests/ with 5 test files (~25 test functions: test_gate, test_review, test_ingest, test_falkor, test_api) plus helpers (conftest, repo_fixture, mirror_selected). Policy behaviours are additionally exercised by `python -m edl eval` over 6 labelled scenarios. Pytest runs use a labelled in-memory test double instead of live FalkorDB.",
+  "dependency_requirements": [
+    "fastapi==0.115.6",
+    "uvicorn==0.34.0",
+    "pyyaml==6.0.2",
+    "typer==0.15.1",
+    "pytest==8.3.4",
+    "falkordb==1.1.2 (older than Kairos's 1.8; verify compatibility)"
+  ],
+  "security_findings": [
+    "edl/falkor.py:21 - hard-coded public IP browser URL http://13.236.193.238:3000/login (also in README.md); used as the displayed 'browser' fallback",
+    "edl/falkor.py:286-304 - FalkorDB password is POSTed as JSON over plain HTTP to settings.browser (auto-derived as http://<host>:3000 for any non-localhost host in edl/config.py:55-56): credential exposure on the wire",
+    "edl/falkor.py:221-231,242-267 - bulk load builds Cypher with inline literal values (_cypher_value escapes only backslash and single quote; labels/rel types and keys are regex/allowlist checked); string-concatenated Cypher is an injection risk if any new value type is added",
+    "edl/graph_reader.py:127-174 - Cypher built with f-strings around qid()-quoted ids; guarded by a strict id regex, so low risk",
+    "edl/falkor.py:210-215 - replace_graph deletes the entire configured graph (selected.delete()) on every publish; pointing FALKORDB_GRAPH at a shared graph would wipe it",
+    "edl/change.py:310-347 - subprocess.run(['git','-C',root,...]) with list args (no shell); root comes from a user-supplied local path, and rev_range from user-supplied base/head without validation (option injection possible for values starting with '-')",
+    "edl/ingest.py:747-770 - outbound urllib calls to api.github.com/raw.githubusercontent.com for user-supplied owner/name; optional GITHUB_TOKEN sent as bearer; only github hosts are contacted",
+    "edl/api.py:1-140 - no authentication on /api/ingest, /api/review, /api/actions; POST /api/ingest accepts a local filesystem path and reads files from the host",
+    "edl/api.py:139-141 - free-text Cypher guard is a keyword check on the target string (cosmetic), the real protection is that no endpoint executes user Cypher",
+    "No eval/exec/pickle; yaml.safe_load used (edl/policy.py:17). No secrets committed (.env.example only)."
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal for software changes (reverse DEPENDS_ON), approval gating / decision lineage (DecisionRecord DECIDES Change), evidence provenance and freshness (similar intent to Evidence Drift), incident/RCA history joins (prior_fixes), and code-change risk review. Shares the title family 'blast radius' with the other batch repos but is policy-centric rather than parser-centric.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "HIGH - implements evidence freshness windows, edge-level observed_at/valid_until staleness, abstention to INSUFFICIENT_EVIDENCE, supports/contradicts/missing evidence roles, claim-to-evidence validation, policy_version plus graph_revision on each decision and an approval-gated action step; lacks decision supersession chains and real (non-None) valid_until ingestion.",
+  "strongest_reusable_unit": {
+    "file": "edl/policy.py + edl/evidence.py (+ edl/queries.py:_edge_stale, edl/memory.py:MemoryGraph.revision)",
+    "symbols": ["decide", "_state_for", "load_policy", "make_evidence", "assemble_evidence", "reject_claim", "validate_decision_record", "_edge_stale", "MemoryGraph.revision"],
+    "why": "A pure-Python, LLM-free, table-driven decision engine that turns stale/missing/contradicting evidence into explicit states with cited evidence ids, plus a strict claim-evidence contract and reproducible graph fingerprint. This is the closest match in the batch to an Evidence Drift Cascade core (freshness windows, abstention, contradiction roles, approval gate).",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none for the engine (PyYAML only); FalkorDB only if using FalkorReader"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "Lift policy.decide, the evidence/claim contract and the freshness helpers into a shared Kairos evidence-drift engine behind the existing FalkorDB reader protocol; keep the repo-ingest and UI as reference only. Record license provenance first (no LICENSE file) and swap the fixed NOW constant for real time.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

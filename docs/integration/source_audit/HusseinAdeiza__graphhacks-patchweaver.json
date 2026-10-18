@@ -1,0 +1,114 @@
+{
+  "repository": "HusseinAdeiza/graphhacks-patchweaver",
+  "url": "https://github.com/HusseinAdeiza/graphhacks-patchweaver",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\HusseinAdeiza__graphhacks-patchweaver",
+  "commit_sha": "c948301c9fa9aa5330cfde2127356f6bfc4a34de",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "package.json",
+    "setup.sh",
+    "verify.js",
+    "graph/falkor.js",
+    "graph/schema.js",
+    "graph/load.js",
+    "graph/osv.js",
+    "planner/plan.js",
+    "agent/act.js",
+    "cypher/queries.cypher",
+    "README.md (first 60 lines)"
+  ],
+  "languages_frameworks": [
+    "Node.js 18+ ESM JavaScript",
+    "semver ^7.8.5",
+    "hand-written RESP/TCP client for FalkorDB (no falkordb package)",
+    "OSV public API (api.osv.dev)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Constraint-aware vulnerability upgrade planner",
+      "files": ["planner/plan.js"],
+      "symbols": ["plan", "planAdvisory", "candidateFix", "satisfiesAnyParent", "safeSatisfies", "loadModel", "renderPlan"],
+      "real_or_stub": "PARTIAL",
+      "notes": "For each advisory it looks for the smallest available version >= the fixed version that satisfies the parent semver constraints, otherwise it proposes bumping blocking parents to their latest version and records a synthetic caret constraint for the new parent. The whole graph is loaded into memory with four flat Cypher reads and solved in JS, so the graph is only storage. satisfiesAnyParent uses ps.some(), meaning a version only has to satisfy one parent, which is wrong when several parents constrain the same child."
+    },
+    {
+      "capability": "Plan application and verification loop",
+      "files": ["agent/act.js", "verify.js"],
+      "symbols": ["run", "applyPlan", "verify", "higherVersion"],
+      "real_or_stub": "PARTIAL",
+      "notes": "OBSERVE-PLAN-ACT-VERIFY: writes package.patched.json from the plan, then re-checks each advisory. verify() uses appliedVersions[pkg] || adv.fixed as the final version, so it partly checks the planner's own assumptions rather than an independent resolution of the real tree. verify.js exits 0 or 1."
+    },
+    {
+      "capability": "Live advisory ingest from OSV",
+      "files": ["graph/osv.js", "graph/load.js"],
+      "symbols": ["fetchOSV", "bounds", "loadLiveAdvisories"],
+      "real_or_stub": "PARTIAL",
+      "notes": "POSTs to https://api.osv.dev/v1/query for lodash, qs and minimist and merges Advisory nodes with introduced/fixed bounds from SEMVER ranges. Only the three hard-coded demo packages are queried; there is no lockfile or SBOM ingest, and live advisories are not necessarily consumed by a package present in SAMPLE."
+    },
+    {
+      "capability": "Hard-coded sample dependency graph",
+      "files": ["graph/schema.js", "graph/load.js"],
+      "symbols": ["SAMPLE", "SCHEMA_STATEMENTS", "loadSample", "reset"],
+      "real_or_stub": "STUB",
+      "notes": "Eight packages and seven DEPENDS_ON edges with hand-written versions and advisories (GHSA-style ids are invented labels such as GHSA-lodash-pollution). This is demo data, not an ingest pipeline."
+    },
+    {
+      "capability": "Raw RESP client for GRAPH.QUERY",
+      "files": ["graph/falkor.js"],
+      "symbols": ["Falkor", "Falkor.query", "parseRESP", "toRows", "q"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Opens a new TCP socket per query, hand-parses RESP, passes parameters as --param k=>json strings and splices values into Cypher text via q(). No TLS, no auth, no pooling. The toRows helper assumes the verbose reply layout [header, rows, stats]."
+    },
+    {
+      "capability": "Documentation-only Cypher file",
+      "files": ["cypher/queries.cypher"],
+      "symbols": ["Q1", "Q2", "Q3", "Q4", "Q5"],
+      "real_or_stub": "STUB",
+      "notes": "Five queries documented for judges but never executed by the code. Q4 contains a tautological 'OR true' check and Q5 refers to an undefined variable r_constraint, so they would not run as written."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Package {name}, Version {version, pkg}, Advisory {id, severity, summary}. Edges: (Package)-[:HAS_VERSION]->(Version), (Package)-[:DEPENDS_ON {constraint}]->(Package), (Advisory)-[:AFFECTS {introduced, fixed}]->(Package). Two uniqueness constraints are issued (CREATE CONSTRAINT ... REQUIRE ... IS UNIQUE, Neo4j-style syntax that FalkorDB may reject; errors are swallowed in reset). Executed Cypher is only MERGE/MATCH plus MATCH (n) DETACH DELETE n; the planner's reads are flat table dumps. The documented variable-length DEPENDS_ON*1..5 traversal in cypher/queries.cypher is not run. No APOC or GDS.",
+  "algorithms": [
+    "Smallest-satisfying-version search across semver ranges (planner/plan.js:candidateFix)",
+    "Parent-bump proposal: blockers = parents whose constraint excludes the fixed version, bumped to their latest version (planner/plan.js:planAdvisory)",
+    "Highest-required-version merge across advisories for the same package (agent/act.js:higherVersion, applyPlan)",
+    "Post-plan check that each advisory's final version >= fixed and satisfies per-edge post-bump constraints (agent/act.js:verify)"
+  ],
+  "backend_interfaces": [
+    "CLI scripts only: node graph/load.js, node graph/osv.js, node planner/plan.js, node agent/act.js, node verify.js, setup.sh (starts a falkordb/falkordb:latest Docker container)"
+  ],
+  "frontend_interfaces": [],
+  "agent_or_memory_mechanisms": "A scripted four-step loop (observe, plan, act, verify) with no LLM, no persisted memory and no handoffs. The 'agent' is deterministic JavaScript.",
+  "tests_present": "None beyond verify.js, an end-to-end PASS/FAIL script that needs a running FalkorDB on port 6381 and, by default, live OSV access.",
+  "dependency_requirements": [
+    "semver ^7.8.5",
+    "Node.js 18+ (global fetch)",
+    "FalkorDB server (falkordb/falkordb:latest, unpinned, started by setup.sh on port 6381)"
+  ],
+  "security_findings": [
+    "graph/load.js:45-62 - Cypher built by string concatenation with q() escaping only backslash and single quote; newline and other control characters are not handled",
+    "graph/osv.js:47-58 - OSV-supplied advisory summary and id are spliced into Cypher text through q(), so a hostile or malformed upstream record is a Cypher-injection vector",
+    "graph/load.js:38 - reset() runs MATCH (n) DETACH DELETE n on the configured graph and loadSample() calls it, which is destructive by default",
+    "graph/falkor.js:23 - raw net.connect to FALKOR_HOST/FALKOR_PORT with no TLS and no authentication",
+    "graph/osv.js:16 and graph/load.js:69 - unauthenticated outbound fetch to api.osv.dev (fixed host, no key)",
+    "agent/act.js:111 - writes package.patched.json to a caller-supplied output directory",
+    "setup.sh:18 - pulls falkordb/falkordb:latest without a version pin",
+    "No hard-coded secrets found"
+  ],
+  "duplicates_or_overlaps": "Dependency-upgrade planning and transitive-vulnerability remediation (Software Dependency Intelligence). Overlaps with other dependency-graph or blast-radius repos, but with a much weaker graph use because the solver runs in memory.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "LOW - advisories carry introduced/fixed bounds and DEPENDS_ON edges carry semver constraints, which is a small dependency-constraint model, but there is no provenance, supersession, validity window, invalidation cascade or approval gate.",
+  "strongest_reusable_unit": {
+    "file": "planner/plan.js",
+    "symbols": ["candidateFix", "planAdvisory", "safeSatisfies"],
+    "why": "The only non-trivial logic is semver reachability of a fixed version under parent constraints. It would need reimplementation in Python (packaging/semantic-version) and a fix of the any-parent bug before any reuse; the Node code itself cannot be dropped into a FastAPI service.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "Node.js plus the semver npm package; FalkorDB for the graph; none for the planner math once ported"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The repo is a small Node.js demo over a hard-coded 8-package tree whose planner does not use graph traversal and contains a constraint-satisfaction bug. Use it only as a reference for the vulnerable-package-blocked-by-parent-pin idea.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

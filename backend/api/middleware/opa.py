@@ -84,6 +84,7 @@ _READ_ACTION_MAP = (
     ("/governance/quarantine", "read_nonconformance"),
     ("/governance", "read_governance"),
     ("/documents", "read_documents"),
+    ("/resolveai", "read_resolveai"),
     ("/events", "read_events"),
 )
 

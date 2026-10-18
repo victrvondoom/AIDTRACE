@@ -1,0 +1,106 @@
+{
+  "repository": "london160771/StepFree",
+  "url": "https://github.com/london160771/StepFree",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\london160771__StepFree",
+  "commit_sha": "ac24f6521110c0c5e90da877634f2f34501975db",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "backend/src/graph/routing.ts",
+    "backend/src/network/stepfree.ts",
+    "backend/src/network/types.ts",
+    "backend/src/network/geo.ts",
+    "backend/src/network/load.ts",
+    "backend/src/tfl/liftDisruptions.ts",
+    "backend/src/app.ts",
+    "backend/src/config.ts",
+    "backend/src/server.ts",
+    "backend/scripts/build-network.ts",
+    "backend/test/routing.test.ts",
+    "backend/test/topology.test.ts",
+    "backend/test/api.test.ts",
+    "backend/package.json",
+    "backend/.env.example",
+    "SPEC.md",
+    "backend/data/network.json (size only)"
+  ],
+  "languages_frameworks": ["TypeScript (Node >=20)", "Express 5", "falkordb npm client ^6.8.0", "vitest + supertest", "React/Vite PWA frontend (map components)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Weighted step-free shortest-path routing in FalkorDB over line/platform/street nodes",
+      "files": ["backend/src/graph/routing.ts"],
+      "symbols": ["RoutingGraph.route", "RoutingGraph.seed", "toLegs", "ROUTABLE"],
+      "real_or_stub": "REAL",
+      "notes": "Seeds Station/Access nodes and RIDE / STEP_FREE_TRANSFER edges with minute weights, then calls CALL algo.SPpaths({relTypes:['RIDE','STEP_FREE_TRANSFER'], weightProp:'minutes', pathCount:1}) via roQuery and converts the path into ride/transfer legs."
+    },
+    {
+      "capability": "Disruption scenario graphs (copy the base graph and re-type affected edges to UNAVAILABLE_TRANSFER)",
+      "files": ["backend/src/graph/routing.ts"],
+      "symbols": ["RoutingGraph.scenarioGraph", "RoutingGraph.createScenario"],
+      "real_or_stub": "REAL",
+      "notes": "Uses GRAPH.COPY into a hash-named graph, then CREATE new UNAVAILABLE_TRANSFER edge + DELETE old STEP_FREE_TRANSFER for ids in $ids, so the same routing query reroutes with no code change; base graph untouched; scenarios memoised per outage set."
+    },
+    {
+      "capability": "Dependency invalidation: derive which transfers fail when a lift is out, via BFS over TfL topology areas",
+      "files": ["backend/src/network/stepfree.ts"],
+      "symbols": ["stepFreePath", "isTransferAvailable", "unavailableTransferIds", "buildAreaGraph"],
+      "real_or_stub": "REAL",
+      "notes": "Pure TypeScript BFS over area edges skipping unavailable lifts; a transfer is available only if every from/to area pair still has a path. Computed outside FalkorDB, then applied to the graph copy."
+    },
+    {
+      "capability": "Live TfL lift disruption feed with 60 s cache",
+      "files": ["backend/src/tfl/liftDisruptions.ts"],
+      "symbols": ["tflLiftDisruptions", "TFL_LIFT_DISRUPTIONS_URL"],
+      "real_or_stub": "REAL",
+      "notes": "Fetches api.tfl.gov.uk Disruptions/Lifts/v2 with 10 s timeout, filters to lifts present in the 7-station network, stamps fetchedAt."
+    },
+    {
+      "capability": "Network data build from official TfL station topology and timetables",
+      "files": ["backend/scripts/build-network.ts", "backend/data/network.json"],
+      "symbols": ["STATIONS", "LINE_SECTIONS", "METRES_PER_MINUTE", "MINUTES_PER_LIFT"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Downloads the TfL detailed topology zip and derives requiredLifts and the demo outage lift rather than guessing, but the network is a hard-coded 7-station / 3-line subset and transfer times use fixed pace constants and a 1.3 corridor factor."
+    },
+    {
+      "capability": "REST API and Live Mode locator",
+      "files": ["backend/src/app.ts", "backend/src/network/geo.ts"],
+      "symbols": ["createApp", "isInLondon", "nearestStation"],
+      "real_or_stub": "REAL",
+      "notes": "POST /api/route, /api/live/status (POST to keep coordinates out of URLs), GET /api/network, /api/health; demo mode toggles a simulated Green Park Lift 2 outage."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Station {id,name,naptanId,lat,lon,stepFreeStreetAccess}, Access {id,stationId,kind: street|line,line} with (Access)-[:AT]->(Station). Edges: RIDE {line,minutes}, STEP_FREE_TRANSFER {id,kind: entrance|interchange,minutes,liftsUsed,requiredLifts}, UNAVAILABLE_TRANSFER (same props, scenario graphs only). Cypher: UNWIND batch CREATE, CREATE INDEX on Access.id, GRAPH.COPY (db.selectGraph().copy), edge re-type via CREATE+DELETE, CALL algo.SPpaths with relTypes parameter and weightProp, roQuery for reads. Parameters are passed via params; relTypes is a bound param. FalkorDB-native, no APOC/GDS.",
+  "algorithms": [
+    "algo.SPpaths weighted shortest path restricted to RIDE and STEP_FREE_TRANSFER (backend/src/graph/routing.ts:route)",
+    "BFS over area graph skipping failed lifts to decide transfer availability (backend/src/network/stepfree.ts:stepFreePath)",
+    "Scenario graph copy + edge retyping for what-if rerouting (backend/src/graph/routing.ts:createScenario)",
+    "Nearest-station haversine style lookup and London bounding check (backend/src/network/geo.ts)"
+  ],
+  "backend_interfaces": ["Express: GET /api/health, GET /api/network, POST /api/route, POST /api/live/status"],
+  "frontend_interfaces": ["React PWA: LondonMap.tsx, TransitMap.tsx (schematic map), RoutePanel.tsx, Intro.tsx, About/InstallGuide pages, useStepFree hook, map layout/geo helpers"],
+  "agent_or_memory_mechanisms": null,
+  "tests_present": "Backend vitest: routing.test.ts (5, live FalkorDB), topology.test.ts (4, pure), api.test.ts (9, supertest); frontend vitest: describe/geo/layout tests (10). About 28 tests; routing and API tests need a FalkorDB at FALKORDB_URL. Not executed by auditor.",
+  "dependency_requirements": ["falkordb ^6.8.0", "express ^5.3.0", "cors ^2.8.6", "vitest ^5.0.5", "adm-zip (build script only)", "FalkorDB server with algo.SPpaths", "Optional TFL_APP_KEY"],
+  "security_findings": [
+    "backend/src/app.ts:25 - CORS origin falls back to true (any origin) when corsOrigin is not supplied; config.ts defaults to http://localhost:5173 so only exposed if constructed without it",
+    "backend/src/app.ts:32-80 - no authentication or rate limiting on routing endpoints; each distinct live outage set creates a new copied graph (backend/src/graph/routing.ts:createScenario) with no eviction, a slow resource-growth risk",
+    "backend/src/tfl/liftDisruptions.ts:35 - TfL app_key sent as URL query parameter (encodeURIComponent applied), may appear in logs; outbound call goes only to a constant api.tfl.gov.uk URL",
+    "backend/src/graph/routing.ts:~66-70 - seed() deletes every graph named <prefix> or <prefix>:* on start-up (scoped by prefix, intended)",
+    "No string-concatenated Cypher with user input found; no eval/exec; no hard-coded secrets (.env.example is empty)"
+  ],
+  "duplicates_or_overlaps": "Weighted routing with disruption rerouting overlaps other accessibility / mobility routing and 'what-if outage' scenario repos (e.g., other pathfinding and supply-route reroute demos); the copy-graph-and-retype pattern overlaps counterfactual / simulation approaches.",
+  "capability_family": "Mobility & Accessibility",
+  "evidence_drift_relevance": "MEDIUM - requiredLifts and the area-graph BFS implement dependency invalidation (a failed upstream lift invalidates dependent transfers and triggers re-derivation on a copied graph), with a fetchedAt-stamped live feed, but there is no provenance chain, supersession or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "backend/src/graph/routing.ts",
+    "symbols": ["RoutingGraph.scenarioGraph", "RoutingGraph.createScenario", "RoutingGraph.route"],
+    "why": "A compact, tested what-if pattern for FalkorDB: derive the set of invalidated edges outside the DB, GRAPH.COPY the base graph, retype the invalid edges, and rerun the same weighted algo.SPpaths query; directly reusable for counterfactual 'if this evidence/dependency is invalid, what else changes' views in Kairos.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB server (GRAPH.COPY, algo.SPpaths); TypeScript code must be re-implemented in Python (about 150 lines of logic)"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Small, correct and FalkorDB-native, but TypeScript and tied to a 7-station TfL dataset; best taken as a Mobility & Accessibility pack plus a reusable scenario-copy pattern, re-implemented in Python rather than merged.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

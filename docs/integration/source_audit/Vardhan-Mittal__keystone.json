@@ -1,0 +1,128 @@
+{
+  "repository": "Vardhan-Mittal/keystone",
+  "url": "https://github.com/Vardhan-Mittal/keystone",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Vardhan-Mittal__keystone",
+  "commit_sha": "c637565f713811e8140d1e28eafba6bdb111ac27",
+  "license": "MIT",
+  "copyright_holder": "Keystone contributors (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "README.md",
+    "keystone/graph/queries.py",
+    "keystone/graph/derive.py",
+    "keystone/graph/schema.py",
+    "keystone/graph/db.py",
+    "keystone/graph/loader.py",
+    "keystone/agent/loop.py",
+    "keystone/agent/router.py",
+    "keystone/agent/tools.py",
+    "keystone/api/main.py",
+    "keystone/sources.py",
+    "keystone/fetch.py",
+    "keystone/config.py",
+    "keystone/scripts/verify_claims.py",
+    "keystone/scripts/bootstrap.py",
+    "mcp_server.py",
+    "tests/test_keystone.py",
+    "requirements.txt",
+    "data/bundle.json (header only)",
+    "LICENSE"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI",
+    "FalkorDB (falkordb>=1.0.9, ro_query, full-text and range indexes)",
+    "MCP stdio server (mcp>=1.2)",
+    "Gemini function calling (google-genai) with deterministic keyword router fallback",
+    "httpx async ingestion from deps.dev, npm registry, OSV",
+    "Single-file web/index.html UI",
+    "pytest"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Maintainer-reach analysis: derived CONTROLS edges (owned, reach, reach_pct, amplification) by one-hop-per-level reverse dependency expansion",
+      "files": ["keystone/graph/derive.py"],
+      "symbols": ["reach_set", "derive_controls", "derive_package_dependents", "derive_co_maintains", "_STEP", "_OWNED"],
+      "real_or_stub": "REAL",
+      "notes": "For each Person, collects owned packages then iteratively issues MATCH (d)-[e:DEPENDS_ON]->(o) WHERE o.id IN $frontier up to MAX_HOPS=8, because variable-length DEPENDS_ON*1..8 times out (path enumeration). Results are written back as first-class edges/properties (CONTROLS, CO_MAINTAINS_WITH, Package.dependents) so later queries read conclusions the graph computed. The per-person loop issues many queries (O(people x depth)); fine for ~850 people, slow at scale."
+    },
+    {
+      "capability": "Eight cited-traversal tools: graph_schema, find_entity, keystone_maintainers, trust_path, hijack_candidates, compromise_blast_radius, correlated_risk, vulnerability_overlay",
+      "files": ["keystone/graph/queries.py", "keystone/agent/tools.py"],
+      "symbols": ["keystone_maintainers", "trust_path", "hijack_candidates", "compromise_blast_radius", "correlated_risk", "vulnerability_overlay", "find_entity", "_ft_terms", "TOOLS", "SPECS", "call"],
+      "real_or_stub": "REAL",
+      "notes": "Every tool returns {answer, path, cypher, summary} including the exact Cypher so the answer is re-runnable; trust_path uses shortestPath((a:App)-[:DEPENDS_ON|MAINTAINED_BY*1..16]->(person)) in WITH/RETURN (FalkorDB constraint); hijack_candidates is a structural filter (maintainer_count = 1 AND stale_days > 730) ranked by transitive dependents; find_entity escapes RediSearch reserved characters and falls back to CONTAINS. All reads use ro_query."
+    },
+    {
+      "capability": "Real npm supply-chain ingestion: deps.dev resolved tree, versionbatch (publish dates, advisories, repos), npm maintainer rosters, OSSF Scorecard, reverse maintainer lookup, with cache/offline replay",
+      "files": ["keystone/sources.py", "keystone/fetch.py", "keystone/scripts/ingest.py", "keystone/graph/loader.py", "keystone/scripts/bootstrap.py", "data/bundle.json"],
+      "symbols": ["dependency_graph", "version_batch", "default_version", "get_json", "post_json", "cache_read", "cache_write", "OfflineMiss", "loader.load", "bootstrap"],
+      "real_or_stub": "REAL",
+      "notes": "Committed data/bundle.json (~1.5 MB) is a real snapshot of gatsby@5.16.1 (1,265 packages, 841 maintainers); KEYSTONE_OFFLINE=1 replays cached API responses; chunk size 100 for versionbatch is documented as load-bearing; bulk loads use UNWIND batches of 1000 with indexes created first."
+    },
+    {
+      "capability": "Claim verification: re-derive every published README number from the live graph and exit non-zero on mismatch",
+      "files": ["keystone/scripts/verify_claims.py"],
+      "symbols": ["check", "soft", "main"],
+      "real_or_stub": "REAL",
+      "notes": "A hard-fail vs warn split (exact counts vs drift-prone ties) that detects when a re-ingest has changed the numbers the documentation asserts. It checks documentation against graph state, not graph data against its sources."
+    },
+    {
+      "capability": "Agent with mandatory path citation, deterministic router fallback and no degraded graph mode",
+      "files": ["keystone/agent/loop.py", "keystone/agent/router.py", "keystone/graph/db.py", "mcp_server.py"],
+      "symbols": ["ask", "SYSTEM", "route", "RULES", "resolve_entity", "GraphUnavailable", "connect"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Gemini loop (max 6 steps, results trimmed to 12 items) is instructed to quote trust paths; the router is regex intent matching plus graph-based entity resolution. Citation is a prompt instruction, not enforced in code. connect() raises GraphUnavailable rather than answering from cache."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: App{name,version}, Package{id,name,version,stale_days,maintainer_count,dependents,published_at,...}, Person{username,email,registry_total,in_tree_count}, Project{scorecard,stars,maintained,code_review}, CVE{id,cvss,aliases}. Edges: DEPENDS_ON{direct,requirement}, MAINTAINED_BY, HOSTED_AT, AFFECTED_BY, derived CONTROLS{owned,reach,reach_pct,amplification,depth} and CO_MAINTAINS_WITH{count}. Cypher is parameterised (UNWIND $rows ... MERGE/SET, WHERE o.id IN $frontier); only labels/relationship names from fixed tuples and MAX_HOPS are interpolated via f-strings. Uses FalkorDB range indexes, CREATE FULLTEXT INDEX and db.idx.fulltext.queryNodes, shortestPath only in WITH/RETURN, ro_query for all reads; avoids <> filters because FalkorDB indexes do not serve them. No Neo4j GDS/APOC and no algo.* procedures (reach is computed by iterative frontier expansion).",
+  "algorithms": [
+    "Iterative reverse BFS frontier expansion in Cypher (one hop per query) to compute per-maintainer reach (keystone/graph/derive.py:reach_set; queries.py:compromise_blast_radius)",
+    "Amplification = reach / owned packages, ranking by reach rather than ownership and detecting ranking disagreement (queries.py:keystone_maintainers)",
+    "shortestPath over mixed DEPENDS_ON|MAINTAINED_BY edges joining dependency and maintainer graphs (queries.py:trust_path)",
+    "Structural takeover heuristic: single maintainer AND stale_days > 730, ranked by transitive dependents (queries.py:hijack_candidates)",
+    "Co-maintainer pair counting via shared MAINTAINED_BY neighbours with a<b dedupe (derive.py:derive_co_maintains)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/overview, /api/hijack, /api/path/{username}, /api/blast/{username}, /api/correlated, /api/vulnerabilities; POST /api/ask; GET / (UI)",
+    "MCP stdio server (mcp_server.py) exposing the same eight tools",
+    "CLI: python -m keystone.agent.loop \"question\" [--no-llm], keystone.scripts.ingest / bootstrap / verify_claims / benchmark, keystone.graph.loader / derive"
+  ],
+  "frontend_interfaces": [
+    "web/index.html single page (684 lines): overview, keystone maintainer ranking, trust path, hijack candidates, ask box showing cited Cypher"
+  ],
+  "agent_or_memory_mechanisms": "Single-shot tool-using agent with no persistent memory. The 'memory' is the derived edges persisted back into the graph. One tool registry (agent/tools.py:SPECS) is shared by the Gemini loop, the MCP server and the router so tools cannot drift.",
+  "tests_present": "tests/test_keystone.py with 17 test functions (several parametrised): label/derived-edge existence, tool return contract, trust_path is a real chain, reach >= owned, ordering-by-owned disagrees with ordering-by-reach, hijack candidates are solo and stale, find_entity reserved-character handling, router tool choice, unknown tool / bad arguments return errors; requires a live FalkorDB loaded from the committed bundle. keystone/scripts/verify_claims.py is an additional executable check.",
+  "dependency_requirements": [
+    "falkordb>=1.0.9",
+    "httpx>=0.27",
+    "google-genai>=0.3 (optional; GEMINI_API_KEY/GOOGLE_API_KEY)",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "mcp>=1.2",
+    "FalkorDB server with RediSearch full-text support"
+  ],
+  "security_findings": [
+    "keystone/graph/loader.py:129,241 and keystone/sources.py:212 - npm maintainer email addresses and usernames (personal data scraped from the public registry) are stored on Person nodes and returned by keystone_maintainers (queries.py:164 returns x.email) and bundled in data/bundle.json; privacy/compliance consideration if reused",
+    "keystone/graph/db.py:43-75 and queries.py - f-string Cypher with label/relationship names from fixed tuples and MAX_HOPS ints (not user-controlled); all user-derived values (usernames, package names, search text) are bound parameters",
+    "keystone/graph/queries.py:99-110 - user text for full-text search is reduced to prefix tokens after stripping RediSearch reserved characters (injection into the FT query is neutralised)",
+    "keystone/api/main.py:131-137 - POST /api/ask unauthenticated; with use_llm sends the question and tool results to Google Gemini; no rate limiting or auth",
+    "keystone/agent/loop.py:20,50 - GEMINI_API_KEY/GOOGLE_API_KEY read from environment; no hard-coded keys found",
+    "keystone/graph/db.py:18 - FalkorDB connection without username/password/TLS support (host/port only)",
+    "keystone/sources.py, keystone/fetch.py - outbound HTTPS only to fixed hosts deps.dev, registry.npmjs.org, api.osv.dev; responses cached to disk under data/cache keyed by sanitised hash",
+    "No subprocess, eval/exec or pickle found"
+  ],
+  "duplicates_or_overlaps": "npm/package supply-chain risk (Software Dependency Intelligence; Security & Vulnerability): overlaps NishaadG/blastradius and reachable on dependency blast-radius traversal, but is unique in joining the dependency graph to the human maintainer graph and in 'reach vs ownership' ranking.",
+  "capability_family": "Software Dependency Intelligence",
+  "evidence_drift_relevance": "LOW - dependency staleness (stale_days since last release) and dependents counts are risk signals and verify_claims detects documentation drift against the graph, but there is no provenance per edge, validity windows, supersession or invalidation propagation.",
+  "strongest_reusable_unit": {
+    "file": "keystone/graph/derive.py",
+    "symbols": ["reach_set", "derive_controls", "derive_package_dependents", "_STEP"],
+    "why": "A tested workaround for a real FalkorDB limitation (variable-length reverse reachability timing out) using frontier expansion with an IN-list, plus the pattern of persisting derived edges (CONTROLS, dependents) back into the graph. It is directly reusable by a Kairos transitive-impact or dependency-invalidation computation on the same server version. The query contract {answer, path, cypher, summary} is a second reusable convention.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; deps.dev/npm/OSV network only for fresh ingestion (committed bundle allows offline load); Gemini key optional"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "The maintainer-reach and hijack-candidate analyses form a self-contained Software Dependency Intelligence pack for npm trees; only the frontier-expansion helper and cited-Cypher result contract need to be lifted into the shared engine. The PII-bearing bundle and npm-only ingestion keep it out of native merge.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

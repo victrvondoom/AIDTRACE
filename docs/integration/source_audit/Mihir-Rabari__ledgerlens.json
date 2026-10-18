@@ -1,0 +1,119 @@
+{
+  "repository": "Mihir-Rabari/ledgerlens",
+  "url": "https://github.com/Mihir-Rabari/ledgerlens",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Mihir-Rabari__ledgerlens",
+  "commit_sha": "ebd4f13dd4f6efba49534dd6ba7c77df9000252c",
+  "license": "MIT",
+  "copyright_holder": "Mihirkumar Rabari (Copyright (c) 2026)",
+  "source_files_inspected": [
+    "LICENSE",
+    "pyproject.toml",
+    "docker-compose.yml",
+    "Dockerfile",
+    ".env.example",
+    "app.py",
+    "GRAPH-MODEL.md",
+    "AI-DISCLOSURE.md (head)",
+    "ledgerlens/config.py",
+    "ledgerlens/graph.py",
+    "ledgerlens/mcp_server.py",
+    "ledgerlens/tools.py (lines 100-340, 526-680, symbol list)",
+    "ledgerlens/agents.py (lines 1-103, symbol list)",
+    "ledgerlens/service.py (lines 101-215)",
+    "tests/test_memory.py (head)",
+    "tests/*.py (function counts)"
+  ],
+  "languages_frameworks": ["Python 3.12+/FastAPI", "falkordb Python client >=1.2", "openai SDK against an OpenAI-compatible LLM endpoint (default model name glm-5.3)", "fastmcp >=2.0", "Static HTML console (static/console.html)", "setuptools"],
+  "implemented_capabilities": [
+    {
+      "capability": "Fraud-ring detection: WCC over shared-device/address/owner projection enriched with internal money-flow density",
+      "files": ["ledgerlens/tools.py", "ledgerlens/model.py", "seed.py"],
+      "symbols": ["t_find_rings", "_Q_WCC", "_Q_COMPONENT_MONEY", "t_linked_accounts", "t_explain_connection"],
+      "real_or_stub": "REAL",
+      "notes": "Calls FalkorDB algo.WCC over a precomputed LINKED_TO projection (built at seed time), then counts internal TRANSFER edges/amount per component to separate a ring from a household sharing a device. Seeded ring/household negative controls are synthetic."
+    },
+    {
+      "capability": "Hub ranking and money tracing with native graph algorithms",
+      "files": ["ledgerlens/tools.py"],
+      "symbols": ["t_rank_ring_accounts", "_Q_PAGERANK_MEMBERS", "_Q_BETWEENNESS_MEMBERS", "t_trace_money_path", "_Q_TRACE", "t_money_flow_capacity", "_Q_MAXFLOW"],
+      "real_or_stub": "REAL",
+      "notes": "algo.pageRank + algo.betweenness on the TRANSFER projection, algo.SPpaths for up to 3 shortest money routes, algo.maxFlow for funnel capacity. All run on FalkorDB-native procedures; the authors state they mapped the algorithm API against a FalkorDB v6 server, whereas Kairos targets 4.22 (LastLift reports algo.maxFlow non-maximal results and algo.SPpaths hangs on 4.22)."
+    },
+    {
+      "capability": "Three-tier agent memory in the graph (episodic Sessions/Messages, semantic Findings/Cases, procedural Playbooks) with learned-lesson write-back",
+      "files": ["ledgerlens/tools.py", "ledgerlens/agents.py", "GRAPH-MODEL.md"],
+      "symbols": ["t_open_case", "t_add_finding", "t_close_case", "t_search_memory", "t_get_playbook", "t_learn_lesson", "_Q_PLAYBOOK_APPEND", "t_record_message", "t_list_sessions", "_Q_SESSIONS", "_session_recap", "_persist_no_case_finding"],
+      "real_or_stub": "REAL",
+      "notes": "Case -[:OPENED_IN]-> Session, Session -[:PRODUCED]-> Finding -[:ABOUT]-> Account/Device, Session -[:HANDS_OFF]-> Session, Playbook -[:STEP]-> PlaybookStep -[:LEARNED_IN]-> Case. Memory recall uses fulltext indexes and returns closed_at/learned dates. No supersession: a later contradictory Finding does not invalidate an earlier one."
+    },
+    {
+      "capability": "Two-agent analyst -> investigator handoff with least-privilege tool menus and typed answer shapes",
+      "files": ["ledgerlens/agents.py", "ledgerlens/service.py"],
+      "symbols": ["investigate_alert", "ask_question", "_run_agent_loop", "ANALYST_TOOLS", "INVESTIGATOR_TOOLS", "ANALYST_SYSTEM", "INVESTIGATOR_SYSTEM", "_parse_final_json", "InvestigationResult", "AgentError"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real OpenAI-tool-calling loop (max 14 tool rounds) with role-restricted tool lists and a final JSON verdict (shape/verdict/confidence/summary). Behaviour rules (follow the playbook, cite policy section ids, do not act on negative controls) are LLM prompt instructions, not enforced code; the freeze/escalate writes are executed on the model's decision without a human approval step."
+    },
+    {
+      "capability": "Per-tenant graph isolation and fixed typed tool registry exposed over MCP and REST",
+      "files": ["ledgerlens/graph.py", "ledgerlens/mcp_server.py", "ledgerlens/tools.py", "ledgerlens/service.py"],
+      "symbols": ["tenant_graph_name", "LensConnection.read", "LensConnection.write", "TOOLS", "run_tool", "tool_specs", "tool_catalog", "build_mcp", "ToolError"],
+      "real_or_stub": "REAL",
+      "notes": "Each bank is its own FalkorDB graph 'bank_<slug>' validated by regex; reads always use GRAPH.RO_QUERY, writes use GRAPH.QUERY. The model never writes Cypher; unknown entities return typed ToolError shapes (unknown_entity / not_in_graph). ~27 tools registered."
+    },
+    {
+      "capability": "Audited actions and policy citation",
+      "files": ["ledgerlens/tools.py"],
+      "symbols": ["t_freeze_account", "t_escalate_case", "Action nodes", "t_search_policies", "t_get_policy_chunks", "_Q_POLICIES"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Freeze/escalate create Action nodes (kind, at, by, reason) linked ACTED_ON/RECORDED_IN. PolicyDoc nodes carry version and effective date so answers can cite them. The freeze action only sets a graph property; no core-banking integration."
+    },
+    {
+      "capability": "Deterministic seeded synthetic banks with planted ground-truth fixtures",
+      "files": ["seed.py", "tests/fixtures/planted_aurora.json", "tests/fixtures/planted_nimbus.json", "tests/fixtures/planted_verdant.json"],
+      "symbols": ["seed.py main routines"],
+      "real_or_stub": "REAL",
+      "notes": "Three synthetic tenants (~280 accounts each), two planted rings, one negative control, one past recurring case. Entirely synthetic."
+    }
+  ],
+  "graph_models_and_cypher": "Data: Bank, Account, Person, Device, Address, Merchant, Transaction, Alert with OWNS, ACCESSED_FROM, LIVES_AT/REGISTERED_AT, FROM/TO, AT, ABOUT plus two algorithm projections TRANSFER(Account->Account {amount, at, channel, count}) and LINKED_TO(Account->Account {via, via_id}). Memory: Session, Message (SAID_IN, NEXT), Case (OPENED_IN, INVESTIGATES, INVOLVES, HAS_FINDING), Finding (ABOUT), Playbook/PlaybookStep (STEP, LEARNED_IN), PolicyDoc/PolicyChunk (HAS_CHUNK), Action (ACTED_ON, RECORDED_IN), HANDS_OFF between Sessions. All Cypher is hand-written with $params in _Q_* constants; reads via ro_query. FalkorDB-native procedures: algo.WCC, algo.pageRank, algo.betweenness, algo.SPpaths, algo.maxFlow, and fulltext indexes (db.idx.fulltext). No APOC/GDS. Write tools issue multiple separate GRAPH.QUERY calls per action (no single-transaction atomicity: open_case issues 3-5 writes).",
+  "algorithms": [
+    "Weakly connected components over association projection with money-density enrichment in ledgerlens/tools.py:t_find_rings",
+    "PageRank + betweenness hub detection inside a component in t_rank_ring_accounts",
+    "Shortest multi-hop transfer route (algo.SPpaths, maxLen param) in t_trace_money_path",
+    "Max-flow funnel capacity (algo.maxFlow with amount capacity) in t_money_flow_capacity",
+    "Variable-length LINKED_TO|TRANSFER*..5 connection explanation in t_explain_connection"
+  ],
+  "backend_interfaces": [
+    "FastAPI (ledgerlens/service.py create_app): GET /healthz, /api/tenants, /api/tenants/{t}/stats|alerts|cases|case/{id}|case/{id}/report|sessions|graph, /api/tools; POST /api/tenants/{t}/investigate, /api/tenants/{t}/ask, /api/bench",
+    "FastMCP stdio server (python -m ledgerlens.mcp_server) exposing the same tool registry with a required tenant argument",
+    "scripts/dev.py, scripts/seed_if_needed.py, scripts/gen_docs.py (generates CYPHER.md)"
+  ],
+  "frontend_interfaces": ["static/console.html (single-file investigator console) and docs/index.html (static docs page)"],
+  "agent_or_memory_mechanisms": "Two OpenAI-compatible tool-calling agents (intake analyst, case investigator) coordinating through the graph: the handoff is a HANDS_OFF edge between Session nodes. Episodic, semantic and procedural memory are explicit graph structures; the investigator can append a learned PlaybookStep sourced to the case that taught it, so procedure evolves across sessions (tests/test_evolution.py). Fixed tool menu with per-role least privilege.",
+  "tests_present": "tests/ has 7 files with ~35 test functions: test_rings.py (8), test_evolution.py (6), test_memory.py (6), test_shapes.py (6), test_isolation.py (4), test_agent_llm.py (3, needs a live LLM, marker 'llm'), test_concurrency.py (2); they assert tools recover exactly the planted rings from tests/fixtures/planted_*.json and need a live FalkorDB. Not executed by auditor.",
+  "dependency_requirements": ["falkordb>=1.2.0", "openai>=1.60.0", "fastapi>=0.115.0", "uvicorn[standard]>=0.30.0", "httpx>=0.27.0", "pydantic>=2.9.0", "fastmcp>=2.0.0", "python >=3.12", "dev: pytest>=8, ruff>=0.8"],
+  "security_findings": [
+    "ledgerlens/service.py:101-213 - no authentication or authorization on any route, including POST /api/tenants/{t}/investigate and /api/bench, which let any caller trigger LLM calls and graph writes; tenant isolation depends only on a URL path slug validated by regex.",
+    "ledgerlens/tools.py:572-588 (t_freeze_account) and :590-601 (t_escalate_case) - model-initiated state-changing actions with no human-approval gate; the only guard is prompt text in agents.py (INVESTIGATOR_SYSTEM).",
+    "ledgerlens/tools.py:526-679 - each write tool performs several independent GRAPH.QUERY calls (no transaction), so a mid-way failure leaves partial case/finding/session structure; t_record_message chain-linking uses a non-atomic 'no NEXT yet' heuristic that can mis-link under concurrency (tests/test_concurrency.py covers 2 cases).",
+    "ledgerlens/tools.py:313-334 and 286-310 - algo.maxFlow / algo.SPpaths calls are on the request path without a pure-Python fallback; see LastLift notes on FalkorDB 4.22 defects/hangs.",
+    "docker-compose.yml - falkordb/falkordb:latest (unpinned) with no password; port not published (internal network only), app container binds 0.0.0.0:8000 behind an external reverse-proxy network.",
+    "ledgerlens/config.py:15-17 - LLM_API_KEY read from env; no hard-coded secrets found. No eval/exec/subprocess/pickle in ledgerlens/, seed.py, app.py or scripts/.",
+    "ledgerlens/service.py:ask - free-text user message is passed to the LLM tool loop (prompt-injection surface): findings from LLM summaries are persisted verbatim to Finding.text and later recalled as memory (stored-prompt-injection / memory-poisoning path)."
+  ],
+  "duplicates_or_overlaps": "Financial Fraud ring detection overlaps ManjariYagnik/GraphHacks (RingLens) and other fraud-ring entries; the explicit three-type agent memory plus handoff edges overlaps the 'Agent Memory & Provenance' family. Algorithms (WCC/pageRank/betweenness/maxFlow/SPpaths) are FalkorDB built-ins, so little unique algorithm code.",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "MEDIUM - findings carry at/confidence/source and link to entities, learned playbook steps carry LEARNED_IN provenance, policy docs carry version and effective date, and memory answers must state when they were learned; but there is no supersession, expiry or dependency invalidation, and actions are not re-checked against changed evidence.",
+  "strongest_reusable_unit": {
+    "file": "ledgerlens/tools.py (memory + ring tools) with ledgerlens/graph.py",
+    "symbols": ["t_find_rings", "t_rank_ring_accounts", "t_open_case", "t_add_finding", "t_close_case", "t_search_memory", "t_learn_lesson", "t_list_sessions", "tenant_graph_name", "run_tool", "TOOLS"],
+    "why": "A compact, tested pattern for graph-resident agent memory (case/finding/session/playbook with HANDS_OFF handoffs and learned-lesson provenance), tenant-per-graph isolation and a typed fixed tool registry exposed identically over REST and MCP. The ring-detection tools are thin wrappers over FalkorDB algorithms and need the projection-building seed logic to be useful.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB with algo.* procedures (verify on 4.22); OpenAI-compatible LLM endpoint only for the agents"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Natural Financial Fraud domain pack for Kairos (ring detection tools, projections, negative-control tests) plus a reference design for graph-native episodic/semantic/procedural agent memory; algorithm calls must be validated or replaced on FalkorDB 4.22 and the action tools need an approval gate before reuse.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "MEDIUM"
+}

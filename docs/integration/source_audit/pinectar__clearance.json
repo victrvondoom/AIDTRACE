@@ -1,0 +1,146 @@
+{
+  "repository": "pinectar/clearance",
+  "url": "https://github.com/pinectar/clearance",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\pinectar__clearance",
+  "commit_sha": "70fa115c972db5180f79dea2b7c260e8303f4234",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "package.json",
+    "README.md (first 80 lines)",
+    "ARCHITECTURE.md (head)",
+    "docs/memory/README.md",
+    "docs/memory/decisions/ADR-0004-fails-closed-gate-semantics-uncertain-or-infra-d.md",
+    "src/lib/graph.ts",
+    "src/lib/paths.ts",
+    "src/lib/decide.ts",
+    "src/lib/resolve.ts",
+    "src/lib/intake.ts",
+    "src/lib/extract.ts",
+    "src/lib/ask-templates.ts",
+    "src/lib/ratelimit.ts",
+    "src/lib/corpus-spec.ts (head)",
+    "src/lib/corpus-load.ts (head)",
+    "src/app/api/admin/reset/route.ts",
+    "src/app/api/intake/route.ts",
+    "src/app/api/matters/[id]/decision/route.ts",
+    "tests/int/decide.test.ts",
+    "tests/ (file list and test counts)"
+  ],
+  "languages_frameworks": [
+    "TypeScript/Next.js 16 (App Router)",
+    "React 19",
+    "falkordb npm client ^6.8.0",
+    "zod 4",
+    "vitest 5",
+    "Tailwind 4"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Multi-hop conflict-of-interest path discovery",
+      "files": ["src/lib/paths.ts"],
+      "symbols": ["conflictPathsFor", "annotateWalls", "toConflictPath", "explainHop"],
+      "real_or_stub": "REAL",
+      "notes": "Two parameterized Cypher traversals run through GRAPH.RO_QUERY: a direct (party)-[CLIENT_IN|ADVERSE_IN|WITNESS_IN|DECLINED_CONSULT]->(Matter) and an indirect (party)-[ALIAS_OF|SUBSIDIARY_OF|RELATED_TO*1..2]-(b)-[terminal]->(Matter). Each hop's relationship source and since properties are returned and carried into a typed ConflictPath with a plain-language explanation, a kind (direct_adversity, corporate_family, related_person, declined_consult), a severity and a waivable flag. Paths are de-duplicated by signature."
+    },
+    {
+      "capability": "Fails-closed attorney sign-off gate with write-back",
+      "files": ["src/lib/decide.ts", "src/lib/intake.ts"],
+      "symbols": ["decideMatter", "proposeWall", "runIntakePipeline", "persistReport", "DecisionError"],
+      "real_or_stub": "REAL",
+      "notes": "Every matter starts blocked. Graph outage, extractor failure or uncertain identity leave it blocked; clear is refused while uncertainty remains; re-deciding a decided matter is refused. Decisions write a write-once Clearance node (by, at, action, note, pathsSeen as a JSON list of path ids) with a CLEARS edge, or a Wall node with GUARDS, SCREENED_BY and AROUND edges, then update Intake.status and Intake.report."
+    },
+    {
+      "capability": "Deterministic ask-once entity resolution with alias memory",
+      "files": ["src/lib/resolve.ts", "src/lib/decide.ts"],
+      "symbols": ["resolveAgainstDirectory", "personAffinity", "orgContainment", "normalizeName", "writeAliases", "writeNewEntities"],
+      "real_or_stub": "REAL",
+      "notes": "Only an exact normalized name auto-matches. Same surname with compatible initials, or whole-word org containment, yields status 'uncertain' and asks an attorney, whose answer is stored as an ALIAS_OF edge with an attorney-resolution source string so it never asks again. No embeddings or scores that could silently auto-match."
+    },
+    {
+      "capability": "Ethical-wall annotation of later findings",
+      "files": ["src/lib/paths.ts", "src/lib/decide.ts"],
+      "symbols": ["annotateWalls", "proposeWall"],
+      "real_or_stub": "REAL",
+      "notes": "A standing Wall around a Matter downgrades later paths ending at that matter and lists the screened attorneys. This is a persisted decision that changes future verdicts."
+    },
+    {
+      "capability": "Parameterized 'ask the firm' institutional-memory queries",
+      "files": ["src/lib/ask-templates.ts"],
+      "symbols": ["ASK_TEMPLATES", "runAsk"],
+      "real_or_stub": "REAL",
+      "notes": "Four canned LIMIT-bounded Cypher templates (family touch, attorney history, declined consults, wall screening) returning a node/edge subgraph with matter citations. No free-form text-to-Cypher."
+    },
+    {
+      "capability": "Bounded read guard and fail-closed graph client",
+      "files": ["src/lib/graph.ts"],
+      "symbols": ["assertBoundedRead", "roQuery", "writeQuery", "GraphUnavailableError", "withDeadline"],
+      "real_or_stub": "REAL",
+      "notes": "Refuses reads without LIMIT or aggregate-only RETURN, applies a 3 s FalkorDB TIMEOUT plus a 6 s client deadline, resets the connection on error, and converts every failure to GraphUnavailableError so callers block."
+    },
+    {
+      "capability": "LLM party extraction behind a port with deterministic mock",
+      "files": ["src/lib/extract.ts"],
+      "symbols": ["LLMExtractor", "MockExtractor", "selectExtractor", "EXTRACT_PROMPT"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The LLM (Featherless Qwen2.5-72B or Anthropic) is used only to read parties out of an intake note; the mock is a regex-based extractor. Output is validated by zod and any failure blocks the matter. The deciding logic never touches the model."
+    },
+    {
+      "capability": "Synthetic firm corpus and eval harness",
+      "files": ["src/lib/corpus-spec.ts", "src/lib/corpus-load.ts", "scripts/eval.ts", "scripts/seed.ts"],
+      "symbols": ["buildCorpus", "loadCorpus", "wipeGraph", "EVAL_INTAKES"],
+      "real_or_stub": "REAL",
+      "notes": "Deterministic fictional corpus (about 120 nodes) with planted conflicts and ground-truth expectations; eval compares recall of the graph traversal against a literal name-search baseline."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Person, Org, Attorney, Matter, Intake, Clearance, Wall. Edges: ALIAS_OF, SUBSIDIARY_OF, RELATED_TO {relType}, CLIENT_IN, ADVERSE_IN, WITNESS_IN, DECLINED_CONSULT, WORKED_ON, GUARDS, SCREENED_BY, AROUND, CLEARS. Every domain edge carries source and since provenance. One graph per firm (default firm_demo). Patterns: variable-length undirected connector traversal *1..2 with id(a) <> id(b), path comprehensions ([n IN nodes(p) | n.name], [r IN relationships(p) | r.source]), UNWIND ... MERGE batch loads, collect() for screened attorneys. Reads use roQuery with TIMEOUT. No APOC or GDS. Intake reports are stored as JSON strings on Intake.report.",
+  "algorithms": [
+    "Bounded variable-length traversal over connector edges (ALIAS_OF|SUBSIDIARY_OF|RELATED_TO*1..2) to terminal matter-history edges, with path de-duplication by hop signature (paths.ts:conflictPathsFor)",
+    "Rule-based name affinity: surname plus initials match for persons, whole-word containment for orgs, exact normalized match as the only auto-accept (resolve.ts)",
+    "Path classification into kind, severity and waivable flags (paths.ts:toConflictPath)",
+    "Wall downgrade lookup per terminal matter (paths.ts:annotateWalls)",
+    "Fixed-window per-IP rate limiter and a daily live-LLM budget (ratelimit.ts)"
+  ],
+  "backend_interfaces": [
+    "Next.js route handlers: GET /api/health, GET /api/matters, GET /api/matters/[id], POST /api/intake, POST /api/matters/[id]/decision, POST /api/ask, POST /api/admin/reset (token-guarded)"
+  ],
+  "frontend_interfaces": [
+    "Next.js pages: / (queue), /intake, /matter/[id], /ask, /about",
+    "Components: DecisionPanel.tsx, parts.tsx (custom SVG path cards, no graph-viz dependency)"
+  ],
+  "agent_or_memory_mechanisms": "Human-in-the-loop gate: intake -> extract -> resolve -> traverse -> blocked -> attorney decision -> write-back. Persistent memory is stored as graph facts (ALIAS_OF edges from attorney resolutions, Wall nodes, Clearance nodes) that change later verdicts. docs/memory/ is a markdown project-memory convention for coding agents (ADR and failure records with verified_at, supersedes, helpful/harmful and cite_hash front matter, managed by a pb.py tool that is not in this repo); it is documentation, not runtime code.",
+  "tests_present": "11 vitest files with about 40 it() cases: unit (alias, calibration, corpus, extract-fail, foundations, graph-deadline, ratelimit, resolution) run without a database; int (ask, decide, engine) are skipped unless FALKORDB_URL is set. Not run by this audit.",
+  "dependency_requirements": [
+    "falkordb ^6.8.0",
+    "next 16.4.1",
+    "react / react-dom 19.3.0",
+    "zod ^4.6.7",
+    "vitest ^5.0.4, tsx ^4.23.15, typescript ^5, playwright ^1.64.1 (dev)",
+    "optional env: FALKORDB_URL, FEATHERLESS_API_KEY or ANTHROPIC_API_KEY, RESET_TOKEN"
+  ],
+  "security_findings": [
+    "src/app/api/matters/[id]/decision/route.ts:5-26 - the decision endpoint that clears, declines or walls a matter has no authentication; the signer identity is a free-text 'by' string (schemas.ts:94, min 2 max 80), so the human gate is not enforced server-side",
+    "src/app/api/admin/reset/route.ts:8 - reset token compared with !== (not constant time); the route wipes the whole graph via MATCH (n) DETACH DELETE n in corpus-load.ts:6",
+    "src/lib/ratelimit.ts:24 - rate limiting keys on a client-controlled x-forwarded-for header and is per-process in-memory",
+    "src/lib/extract.ts:86,104 - outbound fetch to api.featherless.ai and api.anthropic.com with API keys read from environment; intake text (up to 10 KB) is sent to a third party",
+    "src/lib/decide.ts:61 and src/lib/paths.ts:25,39 - Cypher built with ${label}, ${TERMINAL} and ${CONNECTOR} interpolation; values come from fixed constants or a two-value ternary, not user input (low risk); user values go through parameters",
+    "src/lib/extract.ts - intake text is passed to an LLM with the extraction prompt; the output is zod-validated and cannot open the gate, which limits prompt-injection impact",
+    "No hard-coded secrets found",
+    "No LICENSE file: reuse rests on the user-attested owner permission"
+  ],
+  "duplicates_or_overlaps": "Entity resolution with ask-once memory, provenance-bearing multi-hop relationship paths, sign-off gating (overlaps with fraud-ring and KYC link analysis, and with approval-gated agents). Related to conflict/relationship path discovery rather than blast-radius traversal.",
+  "capability_family": "Research & Legal Evidence",
+  "evidence_drift_relevance": "MEDIUM - every edge carries source and since, a signed Clearance records the exact path ids seen, standing Wall nodes change later verdicts and the gate fails closed, but a signed clearance is never re-validated when new conflicting edges appear and there are no validity windows or supersession edges.",
+  "strongest_reusable_unit": {
+    "file": "src/lib/paths.ts",
+    "symbols": ["conflictPathsFor", "toConflictPath", "annotateWalls"],
+    "why": "Compact pattern for returning a verdict as a provenance-labelled graph path (every hop with source and since) plus a standing-rule annotation; pairs with decide.ts:decideMatter for a write-once signed decision node that stores pathsSeen. A gap worth closing in any port is re-checking pathsSeen against the current graph.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; optional Featherless or Anthropic API key for extraction; TypeScript runtime (the Cypher itself ports directly to Python)"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "The conflicts-of-interest check is a self-contained legal-domain capability whose Cypher patterns can be re-expressed in Python as a Kairos capability pack. The TypeScript app cannot be merged directly into the FastAPI backend, and the missing license plus unauthenticated decision route argue against copying code wholesale.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

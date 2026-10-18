@@ -1,0 +1,115 @@
+{
+  "repository": "Sandeep-Hipparagi/NexusGraph",
+  "url": "https://github.com/Sandeep-Hipparagi/NexusGraph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\Sandeep-Hipparagi__NexusGraph",
+  "commit_sha": "af7c5e3bd3a485326bc3b6b6fe76c4cf9da7bcf5",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["backend/db/client.py", "backend/mcp_server/tool_registry.py", "backend/mcp_server/falkor_mcp.py", "backend/agents/orchestrator.py", "backend/main.py", "backend/config.py", "backend/db/seed_graph.py (Cypher excerpts)", "backend/tests/test_api.py (head)", "backend/tests/test_mcp_tools.py (test names)", "backend/requirements.txt", "backend/Dockerfile", "docker-compose.yml", "claude_desktop_config.json", "frontend/package.json", "scripts/generate_demo_video.py (imports/subprocess scan)"],
+  "languages_frameworks": ["Python 3.12 / FastAPI", "FalkorDB (falkordb>=1.8.0)", "MCP (mcp[cli] FastMCP, stdio)", "pydantic-settings", "openai SDK (optional, effectively unused)", "React 18 + TypeScript + Vite + Tailwind"],
+  "implemented_capabilities": [
+    {
+      "capability": "Explainable query execution wrapper with subgraph trace and tenant graph isolation",
+      "files": ["backend/db/client.py"],
+      "symbols": ["FalkorDBManager", "FalkorDBManager.query_with_trace", "FalkorDBManager._serialize_item", "FalkorDBManager.get_graph", "QueryTraceResult"],
+      "real_or_stub": "REAL",
+      "notes": "Executes Cypher and returns row dicts plus a trace {nodes, edges, cypher_executed, execution_time_ms} built by recursively serializing falkordb Node/Edge/Path objects; each tenant maps to its own FalkorDB graph named nexus_<tenant>. Isolation is by graph name only (no authentication or authorization)."
+    },
+    {
+      "capability": "Dependency blast radius joined to recent commits and authors",
+      "files": ["backend/mcp_server/tool_registry.py"],
+      "symbols": ["analyze_blast_radius_and_commits"],
+      "real_or_stub": "REAL",
+      "notes": "OPTIONAL MATCH (target)-[:DEPENDS_ON*1..N]-(connected) (undirected, hop cap clamped 1..5 and interpolated as an int) then joins (:Commit)-[:MODIFIED]->(svc) and (:Person)-[:AUTHORED_COMMIT]->(c). Because traversal is undirected it cannot distinguish upstream vs downstream impact; the docstring claims both directions are reported separately."
+    },
+    {
+      "capability": "Criticality ranking and failure-propagation path via FalkorDB native algorithms",
+      "files": ["backend/mcp_server/tool_registry.py"],
+      "symbols": ["run_graph_criticality_and_path"],
+      "real_or_stub": "REAL",
+      "notes": "Runs CALL algo.pageRank('Service','DEPENDS_ON') and RETURN shortestPath((src)-[:DEPENDS_ON*]->(tgt)) with a reverse-direction retry; returns ranked services, path nodes and hop details. Uses FalkorDB-native procedures (compatible with server 4.x), not Neo4j GDS."
+    },
+    {
+      "capability": "Episodic and procedural incident memory recall and commit",
+      "files": ["backend/mcp_server/tool_registry.py"],
+      "symbols": ["recall_episodic_and_procedural_memory", "commit_new_episode_memory"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Recall matches (Service)<-[:AFFECTED]-(Episode)-[:RESOLVED_BY]->(Procedure) with substring keyword filter ordered by Procedure.success_rate; commit MERGEs the Procedure and increments execution_count but never updates success_rate (always 1.0) and hard-codes Episode.outcome='SUCCESS', so 'reinforcement' is a counter, not learning."
+    },
+    {
+      "capability": "Company-brain ownership and ADR/RFC lookup with online/PTO filtering",
+      "files": ["backend/mcp_server/tool_registry.py"],
+      "symbols": ["query_company_brain_context"],
+      "real_or_stub": "REAL",
+      "notes": "Joins Person-HAS_EXPERTISE->Service, Person-MEMBER_OF->Team and Decision{status:'ACTIVE'}-GOVERNS->Service-DOCUMENTED_IN->Document with author attribution; people are split by a Person.status property (ONLINE/PTO) stored statically in seed data."
+    },
+    {
+      "capability": "Agent handoff recording graph",
+      "files": ["backend/mcp_server/tool_registry.py"],
+      "symbols": ["record_agent_handoff"],
+      "real_or_stub": "REAL",
+      "notes": "Creates AgentHandoff nodes linked to Session, Service and the from/to Agent nodes (INITIATED_HANDOFF, HANDED_OFF_TO, HANDOFF_IN_SESSION, INVESTIGATING) so a coordination trail is queryable."
+    },
+    {
+      "capability": "MCP server exposing the six graph tools",
+      "files": ["backend/mcp_server/falkor_mcp.py", "claude_desktop_config.json"],
+      "symbols": ["mcp (FastMCP)", "analyze_blast_radius_and_commits", "run_graph_criticality_and_path", "recall_episodic_and_procedural_memory", "query_company_brain_context", "record_agent_handoff", "commit_new_episode_memory"],
+      "real_or_stub": "REAL",
+      "notes": "Thin FastMCP wrappers (stdio transport) around tool_registry functions; two tools mutate the graph with no confirmation or authorization."
+    },
+    {
+      "capability": "Three-agent investigation orchestrator",
+      "files": ["backend/agents/orchestrator.py"],
+      "symbols": ["MultiAgentOrchestrator.investigate", "MultiAgentOrchestrator._detect_target_service", "MultiAgentOrchestrator._call_llm_summary"],
+      "real_or_stub": "STUB",
+      "notes": "The 'SRE_Triage / Memory_Coordinator / Company_Brain agents' are a fixed sequential function pipeline that calls the tool functions and renders f-string text. An OpenAI client is initialized but _call_llm_summary is never called, so no LLM is used. Hard-coded content: source service 'api-gateway', 'RESOLVED & COMMITTED TO MEMORY' status, 'Status: ONLINE', a fabricated fallback runbook with success_rate 0.95, and an auto-committed SUCCESS episode per run regardless of real outcome."
+    },
+    {
+      "capability": "Mission-control React UI",
+      "files": ["frontend/src/App.tsx", "frontend/src/components/GraphCanvas.tsx", "frontend/src/components/AgentStream.tsx", "frontend/src/components/CitationsPanel.tsx", "frontend/src/components/NodeInspector.tsx"],
+      "symbols": ["GraphCanvas", "AgentStream", "CitationsPanel", "NodeInspector", "Header"],
+      "real_or_stub": "REAL",
+      "notes": "Canvas graph visualizer fed by the subgraph trace, agent step stream and citation panel; calls /api/investigate, /api/graph/{tenant}, /api/reset-demo (components not read line by line)."
+    }
+  ],
+  "graph_models_and_cypher": "Per-tenant graphs nexus_acme_corp and nexus_finserve_io (synthetic seeds). Labels: Service(name,tier,health,repo), Commit, Person(status ONLINE|PTO), Team, Incident, Episode(symptom,root_cause,outcome), Procedure(success_rate,execution_count), Decision(status ACTIVE), Document, Session, Agent, AgentHandoff. Edges: DEPENDS_ON{latency_ms,criticality}, MODIFIED, AUTHORED_COMMIT, AFFECTED, RESOLVED_BY, HAS_EXPERTISE{score}, MEMBER_OF, GOVERNS, DOCUMENTED_IN, AUTHORED_DECISION, HANDOFF_IN_SESSION, INVESTIGATING, INITIATED_HANDOFF, HANDED_OFF_TO, RECORDED_IN_SESSION. Cypher is parameterized except an integer hop count and index DDL; uses algo.pageRank and shortestPath (FalkorDB-native), MERGE ... ON CREATE/ON MATCH SET, OPTIONAL MATCH joins. No APOC/GDS.",
+  "algorithms": [
+    "Undirected bounded DEPENDS_ON traversal (<=5 hops) joined to commits/authors in tool_registry.py:analyze_blast_radius_and_commits",
+    "FalkorDB native algo.pageRank bottleneck ranking + directed shortestPath with reverse retry in tool_registry.py:run_graph_criticality_and_path",
+    "Procedure ranking by stored success_rate then execution_count in tool_registry.py:recall_episodic_and_procedural_memory (success_rate is never recomputed)",
+    "Recursive Node/Edge/Path serialization to a deduplicated subgraph trace in db/client.py:_serialize_item"
+  ],
+  "backend_interfaces": ["FastAPI: GET /health, POST /api/investigate, GET /api/graph/{tenant_id}, POST /api/reset-demo (CORS allow_origins=*)", "MCP stdio server python -m backend.mcp_server.falkor_mcp with 6 tools (analyze_blast_radius_and_commits, run_graph_criticality_and_path, recall_episodic_and_procedural_memory, query_company_brain_context, record_agent_handoff, commit_new_episode_memory)"],
+  "frontend_interfaces": ["React/TypeScript SPA (Vite, Tailwind): App, Header, GraphCanvas, AgentStream, CitationsPanel, NodeInspector"],
+  "agent_or_memory_mechanisms": "Fixed 3-stage pipeline (Triage -> Memory -> Company Brain) with graph-recorded handoffs and an Episode/Procedure memory written back each run; sessions are graph nodes. LLM hooks exist but are not exercised. Memory 'learning' is an execution counter and unverified SUCCESS outcomes.",
+  "tests_present": "backend/tests/test_api.py (5 tests), backend/tests/test_mcp_tools.py (8 tests incl. mutation read-back and multi-tenant isolation), tests/test_client.py (2 tests); all require a live FalkorDB with the seeded demo graphs (about 15 tests total).",
+  "dependency_requirements": ["falkordb>=1.8.0", "mcp[cli]>=1.3.0,<2.0.0", "fastapi>=0.115.0", "uvicorn>=0.30.0", "pydantic>=2.8.0", "pydantic-settings>=2.4.0", "openai>=1.40.0", "httpx>=0.27.0", "pytest>=8.3.0", "docker image falkordb/falkordb:latest"],
+  "security_findings": [
+    "backend/main.py:29-35 - CORS allow_origins=['*'] with allow_credentials=True and no authentication on any route",
+    "backend/main.py:141-165 - POST /api/reset-demo is unauthenticated and drops/re-seeds tenant graphs (seed_graph.py:28,264 call delete_tenant_graph)",
+    "backend/db/client.py:57-61 - tenant_id from request/MCP args selects the FalkorDB graph by name (nexus_<tenant>, or any name already starting with 'nexus_'); no validation or authz, so tenant isolation is name-based only",
+    "backend/main.py:92-138 - GET /api/graph/{tenant_id} dumps the entire tenant graph (MATCH (n) OPTIONAL MATCH (n)-[r]->(m)) to any caller",
+    "backend/mcp_server/tool_registry.py:46-54 - Cypher f-string interpolates max_hops, but it is clamped to int 1..5 beforehand (not injectable)",
+    "backend/db/client.py:90 - f-string index DDL interpolates label/property_name (callers are internal constants)",
+    "backend/mcp_server/tool_registry.py:541-636,642-757 - MCP-exposed write tools (record_agent_handoff, commit_new_episode_memory) mutate the graph with arbitrary attacker/LLM-supplied text and no confirmation",
+    "backend/agents/orchestrator.py:361-396 - synthesis report f-string embeds graph/user-derived text into Markdown including links (document URLs) that a UI may render as clickable",
+    "backend/config.py:34 - LLM key read from env (LLM_API_KEY/OPENAI_API_KEY); no hard-coded secret found. Dockerfile line 'COPY .env.example /app/.env' bakes the example env into the image",
+    "scripts/generate_demo_video.py:91,334,363 - subprocess.run of ffmpeg-style commands and Playwright navigation to external site; demo tooling only, not executed in this audit",
+    "docker-compose.yml:3-8 - FalkorDB (6379) and browser (3000) published on all interfaces without a password"
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal / incident RCA (blastradius, clearpath), expert/on-call routing, and agent-memory / handoff provenance. Its MCP tool packaging is distinct in this batch.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "LOW - query_with_trace returns the exact Cypher and traversed subgraph for each answer and decisions are filtered on status 'ACTIVE' with document citations, but no seed or logic ever supersedes anything, and the orchestrator auto-commits unverified SUCCESS episodes, which is the opposite of drift-aware memory.",
+  "strongest_reusable_unit": {
+    "file": "backend/db/client.py",
+    "symbols": ["FalkorDBManager.query_with_trace", "FalkorDBManager._serialize_item", "QueryTraceResult"],
+    "why": "A small, generic wrapper for the falkordb Python client that turns any Cypher result into rows plus a UI-ready {nodes, edges, cypher_executed, execution_time_ms} trace; tool_registry.run_graph_criticality_and_path is also a working example of FalkorDB algo.pageRank and shortestPath.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB server (algo.pageRank requires it); none otherwise"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Only the query_with_trace serializer and the algo.pageRank/shortestPath call pattern are worth borrowing; the 'agents' are a canned pipeline with hard-coded outcomes and the memory scoring is a counter, so merging the engine would import misleading behavior. No license file.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

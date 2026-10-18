@@ -1,9 +1,28 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Fetched } from "@/lib/api";
 import { useFetch } from "./use-fetch";
 
 describe("useFetch state transitions", () => {
+  it("refreshes without flashing loading and stops after unmount", async () => {
+    vi.useFakeTimers();
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+    const fn = vi.fn().mockResolvedValue({ data: 42, source: "live" });
+    try {
+      const { result, unmount } = renderHook(() => useFetch(fn, [], 15000));
+      await act(async () => { await Promise.resolve(); });
+      expect(result.current.status).toBe("live");
+      await act(async () => { await vi.advanceTimersByTimeAsync(15000); });
+      expect(fn).toHaveBeenCalledTimes(2);
+      expect(result.current.status).toBe("live");
+      unmount();
+      await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+      expect(fn).toHaveBeenCalledTimes(2);
+    } finally {
+      hidden.mockRestore();
+      vi.useRealTimers();
+    }
+  });
   it("starts loading, resolves live source to 'live'", async () => {
     const fn = () => Promise.resolve<Fetched<number>>({ data: 42, source: "live" });
     const { result } = renderHook(() => useFetch(fn));

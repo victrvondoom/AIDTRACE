@@ -19,14 +19,18 @@ export type FetchState<T> =
  *  result `source: "demo"`, which this hook mapped straight to an error — so the fixture
  *  was built, then discarded, on every failure. Fetchers now throw and the fixtures are
  *  gone; the only paths are live data, a skeleton, or error+retry. */
-export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.DependencyList = []): FetchState<T> {
+export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.DependencyList = [], refreshMs = 0): FetchState<T> {
   const [state, setState] = useState<FetchState<T>>({ status: "loading" });
   const [generation, setGeneration] = useState(0);
 
   useEffect(() => {
     let stale = false;
-    const load = async () => {
-      setState({ status: "loading" });
+    let inFlight = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const load = async (initial = false) => {
+      if (inFlight || stale) return;
+      inFlight = true;
+      if (initial) setState({ status: "loading" });
       try {
         const { data } = await fn();
         if (!stale) {
@@ -43,16 +47,30 @@ export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.Dependenc
             retry: () => setGeneration((g) => g + 1),
           });
         }
+      } finally {
+        inFlight = false;
+        if (!stale && refreshMs > 0 && !document.hidden) {
+          timer = setTimeout(() => void load(), Math.max(refreshMs, 15000));
+        }
       }
     };
-    void load();
+    void load(true);
+    const resume = () => {
+      clearTimeout(timer);
+      if (!document.hidden && refreshMs > 0) void load();
+    };
+    document.addEventListener("visibilitychange", resume);
+    window.addEventListener("online", resume);
     return () => {
       stale = true;
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", resume);
+      window.removeEventListener("online", resume);
     };
     // `fn` is intentionally excluded: callers pass inline closures; `deps` is
     // the caller-declared dependency list (useEffect semantics).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generation, ...deps]);
+  }, [generation, refreshMs, ...deps]);
 
   return state;
 }

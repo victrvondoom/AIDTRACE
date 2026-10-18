@@ -1,0 +1,120 @@
+{
+  "repository": "aniruddhaadak80/unspool",
+  "url": "https://github.com/aniruddhaadak80/unspool",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\aniruddhaadak80__unspool",
+  "commit_sha": "cb3beb1d70cbfdcfc27318a69d38cefdeb4121cb",
+  "license": "MIT",
+  "copyright_holder": "Aniruddha Adak (Copyright (c) 2026)",
+  "source_files_inspected": ["src/lib/graph/queries.ts", "src/lib/graph/readonly.ts", "src/lib/graph/falkordb.ts", "src/lib/graph/schema.ts (header)", "src/lib/graph/seed.ts (grep)", "src/lib/agent/orchestrator.ts", "src/lib/agent/actions.ts", "src/lib/agent/memory.ts", "src/lib/agent/registry.ts (first 140 lines)", "src/lib/agent/trace.ts (grep)", "src/lib/agent/provider.ts (grep)", "src/app/api/cypher/route.ts", "src/app/api/mcp/route.ts", "src/app/api/agent/route.ts", "src/app/api/seed/route.ts", "src/app/api/cron/keepalive/route.ts (head)", "tests/query-builders.test.ts (head)", "package.json", ".env.example", "LICENSE"],
+  "languages_frameworks": ["TypeScript / Next.js 16 (App Router, Vercel serverless)", "FalkorDB (node falkordb ^6.8.0)", "Vercel AI SDK (ai ^7, @ai-sdk/openai)", "MCP SDK (@modelcontextprotocol/sdk)", "React 19 + @xyflow/react", "bun test"],
+  "implemented_capabilities": [
+    {
+      "capability": "Dependency blast radius / upstream dependents / ownership and on-call queries",
+      "files": ["src/lib/graph/queries.ts"],
+      "symbols": ["blastRadius", "dependentsOf", "getServiceOwnership", "documentsFor", "pastIncidents", "findEntities"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterized Cypher over Service-DEPENDS_ON*1..N (hops clamped 1..200 via limit() then interpolated; the tool schema further caps at 5), OWNED_BY/HAS_MEMBER/ONCALL_FOR, returning name paths and depth. No weighting, just path enumeration LIMIT 100."
+    },
+    {
+      "capability": "FalkorDB graph-algorithm tool builder (pageRank, WCC, label propagation, betweenness)",
+      "files": ["src/lib/graph/queries.ts", "src/lib/agent/registry.ts"],
+      "symbols": ["buildAlgorithmCall", "algorithmConfig", "runAlgorithm", "run_algorithm tool"],
+      "real_or_stub": "REAL",
+      "notes": "Builds CALL algo.pageRank(label, rel), algo.WCC({nodeLabels,relationshipTypes}), algo.labelPropagation({...}), algo.betweenness({...}) strings with YIELD columns matching FalkorDB (componentId/communityId) and documents signature quirks; unit-tested for exact output. Label/rel are string-interpolated with only single-quote escaping (see security findings)."
+    },
+    {
+      "capability": "Decision lineage written on action: Action -> Decision -> Evidence -> entity",
+      "files": ["src/lib/agent/actions.ts"],
+      "symbols": ["actPageOnCall", "actCreateIncident", "actResolveIncident"],
+      "real_or_stub": "REAL",
+      "notes": "Paging resolves the on-call Person by graph traversal, attaches to the open Incident (or auto-opens one), only ever escalates severity, creates (Action)-[:AUTHORIZED_BY]->(Decision)-[:BASED_ON]->(Evidence)-[:ABOUT]->(entity) and an episodic Memory. Provenance writes are best-effort (failure sets provenanceRecorded=false and the page still goes out). Real paging/Slack are simulated: only graph records are written."
+    },
+    {
+      "capability": "Graph-native three-type agent memory (episodic, semantic, procedural) with run provenance",
+      "files": ["src/lib/agent/memory.ts", "src/lib/agent/trace.ts"],
+      "symbols": ["writeMemory", "recall", "sessionContext", "recordStep", "startRun", "finishRun"],
+      "real_or_stub": "REAL",
+      "notes": "Memory nodes {kind,key,value,at} linked [:ABOUT] entities and [:WROTE] from the AgentRun; every tool call becomes a TraceStep with TOUCHES edges. Recall is Cypher filtering by kind/entity/substring ordered by timestamp, not vector search; no supersession or expiry."
+    },
+    {
+      "capability": "Three-stage agent pipeline (triage, investigator, commander) via AI SDK tool calling",
+      "files": ["src/lib/agent/orchestrator.ts", "src/lib/agent/registry.ts", "src/lib/agent/tools.ts", "src/lib/agent/provider.ts"],
+      "symbols": ["runAgent", "TRIAGE_SYSTEM", "INVESTIGATOR_SYSTEM", "COMMANDER_SYSTEM", "toolDefs"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Three generateText calls with bounded steps (4/8/6) and different tool subsets; the commander may invoke state-changing tools (page_on_call, create_incident, resolve_incident, write_memory) with no human approval gate. Inter-stage state is passed through text plus TraceStep nodes."
+    },
+    {
+      "capability": "Deterministic 'graph replay' fallback when no LLM key is present",
+      "files": ["src/lib/agent/orchestrator.ts"],
+      "symbols": ["replayAgent"],
+      "real_or_stub": "STUB",
+      "notes": "Runs real Cypher and PageRank but the scenario is hard-coded to checkout-api / payments-gateway / ledger / INC-1180 and the narrative strings are canned; any question containing 'who', 'page' or 'on-call' triggers a SEV1 page of payments-gateway regardless of what was asked."
+    },
+    {
+      "capability": "Read-only Cypher console gate",
+      "files": ["src/lib/graph/readonly.ts", "src/app/api/cypher/route.ts"],
+      "symbols": ["isReadOnlyCypher", "containsWriteClause", "isSingleStatement", "stripStringLiterals", "stripComments"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Regex denylist (CREATE|MERGE|SET|DELETE|REMOVE|DROP|DETACH|ALTER|FOREACH|GRAPH.) after stripping comments/strings plus single-statement check, with 200-row/12-column response caps; it uses graph.query (not RO_QUERY), so it relies entirely on the regex and CALL procedures other than algo.* are not blocked."
+    },
+    {
+      "capability": "MCP server over the same tool registry (stateless Streamable HTTP and stdio)",
+      "files": ["src/app/api/mcp/route.ts", "src/lib/agent/mcp.ts", "scripts/mcp-server.ts"],
+      "symbols": ["buildMcpServer", "handle (POST /api/mcp)"],
+      "real_or_stub": "REAL",
+      "notes": "One tool definition set is adapted to both AI SDK and MCP; every handler writes a TraceStep. The HTTP endpoint is stateless and has no authentication."
+    },
+    {
+      "capability": "Per-tenant graph isolation, seeding and free-tier keep-alive",
+      "files": ["src/lib/graph/falkordb.ts", "src/lib/graph/seed.ts", "src/app/api/seed/route.ts", "src/app/api/cron/keepalive/route.ts"],
+      "symbols": ["graphNameFor", "selectGraph", "seedGraph", "keepalive GET"],
+      "real_or_stub": "REAL",
+      "notes": "Graph name unspool_<sanitized tenant>; seedGraph deletes then rebuilds the synthetic 'company' (services, teams, people, documents, incidents, memories). Keep-alive endpoint is secret-gated only when CRON_SECRET is set."
+    },
+    {
+      "capability": "Graph contract tests (schema vs Cypher usage)",
+      "files": ["src/lib/graph/schema.ts", "tests/graph-contract.test.ts", "tests/schema.test.ts", "tests/seed.test.ts"],
+      "symbols": ["REL_TYPES"],
+      "real_or_stub": "REAL",
+      "notes": "Tests assert that every relationship type traversed in the codebase is created somewhere and vice versa, preventing silent dead joins."
+    }
+  ],
+  "graph_models_and_cypher": "Per-tenant graph unspool_<tenant>. Domain: Service(name,tier,language,repo), Team, Person, Cluster, Document(kind runbook|adr|slack|ticket|postmortem), Incident(id,severity,status,openedAt), Alert; edges DEPENDS_ON{latencyMs,critical}, OWNED_BY, RUNS_IN, HAS_MEMBER, ONCALL_FOR, REFERENCES, AFFECTS, FIRES_ON. Agent layer: Memory(kind,key,value,at)-[:ABOUT]->any; AgentRun-[:TOOK_STEP]->TraceStep-[:TOUCHES]->any; AgentRun-[:WROTE]->Memory; Action-[:TARGETS]->Incident; Action-[:AUTHORIZED_BY]->Decision-[:BASED_ON]->Evidence-[:ABOUT]->any; Tenant. Cypher is mostly parameterized; hop counts and algorithm label/rel names are interpolated. Uses FalkorDB-native algo.pageRank/WCC/labelPropagation/betweenness, shortestPath((a)-[*]-(b)), id() joins. No APOC/GDS. Note: the `(MATCH (e) WHERE e.name = ref OR e.id = ref)` pattern in actions.ts/memory.ts is an unlabeled full scan.",
+  "algorithms": [
+    "Bounded downstream/upstream DEPENDS_ON path enumeration (<=5 hops from tools, LIMIT 100) in queries.ts:blastRadius/dependentsOf",
+    "FalkorDB native pageRank / WCC / label propagation / betweenness invoked and parsed in queries.ts:runAlgorithm",
+    "Unlabeled undirected shortestPath between two named entities ('red thread') in queries.ts:shortestPathBetween",
+    "Severity-escalate-only update and on-call resolution by ONCALL_FOR traversal in actions.ts:actPageOnCall"
+  ],
+  "backend_interfaces": ["Next.js route handlers: POST /api/agent, POST /api/cypher, POST/GET /api/mcp, POST/GET /api/seed, GET /api/graph, GET /api/analysis, GET /api/runs, GET /api/health, GET /api/cron/keepalive", "CLI scripts: bun run seed, bun run mcp (stdio), bun run verify"],
+  "frontend_interfaces": ["React components: GraphCanvas (@xyflow/react), ChatPanel, TraceTimeline, MemoryPanel, AnalysisPanel, CypherConsole; page.tsx dashboard"],
+  "agent_or_memory_mechanisms": "Triage -> Investigator -> Commander stages sharing one FalkorDB graph as the inter-agent state (TraceStep/Evidence/Memory nodes); three-kind Memory recalled by Cypher; action tools write Action/Decision/Evidence provenance. No approval gating, memory expiry or contradiction handling.",
+  "tests_present": "Seven bun test files (about 60 tests): cypher-lint, graph-contract, mcp, query-builders, readonly, schema, seed. Several validate pure functions (buildAlgorithmCall, isReadOnlyCypher, schema/relationship contract); seed/mcp tests may require a configured FalkorDB; scripts/verify.ts is a live end-to-end check (not executed).",
+  "dependency_requirements": ["next 16.4.0", "react 19.3.0", "falkordb ^6.8.0 (npm)", "ai ^7.0.137", "@ai-sdk/openai ^4.0.91", "@modelcontextprotocol/sdk ^1.32.1", "zod ^4.6.5", "@xyflow/react ^12.12.0", "bun 1.3.14", "OpenRouter/OpenAI-compatible key optional"],
+  "security_findings": [
+    "src/lib/graph/queries.ts:105-110,117-118 - algorithm label/relType are interpolated into Cypher with only single-quote escaping (backslash not escaped), so an input ending in backslash-quote can break out of the literal; the values are reachable from the run_algorithm tool (LLM- or MCP-client-supplied, registry.ts:122-140)",
+    "src/app/api/mcp/route.ts:43-92 - unauthenticated MCP endpoint exposes side-effecting tools (page_on_call, create_incident, resolve_incident, write_memory) against any tenant chosen via ?tenant= / X-Tenant-Id",
+    "src/app/api/seed/route.ts:12-26 and src/lib/graph/seed.ts:21 - unauthenticated POST deletes and re-seeds a tenant graph (graph.delete())",
+    "src/app/api/agent/route.ts:22-58 - unauthenticated LLM-invoking endpoint (cost abuse); tenant ids are sanitized to [A-Za-z0-9_-]{1,64} before becoming graph names (good)",
+    "src/lib/graph/readonly.ts:12-14,43-45 and src/app/api/cypher/route.ts:54-62 - read-only protection is a regex denylist executed with graph.query rather than GRAPH.RO_QUERY; unreviewed procedure calls other than writes (e.g. CALL db.* or algo.* with write semantics) are not blocked",
+    "src/app/api/cron/keepalive/route.ts:29-35 - bearer-secret check is skipped entirely when CRON_SECRET is unset",
+    "src/lib/agent/provider.ts:14-38 - LLM API key read from OPENROUTER_API_KEY/OPENAI_API_KEY/AGENT_API_KEY env, sent to a configurable AGENT_BASE_URL; .env.example holds only placeholders (no real secret found)",
+    "src/lib/agent/actions.ts:111-122 and memory.ts:34-38 - MATCH (e) WHERE e.name = ref OR e.id = ref is an unindexed full scan on every evidence/memory link (performance risk on large graphs)",
+    "src/lib/agent/orchestrator.ts:92-95,243-251 - replay fallback can SEV1-page a hard-coded service for any question containing 'who'/'page' (misleading action record)"
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal / incident RCA / on-call routing (blastradius, clearpath, NexusGraph) and agent memory; its Action->Decision->Evidence provenance overlaps hound-aml's evidence ledger (less strict).",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - writes explicit decision lineage (Action AUTHORIZED_BY Decision BASED_ON Evidence ABOUT entity), per-step TraceStep Cypher, memory typed by kind with WROTE provenance, and a schema-vs-Cypher contract test; it has no approval gating, validity intervals, supersession, or invalidation when evidence changes.",
+  "strongest_reusable_unit": {
+    "file": "src/lib/agent/actions.ts",
+    "symbols": ["actPageOnCall", "(Action)-[:AUTHORIZED_BY]->(Decision)-[:BASED_ON]->(Evidence)-[:ABOUT]->(entity) schema", "buildAlgorithmCall in src/lib/graph/queries.ts"],
+    "why": "A compact decision-lineage schema plus the verified FalkorDB algorithm call signatures (config-map procedures, YIELD column names) and a relationship-type contract test idea that can be re-implemented in Python for Kairos.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; Node/Bun + Next.js if used as-is; OpenRouter/OpenAI key only for the live agent"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "TypeScript/Next.js on Vercel does not merge into the Python FastAPI Kairos; borrow the Action/Decision/Evidence provenance schema, algorithm-call signatures and schema-contract test concept, and avoid the regex read-only gate and unauthenticated MCP side-effecting tools.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

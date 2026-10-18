@@ -1,0 +1,132 @@
+{
+  "repository": "dayveedd/sre-sentinel",
+  "url": "https://github.com/dayveedd/sre-sentinel",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\dayveedd__sre-sentinel",
+  "commit_sha": "61e1fcbf8133149331d2875f14b13d82f8bf3dfb",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "requirements.txt",
+    ".env.example",
+    "mcp_server/graph_client.py",
+    "mcp_server/server.py",
+    "core/agent.py",
+    "core/agent_loop.py",
+    "core/sensory_router.py",
+    "scripts/seed_topology.py (lines 1-120)",
+    "start_sentinel.py (lines 70-110)",
+    "tests/test_sentinel.py (head and test count)",
+    "sensory/main.js",
+    "sensory/screen.js (head)"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI + uvicorn",
+    "FalkorDB Python client >=1.8.0",
+    "hand-rolled stdio JSON-RPC 'MCP' server (no MCP SDK)",
+    "Electron + vanilla JS HUD (screen capture, VAD, audio worklet)",
+    "WebSocket (AppLink on 127.0.0.1:47823)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "4-hop upstream culprit Cypher query",
+      "files": ["mcp_server/graph_client.py"],
+      "symbols": ["FalkorDBClient.query_upstream_culprit", "FalkorDBClient._format_culprit"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A real parameterized query: (Service)-[:DEPENDS_ON*1..4]->(dep)-[:READS_WRITES]->(Database)<-[:HOLDS_LOCK]-(culprit)-[:DEPLOYED_WITH]->(Deployment)-[:BUILT_FROM]->(GitCommit)-[:AUTHORED_BY]->(Engineer) LIMIT 1. On any connection failure, empty result or exception it silently returns a hard-coded row (PaymentGateway, CorePostgres, DataWarehouseArchiver, commit 4f82a9c, @sarah) labelled engine 'FalkorDB-Simulator', and the causal_path embeds the literal id dep_9041."
+    },
+    {
+      "capability": "Blast-radius policy gate",
+      "files": ["mcp_server/graph_client.py"],
+      "symbols": ["FalkorDBClient.calculate_blast_radius", "FalkorDBClient._format_blast_radius"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Live query (root)<-[:READS_WRITES|DEPENDS_ON*1..4]-(impacted:Service) with count(DISTINCT) and collect. Policy is one hard-coded threshold: more than 3 casualties returns BLOCKED_BY_POLICY. The fallback returns a hard-coded list of 18 services for CorePostgres and 0 for anything else."
+    },
+    {
+      "capability": "Remediation action (KILL_POD, RESTART_POD, ROLLBACK)",
+      "files": ["mcp_server/graph_client.py"],
+      "symbols": ["FalkorDBClient.execute_remediation_action", "FalkorDBClient.reset_incident", "FalkorDBClient.get_cluster_status"],
+      "real_or_stub": "STUB",
+      "notes": "Only mutates the graph (deletes a HOLDS_LOCK edge, sets Database.active_locks = 0, sets CheckoutService.status = 'HEALTHY', and on ROLLBACK sets every Deployment to ROLLED_BACK) and returns a canned summary with fixed latency numbers (resolution_time_ms 18.4, p99 42) regardless of what happened. Nothing is executed against Kubernetes. Targets such as CorePostgres and CheckoutService are hard-coded in the Cypher."
+    },
+    {
+      "capability": "stdio JSON-RPC tool server exposing three tools",
+      "files": ["mcp_server/server.py"],
+      "symbols": ["MCP_MANIFEST", "handle_tool_call", "run_stdio_mcp_server"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Implements tools/list and tools/call by hand over stdin/stdout; no initialize handshake or SDK, so a standard MCP client may not connect. Tool arguments are not validated beyond .get defaults."
+    },
+    {
+      "capability": "Scripted incident 'agent'",
+      "files": ["core/agent.py", "core/agent_loop.py"],
+      "symbols": ["IncidentAgentOrchestrator.reason_and_orchestrate", "SentinelAgent.process_incident"],
+      "real_or_stub": "STUB",
+      "notes": "Fixed five-step sequence calling the three tools. OPENROUTER_API_KEY and GEMINI_API_KEY are read but never used; there is no LLM call. The entry symptom is always CheckoutService, the summary text and '18 Tier-1 services' are hard-coded strings, and the action pills are fixed. agent_loop.py reads result keys (entry_service, degraded_hop, contested_resource, locked_table) that FalkorDBClient never returns, so it would raise KeyError and appears to be dead code from an earlier schema."
+    },
+    {
+      "capability": "Sensory router and HUD",
+      "files": ["core/sensory_router.py", "sensory/main.js", "sensory/screen.js", "sensory/vad.js", "sensory/applink.js", "start_sentinel.py"],
+      "symbols": ["websocket_endpoint", "handle_remediation", "trigger_analysis", "captureScreenshot", "createSentinelHUD"],
+      "real_or_stub": "PARTIAL",
+      "notes": "FastAPI plus WebSocket relay (POST /remediate, /analyze, /reset; GET /status, /health) and an always-on-top Electron overlay with screen capture and voice-activity detection. Source comments say the sensory code is 'Lifted from Cue', so it originated in another project. Sensor data is not actually fed into analysis; /analyze takes two strings with defaults."
+    },
+    {
+      "capability": "Seeded fintech topology",
+      "files": ["scripts/seed_topology.py", "scripts/simulate_outage.py"],
+      "symbols": ["seed_enterprise_topology", "get_falkordb_connection"],
+      "real_or_stub": "REAL",
+      "notes": "Creates about 25 Service nodes with tiers, two Database nodes, a Deployment, a GitCommit, an Engineer and the wiring between them via literal CREATE statements. It is demo data tuned to produce the planted answer."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Service {name, tier, status, repo_url}, Database {name, engine, max_connections, active_locks}, Deployment {id, version, timestamp, status}, GitCommit {sha, message, diff_summary, author_handle}, Engineer {name, handle, email}. Edges: DEPENDS_ON, READS_WRITES, HOLDS_LOCK {type, table}, DEPLOYED_WITH, BUILT_FROM, AUTHORED_BY. Notable Cypher: variable-length DEPENDS_ON*1..4 chained to a lock-holder pattern; reverse variable-length READS_WRITES|DEPENDS_ON*1..4 with count(DISTINCT) and collect(DISTINCT). Seed uses graph.delete() then CREATE. No APOC or GDS. Query parameters are bound, but several write queries hard-code names.",
+  "algorithms": [
+    "Multi-hop causal-chain match from symptom service to lock-holding service to deployment, commit and author (graph_client.py:query_upstream_culprit)",
+    "Transitive downstream impact count with fixed-threshold policy gate: casualties > 3 means blocked (graph_client.py:calculate_blast_radius)",
+    "Minimal-cut comparison by calling blast radius on the DB versus on the culprit service (core/agent.py steps 3 and 4)"
+  ],
+  "backend_interfaces": [
+    "stdio JSON-RPC tool server: query_upstream_culprit, calculate_blast_radius, execute_remediation_action (mcp_server/server.py)",
+    "FastAPI on 127.0.0.1:47823: WS /, POST /remediate, POST /analyze, GET /status, POST /reset, GET /health, static /hud",
+    "CLI: python start_sentinel.py, core/agent.py --test, scripts/seed_topology.py"
+  ],
+  "frontend_interfaces": [
+    "Electron transparent always-on-top HUD (sensory/main.js, sensory/renderer/*) and a browser HUD (sensory/hud/index.html, hud.js)"
+  ],
+  "agent_or_memory_mechanisms": "None beyond a scripted tool pipeline. A class-level _shared_state dictionary mirrored to .cluster_state.json imitates cluster state in simulator mode, but graph_client.py never imports json, so the load and save helpers raise NameError that is swallowed by bare except blocks and the file is never read or written. No memory, handoffs or learning.",
+  "tests_present": "tests/test_sentinel.py: one unittest class with 9 tests (manifest structure, culprit, blast radius, remediation, MCP calls, agent payload). With no reachable FalkorDB the tests pass against the hard-coded fallback values, so they validate the mock rather than the graph queries.",
+  "dependency_requirements": [
+    "falkordb>=1.8.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",
+    "pydantic>=2.0.0",
+    "websockets>=12.0",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.0",
+    "Electron (undeclared, located by start_sentinel.py)"
+  ],
+  "security_findings": [
+    "mcp_server/graph_client.py:14-16 - hard-coded default FalkorDB Cloud host, port and password; the password default is a credential committed in source and must be treated as exposed (value deliberately not reproduced here)",
+    "core/sensory_router.py:24-30 - CORS allow_origins=['*'] with allow_credentials=True and no authentication on POST /remediate, /analyze, /reset and on the WebSocket; any local web page or process can trigger remediation writes (default bind is 127.0.0.1, but APPLINK_HOST is configurable)",
+    "core/sensory_router.py:56-61 and 85-100 - remediation parameters come from client messages, then go into queries by parameter for the service name but with hard-coded graph targets; on exception the endpoint still returns success: True with a canned summary, which can misreport failure",
+    "mcp_server/graph_client.py:60-90,193-232 - all live-query exceptions are swallowed and replaced with fabricated results labelled FalkorDB-Simulator, so callers can mistake simulated output for real data",
+    "mcp_server/graph_client.py:32,40 - json is used without being imported; NameError is hidden by except Exception: pass",
+    "start_sentinel.py:80-112,147 - subprocess.Popen/run of sys.executable scripts and an Electron binary located from candidate paths; arguments are fixed",
+    "sensory/screen.js, sensory/vad.js - desktop screen capture and microphone audio intended to be sent to LLMs: privacy-sensitive, and not used by the analysis code actually present",
+    "scripts/seed_topology.py - graph.delete() on the configured graph name at seed time (destructive on a shared instance); f-string timestamp is an int (low risk)",
+    "No LICENSE file; sensory code is marked 'Lifted from Cue', so upstream license and ownership are unclear"
+  ],
+  "duplicates_or_overlaps": "Blast-radius traversal with a policy gate and incident root-cause chain to deployment, commit and author. Overlaps with sevenhiremath/blastradius-style and other incident/RCA repos in the audit set; it is the weakest of those because real results are replaced by canned data on any failure.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "LOW - the Service-Deployment-GitCommit-Engineer chain gives code-change provenance for a suspect, but there are no validity windows, supersession, invalidation cascade or approval gate, and the policy is a fixed count threshold.",
+  "strongest_reusable_unit": {
+    "file": "mcp_server/graph_client.py",
+    "symbols": ["FalkorDBClient.query_upstream_culprit", "FalkorDBClient.calculate_blast_radius"],
+    "why": "Two short parameterized Cypher patterns (lock-holder to deploy to commit to author trace, and reverse READS_WRITES|DEPENDS_ON blast radius with a casualty threshold) are the only reusable parts; the surrounding code fabricates results on failure and must not be reused.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; no LLM key is actually used"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The graph queries are small and generic, but the agent is a scripted demo, the remediation is a stub, results are replaced with canned data on failure, a credential is committed in source and the sensory code is of unclear origin. Use only as a reference for the culprit-to-commit trace query.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 5,
+  "auditor_confidence": "HIGH"
+}

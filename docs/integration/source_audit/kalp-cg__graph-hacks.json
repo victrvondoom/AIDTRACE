@@ -1,0 +1,141 @@
+{
+  "repository": "kalp-cg/graph-hacks",
+  "url": "https://github.com/kalp-cg/graph-hacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\kalp-cg__graph-hacks",
+  "commit_sha": "ecc3c90dcb58ac314effb52023a98f4508c75f8b",
+  "license": "MIT",
+  "copyright_holder": "kalp-cg (Copyright (c) 2026 kalp-cg)",
+  "source_files_inspected": [
+    "LICENSE",
+    ".env.example",
+    "backend/requirements.txt",
+    "backend/sentinel/config.py",
+    "backend/sentinel/db.py",
+    "backend/sentinel/mcp_server.py",
+    "backend/sentinel/tools/common.py",
+    "backend/sentinel/tools/read.py",
+    "backend/sentinel/tools/rootcause.py",
+    "backend/sentinel/tools/algorithms.py",
+    "backend/sentinel/tools/memory.py",
+    "backend/sentinel/tools/incidents.py",
+    "backend/sentinel/tools/actions.py",
+    "backend/sentinel/tools/health.py",
+    "backend/sentinel/agent/loop.py",
+    "backend/sentinel/agent/autopilot.py",
+    "backend/sentinel/agent/mcp_client.py",
+    "backend/sentinel/agent/prompts.py",
+    "backend/sentinel/agent/llm.py",
+    "backend/sentinel/api/main.py",
+    "backend/sentinel/seed/scenarios.py",
+    "backend/sentinel/seed/memory.py",
+    "backend/tests/ (file list and test counts)"
+  ],
+  "languages_frameworks": ["Python/FastAPI + WebSocket", "falkordb==1.8.0", "mcp==2.3.0 (stdio MCP server and client)", "httpx", "uvicorn", "Next.js/React frontend with graph canvas", "Playwright e2e"],
+  "implemented_capabilities": [
+    {
+      "capability": "Common-cause root-cause analysis over service dependency graph",
+      "files": ["backend/sentinel/tools/rootcause.py"],
+      "symbols": ["find_common_cause", "COMMON_CAUSE_CYPHER", "PATHS_CYPHER"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher finds services reachable (DEPENDS_ON*0..5) from ALL alerting services, then ranks unhealthy-with-nothing-unhealthy-below (deepest failure) over symptoms, using shortestPath to highlight evidence paths. Deterministic graph logic, not an LLM prompt."
+    },
+    {
+      "capability": "Recent change correlation (deployments, commits, authors, teams in a time window)",
+      "files": ["backend/sentinel/tools/rootcause.py"],
+      "symbols": ["recent_changes", "RECENT_CHANGES_CYPHER"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterised Cypher joins Deployment, Commit, Person and Team within a clamped minutes window and returns minutes_ago."
+    },
+    {
+      "capability": "Blast radius and downstream dependency tracing with depth clamp",
+      "files": ["backend/sentinel/tools/read.py"],
+      "symbols": ["blast_radius", "trace_dependencies", "get_service_context", "get_active_alerts"],
+      "real_or_stub": "REAL",
+      "notes": "Variable-length DEPENDS_ON traversals with min hop per node and a by-tier count; depth is an int clamped to 1..6 before being interpolated into the Cypher string."
+    },
+    {
+      "capability": "Graph-algorithm criticality (PageRank, betweenness, weighted shortest path)",
+      "files": ["backend/sentinel/tools/algorithms.py"],
+      "symbols": ["critical_services", "chokepoints", "failure_path", "PAGERANK_CYPHER", "BETWEENNESS_CYPHER", "FAILURE_PATH_CYPHER"],
+      "real_or_stub": "REAL",
+      "notes": "Uses FalkorDB-native CALL algo.pageRank, algo.betweenness and algo.SPpaths with focus-node ranking; availability of algo.betweenness depends on the FalkorDB server version."
+    },
+    {
+      "capability": "Incident memory recall by graph proximity (not text similarity)",
+      "files": ["backend/sentinel/tools/memory.py", "backend/sentinel/tools/incidents.py", "backend/sentinel/seed/memory.py"],
+      "symbols": ["recall_similar", "RECALL_CYPHER", "open_incident", "conclude_incident", "settle_incidents"],
+      "real_or_stub": "REAL",
+      "notes": "Scores resolved past incidents by affected/root-cause links within 2 DEPENDS_ON hops weighted by 1/(1+hops); each investigation becomes an Incident node with ROOT_CAUSE, FOLLOWED, SIMILAR_TO, RESOLVED_BY edges so memory grows."
+    },
+    {
+      "capability": "Human-approval-gated remediation actions",
+      "files": ["backend/sentinel/tools/actions.py", "backend/sentinel/api/main.py"],
+      "symbols": ["propose_action", "execute_action", "reject_action", "_run_action", "approve", "reject"],
+      "real_or_stub": "REAL",
+      "notes": "Agent can only create a pending Action node; /api/actions/{uid}/approve atomically flips pending->executing (FalkorDB write serialisation prevents double execution) and applies graph changes (rollback, open_breaker, scale_up, page_oncall). Actions simulate remediation by mutating graph state; only the optional webhook page reaches the outside world."
+    },
+    {
+      "capability": "Recovery by traversal (health propagation after fix)",
+      "files": ["backend/sentinel/tools/health.py"],
+      "symbols": ["recompute_health"],
+      "real_or_stub": "REAL",
+      "notes": "Symptom services become healthy once nothing unhealthy is reachable through closed breakers; resolves alerts and incidents accordingly. Operates on a simulated infrastructure graph."
+    },
+    {
+      "capability": "MCP tool server and agent loop with deterministic autopilot fallback",
+      "files": ["backend/sentinel/mcp_server.py", "backend/sentinel/agent/loop.py", "backend/sentinel/agent/autopilot.py", "backend/sentinel/agent/mcp_client.py", "backend/sentinel/agent/llm.py"],
+      "symbols": ["server", "investigate", "RunState", "Autopilot", "GraphToolbox", "compact_for_llm", "make_llm"],
+      "real_or_stub": "REAL",
+      "notes": "12 MCP tools; LLM (Ollama/Gemini/OpenAI-compatible) drives the protocol, hidden params (run_id) are injected by the loop not the model, and a deterministic Autopilot policy takes over on provider failure or runs without any LLM and is labelled as such."
+    },
+    {
+      "capability": "Scenario injection and chaos for demo data",
+      "files": ["backend/sentinel/seed/scenarios.py", "backend/sentinel/seed/generator.py", "backend/sentinel/seed/catalog.py", "backend/sentinel/seed/history.py"],
+      "symbols": ["SCENARIOS", "soft_reset", "inject_scenario", "inject_chaos", "seed_baseline"],
+      "real_or_stub": "STUB",
+      "notes": "Fully synthetic infrastructure (hard-coded services, deployments, people, incidents). The RCA runs on real graph logic but the data is demo-generated."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Service {name, uid, tier, status, root_fault}, Deployment {version, at, status}, Commit, Person, Team, Database, Alert {status}, Incident {id, status, run_id, steps_taken}, Action {kind, status, risk, target}, Runbook, Page. Edges: DEPENDS_ON {breaker, weight, uid}, DEPLOYED_TO, CONTAINS, AUTHORED_BY, MEMBER_OF, OWNS, ON_CALL {from,to}, READS_FROM/WRITES_TO, FIRED_ON, TRIGGERED_BY, AFFECTED, ROOT_CAUSE, RESOLVED_BY, FOLLOWED, SIMILAR_TO, TARGETS, NOTIFIED, PAGED. Cypher is parameterised; uses FalkorDB-specific constructs (shortestPath only in WITH/RETURN with bound endpoints, pattern comprehensions, algo.pageRank / algo.betweenness / algo.SPpaths). No APOC or Neo4j GDS. Every tool returns its Cypher and touched node/edge uids (evidence trail).",
+  "algorithms": [
+    "Common ancestor/dependency intersection with unhealthy-depth ranking (rootcause.py:find_common_cause)",
+    "min-hop BFS-style blast radius with depth cap 6 (read.py:blast_radius)",
+    "PageRank, betweenness, weighted shortest path (algorithms.py)",
+    "Proximity-weighted incident recall sum(weight/(1+hops)) (memory.py:RECALL_CYPHER)",
+    "Fixed-point health recovery over closed-breaker dependency edges (health.py:recompute_health)",
+    "Atomic claim of pending action to prevent double execution (actions.py:execute_action)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/health, /api/graph, /api/incidents, /api/scenarios, /api/actions; POST /api/scenarios/{name}, /api/chaos/{service}, /api/reset, /api/runs, /api/actions/{uid}/approve, /api/actions/{uid}/reject; WebSocket /ws event stream",
+    "MCP stdio server (python -m sentinel.mcp_server) exposing get_active_alerts, get_service_context, trace_dependencies, blast_radius, find_common_cause, recent_changes, critical_services, chokepoints, failure_path, recall_similar, propose_action, conclude_investigation",
+    "CLI: backend/sentinel/agent/cli.py, python -m sentinel.seed"
+  ],
+  "frontend_interfaces": ["Next.js app: Dashboard, GraphCanvas (live graph), AgentTrail (tool-call timeline), ControlPanel (scenarios/chaos/approve), TopBar, WebSocket hook useRunSocket"],
+  "agent_or_memory_mechanisms": "Investigation protocol in SYSTEM_PROMPT driven by an LLM through MCP tools; RunState tracks suspect, repeat incident and proposed actions; nudges force action and paging; memory-guided planning injects a 'memory_match' hint when a past incident shares the root cause; Incident nodes persist learned memory across soft resets; Autopilot is a deterministic fallback with identical interface.",
+  "tests_present": "backend/tests: test_actions (9), test_agent (6), test_api (1), test_llm (1), test_seed (8), test_tools (15) = about 40 pytest tests that need a live FalkorDB; plus Playwright e2e specs (incident.spec.ts, realtime.spec.ts) and GitHub Actions workflows. Not executed by auditor.",
+  "dependency_requirements": ["falkordb==1.8.0", "fastapi==0.143.2", "httpx==0.28.1", "mcp==2.3.0", "uvicorn[standard]==0.54.0", "python-dotenv==1.2.1", "pytest==9.1.1", "FalkorDB server supporting algo.pageRank/betweenness/SPpaths", "Ollama or Gemini/OpenAI-compatible key (optional; Autopilot works without)"],
+  "security_findings": [
+    "backend/sentinel/api/main.py:105 - CORS allow_origins includes '*' appended to the configured list with allow_methods/headers '*'; combined with no authentication on POST /api/actions/{uid}/approve, /api/chaos/{service}, /api/reset any web page can trigger state changes",
+    "backend/sentinel/api/main.py:114-223 - no authentication or authorization on any route, including action approval (approved_by is hard-coded to 'human')",
+    "backend/sentinel/tools/actions.py:~150-165 - urllib.request.urlopen to PAGER_WEBHOOK_URL from environment (operator-controlled; no URL allowlist, SSRF only if env is attacker-controlled)",
+    "backend/sentinel/tools/read.py:~60 and ~95 - Cypher built with f-string interpolation of the variable-length bound {d}; d is produced by clamp() to an int 1..6 so not injectable; service names are passed as $params",
+    "backend/sentinel/agent/mcp_client.py:~28 - spawns subprocess sys.executable -m sentinel.mcp_server with full os.environ passed to the child (includes API keys); fixed command, not user-controlled",
+    "backend/sentinel/tools/incidents.py:~65-70 - generic MATCH (t {uid: $target}) used for ROOT_CAUSE target; parameterised",
+    "No hard-coded secrets; .env.example holds empty values. No eval/exec/pickle found."
+  ],
+  "duplicates_or_overlaps": "Incident root-cause analysis and blast-radius traversal (overlaps other RCA, SRE-sentinel and blast-radius repos in the set); approval-gated action pattern overlaps other agent-governance repos.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - real propose/approve/execute gating with atomic claim and incident-to-root-cause lineage edges with evidence uid trails, but no provenance supersession or temporal validity windows beyond a recent-deploy cutoff.",
+  "strongest_reusable_unit": {
+    "file": "backend/sentinel/tools/rootcause.py",
+    "symbols": ["find_common_cause", "COMMON_CAUSE_CYPHER", "recent_changes"],
+    "why": "Compact, parameterised, FalkorDB-native Cypher that intersects the dependency closures of all alerting nodes and ranks deepest-unhealthy candidates, paired with a tool result shape (value + cypher + node_uids + edge_uids) that gives every answer an evidence trail; actions.py adds a ready approval-gate state machine.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (client falkordb 1.8.0); no LLM needed for the tools; MCP SDK only if the MCP server layer is kept"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "Tools are pure functions over a FalkorDB Graph handle with parameterised Cypher, so the RCA, blast-radius and memory tools can be lifted as an Incident & RCA capability pack; the approval-gate (actions.py) is a candidate shared helper. Keep the synthetic seed data and frontend out of the merge.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

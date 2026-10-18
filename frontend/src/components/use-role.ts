@@ -69,6 +69,8 @@ const STAFF_AND_COMPLIANCE: Role[] = [...STAFF_ONLY, "compliance"];
 // /assets, /field, /settings) are open to any authenticated role. Enforced centrally in
 // the app shell so no page can be reached by URL without the right role.
 const ROUTE_ACCESS: ReadonlyArray<{ prefix: string; roles: Role[] }> = [
+  { prefix: "/workspace", roles: STAFF_ONLY },
+  { prefix: "/resolveai", roles: STAFF_ONLY },
   { prefix: "/system-health", roles: ADMIN_ROLES },
   { prefix: "/overview", roles: STAFF_ONLY },
   { prefix: "/events", roles: STAFF_ONLY },

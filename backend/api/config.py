@@ -79,6 +79,17 @@ class Settings(BaseSettings):
     NEO4J_DATABASE: str = "neo4j"
 
     # -------------------------------------------------------------------------
+    # FalkorDB (local Docker) — the decision-dependency graph behind Evidence Drift Cascade.
+    # One graph per site (`<prefix>__<site_id>`), so tenant isolation is a property of the store,
+    # not of a WHERE clause. The Neo4j asset/document graph above is unchanged.
+    # -------------------------------------------------------------------------
+    FALKORDB_URL: str = "redis://localhost:6380"
+    FALKORDB_GRAPH_PREFIX: str = "kairos_drift"
+    FALKORDB_QUERY_TIMEOUT_MS: int = 5000
+    DRIFT_MAX_DEPTH: int = 12               # bound on any dependency traversal
+    DRIFT_MAX_EDGES: int = 5000              # fail closed when the impact set exceeds this limit
+
+    # -------------------------------------------------------------------------
     # Qdrant (local Docker)
     # -------------------------------------------------------------------------
     QDRANT_URL: str = "http://localhost:6333"

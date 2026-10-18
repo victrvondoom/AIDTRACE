@@ -1,0 +1,140 @@
+{
+  "repository": "aniruddhaadak80/meridian-graphhacks",
+  "url": "https://github.com/aniruddhaadak80/meridian-graphhacks",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\aniruddhaadak80__meridian-graphhacks",
+  "commit_sha": "95f863afc8a43f82ea93c5dde5fe105144075722",
+  "license": "MIT",
+  "copyright_holder": "Aniruddha Adak",
+  "source_files_inspected": [
+    "LICENSE",
+    "package.json",
+    ".env.example",
+    "SECURITY.md",
+    "lib/graph/store.ts",
+    "lib/graph/algorithms.ts",
+    "lib/graph/seed.ts (head)",
+    "lib/memory/memory.ts",
+    "lib/agents/crew.ts",
+    "app/api/cypher/route.ts",
+    "app/api/mcp/route.ts",
+    "app/api/chat/route.ts",
+    "app/api/proof/route.ts (head)",
+    "app/api/seed/route.ts",
+    "scripts/test.ts (test names)"
+  ],
+  "languages_frameworks": [
+    "TypeScript/Next.js 15 (App Router)",
+    "React 19",
+    "falkordb npm client ^6.6.2",
+    "falkordblite (embedded, linux-x64 and darwin-arm64 only)",
+    "zod 3",
+    "Tailwind 3"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "In-memory property graph with best-effort FalkorDB mirror",
+      "files": ["lib/graph/store.ts"],
+      "symbols": ["tenantGraph", "upsertNode", "addEdge", "mirrorWrite", "mirrorSeedBatch", "runCypher", "falkorDb", "openEmbeddedFalkorDb"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A Map-based graph is the source of truth for all agent logic. When FALKORDB_URL (or the embedded lite build) is available every domain write is mirrored to graph meridian_<tenant>, and failures are swallowed (mirrorWrite returns mirrored:false) so the UI never breaks. Without a URL the app silently runs memory-only. Graph algorithms never query FalkorDB."
+    },
+    {
+      "capability": "BFS blast radius over DEPENDS_ON",
+      "files": ["lib/graph/algorithms.ts"],
+      "symbols": ["bfsPaths", "blastRadius"],
+      "real_or_stub": "REAL",
+      "notes": "Undirected BFS with a depth cap over edges optionally filtered by relationship type; blastRadius filters reached nodes to Service labels and returns hop counts and paths. Note that bfsPaths walks edges in both directions, so 'downstream' results include upstream dependencies too, and it rescans the whole edge map per node (O(V*E))."
+    },
+    {
+      "capability": "PageRank and shortest path",
+      "files": ["lib/graph/algorithms.ts"],
+      "symbols": ["pageRank", "shortestPath"],
+      "real_or_stub": "REAL",
+      "notes": "Hand-written PageRank (60 iterations, damping 0.85, dangling-mass redistribution, normalised) over DEPENDS_ON among Service nodes; shortestPath is BFS to depth 6. Executed in TypeScript, not by FalkorDB."
+    },
+    {
+      "capability": "Incident root-cause chain ranking",
+      "files": ["lib/graph/algorithms.ts"],
+      "symbols": ["rootCauseChain", "whoKnows"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Joins Incident -AFFECTS-> Service <-DEPLOYED_TO- Deploy <-DEPLOYED_AS- PR <-AUTHORED- Person by scanning the edge map, then ranks by seeded CAUSED_BY > CORRELATED_WITH > suspect flag > deploy time. The CAUSED_BY and CORRELATED_WITH edges and the suspect/risk flags are hand-seeded, so the 'root cause' is largely authored data rather than inferred."
+    },
+    {
+      "capability": "Episodic/semantic memory and task handoff graph",
+      "files": ["lib/memory/memory.ts"],
+      "symbols": ["rememberEpisode", "rememberFact", "recall", "sessionHistory", "createTask", "claimTask", "completeTask", "openTasks"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Episode, Fact and Task nodes with OBSERVED_IN, IN_SESSION, ABOUT, ASSIGNED_TO and CLAIMED edges. recall is a keyword-substring scorer over JSON-stringified props with a distinctive-token rule, not embeddings or graph search. Task claim has no locking or ownership check."
+    },
+    {
+      "capability": "Four-'agent' crew with keyword intent routing",
+      "files": ["lib/agents/crew.ts"],
+      "symbols": ["runCrew", "MCP_TOOLS", "answerForGeneral", "shortestDemo"],
+      "real_or_stub": "PARTIAL",
+      "notes": "The 'Scout, Archivist, Guardian, Oracle' agents are code paths chosen by q.includes() keyword checks, not LLM agents. Some answers are hard-coded strings (answerForGeneral hard-codes decisions dec_43, dec_41, dec_42 and a Friday-deploy policy; shortestDemo hard-codes tk_5101 and inc_2041). An LLM narrator is mentioned in comments but no LLM call exists in the code read."
+    },
+    {
+      "capability": "HTTP 'MCP' tool endpoint and Cypher export",
+      "files": ["app/api/mcp/route.ts", "app/api/cypher/route.ts", "lib/graph/cypherExport.ts"],
+      "symbols": ["POST", "GET", "exportCypher", "PRODUCT_CYPHER"],
+      "real_or_stub": "PARTIAL",
+      "notes": "/api/mcp is a plain JSON POST dispatcher (tool names graph.blastRadius, graph.pageRank, graph.whoKnows, graph.shortestPath, graph.traverse, brain.decisionLineage, memory.recall, memory.handoff), not the MCP protocol. /api/cypher POST forwards caller-supplied Cypher to FalkorDB. Snippets shown to users (CYPHER_SNIPPETS) are display text built with string interpolation and are not what the algorithms execute."
+    },
+    {
+      "capability": "Proof endpoint that severs relationships to show graph dependence",
+      "files": ["app/api/proof/route.ts", "scripts/ablation.ts"],
+      "symbols": ["snapshot", "GET"],
+      "real_or_stub": "REAL",
+      "notes": "Runs the same capabilities with and without edges in the in-memory graph and reports what changed; useful as a pattern but it ablates the TypeScript mirror, not FalkorDB."
+    }
+  ],
+  "graph_models_and_cypher": "Seeded fictional company with labels Service, Incident, Deploy, PR, Person, Team, Doc, Decision, Skill, Episode, Fact, Memory, Session, Task and edges DEPENDS_ON, AFFECTS, DEPLOYED_TO, DEPLOYED_AS, AUTHORED, CHANGES, CAUSED_BY, CORRELATED_WITH, WORKED_ON, KNOWS, OWNS, REMEDIATES, DESCRIBES, MADE, CONSTRAINS, OBSERVED_IN, IN_SESSION, ABOUT, ASSIGNED_TO, CLAIMED. FalkorDB receives MERGE statements per write (mirrorWrite), UNWIND $nodes MERGE (x {id: n.id}) SET x += n.props batches (mirrorSeedBatch) with label-by-label SET x:Label, and UNWIND $edges MATCH-MERGE per relationship type. One graph per tenant: meridian_<tenant>. Graph algorithms (BFS, PageRank, shortest path) are TypeScript, not FalkorDB; no APOC or GDS. The comment in algorithms.ts about CALL algo.pageRank is aspirational, not executed.",
+  "algorithms": [
+    "Undirected BFS with depth cap, O(V*E) edge scan per frontier node (lib/graph/algorithms.ts:bfsPaths)",
+    "Blast radius = BFS over DEPENDS_ON filtered to Service nodes (blastRadius)",
+    "PageRank with dangling-mass handling (pageRank)",
+    "Evidence-weighted expert scoring: WORKED_ON=3, PR-touch=2 each, skill match capped at 2, graph evidence required (whoKnows)",
+    "Incident suspect ranking by edge type, suspect flag, recency (rootCauseChain)",
+    "Keyword-token recall scoring (memory.ts:recall)"
+  ],
+  "backend_interfaces": [
+    "Next.js route handlers: GET/POST /api/chat, GET/POST /api/cypher, GET /api/graph, GET /api/health, GET/POST /api/investigate, GET/POST /api/mcp, GET/POST /api/memory, GET /api/proof, GET/POST /api/seed"
+  ],
+  "frontend_interfaces": [
+    "app/page.tsx landing page, app/console/page.tsx console, components/GraphCanvas.tsx (graph canvas)"
+  ],
+  "agent_or_memory_mechanisms": "Multi-agent blackboard simulated by a single runCrew function: Scout (anchors), Archivist (memory recall and episode write), Guardian (blast radius and actions), Oracle (owners and decisions). Memory is episodic (Episode nodes per session), semantic (Fact nodes) and task handoff (Task nodes with open, in_progress, done and CLAIMED edges). Per-tenant isolation is enforced by separate in-memory maps and separate FalkorDB graph names.",
+  "tests_present": "scripts/test.ts has 26 node:test cases (seed shape and idempotence, blast radius, PageRank normalisation, shortest path, whoKnows requiring graph evidence, rootCause ranking, episodic memory, task handoff, tenant isolation, crew steps, cypher export). Tests exercise the in-memory implementation; eval.ts and ablation.ts are additional scripts. Not run by this audit.",
+  "dependency_requirements": [
+    "next ^15.3.0",
+    "react / react-dom ^19.0.0",
+    "falkordb ^6.6.2",
+    "falkordblite ^0.3.0 (dev, embedded, no Windows build)",
+    "zod ^3.24.0",
+    "tsx, typescript ^5.7, tailwindcss ^3.4 (dev)"
+  ],
+  "security_findings": [
+    "app/api/cypher/route.ts:41-50 - POST accepts arbitrary Cypher (including writes) from the request body and runs it against the live FalkorDB graph via lib/graph/store.ts:368 runCypher with no authentication, no read-only enforcement and a caller-chosen tenant; this contradicts SECURITY.md's claim that Cypher is always parameterized",
+    "app/api/mcp/route.ts:18 and app/api/seed/route.ts - unauthenticated POST endpoints that create and claim tasks, write memory and reseed any tenant name",
+    "lib/graph/algorithms.ts:15 - CYPHER_SNIPPETS.blastRadius interpolates serviceId into a Cypher string; it is display text only but could be copy-run by users with unescaped input",
+    "lib/graph/store.ts:337 - SET x:${safe} with the label filtered to [a-zA-Z0-9_] (low risk)",
+    "lib/graph/store.ts - mirrorWrite swallows all FalkorDB errors, so persistence failures are silent",
+    "FALKORDB_URL credentials are parsed from the URL string but only a masked form is exposed via backendStatus (good practice)",
+    "No hard-coded secrets found; no outbound LLM calls found"
+  ],
+  "duplicates_or_overlaps": "Blast-radius traversal (DEPENDS_ON BFS), PageRank centrality, incident root-cause chains, agent episodic memory and task handoff, decision lineage. Overlaps with several blast-radius and incident-RCA repos in this audit, with weaker FalkorDB integration than most.",
+  "capability_family": "Enterprise Knowledge",
+  "evidence_drift_relevance": "LOW - Decision nodes with MADE/CONSTRAINS edges and a Doc 'updated' date give a thin decision-lineage and freshness signal, and recall results are cited by id, but nothing models provenance, supersession, validity windows, invalidation or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "lib/graph/algorithms.ts",
+    "symbols": ["pageRank", "blastRadius", "bfsPaths", "whoKnows"],
+    "why": "Small, deterministic, unit-tested graph routines (PageRank with dangling mass, BFS blast radius, evidence-required expert scoring). They are generic but trivial to rewrite in Python/networkx or Cypher and run in TypeScript over an in-memory mirror, so reuse value is as a spec rather than code.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "None for the algorithms (Node/TypeScript); FalkorDB only for the optional mirror"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "The graph logic runs on an in-memory TypeScript mirror with FalkorDB as a best-effort copy, the 'agents' are keyword routing with hard-coded answers, and the open /api/cypher endpoint is unsafe. The ideas (tenant-per-graph naming, ablation proof endpoint, memory/handoff node shapes) are worth referencing but not merging.",
+  "implementation_status": "DEMO_ONLY",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

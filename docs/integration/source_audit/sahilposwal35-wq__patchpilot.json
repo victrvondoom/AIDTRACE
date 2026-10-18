@@ -1,0 +1,99 @@
+{
+  "repository": "sahilposwal35-wq/patchpilot",
+  "url": "https://github.com/sahilposwal35-wq/patchpilot",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\sahilposwal35-wq__patchpilot",
+  "commit_sha": "61392d7911d6a3ec358c9a1c567554bd1dffea74",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "README.md",
+    "backend/requirements.txt",
+    "backend/.env.example",
+    "backend/app/main.py",
+    "backend/app/core/config.py",
+    "backend/app/core/prioritization.py",
+    "backend/app/db/connection.py",
+    "backend/app/graph/queries.py",
+    "backend/app/agent/investigator.py",
+    "backend/app/api/routes.py",
+    "backend/tests/test_patchpilot.py",
+    "scripts/seed_graph.py (listing)",
+    "data/synthetic_data/graph_dataset.json (listing)"
+  ],
+  "languages_frameworks": ["Python 3.11/FastAPI", "falkordb==1.0.10 client", "Pydantic v2", "openai 1.57 / anthropic 0.40 (optional LLM summary)", "React 19 + TypeScript + Vite (frontend)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Transitive dependency blast-radius traversal from CVE to apps, assets, teams",
+      "files": ["backend/app/graph/queries.py"],
+      "symbols": ["trace_affected_packages", "trace_affected_applications", "analyze_asset_impact", "get_responsible_teams", "retrieve_evidence_paths"],
+      "real_or_stub": "REAL",
+      "notes": "Cypher variable-length (DEPENDS_ON*0..N, default 4) from (Vulnerability)-[:AFFECTS]->(Package) up through (Application)-[:USES]->(Package), then DEPLOYED_AS Asset and OWNED_BY Team; evidence paths limited to 20. Plain FalkorDB Cypher, no GDS."
+    },
+    {
+      "capability": "Deterministic evidence-aware priority scoring",
+      "files": ["backend/app/core/prioritization.py"],
+      "symbols": ["compute_priority", "PriorityFactors", "PriorityResult", "_reach_score", "SEVERITY_WEIGHTS", "CRITICALITY_WEIGHTS", "EVIDENCE_INCOMPLETE_PENALTY"],
+      "real_or_stub": "REAL",
+      "notes": "Pure-Python additive score (severity 40 + asset criticality 30 + log-scaled reach 20 + exposure 10 - 15 incomplete-evidence penalty), labels CRITICAL/HIGH/MEDIUM/LOW/UNCERTAIN, and lists missing evidence rather than assuming low risk. Note README says 'reachability' but code only counts affected applications (no call-graph reachability); EPSS/exploit fields in the README table are not used by the scorer."
+    },
+    {
+      "capability": "Investigation workflow ('agent') with optional LLM summary",
+      "files": ["backend/app/agent/investigator.py"],
+      "symbols": ["run_investigation", "GraphTools", "_call_llm"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A fixed 11-step procedural pipeline calling graph queries then the scorer; it is not an LLM-planned agent. LLM (OpenAI/Anthropic) only rewrites a 3-5 sentence summary and degrades to deterministic mode if no key."
+    },
+    {
+      "capability": "Remediation records linked to investigation and finding",
+      "files": ["backend/app/graph/queries.py", "backend/app/api/routes.py"],
+      "symbols": ["create_remediation", "create_investigation", "get_all_remediations"],
+      "real_or_stub": "PARTIAL",
+      "notes": "POST /remediations creates (Remediation)-[:ADDRESSES]->(Finding) and -[:SUPPORTED_BY]->(Investigation) with status hard-set to 'approved' at creation; the POST itself is the 'approval'. Action is simulated (docstring: 'simulated remediation action'). Investigation results are stored as a frozen JSON snapshot string."
+    },
+    {
+      "capability": "Interactive dependency graph / evidence path UI",
+      "files": ["frontend/src/components/DependencyGraph.tsx", "frontend/src/components/EvidencePathView.tsx", "frontend/src/components/PriorityScoreCard.tsx", "frontend/src/pages/InvestigatePage.tsx", "frontend/src/components/RemediationModal.tsx"],
+      "symbols": ["DependencyGraph", "EvidencePathView", "PriorityScoreCard"],
+      "real_or_stub": "REAL",
+      "notes": "React pages for overview, graph, investigate, remediations and status."
+    }
+  ],
+  "graph_models_and_cypher": "Single graph (FALKORDB_GRAPH). Nodes: Vulnerability{cvss_score,cve,incomplete_evidence}, Package{name,version,ecosystem}, Application, Asset{criticality,exposed,environment}, Team, Finding{status,source,detected_at,incomplete_evidence}, Investigation{result JSON}, Remediation{status}. Edges: AFFECTS, DEPENDS_ON, USES, DEPLOYED_AS (README says DEPLOYS_TO), OWNED_BY, IDENTIFIES (Finding->Vulnerability), INVESTIGATES, ADDRESSES, SUPPORTED_BY, PROPOSED_FOR. Variable-length paths with depth f-string interpolated from a Python int default (max_depth=4); all ids parameterized. Uses pattern predicates in WHERE ((entry)-[:DEPENDS_ON*0..N]->(vp)) which FalkorDB supports. No APOC/GDS.",
+  "algorithms": [
+    "Reverse transitive-dependency closure bounded by max_depth (queries.py:544-577)",
+    "Application-to-vulnerable-package path enumeration ordered by hops, LIMIT 20 (queries.py:696-727)",
+    "Log-scaled reach score min(20, 20*ln(n+1)/ln(11)) and additive priority formula (prioritization.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI router (api/routes.py): GET /health, /overview, /vulnerabilities, /vulnerabilities/{id}, /vulnerabilities/{id}/graph, /investigations, /investigations/{id}, /remediations, /remediations/{id}; POST /investigate, /remediations, /seed?clear_first="
+  ],
+  "frontend_interfaces": [
+    "React 19 + TS: OverviewPage, GraphPage, InvestigatePage (589 lines), RemediationsPage, StatusPage; components DependencyGraph, EvidencePathView, PriorityScoreCard, RemediationModal"
+  ],
+  "agent_or_memory_mechanisms": "None beyond persisting Investigation and Remediation nodes; no memory recall, no handoff. 'Autonomous agent' is a scripted function pipeline.",
+  "tests_present": "backend/tests/test_patchpilot.py: 45 test functions - 13 pure unit tests of the scoring engine (no DB) and ~32 integration tests (seed idempotency, traversal, ownership, investigation/remediation persistence, API) that skip if FalkorDB is unavailable. Not executed by auditor.",
+  "dependency_requirements": ["fastapi==0.115.5", "uvicorn[standard]==0.32.1", "pydantic==2.10.2", "pydantic-settings==2.6.1", "falkordb==1.0.10 (older than Kairos falkordb 1.8)", "openai==1.57.0", "anthropic==0.40.0", "httpx==0.27.2", "python-dotenv==1.0.1", "pytest==8.3.4 / pytest-asyncio==0.24.0 (listed in runtime requirements)"],
+  "security_findings": [
+    "backend/app/api/routes.py:221-231 - POST /seed?clear_first=true is unauthenticated and runs MATCH (n) DETACH DELETE n (queries.py:~302) wiping the whole graph.",
+    "backend/app/graph/queries.py:544-727 - max_depth interpolated into Cypher via f-string; currently always the default 4 (routes/agent do not pass user input) but the function signature would be injectable if exposed.",
+    "backend/app/agent/investigator.py:78-130 - sends vulnerability text and asset names to OpenAI/Anthropic when LLM_PROVIDER is set; keys read from settings/env only; .env.example contains placeholders only.",
+    "backend/app/api/routes.py:171-193 - remediation endpoint auto-sets status 'approved' with no authn/authz or reviewer identity; any caller can 'approve' actions.",
+    "backend/app/api/routes.py:~186 - detail=str(exc) returned in HTTP 500 bodies can leak internals; unused get_all_vulnerabilities() call is executed on every remediation POST.",
+    "CORS limited to localhost origins by default (config.py:26) - good."
+  ],
+  "duplicates_or_overlaps": "Overlaps software dependency blast radius / vulnerability reachability with many sibling repos (e.g. other CVE-to-asset-to-team traversal projects). Little unique beyond the compact scoring engine with UNCERTAIN label for incomplete evidence.",
+  "capability_family": "Security & Vulnerability",
+  "evidence_drift_relevance": "LOW - It flags incomplete evidence (UNCERTAIN label, missing_evidence list) and links remediations to investigations/findings, but investigations are frozen JSON snapshots with no re-evaluation, versioning, supersession or invalidation when the graph changes, and 'approval' is auto-assigned.",
+  "strongest_reusable_unit": {
+    "file": "backend/app/core/prioritization.py",
+    "symbols": ["compute_priority", "PriorityFactors", "PriorityResult"],
+    "why": "Small pure-Python, unit-tested, transparent scoring function that returns per-factor contributions and an explicit missing-evidence list with an UNCERTAIN label instead of defaulting to low risk; easy to adapt as an evidence-completeness-aware priority scorer.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "none"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "The CVE-to-package-to-app-to-asset-to-team traversal and scorer fit a Security & Vulnerability capability pack; Kairos can lift prioritization.py and re-express the five Cypher queries on its own schema. Not worth merging wholesale because the agent is a fixed pipeline and the remediation 'approval' is simulated.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 3,
+  "auditor_confidence": "HIGH"
+}

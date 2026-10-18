@@ -1,0 +1,105 @@
+{
+  "repository": "gagan-gag/FraudTrace-AI",
+  "url": "https://github.com/gagan-gag/FraudTrace-AI",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\gagan-gag__FraudTrace-AI",
+  "commit_sha": "299ec7350f21c215e698d9133dc765cf7dae9eeb",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": ["ring_detection.py", "case_memory.py", "dataset_registry.py", "ai_assistant.py", "app.py", "amlsim_importer.py (symbols, batch Cypher)", "seed_graph.py", "dashboard.py (imports/API client only)", "test_*.py (counts)", "requirements.txt", "README.md (top)"],
+  "languages_frameworks": ["Python/FastAPI", "FalkorDB (falkordb client)", "networkx", "Streamlit + plotly dashboard", "reportlab PDF export", "optional OpenAI-compatible LLM (requests)"],
+  "implemented_capabilities": [
+    {
+      "capability": "Shared-entity connected-account detection (devices, IPs, merchants) with evidence strings",
+      "files": ["ring_detection.py"],
+      "symbols": ["detect_connected_accounts"],
+      "real_or_stub": "REAL",
+      "notes": "Per-account Cypher finding other accounts sharing a Device, IPAddress or Merchant (via Transaction-PAID_TO), emitting signal list, human-readable evidence lines and a transparent signal-count review priority (HIGH>=3, MEDIUM=2). AMLSim variant uses AML_SENT/AML_RECEIVED/HAS_ALERT. Uses an all-accounts cross product (MATCH (a),(b)) so it does not scale beyond demo-sized graphs."
+    },
+    {
+      "capability": "Fraud ring / suspicious cluster discovery",
+      "files": ["ring_detection.py"],
+      "symbols": ["detect_suspicious_clusters"],
+      "real_or_stub": "REAL",
+      "notes": "UNION Cypher returns pairwise shared-resource edges which are loaded into networkx and split with nx.connected_components (done in Python, not via FalkorDB algo.WCC). Clusters get an additive heuristic score (accounts*15 + devices*20 + ips*15 + merchants*10 + flagged*15, capped at 100) and are labeled as heuristics, not fraud probabilities."
+    },
+    {
+      "capability": "Bounded multi-hop path finder between any two entities",
+      "files": ["ring_detection.py"],
+      "symbols": ["find_graph_paths", "search_graph_entities"],
+      "real_or_stub": "REAL",
+      "notes": "MATCH path=(s)-[*1..6]-(t) with hop cap parameter, returns node/edge lists and 'a -[:REL]-> b' evidence strings; ID substring search via parameterized toUpper() CONTAINS."
+    },
+    {
+      "capability": "Persistent investigation memory labeled as unverified observations",
+      "files": ["case_memory.py"],
+      "symbols": ["save_investigation_memory", "get_recent_investigation_memories"],
+      "real_or_stub": "REAL",
+      "notes": "Stores (:Account)-[:HAS_INVESTIGATION_MEMORY]->(:InvestigationMemory) with question, answer, evidence_json, created_at, record_type='historical_observation' and verification_status='unverified'; MATCH-before-CREATE prevents orphan memories; reads warn that history may be outdated. No supersession, validity or re-verification logic."
+    },
+    {
+      "capability": "Evidence-referenced Q&A with deterministic planner and optional LLM",
+      "files": ["ai_assistant.py"],
+      "symbols": ["plan_investigation", "get_transaction_evidence", "get_connected_account_evidence", "_add_evidence_reference", "_build_evidence_reference_index", "_answer_with_llm", "investigate_question"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Keyword routing selects two evidence tools; each retrieved record gets a stable EV-TXN/EV-LINK/EV-ALERT id; without an LLM key a templated 'graph_evidence_summary' is returned, with a key the evidence is placed in an LLM prompt instructing it not to invent facts. Citation compliance by the model is not machine-validated."
+    },
+    {
+      "capability": "Multi-dataset isolation via server-side allowlist",
+      "files": ["dataset_registry.py", "test_dataset_isolation.py"],
+      "symbols": ["validate_dataset_id", "get_graph", "get_graph_stats", "DATASET_METADATA"],
+      "real_or_stub": "REAL",
+      "notes": "Only two hard-coded graph names (FraudTrace, ibm_amlsim) can be selected, so user input never chooses a graph name; metadata drives dataset-specific disclaimers."
+    },
+    {
+      "capability": "IBM AMLSim CSV import into FalkorDB",
+      "files": ["amlsim_importer.py"],
+      "symbols": ["run_import", "import_accounts", "import_transactions", "import_cash_transactions", "import_alerts", "_load_csv"],
+      "real_or_stub": "REAL",
+      "notes": "Validates required CSV columns, batches UNWIND $rows MERGE writes with created/updated/rejected counters and a dry-run mode; reads fixed files from amlsim_data/ (sample IBM AMLSim CSVs)."
+    },
+    {
+      "capability": "Case report PDF export and Streamlit analyst dashboard",
+      "files": ["export_case_report.py", "dashboard.py"],
+      "symbols": ["build_report", "get_json", "post_json"],
+      "real_or_stub": "REAL",
+      "notes": "ReportLab PDF assembled from the REST API responses; 2457-line Streamlit UI with plotly/networkx graph rendering. dashboard_committed_reference.py is an older duplicate of the dashboard."
+    }
+  ],
+  "graph_models_and_cypher": "Demo graph 'FraudTrace': Account(risk), Device, IPAddress, Merchant, Transaction(amount,status flagged), InvestigationMemory; edges MADE, PAID_TO, USES_DEVICE, CONNECTS_FROM, HAS_INVESTIGATION_MEMORY. AMLSim graph 'ibm_amlsim': AMLAccount(is_fraud,suspicious), AMLTransaction, AMLAlert, AMLBranch; edges AML_SENT, AML_RECEIVED, AML_AT_BRANCH, HAS_ALERT. Cypher is parameterized ($account_id, $hops, $accounts, UNWIND $rows) with f-strings only for the label name chosen from a two-value ternary. Patterns: OPTIONAL MATCH + collect(DISTINCT) for shared entities, UNION of pair queries, variable-length (-[*1..6]-) undirected paths with parameterized length cap, list comprehensions with startNode/endNode. No APOC/GDS and no FalkorDB algo.* procedures (clustering done in networkx).",
+  "algorithms": [
+    "Pairwise shared-resource linking (device/IP/merchant/transaction counterparty/shared alert) with signal-count prioritization in ring_detection.py:detect_connected_accounts",
+    "Connected-components clustering of the shared-resource graph in networkx plus additive heuristic risk score in ring_detection.py:detect_suspicious_clusters",
+    "Bounded undirected multi-hop path enumeration (<=6 hops, LIMIT 10) in ring_detection.py:find_graph_paths",
+    "Deterministic keyword intent routing to evidence tools in ai_assistant.py:plan_investigation"
+  ],
+  "backend_interfaces": ["FastAPI app.py: GET / , GET /health, GET /datasets, GET /dataset-stats/{dataset_id}, POST /import-amlsim, GET /investigate/{account_id}, GET /account-evidence/{account_id}, GET /graph/{account_id}?hops=, GET /case-history/{account_id}, POST /ask, GET /paths, GET /clusters, GET /search", "CLI scripts investigate.py, seed_graph.py, inspect_graph.py, ring_detection.py __main__"],
+  "frontend_interfaces": ["Streamlit dashboard (dashboard.py) calling the REST API, with PDF report download (export_case_report.py)"],
+  "agent_or_memory_mechanisms": "Not an autonomous agent: a deterministic question router plus optional LLM answer step. Persistent memory in FalkorDB of past Q&A with evidence, explicitly typed as unverified historical observations and scoped by account, session and dataset.",
+  "tests_present": "About 40 pytest-style tests across test_ai_assistant.py (7, mocks the LLM), test_amlsim_importer.py (8), test_case_memory.py (3), test_case_report.py (5), test_dataset_isolation.py (8), test_enhanced_features.py (9); smoke_test.py, test_falkordb.py and verify_amlsim_api.py are live-service scripts. Most DB tests need a running FalkorDB with seeded graphs.",
+  "dependency_requirements": ["fastapi", "uvicorn", "falkordb", "streamlit", "plotly", "requests", "pandas", "networkx", "reportlab", "pydantic", "python-dotenv (all unpinned in requirements.txt)"],
+  "security_findings": [
+    "case_memory.py:78,173,198 and app.py:502,515 - f-string Cypher interpolates only the label (AMLAccount/Account) chosen from a ternary on a validated dataset id; all user values are bound parameters (not injectable)",
+    "dataset_registry.py:41-44,135-157 - graph names come from a server-side allowlist, never from user input (good)",
+    "app.py:159-208 - POST /import-amlsim is unauthenticated and triggers a bulk MERGE write from local CSVs (fixed path); no auth on any route, no CORS configuration",
+    "seed_graph.py:10 - script runs MATCH (n) DETACH DELETE n on the FraudTrace graph (operator-run reset; not executed in this audit)",
+    "ai_assistant.py:472-492,773-780 - API key read from FRAUDTRACE_LLM_API_KEY/OPENAI_API_KEY env; outbound requests.post to configurable base URL with Bearer token; account evidence (financial records) is sent to the LLM provider; no hard-coded secrets found",
+    "ring_detection.py:25-57 - MATCH (a),(b) cross-product over all accounts makes detect_connected_accounts O(N^2) (availability risk at scale)",
+    "app.py:515-521 - '/graph' collects all variable-length paths up to 3 hops into a single list (memory blow-up on dense graphs; capped by hops<=3)",
+    "case_memory.py:64-69 - evidence stored as JSON string property (up to 100 items) per memory; unbounded memory growth per account"
+  ],
+  "duplicates_or_overlaps": "Overlaps fraud-ring / mule-network detection (hound-aml, clearpath fraud_ring) and expert evidence-linking; its memory typing overlaps agent memory & provenance work.",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "MEDIUM - assigns stable evidence ids to retrieved records, stores prior answers explicitly as 'historical_observation' with verification_status='unverified' and warns they may be outdated, but never re-verifies, supersedes or invalidates them as the graph changes.",
+  "strongest_reusable_unit": {
+    "file": "ring_detection.py",
+    "symbols": ["detect_connected_accounts", "detect_suspicious_clusters", "find_graph_paths"],
+    "why": "Self-contained parameterized Cypher plus networkx clustering that produces explainable, evidence-string-bearing shared-entity links and cluster scores; case_memory.py adds a reusable pattern for typing stored conclusions as unverified observations.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB; networkx; LLM key optional"
+  },
+  "integration_strategy": "DOMAIN_CAPABILITY_PACK",
+  "strategy_rationale": "A fraud-ring capability pack for Kairos can reuse the shared-entity link queries, cluster scoring and evidence-id scheme; the O(N^2) pair query should be replaced by shared-entity-first traversal or algo.WCC. No license file, so reuse is gated on the owner permission attestation.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

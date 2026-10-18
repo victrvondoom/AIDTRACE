@@ -1,0 +1,148 @@
+{
+  "repository": "PranavRaam/rewire-falkordb-agent",
+  "url": "https://github.com/PranavRaam/rewire-falkordb-agent",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\PranavRaam__rewire-falkordb-agent",
+  "commit_sha": "5d293518b8bae9e6adeda9f0e6a3235821f8ea3e",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "pyproject.toml",
+    "requirements.txt",
+    ".env.example",
+    "README.md (header only)",
+    "src/rewire/domain.py",
+    "src/rewire/graph/store.py",
+    "src/rewire/planner/engine.py",
+    "src/rewire/execution.py",
+    "src/rewire/recovery.py",
+    "src/rewire/mcp_server.py",
+    "src/rewire/agent.py (head, LLM call section)",
+    "src/rewire/web.py (middleware, provider launch, audit endpoints)",
+    "services/simulator/rewire_simulator/store.py (grep)",
+    "src/rewire/graph/queries/Q01_producers.cypher",
+    "src/rewire/graph/queries/Q02_bindings.cypher",
+    "src/rewire/graph/queries/Q03_exact_binding.cypher",
+    "src/rewire/graph/queries/Q04_affected_steps.cypher",
+    "src/rewire/graph/queries/Q06_execution_preflight.cypher",
+    "src/rewire/graph/queries/Q07_effect_fence.cypher",
+    "src/rewire/graph/queries/Q08_claim_intent.cypher",
+    "src/rewire/graph/queries/Q08B_mark_unknown.cypher",
+    "src/rewire/graph/queries/Q10_confirm_receipt.cypher",
+    "src/rewire/graph/queries/Q11_record_no_effect.cypher",
+    "src/rewire/graph/queries/Q16_select_approved_plan.cypher",
+    "src/rewire/graph/queries/Q17_project_prerequisite.cypher"
+  ],
+  "languages_frameworks": [
+    "Python 3.10+/FastAPI",
+    "FalkorDB Python client 1.8.0",
+    "MCP Python SDK 2.1.1",
+    "React/TypeScript/Vite (apps/web)",
+    "SQLite (synthetic provider simulator)",
+    "Ollama or OpenAI-compatible LLM endpoint"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Contract-driven AND/OR plan discovery over tool/artifact graph",
+      "files": ["src/rewire/planner/engine.py", "src/rewire/graph/queries/Q01_producers.cypher", "src/rewire/graph/queries/Q02_bindings.cypher", "src/rewire/graph/queries/Q03_exact_binding.cypher"],
+      "symbols": ["ConditionalPlanner", "ConditionalPlanner._expand_type", "ConditionalPlanner._artifact_candidates", "ConditionalPlanner.discover"],
+      "real_or_stub": "REAL",
+      "notes": "Bounded recursive search (MAX_DEPTH=12, MAX_EXPANSIONS=2000) from a goal ArtifactType to producer ToolRevisions and their RequirementSlots, binding existing artifacts only if schemaVersion, minVersion, status, expiry, order and warehouse scope all hold. Each candidate is re-validated by Q03 against run.stateRevision and the exact artifact version. Rejections carry reason codes (EXPIRED, BELOW_MINIMUM_VERSION, DEPENDENCY_CYCLE, REQUIRED_SLOT_UNSATISFIED). Result is sorted shortest-plan-first and labelled STRUCTURALLY_VALID, EXHAUSTIVE_NO_PLAN or SEARCH_LIMIT_REACHED. Every query hash and row count is attached as evidence."
+    },
+    {
+      "capability": "Revision-guarded state transitions (optimistic concurrency) in Cypher",
+      "files": ["src/rewire/execution.py", "src/rewire/graph/queries/Q06_execution_preflight.cypher", "src/rewire/graph/queries/Q08_claim_intent.cypher", "src/rewire/graph/queries/Q10_confirm_receipt.cypher", "src/rewire/graph/queries/Q16_select_approved_plan.cypher"],
+      "symbols": ["ExecutionCoordinator.transition", "ExecutionCoordinator.claim_intent", "ExecutionCoordinator.project_booking", "Q08_claim_intent", "Q10_confirm_receipt"],
+      "real_or_stub": "REAL",
+      "notes": "Each write is a single GRAPH.QUERY whose WHERE clause requires run.stateRevision = $expectedRevision and the expected effect/intent state, then increments the revision and appends an Event node. A mismatch returns zero rows and the coordinator raises. Operation-key replay is deduplicated by payload hash."
+    },
+    {
+      "capability": "Approval-gated recovery with plan snapshot digest",
+      "files": ["src/rewire/recovery.py", "src/rewire/mcp_server.py"],
+      "symbols": ["preview_recovery", "RecoverySession.execute", "RecoverySession._step", "authorize_recovery", "canonical_hash"],
+      "real_or_stub": "REAL",
+      "notes": "A plan snapshot (steps, preserved artifacts, based-on revision, clock) is hashed to approvalDigest. Execution refuses if the freshly recomputed digest differs from the human-approved one (stale approval detection). Approval lives in a host-only context manager and is deliberately not an MCP tool, so the model cannot approve itself."
+    },
+    {
+      "capability": "Intent/Attempt/Receipt effect ledger with UNKNOWN and reconciliation states",
+      "files": ["src/rewire/graph/queries/Q07_effect_fence.cypher", "src/rewire/graph/queries/Q08B_mark_unknown.cypher", "src/rewire/graph/queries/Q11_record_no_effect.cypher", "src/rewire/recovery.py"],
+      "symbols": ["Q07_effect_fence", "Q08B_mark_unknown", "Q11_record_no_effect", "RecoverySession._step"],
+      "real_or_stub": "REAL",
+      "notes": "Models Effect -> Intent -> Attempt -> Receipt. A lost provider response moves the intent to UNKNOWN and the run to PAUSED_UNKNOWN. Automatic redispatch is disabled until provider status confirms or authoritatively denies the effect (NO_EFFECT frees the fence). Idempotency-Key and operationKey are derived from graph and step ids."
+    },
+    {
+      "capability": "Affected-step invalidation traversal",
+      "files": ["src/rewire/graph/queries/Q04_affected_steps.cypher"],
+      "symbols": ["Q04_affected_steps"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A four-line variable-length query (PlanStep)-[:DEPENDS_ON*1..12]->(changed) that returns downstream steps when one step changes. The query is real, but its only caller found (src/rewire/phase1.py around line 331) is an acceptance probe on a tiny seeded dependency chain; it is not wired into recovery or execution, so this is a primitive rather than a working cascade."
+    },
+    {
+      "capability": "Typed MCP tools and bounded LLM tool-calling loop",
+      "files": ["src/rewire/mcp_server.py", "src/rewire/agent.py"],
+      "symbols": ["inspect_run", "discover_recovery", "read_execution_evidence", "execute_approved_recovery", "_tool_schemas", "_model_tool_output"],
+      "real_or_stub": "REAL",
+      "notes": "Three read tools plus one action tool exposed through the MCP SDK; the agent discovers schemas from the live server, caps tool rounds at 6, and trims tool output for small local models (Ollama qwen3.5:4b default). Action tool only works inside a host-installed authorization."
+    },
+    {
+      "capability": "Synthetic carrier provider simulator and control-room UI",
+      "files": ["services/simulator/rewire_simulator/server.py", "services/simulator/rewire_simulator/store.py", "src/rewire/web.py", "src/rewire/fixtures.py", "apps/web/src/main.tsx"],
+      "symbols": ["SimulatorClient", "start_provider", "create_run", "execute", "audit"],
+      "real_or_stub": "PARTIAL",
+      "notes": "A separate SQLite-backed loopback provider with a deliberate fault-after-commit mode, plus a React control room. The domain world (carriers B and D, one warehouse W7) is fixed synthetic fixtures."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Run, Goal, ToolRevision, RequirementSlot, ArtifactType, Artifact, Constraint, Plan, PlanStep, Decision, Effect, Intent, Attempt, Receipt, Event. Edges: HAS_GOAL, NEEDS_TYPE, HAS_ARTIFACT, INSTANCE_OF, PRODUCES, REQUIRES, OF_TYPE, CONSUMES, HAS_PLAN, HAS_STEP, USES_TOOL, DEPENDS_ON, BINDS, HAS_EFFECT, HAS_INTENT, FOR_STEP, AUTHORIZED_BY, HAS_ATTEMPT, OBSERVED, CONFIRMS, PROJECTS, EMITTED. Schema installs id indexes and UNIQUE plus MANDATORY constraints on id for every label and polls until operational. Every query lives in a numbered .cypher file loaded by id and returned with its sha256 and documentation URL. Single-statement CREATE/SET/MATCH transactions guarded by stateRevision. No APOC and no GDS; plain openCypher that FalkorDB 4.x accepts. Graph names must start with rewire_phase1_.",
+  "algorithms": [
+    "Bounded depth-first AND/OR plan expansion with clone-on-branch PlanContext, cycle detection, consumed-artifact tracking and a shortest-plan sort (planner/engine.py:ConditionalPlanner._expand_type)",
+    "Artifact eligibility filter on schemaVersion, minVersion, status, expiresAt, order and warehouse scope with explicit rejection reason codes (planner/engine.py:_artifact_candidates, Q02_bindings, Q03_exact_binding)",
+    "Canonical-JSON sha256 approval digest and stale-approval check (recovery.py:preview_recovery, execution.py:canonical_hash)",
+    "Optimistic-concurrency revision counter on Run.stateRevision with append-only Event sequence (Q08, Q10, Q11, Q16, Q17)",
+    "Variable-length DEPENDS_ON*1..12 downstream-step traversal (Q04_affected_steps)"
+  ],
+  "backend_interfaces": [
+    "FastAPI (src/rewire/web.py): GET /api/health, /api/scenarios, /api/runs, /api/runs/{run_id}, /api/runs/{run_id}/events (SSE), /api/runs/{run_id}/audit, /api/runs/{run_id}/export; POST /api/runs, /api/runs/{run_id}/execute",
+    "MCP tools: inspect_run, discover_recovery, read_execution_evidence, execute_approved_recovery",
+    "CLI: rewire (src/rewire/cli.py)",
+    "Separate loopback provider simulator process (rewire_simulator)"
+  ],
+  "frontend_interfaces": [
+    "React 19/Vite control room: apps/web/src/main.tsx (1753 lines), Workflow.tsx, components.tsx, types.ts (React Flow workflow and evidence panels)"
+  ],
+  "agent_or_memory_mechanisms": "Run state machine persisted in FalkorDB: Run.status (RUNNING, PAUSED_UNKNOWN, SUCCEEDED), Intent.status (PREPARED, IN_FLIGHT, UNKNOWN, CONFIRMED, NO_EFFECT, INVALID_OUTPUT) and Effect.state (FREE, CLAIMED, CONFIRMED). Events are appended per transition. A model-driven recovery loop with host-controlled approval. The graph acts as the durable execution journal so a restarted process can resume or reconcile.",
+  "tests_present": "No pytest or unit-test suite. Six verification scripts in scripts/ (verify_phase1_acceptance.py, verify_phase2.py, verify_phase3.py, verify_phase4.py, verify_recovery.py, verify_control_room.py, about 940 lines) run against a live FalkorDB and the simulator, and phase reports under reports/ include JSON verification artifacts. These are acceptance scripts, not isolated tests, and could not be re-run here.",
+  "dependency_requirements": [
+    "FalkorDB==1.8.0",
+    "mcp==2.1.1",
+    "fastapi==0.143.3",
+    "uvicorn==0.54.0",
+    "setuptools==75.8.0 (build)",
+    "optional: Ollama (qwen3.5:4b) or OPENAI_API_KEY",
+    "apps/web: React/Vite (package.json not read in detail)"
+  ],
+  "security_findings": [
+    "src/rewire/agent.py:138-166 - urllib.request POST to REWIRE_LLM_BASE_URL (default local Ollama) with a Bearer header from REWIRE_LLM_API_KEY or OPENAI_API_KEY; the base URL is environment-controlled and not allow-listed",
+    "src/rewire/web.py:119 - subprocess.Popen of the simulator with sys.executable and a controlled argument list (port, db path, now-ms); inherits full os.environ",
+    "src/rewire/web.py:357-359 - f-string SQL with table names from a fixed tuple, and a read-only sqlite URI (low risk)",
+    "services/simulator/rewire_simulator/store.py:149 - f-string SQL with call-site literal table and column names, documented as not user supplied (low risk)",
+    "src/rewire/graph/store.py:94,187,213 - f-string Cypher with labels from module constants and relationship types checked against ALLOWED_RELATIONSHIPS (low risk); the graph-name prefix guard is rewire_phase1_",
+    "src/rewire/recovery.py:29-37 - good practice: SimulatorClient accepts only http loopback URLs and refuses redirects",
+    "src/rewire/web.py:199-213 - POST requests require an x-rewire-client header plus origin check and TrustedHostMiddleware; there is no user authentication, so the app is intended for localhost only",
+    "No hard-coded secrets found; .env.example holds placeholders only",
+    "No LICENSE file: reuse rests entirely on the user-attested owner permission"
+  ],
+  "duplicates_or_overlaps": "Approval-gated agent action, dependency/prerequisite resolution with version, expiry and scope checks, stale-plan detection, effect journal with UNKNOWN reconciliation. Overlaps with supply-chain/logistics recovery planners and any Evidence Drift engine that needs approval gating. Not a blast-radius traversal engine.",
+  "capability_family": "Operational Optimization",
+  "evidence_drift_relevance": "HIGH - artifacts carry version, status and expiresAt that planning checks at the current clock, plans are bound to Run.stateRevision, approvals are invalidated when the recomputed plan digest differs, receipts and events give an append-only audit trail, and Q04 gives a downstream-step invalidation traversal; there is no explicit supersession edge type.",
+  "strongest_reusable_unit": {
+    "file": "src/rewire/execution.py",
+    "symbols": ["ExecutionCoordinator", "ExecutionCoordinator.transition", "ExecutionCoordinator.claim_intent", "canonical_hash", "Q03_exact_binding", "Q06_execution_preflight", "Q08_claim_intent", "Q10_confirm_receipt"],
+    "why": "A compact, domain-neutral pattern: revision-guarded single-statement Cypher transitions, exact-binding recheck of artifact version/status/expiry before action, operation-key idempotency, and a canonical-hash approval digest that goes stale when graph state changes. Together with planner/engine.py:_artifact_candidates it is a ready template for approval gating and temporal-validity checks in an evidence engine.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB only (client 1.8.0 matches Kairos); the demo provider simulator and Ollama/OpenAI are optional"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The revision-guarded Cypher transition files, approval-digest pattern and artifact-eligibility reason codes are generic and map directly onto Evidence Drift approval gating and stale-evidence detection. The shipping-carrier fixtures should be dropped. Missing license means confirm the owner attestation before copying any code.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 2,
+  "auditor_confidence": "HIGH"
+}

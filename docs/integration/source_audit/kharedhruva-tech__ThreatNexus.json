@@ -1,0 +1,177 @@
+{
+  "repository": "kharedhruva-tech/ThreatNexus",
+  "url": "https://github.com/kharedhruva-tech/ThreatNexus",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\kharedhruva-tech__ThreatNexus",
+  "commit_sha": "2f5897cb869acc3d95dabc50aa171320e564f2f8",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "schema.py",
+    "graph_queries.py",
+    "graph_service.py",
+    "agent.py",
+    "memory_service.py",
+    "evidence_service.py",
+    "whatif_simulator.py",
+    "simulation_engine.py",
+    "falkordb_bridge.py",
+    "wsl_bridge_agent.py",
+    "remediation_service.py",
+    "debate_service.py",
+    "webhook_service.py",
+    "mcp_server.py",
+    "config.py",
+    "database.py",
+    "intent_router.py",
+    "seed_data.py",
+    "chat_service.py",
+    "api_v1.py",
+    "server.py",
+    "requirements.txt",
+    ".env.example",
+    "tests/test_graph_queries.py",
+    "tests/test_memory.py",
+    "docs/graph_schema.md",
+    "frontend/src/lib/api/apiClient.ts"
+  ],
+  "languages_frameworks": [
+    "Python/FastAPI (server.py, api_v1.py)",
+    "Streamlit dashboard (app.py)",
+    "FalkorDB (falkordb>=1.8.0)",
+    "MCP FastMCP (mcp>=1.26,<2)",
+    "Optional local Ollama via httpx",
+    "Next.js/React/TypeScript frontend (frontend/)"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Bounded read-only graph retrieval (search, neighbours, multi-hop paths, subgraph, timeline)",
+      "files": ["graph_queries.py", "graph_service.py"],
+      "symbols": ["SEARCH_ENTITIES_CYPHER", "build_multi_hop_query", "build_subgraph_query", "GET_TIMELINE_EVENTS_CYPHER", "GraphService.trace_multi_hop_relationships", "GraphService.extract_subgraph"],
+      "real_or_stub": "REAL",
+      "notes": "Parameterised Cypher with depth clamped to 1..4 and limits clamped to config.MAX_QUERY_RESULTS; the only string interpolation is a clamped integer path depth. Variable-length undirected traversal with LIMIT, no weights."
+    },
+    {
+      "capability": "What-if outage blast radius over DEPENDS_ON",
+      "files": ["whatif_simulator.py"],
+      "symbols": ["WhatIfSimulator.simulate_system_outage"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real Cypher MATCH (downstream:System)-[:DEPENDS_ON*1..3]->(target) giving hop counts and paths, but the risk tier and 'estimated_cascade_seconds' (15/35/60) are hard-coded constants, with special-casing on substrings 'SYS-AUTH'/'SYS-GATEWAY'."
+    },
+    {
+      "capability": "Cross-session investigation memory with context reuse",
+      "files": ["memory_service.py", "schema.py"],
+      "symbols": ["MemoryService.save_session_context", "MemoryService.evaluate_context_reuse", "MemoryService.search_prior_investigations", "REUSE_STATUSES"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Persists Session/Investigation/Finding/Evidence nodes with REVISITS and DERIVED_FROM edges and finds prior sessions by target or 1-2 hop neighbours. CONTRADICTED_PRIOR_FINDING is declared in REUSE_STATUSES but never returned; every evidence item is attached to every finding (nested loop, memory_service.py:96-148). Prior-session matching uses CONTAINS on JSON strings."
+    },
+    {
+      "capability": "Evidence/provenance records with epistemic classification",
+      "files": ["evidence_service.py"],
+      "symbols": ["RULES_CATALOG", "EvidenceService.create_evidence_item", "EvidenceService.format_explanation"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Small, honest data model: claim, source_records, graph_path, rule_id, epistemic_type (STORED_FACT/RULE_BASED_INFERENCE/HYPOTHESIS), sufficiency, missing_evidence. Only 4 hand-written rules; no automatic rule evaluation."
+    },
+    {
+      "capability": "Deterministic 'agent' investigation",
+      "files": ["agent.py", "intent_router.py"],
+      "symbols": ["ContextGraphAgent.run", "IntentRouter.route_request"],
+      "real_or_stub": "STUB",
+      "notes": "Regex intent routing, then if-branches keyed on the literal seeded IDs E-101/E-102 that emit pre-written claims and findings (agent.py:121-167). Graph calls are real but conclusions are hard-coded for the demo dataset."
+    },
+    {
+      "capability": "Dual-agent debate",
+      "files": ["debate_service.py"],
+      "symbols": ["DualAgentDebateService.run_debate"],
+      "real_or_stub": "STUB",
+      "notes": "Four rounds of pre-written f-string text; consensus_confidence 0.92, 'VERIFIED_ROOT_CAUSE' and 'EVT-0945' are constants (debate_service.py:34-94). No LLM, no logic."
+    },
+    {
+      "capability": "SRE remediation runbook generator",
+      "files": ["remediation_service.py"],
+      "symbols": ["RemediationService.generate_remediation_runbook"],
+      "real_or_stub": "STUB",
+      "notes": "Three canned runbook templates with kubectl/helm/redis-cli/curl strings, claims '100% EXECUTABLE_SRE_RUNBOOK'. Commands are returned as data, never executed."
+    },
+    {
+      "capability": "Alert webhook ingestion",
+      "files": ["webhook_service.py"],
+      "symbols": ["WebhookService.ingest_and_investigate"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real CREATE of Event/Record nodes linked AFFECTS to a System from Prometheus/Datadog-style payload, then calls the scripted agent."
+    },
+    {
+      "capability": "Scripted v1 API for the Next.js UI",
+      "files": ["api_v1.py"],
+      "symbols": ["CYBER_ENTITIES", "CYBER_RELATIONSHIPS", "SESSIONS_STORE", "DEMO_SCENARIOS", "DEMO_EVIDENCE_ITEMS", "run_v1_investigation"],
+      "real_or_stub": "STUB",
+      "notes": "/api/v1/investigate returns hard-coded investigation payloads (risk scores, reasoning steps) based on whether the entity id contains 'E-102' or 'SQL'; graph/entities/sessions routes are partly live, the rest are in-memory demo lists."
+    },
+    {
+      "capability": "Localhost TCP bridge Windows<->WSL for FalkorDB",
+      "files": ["falkordb_bridge.py", "wsl_bridge_agent.py"],
+      "symbols": ["FalkorDBBridge", "worker", "pipe_sockets"],
+      "real_or_stub": "REAL",
+      "notes": "Dev-environment workaround (TCP relay with worker pool); has no relevance to Kairos and contains hard-coded host paths/IPs."
+    }
+  ],
+  "graph_models_and_cypher": "Labels (schema.py NODE_LABELS): Person, User, Organization, Project, System, Software, Event, Record, Document, Task, Session, Conversation, Message, Fact, Entity, Evidence, Decision, Investigation, Finding. Edges: DEPENDS_ON, USES, AFFECTS, LED_TO, RECORDED_IN, SUPPORTED_BY, DERIVED_FROM, REVISITS, DISCOVERED_IN, OWNS, HAS_CONVERSATION, HAS_MESSAGE, HAS_FACT, MENTIONS, etc. Index syntax CREATE INDEX ON :Label(prop) (older style; FalkorDB 4.x accepts it). Variable-length undirected paths [r*1..N], no APOC/GDS. Single graph 'contextgraph' with no tenant separation.",
+  "algorithms": [
+    "Bounded variable-length path trace between two ids (graph_queries.py:build_multi_hop_query, depth 1..4)",
+    "Downstream transitive closure over DEPENDS_ON up to 3 hops with hop-count bucketing (whatif_simulator.py:simulate_system_outage)",
+    "Prior-session reuse by 1-2 hop connected entity match (memory_service.py:evaluate_context_reuse)",
+    "Regex/keyword intent routing (intent_router.py:IntentRouter.route_request)"
+  ],
+  "backend_interfaces": [
+    "FastAPI server.py (/api/chat, /api/agent/investigate, /api/graph/subgraph, /api/simulation/whatif, /api/remediation/runbook, /api/debate, /api/alerts/ingest, /api/memory/*, /api/postmortem/export)",
+    "FastAPI router api_v1.py (/api/v1/health, /graph, /entities/{id}, /investigate, /sessions, /scenarios, /evidence, /chat)",
+    "MCP stdio server mcp_server.py (search_entities, get_entity_details, find_related_records, trace_multi_hop_relationships, retrieve_previous_context, reconstruct_incident_timeline, run_agent_investigation, simulate_what_if_outage, generate_mitigation_runbook, run_dual_agent_debate, ingest_monitoring_alert)",
+    "CLI cli.py; Streamlit dashboard app.py"
+  ],
+  "frontend_interfaces": [
+    "Next.js pages: investigation, graph, sessions, scenarios, health, explainability, comparison",
+    "Components: InteractiveGraph.tsx, NodeInspector.tsx, EdgeInspector.tsx, AgentTimeline.tsx, EvidenceDrawer.tsx, CrossSessionInsightCard.tsx, FloatingAssistant.tsx, HolographicGraphStage.tsx",
+    "lib/api/apiClient.ts with demo-mode fallback and lib/demo/*.ts static data"
+  ],
+  "agent_or_memory_mechanisms": "Cross-session memory stored in FalkorDB: Session -OWNS-> Investigation -DISCOVERED_IN-> Finding -SUPPORTED_BY-> Evidence, Session -REVISITS-> earlier Session, Finding -DERIVED_FROM-> Finding. Chat turns persisted as User/Conversation/Message nodes. Agent is deterministic (no LLM by default); optional Ollama text generation grounded on retrieved graph context (chat_service.py:_query_ollama). No state machine, handoffs, or approval flow.",
+  "tests_present": "9 pytest files under tests/ (~47 test functions: test_agent, test_e2e_demo, test_evidence, test_graph_queries, test_master_features, test_mcp, test_memory, test_simulation, test_unique_features). Integration tests that require a live seeded FalkorDB (e.g. assert nodes>0).",
+  "dependency_requirements": [
+    "falkordb>=1.8.0",
+    "redis>=8.1.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "httpx>=0.28.0",
+    "streamlit>=1.40.0",
+    "pydantic>=2.11.0,<3.0.0",
+    "mcp>=1.26.0,<2.0.0",
+    "pandas>=2.0.0",
+    "numpy>=1.26.0,<2.0.0",
+    "pyarrow<19.0.0",
+    "pytest>=8.0.0"
+  ],
+  "security_findings": [
+    "server.py:37 - CORSMiddleware allow_origins=['*']; no authentication on any route including destructive /api/memory DELETE and simulation reset",
+    "falkordb_bridge.py:57 - control listener binds 0.0.0.0:6382 with no authentication; any LAN host can register as a worker and receive proxied FalkorDB traffic",
+    "falkordb_bridge.py:28-35 - subprocess.Popen of 'wsl -u root -d Ubuntu -- python3 /mnt/d/PROJECT/ai-agent/wsl_bridge_agent.py' (hard-coded path, root user)",
+    "wsl_bridge_agent.py:11 - hard-coded Windows host IP 172.31.80.1 and unauthenticated socket relay to FalkorDB 127.0.0.1:6379",
+    "remediation_service.py:117,125,133,138 - f-strings embed user-supplied entity id into shell commands (journalctl/consul/kubectl) and into a Cypher string (MATCH (n {id: '{clean_id}'})); returned as data, not executed, but unsafe if a consumer runs them",
+    "remediation_service.py:59 - canned redis-cli EVAL that deletes keys 'auth:sig:*' presented as an executable runbook step",
+    "chat_service.py:611 - outbound httpx POST to config.OLLAMA_BASE_URL (env-controlled, no allowlist)",
+    "webhook_service.py:48-105 - unauthenticated alert ingestion creates graph nodes from arbitrary payload (graph poisoning), triggers agent run",
+    "config.py:12-40 - FalkorDB password read from env/REDIS_URL; no hard-coded secrets found. No eval/exec/pickle found."
+  ],
+  "duplicates_or_overlaps": "Overlaps incident/root-cause investigation, dependency blast-radius traversal (whatif_simulator), agent session memory/provenance (memory_service/evidence_service) and software-vulnerability correlation (Record -AFFECTS-> Software <-USES- System).",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - defines an Evidence/Finding/Session provenance model with epistemic types, sufficiency levels, missing-evidence lists and REVISITS/DERIVED_FROM links, but contradiction/invalidation (CONTRADICTED_PRIOR_FINDING) is declared and never implemented and nothing is temporal or approval-gated.",
+  "strongest_reusable_unit": {
+    "file": "evidence_service.py + memory_service.py",
+    "symbols": ["RULES_CATALOG", "EvidenceService.create_evidence_item", "EvidenceService.format_explanation", "MemoryService.save_session_context", "MemoryService.evaluate_context_reuse"],
+    "why": "Compact, readable schema for evidence records (claim, rule, epistemic_type, sufficiency, missing_evidence, source_session_id) and prior-context lookup that could seed an Evidence Drift evidence node model; the traversal and what-if Cypher in graph_queries.py/whatif_simulator.py are simple and portable.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB only (no LLM key; Ollama optional)"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Most of the 'intelligence' (agent findings, debate, runbooks, v1 API) is hard-coded around two seeded events, so the code should not be merged. Use the evidence/epistemic data model and the bounded traversal Cypher as design reference for Kairos.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

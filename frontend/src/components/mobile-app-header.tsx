@@ -1,4 +1,5 @@
 import { Icon } from "@/components/icon";
+import { ThemeToggle } from "@/components/theme-toggle";
 type MobileAppHeaderProps = {
   onOpenMenu: () => void;
   onOpenSearch: () => void;
@@ -21,6 +22,7 @@ export function MobileAppHeader({ onOpenMenu, onOpenSearch, onCreate, onOpenUser
       {onCreate && (
         <button type="button" onClick={onCreate} aria-label="Ingest document" className="fill-sweep grid size-10 shrink-0 place-items-center bg-accent text-on-accent sm:size-11"><Icon name="plus" className="relative z-10 size-5" /></button>
       )}
+      <ThemeToggle />
       <button type="button" onClick={onOpenUser} aria-label="Open user menu" className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2 text-label font-bold text-muted">{userInitial}</button>
     </header>
   );

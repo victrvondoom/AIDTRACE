@@ -889,7 +889,17 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
+    <header className={cn("kairos-spatial-header flex flex-wrap items-end justify-between gap-4", className)}>
+      {!compact && <div className="kairos-architecture" aria-hidden="true">
+        <div className="kairos-architecture-floor" />
+        <div className="kairos-architecture-stack">
+          <span className="kairos-architecture-slab" />
+          <span className="kairos-architecture-slab" />
+          <span className="kairos-architecture-slab" />
+          <span className="kairos-architecture-slab" />
+          <span className="kairos-architecture-core" />
+        </div>
+      </div>}
       <div className="min-w-0">
         <h1 className={cn("display text-balance text-ink", compact ? "text-title" : "text-display sm:text-hero")}>
           {title}

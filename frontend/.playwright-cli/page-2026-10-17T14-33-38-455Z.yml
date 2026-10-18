@@ -1,0 +1,249 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - link "Skip to content" [ref=f1e3] [cursor=pointer]:
+      - /url: "#main"
+    - complementary [ref=f1e4]:
+      - generic [ref=f1e6]:
+        - link "Kairos home" [ref=f1e8] [cursor=pointer]:
+          - /url: /overview
+          - img "Kairos" [ref=f1e9]
+          - generic [ref=f1e10]: Kairos
+        - generic [ref=f1e11]:
+          - button "Search workspace" [ref=f1e12] [cursor=pointer]:
+            - generic [ref=f1e15]: Search
+            - generic [ref=f1e16]: Ctrl K
+          - button "Ingest document" [ref=f1e17] [cursor=pointer]
+        - navigation [ref=f1e20]:
+          - list [ref=f1e21]:
+            - listitem [ref=f1e22]:
+              - link "Overview" [ref=f1e23] [cursor=pointer]:
+                - /url: /overview
+          - list "Operate" [ref=f1e27]:
+            - listitem [ref=f1e28]:
+              - link "Briefs" [ref=f1e29] [cursor=pointer]:
+                - /url: /briefs
+            - listitem [ref=f1e33]:
+              - link "Copilot" [ref=f1e34] [cursor=pointer]:
+                - /url: /copilot
+            - listitem [ref=f1e38]:
+              - link "Assets" [ref=f1e39] [cursor=pointer]:
+                - /url: /assets
+            - listitem [ref=f1e43]:
+              - link "Events" [ref=f1e44] [cursor=pointer]:
+                - /url: /events
+          - list "Analyze" [ref=f1e48]:
+            - listitem [ref=f1e49]:
+              - link "RCA" [ref=f1e50] [cursor=pointer]:
+                - /url: /rca
+            - listitem [ref=f1e54]:
+              - link "Graph" [ref=f1e55] [cursor=pointer]:
+                - /url: /graph
+            - listitem [ref=f1e59]:
+              - link "Coverage" [ref=f1e60] [cursor=pointer]:
+                - /url: /overview/coverage
+          - list "Assure" [ref=f1e64]:
+            - listitem [ref=f1e65]:
+              - link "Compliance" [ref=f1e66] [cursor=pointer]:
+                - /url: /compliance
+            - listitem [ref=f1e70]:
+              - link "Governance" [ref=f1e71] [cursor=pointer]:
+                - /url: /governance
+            - listitem [ref=f1e75]:
+              - link "Audit Trail" [ref=f1e76] [cursor=pointer]:
+                - /url: /audit
+          - list "Knowledge" [ref=f1e80]:
+            - listitem [ref=f1e81]:
+              - link "Documents" [ref=f1e82] [cursor=pointer]:
+                - /url: /documents
+            - listitem [ref=f1e86]:
+              - link "Projects" [ref=f1e87] [cursor=pointer]:
+                - /url: /projects
+            - listitem [ref=f1e91]:
+              - link "Off-Boarding" [ref=f1e92] [cursor=pointer]:
+                - /url: /offboarding
+        - button "Open user menu" [ref=f1e97] [cursor=pointer]:
+          - generic [ref=f1e98]: KA
+          - generic [ref=f1e99]:
+            - generic [ref=f1e100]: Kairos user
+            - generic [ref=f1e101]: engineer
+    - main [ref=f1e105]:
+      - generic [ref=f1e108]:
+        - generic [ref=f1e109]:
+          - generic [ref=f1e110]:
+            - heading "Plant Overview" [level=1] [ref=f1e111]
+            - paragraph [ref=f1e112]: "The state of the plant at a glance: what needs a decision, how much sits in review, which deadlines are overdue, where compliance evidence is missing, and what the plant has been doing over the last two weeks."
+          - generic [ref=f1e114]:
+            - link "Plant state" [ref=f1e115] [cursor=pointer]:
+              - /url: /overview/plant-state
+            - link "Cross-site patterns" [ref=f1e118] [cursor=pointer]:
+              - /url: /overview/cross-site
+        - generic [ref=f1e136]:
+          - heading "Operational events" [level=2] [ref=f1e137]
+          - paragraph [ref=f1e138]: Daily volume, last 14 days
+        - generic [ref=f1e141]:
+          - generic [ref=f1e142]:
+            - heading "Needs attention" [level=2] [ref=f1e145]
+            - heading "System health" [level=2] [ref=f1e154]
+          - generic [ref=f1e163]:
+            - heading "Recent signals" [level=2] [ref=f1e164]
+            - link "View all" [ref=f1e166] [cursor=pointer]:
+              - /url: /events
+        - region [ref=f1e175]:
+          - generic [ref=f1e176]:
+            - generic [ref=f1e177]:
+              - paragraph [ref=f1e178]: Kairos intelligence
+              - heading "Reasoning & Decision System" [level=2] [ref=f1e179]
+              - paragraph [ref=f1e180]: Investigative agents connect plant evidence to governed decisions. Each conclusion stays traceable to its sources and requires the right human approval.
+            - link "Explore evidence graph" [ref=f1e181] [cursor=pointer]:
+              - /url: /graph
+              - text: Explore evidence graph
+              - generic [aria-hidden] [ref=f1e182]: →
+          - generic [ref=f1e183]:
+            - generic [ref=f1e184]:
+              - generic [ref=f1e185]:
+                - heading "Agent map" [level=3] [ref=f1e186]
+                - generic [ref=f1e187]: Mapped to Kairos workflows. Agent runtime is not yet connected.
+              - generic [ref=f1e188]:
+                - link "Investigation supervisor 01 Routes work to the smallest relevant specialist team Workflow entry" [ref=f1e189] [cursor=pointer]:
+                  - /url: /rca
+                  - generic [ref=f1e193]:
+                    - generic [ref=f1e194]:
+                      - generic [ref=f1e195]: Investigation supervisor
+                      - generic [ref=f1e196]: "01"
+                    - generic [ref=f1e197]: Routes work to the smallest relevant specialist team
+                    - generic [ref=f1e198]: Workflow entry
+                - link "Evidence extraction 02 Extracts candidate facts for human review Workflow entry" [ref=f1e199] [cursor=pointer]:
+                  - /url: /documents
+                  - generic [ref=f1e203]:
+                    - generic [ref=f1e204]:
+                      - generic [ref=f1e205]: Evidence extraction
+                      - generic [ref=f1e206]: "02"
+                    - generic [ref=f1e207]: Extracts candidate facts for human review
+                    - generic [ref=f1e208]: Workflow entry
+                - link "Entity resolution 03 Review asset identity and canonical records Kairos workflow" [ref=f1e209] [cursor=pointer]:
+                  - /url: /assets
+                  - generic [ref=f1e213]:
+                    - generic [ref=f1e214]:
+                      - generic [ref=f1e215]: Entity resolution
+                      - generic [ref=f1e216]: "03"
+                    - generic [ref=f1e217]: Review asset identity and canonical records
+                    - generic [ref=f1e218]: Kairos workflow
+                - link "Graph investigation 04 Explore connected assets, documents, and events Kairos workflow" [ref=f1e219] [cursor=pointer]:
+                  - /url: /graph
+                  - generic [ref=f1e223]:
+                    - generic [ref=f1e224]:
+                      - generic [ref=f1e225]: Graph investigation
+                      - generic [ref=f1e226]: "04"
+                    - generic [ref=f1e227]: Explore connected assets, documents, and events
+                    - generic [ref=f1e228]: Kairos workflow
+                - link "Temporal reasoning 05 Inspect when evidence became valid or changed Kairos workflow" [ref=f1e229] [cursor=pointer]:
+                  - /url: /graph
+                  - generic [ref=f1e233]:
+                    - generic [ref=f1e234]:
+                      - generic [ref=f1e235]: Temporal reasoning
+                      - generic [ref=f1e236]: "05"
+                    - generic [ref=f1e237]: Inspect when evidence became valid or changed
+                    - generic [ref=f1e238]: Kairos workflow
+                - link "Evidence drift 06 Trace conclusions affected by changed evidence Engine in progress" [ref=f1e239] [cursor=pointer]:
+                  - /url: /governance/timestamp-drift
+                  - generic [ref=f1e243]:
+                    - generic [ref=f1e244]:
+                      - generic [ref=f1e245]: Evidence drift
+                      - generic [ref=f1e246]: "06"
+                    - generic [ref=f1e247]: Trace conclusions affected by changed evidence
+                    - generic [ref=f1e248]: Engine in progress
+                - link "Contradiction analyst 07 Surface competing claims for resolution Kairos workflow" [ref=f1e249] [cursor=pointer]:
+                  - /url: /governance/conflicts
+                  - generic [ref=f1e253]:
+                    - generic [ref=f1e254]:
+                      - generic [ref=f1e255]: Contradiction analyst
+                      - generic [ref=f1e256]: "07"
+                    - generic [ref=f1e257]: Surface competing claims for resolution
+                    - generic [ref=f1e258]: Kairos workflow
+                - link "Memory curator 08 Review low-confidence knowledge before promotion Human-led" [ref=f1e259] [cursor=pointer]:
+                  - /url: /governance/quarantine
+                  - generic [ref=f1e263]:
+                    - generic [ref=f1e264]:
+                      - generic [ref=f1e265]: Memory curator
+                      - generic [ref=f1e266]: "08"
+                    - generic [ref=f1e267]: Review low-confidence knowledge before promotion
+                    - generic [ref=f1e268]: Human-led
+                - link "Action coordinator 09 Prepare governed change and work-order decisions Human-led" [ref=f1e269] [cursor=pointer]:
+                  - /url: /governance/moc
+                  - generic [ref=f1e273]:
+                    - generic [ref=f1e274]:
+                      - generic [ref=f1e275]: Action coordinator
+                      - generic [ref=f1e276]: "09"
+                    - generic [ref=f1e277]: Prepare governed change and work-order decisions
+                    - generic [ref=f1e278]: Human-led
+                - link "Human review 010 Keep material decisions under authorized approval Required" [ref=f1e279] [cursor=pointer]:
+                  - /url: /governance
+                  - generic [ref=f1e283]:
+                    - generic [ref=f1e284]:
+                      - generic [ref=f1e285]: Human review
+                      - generic [ref=f1e286]: "010"
+                    - generic [ref=f1e287]: Keep material decisions under authorized approval
+                    - generic [ref=f1e288]: Required
+            - generic [ref=f1e289]:
+              - generic [ref=f1e290]:
+                - heading "Reasoning infrastructure" [level=3] [ref=f1e291]
+                - link "System health" [ref=f1e292] [cursor=pointer]:
+                  - /url: /system-health
+              - paragraph [ref=f1e293]: Read-only status from the current health check.
+              - generic [ref=f1e294]:
+                - generic [ref=f1e295]:
+                  - term [ref=f1e296]: FalkorDB reasoning graph
+                  - definition [ref=f1e297]: Checking
+                - generic [ref=f1e298]:
+                  - term [ref=f1e299]: Kairos knowledge graph
+                  - definition [ref=f1e300]:
+                    - generic [ref=f1e301]: Checking
+                - generic [ref=f1e303]:
+                  - term [ref=f1e304]: Evidence retrieval
+                  - definition [ref=f1e305]:
+                    - generic [ref=f1e306]: Checking
+                - generic [ref=f1e308]:
+                  - term [ref=f1e309]: Model registry
+                  - definition [ref=f1e310]: Loading
+          - generic [ref=f1e311]:
+            - generic [ref=f1e312]:
+              - generic [ref=f1e313]:
+                - heading "Data curation with the team" [level=3] [ref=f1e314]
+                - paragraph [ref=f1e315]: Human-reviewed labels and held documents prepare safer evidence and evaluation sets.
+              - generic [ref=f1e316]:
+                - generic [ref=f1e317]:
+                  - term [ref=f1e318]: Validation labels
+                  - definition [ref=f1e319]: …
+                - generic [ref=f1e320]:
+                  - term [ref=f1e321]: Team annotations
+                  - definition [ref=f1e322]: …
+                - generic [ref=f1e323]:
+                  - term [ref=f1e324]: Corrections, 7 days
+                  - definition [ref=f1e325]: …
+              - generic [ref=f1e326]:
+                - link "Review held evidence" [ref=f1e327] [cursor=pointer]:
+                  - /url: /governance/quarantine
+                  - text: Review held evidence
+                  - generic [aria-hidden] [ref=f1e328]: →
+                - link "Validation corpus" [ref=f1e329] [cursor=pointer]:
+                  - /url: /governance/model-gate
+                  - text: Validation corpus
+                  - generic [aria-hidden] [ref=f1e330]: →
+                - link "Curate source documents" [ref=f1e331] [cursor=pointer]:
+                  - /url: /documents/ingest
+                  - text: Curate source documents
+                  - generic [aria-hidden] [ref=f1e332]: →
+            - generic [ref=f1e333]:
+              - generic [ref=f1e334]:
+                - heading "Models and evaluation" [level=3] [ref=f1e335]
+                - generic [ref=f1e336]: Loading
+              - paragraph [ref=f1e338]: Loading model configuration…
+              - generic [ref=f1e339]:
+                - generic [ref=f1e340]: Fine-tuned model registry
+                - generic [ref=f1e341]: Checking
+              - paragraph [ref=f1e342]: Kairos supports human-curated evaluation through its validation corpus and model gate. Training jobs and checkpoints are not available in this deployment.
+              - link "Open model evaluation" [ref=f1e343] [cursor=pointer]:
+                - /url: /governance/model-gate
+                - text: Open model evaluation
+                - generic [aria-hidden] [ref=f1e344]: →
+  - alert [ref=f1e345]

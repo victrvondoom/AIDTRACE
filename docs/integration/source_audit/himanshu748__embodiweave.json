@@ -1,0 +1,163 @@
+{
+  "repository": "himanshu748/embodiweave",
+  "url": "https://github.com/himanshu748/embodiweave",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\himanshu748__embodiweave",
+  "commit_sha": "c5fdd12721a5f6ae700c7d5b46156f2a0fbdfa22",
+  "license": "MIT",
+  "copyright_holder": "Himanshu Kumar Jha",
+  "source_files_inspected": [
+    "LICENSE",
+    "requirements.lock",
+    "requirements-hosted.txt",
+    "ew/graph/db.py",
+    "ew/graph/ingest.py",
+    "ew/graph/queries.py",
+    "ew/provenance.py",
+    "ew/records.py",
+    "ew/decision_outcomes.py",
+    "ew/whatif.py",
+    "ew/validation.py",
+    "ew/contract.py",
+    "ew/select.py",
+    "ew/mcp_client.py",
+    "ew/mcp_domain.py",
+    "ew/mcp_server.py",
+    "ew/agent_tools.py",
+    "ew/agent_sessions.py",
+    "ew/api.py",
+    "ew/rl.py (grep only for model loading)",
+    "tests/ (file listing and test-function counts)"
+  ],
+  "languages_frameworks": [
+    "Python 3.13/FastAPI",
+    "FalkorDB Python client 1.8.0",
+    "stable-baselines3 2.9 / gymnasium / torch (PPO training)",
+    "MuJoCo (optional sim2sim transfer)",
+    "MCP Python SDK 2.3.0 (streamable HTTP)",
+    "vanilla JS web console"
+  ],
+  "implemented_capabilities": [
+    {
+      "capability": "Hash-bound evidence queries (read-only decision graph)",
+      "files": ["ew/graph/queries.py", "ew/graph/db.py"],
+      "symbols": ["TEMPLATES", "QueryResult", "run", "db.ro", "db.revision", "db.bump_revision"],
+      "real_or_stub": "REAL",
+      "notes": "~25 named, parameterized Cypher templates executed only through GRAPH.RO_QUERY. Every evidence join requires Evaluation.artifact_hash == Policy.artifact_hash, Evaluation.suite_fingerprint == Suite.fingerprint and complete_suite = true, so stale or mismatched evidence silently drops out. Each QueryResult records template, exact Cypher, params, rows, record ids and the graph revision."
+    },
+    {
+      "capability": "Trusted idempotent graph ingest with global revision counter",
+      "files": ["ew/graph/ingest.py", "ew/graph/db.py"],
+      "symbols": ["init_world", "policy", "run", "evaluation", "trial", "decision", "promotion", "decision_outcome", "rebuild", "bump_revision"],
+      "real_or_stub": "REAL",
+      "notes": "MERGE-on-stable-id writers plus a (:Meta {id:'meta'}) revision bumped on each change. Decisions are stamped with graph_revision. rebuild() deletes the graph and replays append-only JSON records, so the graph is a rebuildable projection of durable evidence."
+    },
+    {
+      "capability": "Append-only evidence records with O_EXCL write-once semantics",
+      "files": ["ew/records.py", "ew/provenance.py"],
+      "symbols": ["write", "read", "all_of", "new_id", "source_snapshot"],
+      "real_or_stub": "REAL",
+      "notes": "Every run/evaluation/trial/decision/promotion/decision_outcome is written once with os.O_EXCL and mode 0o444. source_snapshot hashes every ew/*.py and sim/*.py file and shells out to git for commit and dirty state so exports are bound to their source tree."
+    },
+    {
+      "capability": "Decision outcome as a separate post-action node with regression propagation",
+      "files": ["ew/decision_outcomes.py", "ew/graph/ingest.py", "ew/graph/queries.py"],
+      "symbols": ["record_outcome", "ingest.decision_outcome", "mcp_origins_excluding_regressed", "mcp_regression_degree"],
+      "real_or_stub": "REAL",
+      "notes": "A DecisionOutcome node links the original Decision, the Run and child/parent Policies via HAS_OUTCOME, ASSESSED, COMPARED_AGAINST and REGRESSED_AGAINST edges. The original pre-action Decision is never mutated. A Cypher template walks DERIVED_FROM*0..8 ancestry and excludes any origin whose ancestors regressed, or whose lineage exceeds the hop cap (unexamined_ancestors). This is a genuine dependency-exclusion cascade."
+    },
+    {
+      "capability": "Rule-based parent selection with explicit rejection reasons",
+      "files": ["ew/select.py"],
+      "symbols": ["decide", "_rank_options_v3", "inspect_training_origins", "validate_proposed_origin"],
+      "real_or_stub": "REAL",
+      "notes": "Frozen ranking rules (ew-select-1/2/3) run only on graph read templates. They reject candidates for contract/robot mismatch, non-completed status or failed on-disk artifact hash, return evaluate_candidates when matched validation evidence is missing, and rank by a Beta(1,1)-smoothed success estimate. validate_proposed_origin acts as a guardrail that vetoes an LLM-proposed origin."
+    },
+    {
+      "capability": "Isolated What-if graph via GRAPH.COPY",
+      "files": ["ew/whatif.py", "ew/graph/db.py"],
+      "symbols": ["create", "add_hypothetical_trial", "set_hypothetical_contract", "drop", "db.copy_graph", "_guard", "fingerprint"],
+      "real_or_stub": "REAL",
+      "notes": "Copies the production graph to ew_whatif_<id>, marks interventions hypothetical=true and measured=false, and refuses writes to any other graph name. Decisions from the copy carry mode='what-if'."
+    },
+    {
+      "capability": "Semantic sensor/action contract hash and evaluation completeness check",
+      "files": ["ew/contract.py", "ew/validation.py"],
+      "symbols": ["PolicyContract.contract_id", "suite_fingerprint", "complete_evaluation"],
+      "real_or_stub": "REAL",
+      "notes": "contract_id is a sha256 over the full semantic description, so same-shape but different-semantics checkpoints get different ids. complete_evaluation recomputes rates from raw episodes and rejects partial or tampered summaries."
+    },
+    {
+      "capability": "MCP tool surface and consent-scoped LLM agent",
+      "files": ["ew/mcp_server.py", "ew/mcp_domain.py", "ew/mcp_client.py", "ew/agent_tools.py", "ew/agent_sessions.py"],
+      "symbols": ["create_server", "register", "lookup", "revoke", "find_training_origins", "nearest_passing_ancestor", "explain_decision", "connect"],
+      "real_or_stub": "REAL",
+      "notes": "Read tools annotated READ plus one WRITE tool for bounded training. Per-session capability tokens (secrets.token_hex(32), 600 s TTL) never reach the model. A model that proposes an origin is checked by the guardrail before any training run."
+    },
+    {
+      "capability": "PPO policy training / MuJoCo sim2sim transfer domain",
+      "files": ["ew/rl.py", "ew/env.py", "ew/physics_study.py", "sim/mujoco/environment.py"],
+      "symbols": ["PPO.load", "VecNormalize.load"],
+      "real_or_stub": "REAL",
+      "notes": "Real stable-baselines3 training and evaluation. This is the robotics domain payload and is not relevant to Kairos beyond serving as the data source behind the evidence graph."
+    }
+  ],
+  "graph_models_and_cypher": "Labels: Robot, Contract, Policy, Run, Evaluation, Suite, Family, Competency, Mission, Threshold, Trial, Origin, Decision, DecisionOutcome, Promotion, Failure, Hypothesis, Meta. Edges: USES_CONTRACT, FOR_ROBOT, DERIVED_FROM, PRODUCED, STARTED_FROM, TRAINED_ON, ASSESSED, ON_SUITE, OBSERVED_IN, ABOUT, SUGGESTS, REQUIRES, MEASURED_ON, DRAWS_FROM, EVALUATES, FROM_PARENT, FROM_ORIGIN, TARGETS, VALIDATED_ON, UNDER_CONTRACT, VIA_RUN, CONSIDERED, SELECTED, REJECTED, LAUNCHED, BASED_ON, FOR, USED_EVALUATION, HAS_OUTCOME, FOR_RUN, COMPARED_AGAINST, REGRESSED_AGAINST, CITED_OUTCOME. Notable patterns: variable-length DERIVED_FROM*0..8 ancestry with hop cap and an unexamined-ancestor flag; shortestPath((p)-[:DERIVED_FROM*1..8]->(a)); hash-equality joins between Evaluation, Policy and Suite fingerprints; UNWIND $criteria / $origins batches; FOREACH(CASE WHEN ...) conditional edge creation. All reads use GRAPH.RO_QUERY. No APOC or GDS. GRAPH.COPY is used for what-if copies and is available in FalkorDB.",
+  "algorithms": [
+    "Beta(1,1)-smoothed transfer-success estimate p_reach=(reached+1)/(completed+2) with multi-key ranking in ew/select.py:decide and _rank_options_v3",
+    "Ancestry walk with hop cap that excludes origins whose DERIVED_FROM ancestors are regressed or unexamined (graph/queries.py:mcp_origins_excluding_regressed)",
+    "Nearest passing ancestor via shortestPath over DERIVED_FROM (queries.py:mcp_nearest_passing_ancestor)",
+    "Weighted regression degree per origin (queries.py:mcp_regression_degree)",
+    "Hash and fingerprint equality checks for evidence validity (validation.py:complete_evaluation, ingest.evaluation)",
+    "PPO policy training and MuJoCo evaluation (rl.py)"
+  ],
+  "backend_interfaces": [
+    "FastAPI: GET /api/status, /api/catalog, /api/decisions, /api/decisions/{did}, /api/evaluations, /api/replay/{eid}, /api/trials, /api/evidence/{rid}, /api/subgraph/{did}, /api/live/query/{name}, /api/search/lineage, /api/robustness/lineage, /api/physics/lineage, /api/transfer/mujoco, /api/results",
+    "FastAPI: POST /api/decide, /api/train, /api/evaluate, /api/evaluate_candidates/{did}, /api/scenario_eval, /api/promote/{pid}, /api/export/{pid}, /api/whatif, /api/jobs/{jid}/cancel, /api/judge/start, /api/public-training/start|cancel, /api/agent/start",
+    "MCP server over streamable HTTP mounted at /mcp (about 11 tools, 10 READ and 1 WRITE)",
+    "CLI: ew/cli.py"
+  ],
+  "frontend_interfaces": [
+    "Static vanilla-JS pages in web/: index.html + app.js, live.html + live.js + live-arena.js, evidence.html + evidence.js, guide.html, landing.js",
+    "Live Cypher console that replays preset read templates through /api/live/query/{name}"
+  ],
+  "agent_or_memory_mechanisms": "LLM tool-calling agent (OpenRouter, Groq or Anthropic) over MCP with a guardrail veto (select.py:validate_proposed_origin) and a deterministic fallback; per-session capability tokens; agent traces persisted as append-only records; DecisionOutcome nodes are cited by later decisions (Decision-[:CITED_OUTCOME]->DecisionOutcome), giving the agent a graph-backed memory of past decision results.",
+  "tests_present": "21 pytest files under tests/ with about 140 test functions (test_graph.py 12, test_mcp_agent.py 17, test_judge_agent.py 18, test_env.py 13, test_gate3.py 8 and others). Graph tests require a live FalkorDB. A GitHub Actions workflow runs them. The repo also commits recorded evidence under evidence/, artifacts/records and artifacts/policies, which could not be independently re-verified.",
+  "dependency_requirements": [
+    "FalkorDB==1.8.0 (Python client)",
+    "redis==8.1.0",
+    "fastapi==0.143.1",
+    "pydantic==2.14.1",
+    "uvicorn==0.54.0",
+    "mcp==2.3.0",
+    "httpx2==2.13.1 (unusual package name, verify provenance before installing)",
+    "stable_baselines3==2.9.0, torch==2.14.1, gymnasium==1.4.0, numpy==2.5.4",
+    "PyJWT==2.15.1, cryptography==50.0.2",
+    "optional: openai==3.31.0, anthropic==1.14.0, groq==1.7.0, MuJoCo (requirements-mujoco.txt)"
+  ],
+  "security_findings": [
+    "ew/rl.py:132,136,242,244 - VecNormalize.load on vecnormalize.pkl and PPO.load on model.zip use pickle-based deserialization; the repo ships committed artifacts/policies/*/vecnormalize.pkl and model.zip, so treat those as untrusted code-execution vectors",
+    "ew/agent_sessions.py:75 - subprocess.Popen of [sys.executable,'-m','ew.agent','llm'] with the full os.environ copied; arguments are fixed but the child inherits provider API keys",
+    "ew/public_training.py:139 - subprocess.Popen training worker started from an API request (consent and quota gated)",
+    "ew/provenance.py:17-18 - subprocess.check_output of git rev-parse and git status with fixed arguments (low risk)",
+    "ew/judge_agent.py:304-340 - outbound urllib calls to openrouter.ai and api.groq.com using API keys read from environment (fixed hosts, no secrets in source)",
+    "ew/api.py:54-60 - hosted read-only middleware whitelists POST /api/decide, /api/whatif, /api/judge/start, /api/public-training/start and /mcp, so those endpoints stay open to unauthenticated callers in hosted mode",
+    "ew/whatif.py:43 - f-string Cypher interpolates a relationship type, but the value is a fixed literal chosen by code, not user input",
+    "ew/mcp_client.py:6 - imports the nonstandard module httpx2 (pinned httpx2/httpcore2 in requirements) alongside normal httpx; verify these are legitimate packages",
+    "Dockerfile and compose.yaml reference a pulled FalkorDB image; version pinning was not checked"
+  ],
+  "duplicates_or_overlaps": "Decision lineage and provenance (Decision -> BASED_ON -> Evaluation, DecisionOutcome, CITED_OUTCOME), stale-evidence rejection via hash joins, ancestor-regression exclusion (a form of dependency invalidation), what-if graph forks. Overlaps with agent-memory/provenance repos and with any cascade-invalidation engine.",
+  "capability_family": "Agent Memory & Provenance",
+  "evidence_drift_relevance": "HIGH - evidence is bound by artifact_hash and suite_fingerprint so changed artifacts invalidate prior evaluations, decisions are stamped with graph_revision and cite exact evidence ids, outcomes are append-only separate nodes, and a regression on an ancestor excludes descendants; it lacks explicit validity intervals and supersession edges.",
+  "strongest_reusable_unit": {
+    "file": "ew/graph/queries.py",
+    "symbols": ["TEMPLATES", "QueryResult", "run", "mcp_origins_excluding_regressed", "mcp_decision_outcomes", "decision_provenance"],
+    "why": "Small, self-contained pattern for read-only templated Cypher that returns the exact query, parameters, row ids and graph revision with every answer, combined with hash-equality evidence joins and an ancestor-exclusion cascade. Pair with ew/records.py (O_EXCL write-once records) and ew/whatif.py (GRAPH.COPY what-if forks) for provenance and replay.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB (client 1.8.0 matches Kairos); no OpenAI key needed for the graph and provenance parts; torch and stable-baselines3 only for the robotics payload"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The robotics RL domain has no value for Kairos, but the hash-bound evidence joins, revision stamping, QueryResult receipts, write-once record store and GRAPH.COPY what-if helper are domain-neutral and can be lifted into a shared evidence/provenance engine. Do not import the torch, SB3 or MuJoCo parts.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 3,
+  "auditor_confidence": "MEDIUM"
+}

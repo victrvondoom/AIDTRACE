@@ -1,0 +1,106 @@
+{
+  "repository": "LENGND123/clearpath",
+  "url": "https://github.com/LENGND123/clearpath",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\LENGND123__clearpath",
+  "commit_sha": "4de28fd517b7ff7dd0e12d982c812f2e6677d453",
+  "license": "MIT",
+  "copyright_holder": "Aditya Raj Singh (Copyright (c) 2026)",
+  "source_files_inspected": ["app/agents.py", "app/planner.py", "app/db.py", "app/main.py", "app/seed.py", "app/demo.py", "tests/test_agents.py", "tests/test_planner.py", "static/app.js", "requirements.txt", ".env.example", "docker-compose.yml", "LICENSE"],
+  "languages_frameworks": ["Python/FastAPI", "FalkorDB (falkordb client >=1.2)", "Vanilla JS static UI", "pytest"],
+  "implemented_capabilities": [
+    {
+      "capability": "Service dependency blast radius with FalkorDB algo.SSpaths cross-checked against variable-length Cypher",
+      "files": ["app/agents.py"],
+      "symbols": ["blast_radius", "_dependent_ids", "_dependency_paths", "_service_details"],
+      "real_or_stub": "REAL",
+      "notes": "Calls CALL algo.SSpaths({sourceNode, relTypes:['DEPENDS_ON'], relDirection:'incoming', maxLen:6, pathCount}) and independently runs MATCH (dep)-[:DEPENDS_ON*1..6]->(s); uses SSpaths only if the id sets agree, otherwise falls back to the Cypher result. Depth cap 6. Opens/updates an Incident (MERGE, idempotent) with severity sev1 if any dependent is tier 0."
+    },
+    {
+      "capability": "Fraud ring / linked-account component via algo.WCC with verification and fallback",
+      "files": ["app/agents.py"],
+      "symbols": ["fraud_ring", "_fraud_component", "_require_same_component", "_component_from_rows", "_component_id"],
+      "real_or_stub": "REAL",
+      "notes": "Runs CALL algo.WCC on Account/LINKED_TO (two call signatures tried), verifies the component equals the LINKED_TO*0..6 neighbourhood, else falls back to variable-length Cypher. Then freezes all component accounts (SET status='frozen') and writes a Decision. Fraud scoring is only a 'flagged' boolean on seed data; no scoring model."
+    },
+    {
+      "capability": "Expert finder with algo.pageRank tie-break",
+      "files": ["app/agents.py"],
+      "symbols": ["who_knows", "_page_rank", "_role_people"],
+      "real_or_stub": "REAL",
+      "notes": "Person-WORKED_ON->Project-USES->Service traversal, ON_CALL_FOR / OWNS role precedence, and CALL algo.pageRank('Person','KNOWS') only when no on-call/owner exists (test_notifications_page_uses_pagerank)."
+    },
+    {
+      "capability": "Decision lineage lookup (human vs agent decisions, CITES documents)",
+      "files": ["app/agents.py"],
+      "symbols": ["past_decision", "_human_decision"],
+      "real_or_stub": "REAL",
+      "notes": "MATCH (d:Decision {source:'human'})-[:ABOUT]->(:Incident)-[:AFFECTS]->(s:Service) ... OPTIONAL MATCH (d)-[:CITES]->(doc) ORDER BY decided_at DESC LIMIT 1. Agent-authored decisions carry source='agent' and are excluded so they never overwrite human precedent (test_human_decision_survives_agent_decision)."
+    },
+    {
+      "capability": "Per-user graph memory (episodic, semantic, procedural) with cross-session recall",
+      "files": ["app/agents.py", "app/db.py"],
+      "symbols": ["_write_episode", "_write_fact", "set_procedure", "recall", "_read_override", "_memory_snapshot", "memory_name", "check_user_id"],
+      "real_or_stub": "REAL",
+      "notes": "Each operator gets a separate FalkorDB graph memory_<user_id> with User-HAD_EPISODE->Episode, User-REMEMBERS->Fact and User-FOLLOWS->Procedure. A stored procedure overrides company on-call in blast_radius (page_reason=PROCEDURE_OVERRIDE) without mutating the company graph."
+    },
+    {
+      "capability": "Agent handoff trace graph",
+      "files": ["app/agents.py"],
+      "symbols": ["_write_handoffs"],
+      "real_or_stub": "REAL",
+      "notes": "Each tool result lists handoffs (coordinator->impact->people etc.) that are persisted as (:Agent)-[:HANDED_OFF {run_id, reason, ts, user_id, session_id}]->(:Agent) in a 'coord' graph. The 'agents' are labels for code paths, not autonomous agents."
+    },
+    {
+      "capability": "Question-to-tool planner",
+      "files": ["app/planner.py"],
+      "symbols": ["plan", "rule_plan", "grok_plan", "find_service", "person_to_page"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Keyword/regex rules with hard-coded service and staff alias tables handle the demo questions; an xAI Grok call (model string 'grok-4.7') is a fallback tool picker only. Not general NL understanding."
+    },
+    {
+      "capability": "Customer ticket history with date-window query",
+      "files": ["app/agents.py", "app/seed.py"],
+      "symbols": ["customer_history", "LAST_MONTH_START", "LAST_MONTH_END"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Works only on synthetic Harbor Pay data; the 'last month' window is hard-coded to September 2026 constants in seed.py, not computed from a clock."
+    }
+  ],
+  "graph_models_and_cypher": "Company graph 'harbor' (synthetic): Service(id,name,tier), Person, Team, Project, Account(status), Transaction(flagged), Customer, Ticket, Incident, Decision(source human|agent, decided_at), Document, Procedure, Agent. Edges: DEPENDS_ON{weight}, ON_CALL_FOR, OWNS, WORKED_ON, USES, KNOWS, MEMBER_OF, LINKED_TO, FROM_ACCOUNT, TO_ACCOUNT, FILED, ABOUT, AFFECTS, DECIDED_BY, PAGES, CITES, ASSIGNED_TO. Per-user graphs memory_<user_id> (User/Episode/Fact/Procedure) and a 'coord' graph (Agent-HANDED_OFF->Agent). Cypher uses parameters throughout, UNWIND $ids ... SET for bulk freeze, MERGE for idempotent incident/decision upserts, [n IN nodes(path) | n.id] list comprehensions. Uses FalkorDB-native procedures algo.SSpaths, algo.WCC, algo.pageRank (not Neo4j GDS/APOC), plus CREATE INDEX FOR (n:L) ON (n.p) with legacy fallback.",
+  "algorithms": [
+    "Reverse-reachability blast radius: algo.SSpaths(relDirection incoming, maxLen 6) cross-validated against DEPENDS_ON*1..6 in agents.py:_dependent_ids",
+    "Weakly connected components on LINKED_TO via algo.WCC with self-verification against a bounded walk in agents.py:_fraud_component/_require_same_component",
+    "PageRank over Person-KNOWS via algo.pageRank as a tie-breaker in agents.py:_page_rank",
+    "Shortest dependency path per dependent chosen by min len(nodes) in agents.py:_dependency_paths",
+    "Role precedence for paging: procedural-memory override > ON_CALL_FOR > OWNS > pageRank > WORKED_ON in agents.py:blast_radius/who_knows"
+  ],
+  "backend_interfaces": ["GET / (static UI)", "GET /api/health", "POST /api/ask {question,user_id,session_id}", "POST /api/reset (wipes and reseeds all graphs)", "python -m app.demo CLI story"],
+  "frontend_interfaces": ["static/index.html + static/app.js: chat panel, preset questions, trace panel rendering paths, actions, handoffs, memory and the exact Cypher executed (all values passed through escapeHtml)"],
+  "agent_or_memory_mechanisms": "Coordinator -> impact/people/fraud/support/company 'agents' are named handoff hops over deterministic tool functions, recorded in a coord graph. Memory is three-tier per user (Episode, Fact, Procedure) in separate graphs; procedure memory changes later decisions. Every answer returns the executed Cypher so results are auditable.",
+  "tests_present": "tests/test_agents.py (~14 tests: blast radius for ledger/status-page/card-network, per-operator standing orders, idempotent incident, pageRank vs on-call, fraud component freeze, date window, human decision precedence, cross-session recall, parallel writes, HTTP ask) and tests/test_planner.py (~5 rule-planner tests). Agent tests are skipped unless a live FalkorDB is reachable.",
+  "dependency_requirements": ["fastapi>=0.115", "uvicorn>=0.32", "falkordb>=1.2", "pytest>=8.0", "httpx>=0.27", "docker image falkordb/falkordb:latest"],
+  "security_findings": [
+    "app/main.py:71-81 - POST /api/reset is unauthenticated and deletes/reseeds harbor, coord and every memory_* graph (app/seed.py:407-420)",
+    "app/agents.py:418-426 - fraud_ring executes UNWIND ... SET a.status='frozen' directly from a chat question with no approval gate or authz; app/agents.py:105-123 likewise writes Incident/Decision rows from a read-style question",
+    "app/main.py:43-47 - user_id is client-supplied with no authentication (only regex-validated by app/db.py:10,45); any caller can read/write another operator's memory_<user_id> graph",
+    "app/planner.py:164-185 - outbound HTTPS call to api.x.ai with Bearer XAI_API_KEY read from env (no hard-coded key); question text sent to a third party; model id 'grok-4.7' is hard-coded",
+    "app/agents.py:1004-1011 - f-string Cypher with relationship type, but guarded by an {ON_CALL_FOR, OWNS} whitelist (not injectable)",
+    "app/seed.py:386-387 - f-string index DDL with label/prop from constants (not injectable)",
+    "app/db.py:17-18 - FalkorDB credentials from env FALKORDB_USERNAME/PASSWORD; defaults to unauthenticated localhost:6379",
+    "app/agents.py:1150 - executed Cypher plus params are echoed back to the client in the 'cypher' field (information disclosure of query shapes; params include IDs only)"
+  ],
+  "duplicates_or_overlaps": "Overlaps blast-radius traversal (Argus/blastradius style), fraud-ring WCC (hound-aml, FraudTrace-AI), expert-finder/on-call routing and agent-memory families. Most architecturally aligned with Kairos because it targets FalkorDB natively.",
+  "capability_family": "Incident & Root Cause Analysis",
+  "evidence_drift_relevance": "MEDIUM - persists Decision nodes with DECIDED_BY/ABOUT/CITES lineage, separates human vs agent decision provenance, and layers per-user procedural memory over the company graph, but it has no temporal validity windows, supersession edges or invalidation propagation.",
+  "strongest_reusable_unit": {
+    "file": "app/agents.py",
+    "symbols": ["_dependent_ids", "_dependency_paths", "_fraud_component", "_require_same_component", "_page_rank", "_run_on", "_shown"],
+    "why": "Small, working pattern for calling FalkorDB-native graph algorithms (SSpaths, WCC, pageRank) with self-verification against plain Cypher and fallback, returning the exact Cypher used as an audit trail. Directly matches the FalkorDB 4.x server and falkordb 1.x client Kairos uses.",
+    "pure_python_portable": true,
+    "external_runtime_needed": "FalkorDB server (algo.* procedures); no LLM key required for core paths"
+  },
+  "integration_strategy": "SHARED_ENGINE",
+  "strategy_rationale": "The verified-algorithm-with-fallback helpers and the Decision/Episode/Procedure memory schema can be lifted into a Kairos shared graph-engine module; the keyword planner, hard-coded Harbor Pay seed and unauthenticated mutation endpoints should not be copied.",
+  "implementation_status": "REAL_ENGINE",
+  "integration_priority": 1,
+  "auditor_confidence": "HIGH"
+}

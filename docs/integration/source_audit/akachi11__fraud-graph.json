@@ -1,0 +1,109 @@
+{
+  "repository": "akachi11/fraud-graph",
+  "url": "https://github.com/akachi11/fraud-graph",
+  "local_path": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\track1-agent\\EXTERNAL_REPOS\\akachi11__fraud-graph",
+  "commit_sha": "f96fa0a1eea46008b113d51596b1776ad750ec53",
+  "license": "NO_LICENSE_FILE",
+  "copyright_holder": null,
+  "source_files_inspected": [
+    "mcp-server.ts",
+    "mcp-config.json",
+    "src/app/api/chat/route.ts (head, tool declarations, tail)",
+    "src/app/api/graph/route.ts (head)",
+    "src/app/api/seed/route.ts",
+    "src/lib/falkordb.ts",
+    "src/lib/seed-data.ts (head and grep)",
+    "package.json",
+    ".env.example",
+    "README.md (head)"
+  ],
+  "languages_frameworks": ["TypeScript", "Next.js 16 App Router", "Vercel AI SDK (ToolLoopAgent) with Google Gemini", "@modelcontextprotocol/sdk (stdio McpServer)", "falkordb npm client ^6.8.0", "React 19 + canvas graph", "zod"],
+  "implemented_capabilities": [
+    {
+      "capability": "Temporally ordered circular money-flow (round-trip) detection over Account-Transaction-Account chains, 2 and 3 hops",
+      "files": ["mcp-server.ts", "src/app/api/chat/route.ts"],
+      "symbols": ["investigate_account", "trace_money_flow"],
+      "real_or_stub": "REAL",
+      "notes": "Fixed-length Cypher patterns (a)-[:SENT]->(tx1)-[:RECEIVED_BY]->(b)-...->(a) with tx2.timestamp > tx1.timestamp ordering and min-amount filters; 1-3 hop forward flow queries capped at LIMIT 20. Bounded to 3-hop cycles; no variable-length or cycle algorithm."
+    },
+    {
+      "capability": "Fraud pattern detectors (shared devices, high-risk/shell merchants, structuring near 5k/10k thresholds, velocity vs avg_monthly_volume, geo mismatch, unverified-KYC accounts)",
+      "files": ["mcp-server.ts", "src/app/api/chat/route.ts"],
+      "symbols": ["detect_patterns"],
+      "real_or_stub": "REAL",
+      "notes": "Six fixed Cypher aggregations with hard-coded thresholds (e.g. 4500-5000, total > avg_monthly_volume*3). Heuristic rules, not statistical or graph-algorithm detection; SHARES_DEVICE edges are pre-materialised in the seed rather than derived at query time."
+    },
+    {
+      "capability": "Account investigation dossier (account, outbound/inbound txs, devices, cases, alerts, shared-device peers, cycles)",
+      "files": ["mcp-server.ts"],
+      "symbols": ["investigate_account"],
+      "real_or_stub": "REAL",
+      "notes": "Seven parallel parameterised queries merged into one JSON response with circularFlowDetected flag."
+    },
+    {
+      "capability": "Action tools: flag account (risk/status update + Alert node) and escalate case (FraudCase node + FLAGGED_IN edges)",
+      "files": ["mcp-server.ts", "src/app/api/chat/route.ts"],
+      "symbols": ["flag_account", "escalate_case"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Real graph writes with no approval step. Account lookup uses toLower(name) CONTAINS toLower($name) with no LIMIT before SET, so a short or ambiguous name updates every matching account; the model can freeze accounts directly."
+    },
+    {
+      "capability": "Free-form Cypher tool for the LLM",
+      "files": ["mcp-server.ts", "src/app/api/chat/route.ts"],
+      "symbols": ["query_graph"],
+      "real_or_stub": "PARTIAL",
+      "notes": "Passes model-written Cypher to graph.query (write-capable, not ro_query) with no allow-list, read-only enforcement or row/time limit beyond slicing the first 50 rows."
+    },
+    {
+      "capability": "Synthetic transaction-graph seeding",
+      "files": ["src/lib/seed-data.ts", "src/app/api/seed/route.ts"],
+      "symbols": ["seedDatabase"],
+      "real_or_stub": "STUB",
+      "notes": "716 lines of Math.random-generated accounts, merchants, devices and transactions with dates relative to now; results are not reproducible and not real data."
+    },
+    {
+      "capability": "LLM investigation chat agent and graph visualisation",
+      "files": ["src/app/api/chat/route.ts", "src/app/api/graph/route.ts", "src/components/chat-panel.tsx", "src/components/graph-canvas.tsx"],
+      "symbols": ["ToolLoopAgent", "defaultGraph", "focusedGraph"],
+      "real_or_stub": "LLM_PROMPT_ONLY",
+      "notes": "Gemini tool loop (stopWhen 8 steps) whose behaviour is governed by a long system prompt; the report writing and 'reasoning' are model text, while the graph tools underneath are the real part."
+    }
+  ],
+  "graph_models_and_cypher": "Nodes: Account {risk_score, kyc_verified, status, country, avg_monthly_volume...}, Transaction {amount, timestamp, type, channel, is_international...}, Merchant {risk_level, is_shell_company}, Device {is_vpn, is_emulator}, FraudCase, Alert. Edges: SENT, RECEIVED_BY, AT, USES, USED_IN, FLAGGED_IN, INVOLVES, HAS_ALERT, TRIGGERED_BY, SHARES_DEVICE. Transactions are reified as nodes between accounts, enabling per-hop timestamp/amount predicates. Cypher notes in code highlight FalkorDB quirks (round() one arg, no EXISTS{}, booleans as 1/0). Mostly parameterised; no APOC/GDS and no FalkorDB algo.* calls (no PageRank/WCC/cycle algorithms used).",
+  "algorithms": [
+    "Fixed-depth 2/3-hop circular flow match with strictly increasing timestamps (mcp-server.ts:investigate_account, trace_money_flow)",
+    "Forward k-hop flow tracing with min-amount filter, k in 1..4 (mcp-server.ts:trace_money_flow; the 4-hop request falls into the 3-hop branch)",
+    "Threshold-based structuring and velocity heuristics (mcp-server.ts:detect_patterns)"
+  ],
+  "backend_interfaces": [
+    "Next.js route handlers: POST /api/chat (streaming agent), GET /api/graph?focus=..., POST /api/seed",
+    "MCP stdio server (mcp-server.ts) tools: query_graph, investigate_account, trace_money_flow, detect_patterns, flag_account, escalate_case, get_graph_schema; resources fraudgraph://schema and fraudgraph://guide"
+  ],
+  "frontend_interfaces": ["Next.js page with ChatPanel (markdown report streaming) and GraphCanvas (highlighted investigation subgraph), lucide icons, Tailwind"],
+  "agent_or_memory_mechanisms": "Single ToolLoopAgent (Gemini) with 7 tools and an 8-step cap; no persistent agent memory beyond the writes it makes (Alert, FraudCase nodes). No handoffs or state machine.",
+  "tests_present": "none",
+  "dependency_requirements": ["falkordb ^6.8.0", "next 16.4.0", "ai ^7.0.137", "@ai-sdk/google ^4.0.93", "@modelcontextprotocol/sdk ^1.32.1", "zod ^4.6.6", "GOOGLE_GENERATIVE_AI_API_KEY", "FalkorDB server"],
+  "security_findings": [
+    "mcp-server.ts:73-85 and src/app/api/chat/route.ts:41-85 - query_graph executes arbitrary LLM/client-supplied Cypher with graph.query (read-write, unauthenticated); allows MATCH...DETACH DELETE and data exfiltration",
+    "mcp-server.ts:~300-340 (flag_account) and src/app/api/chat/route.ts:416-470 - MATCH ... WHERE toLower(a.name) CONTAINS toLower($name) followed by SET without LIMIT/uniqueness, mass-updating all matching accounts; no approval gate on freezing accounts",
+    "src/app/api/seed/route.ts:1-12 - unauthenticated POST /api/seed reseeds (and presumably clears) the shared graph",
+    "mcp-server.ts:~340 and src/app/api/chat/route.ts:447 - SET clause assembled by template string from fixed fragments (a.risk_score = $risk, a.status = $status); values parameterised, not injectable as written",
+    "src/app/api/chat/route.ts:605-615 - raw error strings returned to the client",
+    "mcp-config.json:5 - committed absolute developer path in cwd (information leak only); .env.example holds placeholders; no hard-coded secrets, eval or exec found"
+  ],
+  "duplicates_or_overlaps": "Financial fraud ring / circular flow detection overlaps ShaktiEighteen Financial_Crime_Agent, manav-Mnv hound-aml, mirah227 walletrace and other fraud-graph repos in the hackathon set; agent-with-raw-Cypher pattern is common.",
+  "capability_family": "Financial Fraud",
+  "evidence_drift_relevance": "LOW - writes Alert and FraudCase nodes with timestamps but has no provenance linkage, supersession, temporal validity beyond transaction ordering, dependency invalidation or approval gating.",
+  "strongest_reusable_unit": {
+    "file": "mcp-server.ts",
+    "symbols": ["investigate_account (circular flow Cypher)", "trace_money_flow", "detect_patterns"],
+    "why": "Concise temporally ordered 2/3-hop round-trip Cypher over reified transaction nodes plus six threshold-based fraud heuristics that port easily into a Financial Fraud pack; reusable as query templates, not as an engine.",
+    "pure_python_portable": false,
+    "external_runtime_needed": "FalkorDB; Gemini key only for the chat agent. Cypher templates are language-agnostic"
+  },
+  "integration_strategy": "REFERENCE_ONLY",
+  "strategy_rationale": "Small set of useful Cypher templates, but the surrounding system is TypeScript, untested, runs on random seed data, and exposes unrestricted write Cypher and un-gated account freezing; borrow the circular-flow and structuring queries into the Python fraud pack instead of integrating code.",
+  "implementation_status": "PARTIAL",
+  "integration_priority": 4,
+  "auditor_confidence": "HIGH"
+}

@@ -194,6 +194,40 @@ If any service is unreachable, its value is `"error: <message>"`.
 
 ---
 
+### `GET /health/falkordb`
+
+Read-only connectivity check for FalkorDB and the current user's site graph. The site identifier
+comes from the validated Kairos token. This does not create a graph or read another site's graph.
+
+**Auth required:** Yes, any signed-in user. The route catches connection failures and returns
+`reachable: false`; `site_graph_exists: false` means either no site graph has been created yet or
+the connection could not be reached (check `reachable` to distinguish them).
+
+**Response `200`:** `{ "reachable": true, "site_graph_exists": false }`
+
+---
+
+### `GET /health/model-catalog`
+
+Lists model roles, provider names and configured model identifiers without exposing credentials or
+calling providers. It reports deployment configuration, not live provider health. Fine-tuning is
+explicitly marked `not_connected` because this deployment has no fine-tuning job registry.
+
+**Auth required:** Yes, any signed-in user.
+
+**Response `200`:**
+```json
+{
+  "models": [
+    { "role": "reasoning", "provider": "nim", "model": "nvidia/nemotron-3-super-120b-a12b", "configured": true },
+    { "role": "entity_extraction", "provider": "NVIDIA NIM", "model": "meta/llama-3.2-11b-vision-instruct", "configured": true }
+  ],
+  "fine_tuning": { "status": "not_connected", "registry_available": false }
+}
+```
+
+---
+
 ### `GET /health/model`
 
 Opt-in liveness probe for a **rate-limited model provider**. Makes the smallest possible real call
@@ -3063,11 +3097,11 @@ Aggregated annotation statistics for dashboard display.
 **Response `200`:**
 ```json
 {
-  "total_annotations": 42,
+  "total": 42,
   "corrections_this_week": 6,
   "top_corrected_entity_types": [
-    {"entity_type": "FAILURE_MODE", "count": 3},
-    {"entity_type": "process_parameter", "count": 2}
+    {"corrected_type": "FAILURE_MODE", "count": 3},
+    {"corrected_type": "process_parameter", "count": 2}
   ]
 }
 ```
