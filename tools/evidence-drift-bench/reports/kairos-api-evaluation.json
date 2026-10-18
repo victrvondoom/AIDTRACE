@@ -39,14 +39,14 @@
       "status": "PASS"
     },
     "engine_evaluation": "NOT_RUN",
-    "graph_name": "EDB_TEST_20261018T043832_726c168f",
+    "graph_name": "EDB_TEST_20261018T054759_2c0d5e57",
     "graph_nodes": 367,
     "graph_relationships": 504,
     "graph_traversal_latency_ms": {
-      "max_ms": 78.5101,
-      "mean_ms": 6.2257,
-      "p50_ms": 4.1689,
-      "p95_ms": 5.808,
+      "max_ms": 10.859,
+      "mean_ms": 7.3051,
+      "p50_ms": 6.7964,
+      "p95_ms": 10.029,
       "sample_count": 50
     },
     "memory_metrics": {
@@ -61,375 +61,1345 @@
   },
   "fixture_count": 50,
   "fixture_seed": 98,
-  "fixture_validation": "PASS",
   "kairos_api": {
-    "decision_metrics": null,
-    "memory_validity": {
+    "approval_validity": {
       "checked": 0,
-      "correct": null,
       "status": "UNSUPPORTED"
     },
-    "reason": "A dedicated local Kairos API origin, site-bound test token, EDB_BENCH_ site, and disposable graph store were not configured.",
-    "request_latency_ms": null,
+    "blocked_scenarios": 0,
+    "cleanup": "deleted_benchmark_owned_graph",
+    "compatible_scenarios": 31,
+    "decision_metrics": {
+      "correctly_identified_impacted_decisions": 40,
+      "decision_count": 66,
+      "false_invalidations": 0,
+      "missed_invalidations": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative_decisions": 26
+    },
+    "evaluation_scope": "Actual Kairos drift router/store/engine impact reachability only; no decision, memory, or approval validity evaluation.",
+    "failed_scenarios": 0,
+    "fixture_count": 50,
+    "fixture_seed": 98,
+    "graph_nodes": 190,
+    "graph_relationships": 78,
+    "kairos_backend": "C:\\Users\\Administrator\\Downloads\\current going on hackathons work\\GRAPH HACKS\\kairos-main\\backend",
+    "memory_validity": {
+      "checked": 0,
+      "status": "UNSUPPORTED"
+    },
+    "probes": {
+      "authentication": {
+        "foreign_site_status": 403,
+        "passed": true,
+        "without_token_status": 401
+      },
+      "empty_impact": {
+        "http_status": 200,
+        "passed": true
+      },
+      "health": {
+        "http_status": 200,
+        "reachable": true,
+        "site_graph_exists": false
+      },
+      "pure_impact": {
+        "fixture_compatible": false,
+        "http_status": 403,
+        "reason": "Route accepts no fixture edges; /impact/{site_id} currently shadows /impact/pure."
+      }
+    },
+    "reason": null,
+    "repeat_consistency": {
+      "checked": 31,
+      "consistent": 31,
+      "status": "PASSED"
+    },
+    "request_latency_ms": {
+      "max_ms": 13.8822,
+      "mean_ms": 11.4288,
+      "p50_ms": 11.2567,
+      "p95_ms": 13.5793,
+      "sample_count": 31
+    },
     "scenario_results": [
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-001-supplier_evidence_supersession:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-001-supplier_evidence_supersession:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.2247,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-001-supplier_evidence_supersession",
         "scenario_type": "supplier_evidence_supersession",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-002-outdated_emissions_estimate:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-002-outdated_emissions_estimate:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-002-outdated_emissions_estimate:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.962,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-002-outdated_emissions_estimate",
         "scenario_type": "outdated_emissions_estimate",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-003-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-003-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "expected_unaffected": [
+          "scenario-003-changed_supplier_relationship:decision:unrelated-1",
+          "scenario-003-changed_supplier_relationship:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 13.8822,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-003-changed_supplier_relationship",
         "scenario_type": "changed_supplier_relationship",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-004-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-004-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-004-cybersecurity_risk_evidence:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.1618,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-004-cybersecurity_risk_evidence",
         "scenario_type": "cybersecurity_risk_evidence",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-005-agent_memory_recall:decision:primary"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-005-agent_memory_recall",
         "scenario_type": "agent_memory_recall",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-006-stale_agent_memory:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-006-stale_agent_memory:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-006-stale_agent_memory:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.297,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-006-stale_agent_memory",
         "scenario_type": "stale_agent_memory",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-007-direct_decision_invalidation:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-007-direct_decision_invalidation:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.9853,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-007-direct_decision_invalidation",
         "scenario_type": "direct_decision_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-008-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-008-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-008-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-008-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-008-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-008-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "expected_unaffected": [
+          "scenario-008-multi_hop_dependency_invalidation:decision:unrelated-1",
+          "scenario-008-multi_hop_dependency_invalidation:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 13.5793,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-008-multi_hop_dependency_invalidation",
         "scenario_type": "multi_hop_dependency_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 3
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-009-independently_supported_conclusion:decision:source-only"
+        ],
+        "expected_unaffected": [
+          "scenario-009-independently_supported_conclusion:decision:independently-supported",
+          "scenario-009-independently_supported_conclusion:decision:unrelated-1",
+          "scenario-009-independently_supported_conclusion:decision:unrelated-2"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint does not subtract alternate current support.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-009-independently_supported_conclusion",
         "scenario_type": "independently_supported_conclusion",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-010-irrelevant_evidence_update:decision:primary"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint has no materiality or relevance input.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-010-irrelevant_evidence_update",
         "scenario_type": "irrelevant_evidence_update",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-011-cyclic_dependencies:decision:cycle-a",
+          "scenario-011-cyclic_dependencies:decision:cycle-b"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-011-cyclic_dependencies:decision:cycle-a",
+          "scenario-011-cyclic_dependencies:decision:cycle-b"
+        ],
+        "expected_unaffected": [
+          "scenario-011-cyclic_dependencies:decision:unrelated-1",
+          "scenario-011-cyclic_dependencies:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.2123,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-011-cyclic_dependencies",
         "scenario_type": "cyclic_dependencies",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 2
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-012-duplicate_events:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "duplicate_link_stable": true,
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-012-duplicate_events:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-012-duplicate_events:decision:unrelated-1",
+          "scenario-012-duplicate_events:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.8852,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-012-duplicate_events",
         "scenario_type": "duplicate_events",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-013-conflicting_sources:decision:conflicting-conclusion"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-013-conflicting_sources",
         "scenario_type": "conflicting_sources",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-014-cross_tenant_isolation:decision:local-risk"
+        ],
+        "expected_unaffected": [
+          "scenario-014-cross_tenant_isolation:decision:unrelated-1",
+          "scenario-014-cross_tenant_isolation:foreign-tenant:decision"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-014-cross_tenant_isolation",
         "scenario_type": "cross_tenant_isolation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-015-approval_invalidation:decision:approved-decision"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-015-approval_invalidation",
         "scenario_type": "approval_invalidation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-016-supplier_evidence_supersession:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-016-supplier_evidence_supersession:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.0134,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-016-supplier_evidence_supersession",
         "scenario_type": "supplier_evidence_supersession",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-017-outdated_emissions_estimate:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-017-outdated_emissions_estimate:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.273,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-017-outdated_emissions_estimate",
         "scenario_type": "outdated_emissions_estimate",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-018-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-018-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "expected_unaffected": [
+          "scenario-018-changed_supplier_relationship:decision:unrelated-1",
+          "scenario-018-changed_supplier_relationship:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.0727,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-018-changed_supplier_relationship",
         "scenario_type": "changed_supplier_relationship",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-019-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-019-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-019-cybersecurity_risk_evidence:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 9.9034,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-019-cybersecurity_risk_evidence",
         "scenario_type": "cybersecurity_risk_evidence",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-020-agent_memory_recall:decision:primary",
+          "scenario-020-agent_memory_recall:decision:unrelated-1",
+          "scenario-020-agent_memory_recall:decision:unrelated-2"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-020-agent_memory_recall",
         "scenario_type": "agent_memory_recall",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-021-stale_agent_memory:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-021-stale_agent_memory:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.8308,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-021-stale_agent_memory",
         "scenario_type": "stale_agent_memory",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-022-direct_decision_invalidation:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-022-direct_decision_invalidation:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-022-direct_decision_invalidation:decision:unrelated-1",
+          "scenario-022-direct_decision_invalidation:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.2567,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-022-direct_decision_invalidation",
         "scenario_type": "direct_decision_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-023-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-023-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-023-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-023-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-023-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-023-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.6567,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-023-multi_hop_dependency_invalidation",
         "scenario_type": "multi_hop_dependency_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 3
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-024-independently_supported_conclusion:decision:source-only"
+        ],
+        "expected_unaffected": [
+          "scenario-024-independently_supported_conclusion:decision:independently-supported",
+          "scenario-024-independently_supported_conclusion:decision:unrelated-1"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint does not subtract alternate current support.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-024-independently_supported_conclusion",
         "scenario_type": "independently_supported_conclusion",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-025-irrelevant_evidence_update:decision:primary",
+          "scenario-025-irrelevant_evidence_update:decision:unrelated-1"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint has no materiality or relevance input.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-025-irrelevant_evidence_update",
         "scenario_type": "irrelevant_evidence_update",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-026-cyclic_dependencies:decision:cycle-a",
+          "scenario-026-cyclic_dependencies:decision:cycle-b"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-026-cyclic_dependencies:decision:cycle-a",
+          "scenario-026-cyclic_dependencies:decision:cycle-b"
+        ],
+        "expected_unaffected": [
+          "scenario-026-cyclic_dependencies:decision:unrelated-1",
+          "scenario-026-cyclic_dependencies:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.1294,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-026-cyclic_dependencies",
         "scenario_type": "cyclic_dependencies",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 2
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-027-duplicate_events:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "duplicate_link_stable": true,
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-027-duplicate_events:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.3362,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-027-duplicate_events",
         "scenario_type": "duplicate_events",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-028-conflicting_sources:decision:conflicting-conclusion"
+        ],
+        "expected_unaffected": [
+          "scenario-028-conflicting_sources:decision:unrelated-1",
+          "scenario-028-conflicting_sources:decision:unrelated-2"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-028-conflicting_sources",
         "scenario_type": "conflicting_sources",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-029-cross_tenant_isolation:decision:local-risk"
+        ],
+        "expected_unaffected": [
+          "scenario-029-cross_tenant_isolation:decision:unrelated-1",
+          "scenario-029-cross_tenant_isolation:foreign-tenant:decision"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-029-cross_tenant_isolation",
         "scenario_type": "cross_tenant_isolation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-030-approval_invalidation:decision:approved-decision"
+        ],
+        "expected_unaffected": [
+          "scenario-030-approval_invalidation:decision:unrelated-1",
+          "scenario-030-approval_invalidation:decision:unrelated-2"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-030-approval_invalidation",
         "scenario_type": "approval_invalidation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-031-supplier_evidence_supersession:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-031-supplier_evidence_supersession:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-031-supplier_evidence_supersession:decision:unrelated-1",
+          "scenario-031-supplier_evidence_supersession:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.8339,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-031-supplier_evidence_supersession",
         "scenario_type": "supplier_evidence_supersession",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-032-outdated_emissions_estimate:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-032-outdated_emissions_estimate:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-032-outdated_emissions_estimate:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.2912,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-032-outdated_emissions_estimate",
         "scenario_type": "outdated_emissions_estimate",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-033-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-033-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.1963,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-033-changed_supplier_relationship",
         "scenario_type": "changed_supplier_relationship",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-034-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-034-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.9411,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-034-cybersecurity_risk_evidence",
         "scenario_type": "cybersecurity_risk_evidence",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-035-agent_memory_recall:decision:primary",
+          "scenario-035-agent_memory_recall:decision:unrelated-1"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-035-agent_memory_recall",
         "scenario_type": "agent_memory_recall",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-036-stale_agent_memory:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-036-stale_agent_memory:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-036-stale_agent_memory:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.5963,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-036-stale_agent_memory",
         "scenario_type": "stale_agent_memory",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-037-direct_decision_invalidation:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-037-direct_decision_invalidation:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-037-direct_decision_invalidation:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.3091,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-037-direct_decision_invalidation",
         "scenario_type": "direct_decision_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-038-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-038-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-038-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-038-multi_hop_dependency_invalidation:decision:dependent-1",
+          "scenario-038-multi_hop_dependency_invalidation:decision:dependent-2",
+          "scenario-038-multi_hop_dependency_invalidation:decision:root"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 12.8281,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-038-multi_hop_dependency_invalidation",
         "scenario_type": "multi_hop_dependency_invalidation",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 3
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-039-independently_supported_conclusion:decision:source-only"
+        ],
+        "expected_unaffected": [
+          "scenario-039-independently_supported_conclusion:decision:independently-supported"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint does not subtract alternate current support.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-039-independently_supported_conclusion",
         "scenario_type": "independently_supported_conclusion",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-040-irrelevant_evidence_update:decision:primary"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "The impact endpoint has no materiality or relevance input.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-040-irrelevant_evidence_update",
         "scenario_type": "irrelevant_evidence_update",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-041-cyclic_dependencies:decision:cycle-a",
+          "scenario-041-cyclic_dependencies:decision:cycle-b"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-041-cyclic_dependencies:decision:cycle-a",
+          "scenario-041-cyclic_dependencies:decision:cycle-b"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.3479,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-041-cyclic_dependencies",
         "scenario_type": "cyclic_dependencies",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 2
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-042-duplicate_events:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "duplicate_link_stable": true,
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-042-duplicate_events:decision:primary"
+        ],
+        "expected_unaffected": [
+          "scenario-042-duplicate_events:decision:unrelated-1",
+          "scenario-042-duplicate_events:decision:unrelated-2"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.1085,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-042-duplicate_events",
         "scenario_type": "duplicate_events",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-043-conflicting_sources:decision:conflicting-conclusion"
+        ],
+        "expected_unaffected": [
+          "scenario-043-conflicting_sources:decision:unrelated-1"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-043-conflicting_sources",
         "scenario_type": "conflicting_sources",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-044-cross_tenant_isolation:decision:local-risk"
+        ],
+        "expected_unaffected": [
+          "scenario-044-cross_tenant_isolation:decision:unrelated-1",
+          "scenario-044-cross_tenant_isolation:foreign-tenant:decision"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-044-cross_tenant_isolation",
         "scenario_type": "cross_tenant_isolation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [
+          "scenario-045-approval_invalidation:decision:approved-decision"
+        ],
+        "expected_unaffected": [
+          "scenario-045-approval_invalidation:decision:unrelated-1"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-045-approval_invalidation",
         "scenario_type": "approval_invalidation",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-046-supplier_evidence_supersession:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-046-supplier_evidence_supersession:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.8229,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-046-supplier_evidence_supersession",
         "scenario_type": "supplier_evidence_supersession",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-047-outdated_emissions_estimate:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-047-outdated_emissions_estimate:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.555,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-047-outdated_emissions_estimate",
         "scenario_type": "outdated_emissions_estimate",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-048-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-048-changed_supplier_relationship:decision:supplier-exposure"
+        ],
+        "expected_unaffected": [
+          "scenario-048-changed_supplier_relationship:decision:unrelated-1"
+        ],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 11.1321,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-048-changed_supplier_relationship",
         "scenario_type": "changed_supplier_relationship",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
-        "executed": false,
+        "actual_api_impacts": [
+          "scenario-049-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "compatibility_status": "SUPPORTED_IMPACT_ONLY",
+        "error": null,
+        "executed": true,
+        "expected_impacts": [
+          "scenario-049-cybersecurity_risk_evidence:decision:primary"
+        ],
+        "expected_unaffected": [],
+        "false_negatives": 0,
+        "false_positives": 0,
+        "http_status": 200,
+        "latency_ms": 10.6677,
+        "precision": 1.0,
         "reason": "Source to dependent reachability; no persisted validity status.",
+        "recall": 1.0,
+        "repeat_consistent": true,
         "scenario_id": "scenario-049-cybersecurity_risk_evidence",
         "scenario_type": "cybersecurity_risk_evidence",
-        "status": "SUPPORTED_IMPACT_ONLY"
+        "status": "PASSED",
+        "true_positives": 1
       },
       {
+        "actual_api_impacts": null,
+        "compatibility_status": "UNSUPPORTED",
+        "error": null,
         "executed": false,
+        "expected_impacts": [],
+        "expected_unaffected": [
+          "scenario-050-agent_memory_recall:decision:primary"
+        ],
+        "false_negatives": null,
+        "false_positives": null,
+        "http_status": null,
+        "latency_ms": null,
+        "precision": null,
         "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "recall": null,
+        "repeat_consistent": null,
         "scenario_id": "scenario-050-agent_memory_recall",
         "scenario_type": "agent_memory_recall",
-        "status": "UNSUPPORTED"
+        "status": "UNSUPPORTED",
+        "true_positives": null
       }
     ],
-    "scenarios_executed": 0,
-    "status": "BLOCKED",
+    "scenarios_executed": 31,
+    "source_sha256": {
+      "api/routers/drift.py": "7e61ff756a3a18ba74dfc7305895d615041f90ae2d10b7980a2b48fcf7ea2b6e",
+      "api/services/drift/engine.py": "da791f4ad5bec7b1d2d7cc9c27ad0c0eade34fc27a37984518debb54799596ff",
+      "api/services/drift/model.py": "031bbb1a6b39a67cb67c56144b262350289a8088daa098062db77d5c29669ecd",
+      "api/services/drift/store.py": "17e5ecd22221cf69e56baddff45c8d6cd6ba053604656f365c326c1ce2867f69"
+    },
+    "source_stable": true,
+    "status": "PASSED",
     "tenant_isolation": {
-      "checked": 0,
-      "status": "NOT_RUN"
-    }
+      "checked": 1,
+      "scope": "router site_scope with in-process test identity; Supabase JWT and OPA middleware not evaluated",
+      "status": "PASSED"
+    },
+    "transport": "in_process_ASGI_real_Kairos_router",
+    "unsupported_scenarios": 19
   },
-  "run_timestamp_utc": "2026-10-18T04:39:27.722787+00:00",
-  "scope": "Direct graph benchmark and actual Kairos API are separate measurements."
+  "run_timestamp_utc": "2026-10-18T05:49:23.578130+00:00",
+  "scope": "Actual Kairos impact API measurements are separate from direct FalkorDB traversal."
 }

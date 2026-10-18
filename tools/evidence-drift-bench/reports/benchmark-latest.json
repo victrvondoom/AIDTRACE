@@ -41,14 +41,14 @@
       "status": "PASS"
     },
     "engine_evaluation": "NOT_RUN",
-    "graph_name": "EDB_TEST_20261018T043832_726c168f",
+    "graph_name": "EDB_TEST_20261018T054759_2c0d5e57",
     "graph_nodes": 367,
     "graph_relationships": 504,
     "graph_traversal_latency_ms": {
-      "max_ms": 78.5101,
-      "mean_ms": 6.2257,
-      "p50_ms": 4.1689,
-      "p95_ms": 5.808,
+      "max_ms": 10.859,
+      "mean_ms": 7.3051,
+      "p50_ms": 6.7964,
+      "p95_ms": 10.029,
       "sample_count": 50
     },
     "memory_metrics": {
@@ -72,9 +72,9 @@
     "reason": "Run compare_engines.py for source-verified Kairos API evaluation.",
     "status": "NOT_RUN"
   },
-  "run_timestamp_utc": "2026-10-18T04:38:33.175756+00:00",
+  "run_timestamp_utc": "2026-10-18T05:48:00.378587+00:00",
   "runtime": {
-    "falkordb_client": "1.6.0",
+    "falkordb_client": "1.0.10",
     "python": "3.12.10"
   },
   "scenario_count": 50,

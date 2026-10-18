@@ -57,6 +57,26 @@ Fixture and FalkorDB traversal correctness do not establish that Kairos's produc
 
 `kairos_contracts.md` maps the routes found in Kairos source. The generic `/drift/impact/{site_id}` route reports dependent reachability. It does not mutate decision validity or expose arbitrary memory/approval validity. A hard-coded ResolveAI demo exists, but cannot accept these 50 fixtures. The comparison reports unsupported semantics instead of treating graph reachability as a full evidence-change outcome.
 
+### Real in-process API run
+
+The preferred runner mounts Kairos's unchanged `backend/api/routers/drift.py` in memory. It overrides only settings and the test identity dependency; the identity is an in-process bearer-token-gated, non-admin engineer assigned to a fresh `EDB_BENCH_` site. The handler calls Kairos's real FalkorDB store and impact engine. The runner never opens a listening port or calls the applications already running on ports 3000/8000. It requires a local FalkorDB test instance and creates a fresh `EDB_BENCH_` graph, verifies it did not exist, and deletes only that graph.
+
+From this directory on Windows, create an isolated Python 3.12 environment and run the full suite plus live API measurement:
+
+```powershell
+uv venv --python 3.12 .venv
+uv pip install --system-certs --python .venv\Scripts\python.exe -r requirements-isolated-api.txt
+$env:FALKORDB_URL = 'redis://127.0.0.1:6379'
+.venv\Scripts\python.exe -B -m pytest -p no:cacheprovider tests -q
+.venv\Scripts\python.exe -B run_isolated_api.py --falkordb-url redis://127.0.0.1:6379
+```
+
+The run writes `reports/kairos-api-live-results.json`, updates `reports/kairos-api-evaluation.json`, and writes `reports/real-api-comparison.md`. Each scenario records its expected and actual decision impacts, HTTP status, latency, TP/FP/FN, precision, recall, and repeat consistency. The source file hashes, graph counts, cleanup state, and route probes are included. The previously measured direct FalkorDB result comes from `reports/benchmark-latest.json`; it is never copied into the API column.
+
+The live run on the inspected source executed **31/31 compatible fixtures**. The other 19 remain `UNSUPPORTED`. `/drift/impact/pure` is shadowed by the earlier `/drift/impact/{site_id}` route in the current router and cannot accept fixture edges. The in-process identity tests route-level 401 and site-scope 403 behavior; it does not test Supabase JWT verification or OPA middleware. Generic graph upsert replay is tested for duplicate fixtures, but evidence-event idempotency, supersession, memory validity, decision validity, and approval validity remain outside the available generic route.
+
+### Authenticated external API mode
+
 Run direct FalkorDB afresh and generate the comparative reports. Without a configured API this runs fixture/contract validation and marks Kairos `BLOCKED` with null metrics:
 
 ```powershell

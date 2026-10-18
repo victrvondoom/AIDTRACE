@@ -182,17 +182,20 @@ def comparison_markdown(report: dict[str, Any]) -> str:
     tenant_display = f"{tenant['status']} ({tenant['passed']}/{tenant['checked']})" if "checked" in tenant else None
     rows = [
         ("Scenarios executed", direct.get("scenarios_executed"), api.get("scenarios_executed")),
-        ("Correct invalidations / impact candidates", dm.get("correctly_identified_impacted_decisions"), am.get("correctly_identified_impacted_decisions")),
-        ("Missed invalidations / impact candidates", dm.get("missed_invalidations"), am.get("missed_invalidations")),
-        ("False invalidations / impact candidates", dm.get("false_invalidations"), am.get("false_invalidations")),
+        ("Correct impacts", dm.get("correctly_identified_impacted_decisions"), am.get("correctly_identified_impacted_decisions")),
+        ("Missed impacts", dm.get("missed_invalidations"), am.get("missed_invalidations")),
+        ("False impacts", dm.get("false_invalidations"), am.get("false_invalidations")),
         ("Precision", dm.get("precision"), am.get("precision")),
         ("Recall", dm.get("recall"), am.get("recall")),
+        ("Mean latency (ms)", dl.get("mean_ms"), al.get("mean_ms")),
         ("p95 latency (ms)", dl.get("p95_ms"), al.get("p95_ms")),
         ("Memory validity", memory_display, None),
         ("Tenant isolation", tenant_display, (api.get("tenant_isolation") or {}).get("status")),
     ]
     table = "\n".join(f"| {name} | {_metric(left)} | {_metric(right)} |" for name, left, right in rows)
-    supported = sum(item["status"] == "SUPPORTED_IMPACT_ONLY" for item in api["scenario_results"])
+    supported = sum(item.get("compatibility_status", item["status"]) == "SUPPORTED_IMPACT_ONLY" for item in api["scenario_results"])
+    detail = api.get("reason") or api.get("evaluation_scope") or "No further run detail."
+    auth_scope = (api.get("tenant_isolation") or {}).get("scope")
     return (
         "# Evidence Drift engine comparison\n\n"
         f"Generated from actual report data at {report['run_timestamp_utc']}. "
@@ -201,7 +204,8 @@ def comparison_markdown(report: dict[str, Any]) -> str:
         f"{supported} of {len(api['scenario_results'])} fixtures have a generic impact mapping. "
         "Kairos impact results are dependent reachability, not persisted decision invalidation. "
         "Memory and approval validity are unavailable for arbitrary fixtures.\n\n"
-        f"API run detail: {api['reason']}\n"
+        f"API run detail: {detail}\n"
+        + (f"Authorization scope: {auth_scope}.\n" if auth_scope else "")
     )
 
 
