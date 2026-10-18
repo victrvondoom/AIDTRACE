@@ -72,7 +72,7 @@ const nextConfig: NextConfig = {
   // Next forwards /api/* to the private backend (API_INTERNAL_URL). Additive: an absolute NEXT_PUBLIC_API_URL
   // keeps working exactly as before.
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL ?? (process.env.API_HOSTPORT ? `http://${process.env.API_HOSTPORT}` : "http://localhost:8000")}/:path*` }];
+    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL || (process.env.API_HOSTPORT ? `http://${process.env.API_HOSTPORT}` : "http://localhost:8000")}/:path*` }];
   },
 
   async headers() {

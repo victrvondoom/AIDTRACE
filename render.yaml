@@ -1,25 +1,18 @@
-# Render Blueprint — AIDTRACE / Kairos demo deployment.
-#   kairos-api       FastAPI backend (Docker, ./backend), started via render_start.py
-#   kairos-web       Next.js frontend (Docker, ./frontend); browser calls /api, Next proxies to kairos-api
-#   kairos-falkordb  FalkorDB graph store on the private network
+# Render Blueprint — AIDTRACE / Kairos demo deployment (free plan, no card needed).
+#   aidtrace-api-vsr  FastAPI backend (Docker, ./backend), started via render_start.py
+#   aidtrace-web-vsr  Next.js frontend (Docker, ./frontend); browser calls /api, Next proxies to the API's public URL
+# Free services cannot receive private-network traffic, so the proxy target is the API's public onrender.com URL.
+# No FalkorDB on the free plan: graph/drift routes report their store as unavailable.
 # Secrets (ANTHROPIC_API_KEY) are sync:false: entered in the Render dashboard, never committed.
 services:
-  - type: pserv
-    name: kairos-falkordb
-    runtime: image
-    image:
-      url: docker.io/falkordb/falkordb:latest
-    plan: starter
-    region: oregon
-
   - type: web
-    name: kairos-api
+    name: aidtrace-api-vsr
     runtime: docker
     rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
     dockerCommand: python render_start.py
-    plan: starter
+    plan: free
     region: oregon
     healthCheckPath: /docs
     envVars:
@@ -33,16 +26,11 @@ services:
         value: "true"
       - key: GREENCHAIN_DATA_DIR
         value: /app/domains/greenchain/data
-      - key: FALKORDB_HOSTPORT
-        fromService:
-          type: pserv
-          name: kairos-falkordb
-          property: hostport
       - key: CORS_ORIGINS
         value: '["*"]'
 
   - type: web
-    name: kairos-web
+    name: aidtrace-web-vsr
     runtime: docker
     rootDir: frontend
     dockerfilePath: ./Dockerfile
@@ -54,8 +42,5 @@ services:
         value: /api
       - key: BUILD_STANDALONE
         value: "true"
-      - key: API_HOSTPORT
-        fromService:
-          type: web
-          name: kairos-api
-          property: hostport
+      - key: API_INTERNAL_URL
+        value: https://aidtrace-api-vsr.onrender.com
