@@ -49,22 +49,40 @@ The JSON report separates:
 - Independent Python fixture traversal validation against the explicit scenario oracle.
 - Actual FalkorDB decision precision/recall, correctly identified impacts, missed and false invalidations, graph counts, and traversal latency.
 - Actual memory validity, duplicate event replay stability, and cross-tenant isolation.
-- Optional Kairos Evidence Drift API evaluation.
+- Source-verified Kairos API reachability evaluation, only through `compare_engines.py`.
 
-Fixture and FalkorDB traversal correctness do not establish that Kairos's production engine was evaluated. A Kairos API result is produced only when `--kairos-api-url` is explicitly configured.
+Fixture and FalkorDB traversal correctness do not establish that Kairos's production engine was evaluated. `benchmark.py` records Kairos as `NOT_RUN`. The comparison tool reports it separately.
 
-## Optional Kairos API adapter
+## Compare with the actual Kairos API
 
-The generic HTTP JSON adapter sends each scenario's graph and evidence inputs without its expected results. It accepts an explicitly supplied endpoint with this response contract:
+`kairos_contracts.md` maps the routes found in Kairos source. The generic `/drift/impact/{site_id}` route reports dependent reachability. It does not mutate decision validity or expose arbitrary memory/approval validity. A hard-coded ResolveAI demo exists, but cannot accept these 50 fixtures. The comparison reports unsupported semantics instead of treating graph reachability as a full evidence-change outcome.
 
-```json
-{
-  "affected_decisions": ["scenario-001:decision:primary"],
-  "memory_valid": false
-}
+Run direct FalkorDB afresh and generate the comparative reports. Without a configured API this runs fixture/contract validation and marks Kairos `BLOCKED` with null metrics:
+
+```powershell
+python compare_engines.py --run-direct --falkordb-url redis://127.0.0.1:6379
 ```
 
-Run it with `--kairos-api-url https://test-host.example/evidence-drift/evaluate`. If the endpoint needs bearer authentication, set `KAIROS_BENCH_BEARER_TOKEN` in the environment. The adapter does not assume a Kairos route or alter application code.
+Authenticated read-only preflight requires a pre-provisioned, site-bound engineer or reliability test identity. Provide its bearer token through an environment variable; the tool never prints it:
+
+```powershell
+$env:KAIROS_BENCH_TEST_TOKEN = '<test bearer token>'
+python compare_engines.py --api-base-url http://127.0.0.1:8000 --api-site-id EDB_BENCH_LOCAL01
+```
+
+Write-based API evaluation additionally requires a **dedicated local** Kairos instance configured to use an empty disposable FalkorDB and a test identity assigned to the named `EDB_BENCH_` site. Set the actual API graph prefix and exact FalkorDB URL; the runner refuses any existing graph and deletes only the graph it created:
+
+```powershell
+$env:KAIROS_BENCH_DEDICATED_LOCAL_TEST = 'YES'
+python compare_engines.py --run-direct --falkordb-url redis://127.0.0.1:6379 `
+  --api-base-url http://127.0.0.1:8000 --api-site-id EDB_BENCH_LOCAL01 `
+  --execute-local-test --dedicated-local-test `
+  --api-falkordb-url redis://127.0.0.1:6380 --api-graph-prefix kairos_drift
+```
+
+Use a second site-bound test bearer token in `KAIROS_BENCH_FOREIGN_TEST_TOKEN` to test HTTP 403 cross-site isolation. The dedicated Kairos graph store should be separate from the direct benchmark store. Outputs are `reports/kairos-api-evaluation.json` and `reports/comparison.md`; `reports/benchmark-latest.json` remains the direct benchmark measurement. API latency is HTTP request time, while the direct column is graph query/traversal time.
+
+The former generic `HttpJsonEvidenceDriftAdapter` remains as an extension point for a separately defined future JSON API. It is not Kairos's current route contract and is not invoked by either benchmark command.
 
 ## Report interpretation
 

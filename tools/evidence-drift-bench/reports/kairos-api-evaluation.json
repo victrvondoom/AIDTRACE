@@ -1,0 +1,435 @@
+{
+  "direct_falkordb": {
+    "cleanup": "deleted",
+    "cross_tenant_isolation": {
+      "cases": [
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-014-cross_tenant_isolation"
+        },
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-029-cross_tenant_isolation"
+        },
+        {
+          "isolated": true,
+          "leaked_decisions": [],
+          "scenario_id": "scenario-044-cross_tenant_isolation"
+        }
+      ],
+      "checked": 3,
+      "passed": 3,
+      "status": "PASS"
+    },
+    "decision_metrics": {
+      "correctly_identified_impacted_decisions": 52,
+      "decision_count": 107,
+      "false_invalidations": 0,
+      "missed_invalidations": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "true_negative_decisions": 55
+    },
+    "duplicate_event_stability": {
+      "checked_scenarios": 3,
+      "graph_counts_unchanged_after_replay": true,
+      "stable_scenarios": 3,
+      "status": "PASS"
+    },
+    "engine_evaluation": "NOT_RUN",
+    "graph_name": "EDB_TEST_20261018T043832_726c168f",
+    "graph_nodes": 367,
+    "graph_relationships": 504,
+    "graph_traversal_latency_ms": {
+      "max_ms": 78.5101,
+      "mean_ms": 6.2257,
+      "p50_ms": 4.1689,
+      "p95_ms": 5.808,
+      "sample_count": 50
+    },
+    "memory_metrics": {
+      "accuracy": 1.0,
+      "correct": 50,
+      "incorrect": 0,
+      "scenario_count": 50
+    },
+    "scenarios_executed": 50,
+    "server_version": "8.10.2",
+    "status": "PASS"
+  },
+  "fixture_count": 50,
+  "fixture_seed": 98,
+  "fixture_validation": "PASS",
+  "kairos_api": {
+    "decision_metrics": null,
+    "memory_validity": {
+      "checked": 0,
+      "correct": null,
+      "status": "UNSUPPORTED"
+    },
+    "reason": "A dedicated local Kairos API origin, site-bound test token, EDB_BENCH_ site, and disposable graph store were not configured.",
+    "request_latency_ms": null,
+    "scenario_results": [
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-001-supplier_evidence_supersession",
+        "scenario_type": "supplier_evidence_supersession",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-002-outdated_emissions_estimate",
+        "scenario_type": "outdated_emissions_estimate",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-003-changed_supplier_relationship",
+        "scenario_type": "changed_supplier_relationship",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-004-cybersecurity_risk_evidence",
+        "scenario_type": "cybersecurity_risk_evidence",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "scenario_id": "scenario-005-agent_memory_recall",
+        "scenario_type": "agent_memory_recall",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-006-stale_agent_memory",
+        "scenario_type": "stale_agent_memory",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-007-direct_decision_invalidation",
+        "scenario_type": "direct_decision_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-008-multi_hop_dependency_invalidation",
+        "scenario_type": "multi_hop_dependency_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint does not subtract alternate current support.",
+        "scenario_id": "scenario-009-independently_supported_conclusion",
+        "scenario_type": "independently_supported_conclusion",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint has no materiality or relevance input.",
+        "scenario_id": "scenario-010-irrelevant_evidence_update",
+        "scenario_type": "irrelevant_evidence_update",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-011-cyclic_dependencies",
+        "scenario_type": "cyclic_dependencies",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-012-duplicate_events",
+        "scenario_type": "duplicate_events",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "scenario_id": "scenario-013-conflicting_sources",
+        "scenario_type": "conflicting_sources",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "scenario_id": "scenario-014-cross_tenant_isolation",
+        "scenario_type": "cross_tenant_isolation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "scenario_id": "scenario-015-approval_invalidation",
+        "scenario_type": "approval_invalidation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-016-supplier_evidence_supersession",
+        "scenario_type": "supplier_evidence_supersession",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-017-outdated_emissions_estimate",
+        "scenario_type": "outdated_emissions_estimate",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-018-changed_supplier_relationship",
+        "scenario_type": "changed_supplier_relationship",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-019-cybersecurity_risk_evidence",
+        "scenario_type": "cybersecurity_risk_evidence",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "scenario_id": "scenario-020-agent_memory_recall",
+        "scenario_type": "agent_memory_recall",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-021-stale_agent_memory",
+        "scenario_type": "stale_agent_memory",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-022-direct_decision_invalidation",
+        "scenario_type": "direct_decision_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-023-multi_hop_dependency_invalidation",
+        "scenario_type": "multi_hop_dependency_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint does not subtract alternate current support.",
+        "scenario_id": "scenario-024-independently_supported_conclusion",
+        "scenario_type": "independently_supported_conclusion",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint has no materiality or relevance input.",
+        "scenario_id": "scenario-025-irrelevant_evidence_update",
+        "scenario_type": "irrelevant_evidence_update",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-026-cyclic_dependencies",
+        "scenario_type": "cyclic_dependencies",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-027-duplicate_events",
+        "scenario_type": "duplicate_events",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "scenario_id": "scenario-028-conflicting_sources",
+        "scenario_type": "conflicting_sources",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "scenario_id": "scenario-029-cross_tenant_isolation",
+        "scenario_type": "cross_tenant_isolation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "scenario_id": "scenario-030-approval_invalidation",
+        "scenario_type": "approval_invalidation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-031-supplier_evidence_supersession",
+        "scenario_type": "supplier_evidence_supersession",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-032-outdated_emissions_estimate",
+        "scenario_type": "outdated_emissions_estimate",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-033-changed_supplier_relationship",
+        "scenario_type": "changed_supplier_relationship",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-034-cybersecurity_risk_evidence",
+        "scenario_type": "cybersecurity_risk_evidence",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "scenario_id": "scenario-035-agent_memory_recall",
+        "scenario_type": "agent_memory_recall",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-036-stale_agent_memory",
+        "scenario_type": "stale_agent_memory",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-037-direct_decision_invalidation",
+        "scenario_type": "direct_decision_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-038-multi_hop_dependency_invalidation",
+        "scenario_type": "multi_hop_dependency_invalidation",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint does not subtract alternate current support.",
+        "scenario_id": "scenario-039-independently_supported_conclusion",
+        "scenario_type": "independently_supported_conclusion",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "The impact endpoint has no materiality or relevance input.",
+        "scenario_id": "scenario-040-irrelevant_evidence_update",
+        "scenario_type": "irrelevant_evidence_update",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-041-cyclic_dependencies",
+        "scenario_type": "cyclic_dependencies",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-042-duplicate_events",
+        "scenario_type": "duplicate_events",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Authority and conflict resolution are not exposed for arbitrary fixtures.",
+        "scenario_id": "scenario-043-conflicting_sources",
+        "scenario_type": "conflicting_sources",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Requires a second site-bound test identity and a separate authorization check.",
+        "scenario_id": "scenario-044-cross_tenant_isolation",
+        "scenario_type": "cross_tenant_isolation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Generic impact does not revalidate approval revisions or action eligibility.",
+        "scenario_id": "scenario-045-approval_invalidation",
+        "scenario_type": "approval_invalidation",
+        "status": "UNSUPPORTED"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-046-supplier_evidence_supersession",
+        "scenario_type": "supplier_evidence_supersession",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-047-outdated_emissions_estimate",
+        "scenario_type": "outdated_emissions_estimate",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-048-changed_supplier_relationship",
+        "scenario_type": "changed_supplier_relationship",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "Source to dependent reachability; no persisted validity status.",
+        "scenario_id": "scenario-049-cybersecurity_risk_evidence",
+        "scenario_type": "cybersecurity_risk_evidence",
+        "status": "SUPPORTED_IMPACT_ONLY"
+      },
+      {
+        "executed": false,
+        "reason": "No evidence invalidation to trigger; recall state is not returned by /drift/impact.",
+        "scenario_id": "scenario-050-agent_memory_recall",
+        "scenario_type": "agent_memory_recall",
+        "status": "UNSUPPORTED"
+      }
+    ],
+    "scenarios_executed": 0,
+    "status": "BLOCKED",
+    "tenant_isolation": {
+      "checked": 0,
+      "status": "NOT_RUN"
+    }
+  },
+  "run_timestamp_utc": "2026-10-18T04:39:27.722787+00:00",
+  "scope": "Direct graph benchmark and actual Kairos API are separate measurements."
+}

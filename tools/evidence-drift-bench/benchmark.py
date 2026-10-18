@@ -15,7 +15,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from adapters.http_json import HttpJsonEvidenceDriftAdapter
 from generate_fixtures import write_fixtures
 from graph_client import FalkorGraphRunner, connect_falkordb
 from oracle import validate_fixture_document
@@ -104,24 +103,6 @@ def _cross_tenant_summary(
 
 def _memory_summary(scenarios: list[dict[str, Any]], actual_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
     return _score_memories(scenarios, actual_results)
-
-
-def _api_summary(scenarios: list[dict[str, Any]], adapter: HttpJsonEvidenceDriftAdapter) -> dict[str, Any]:
-    results: dict[str, set[str]] = {}
-    normalized: dict[str, dict[str, Any]] = {}
-    latencies: list[float] = []
-    for scenario in scenarios:
-        started = time.perf_counter_ns()
-        result = adapter.evaluate(scenario)
-        latencies.append((time.perf_counter_ns() - started) / 1_000_000)
-        results[scenario["scenario_id"]] = set(result.affected_decisions)
-        normalized[scenario["scenario_id"]] = {"memory_valid": result.memory_valid}
-    return {
-        "status": "PASS",
-        "decision_metrics": _score_decisions(scenarios, results),
-        "memory_metrics": _memory_summary(scenarios, normalized),
-        "request_latency_ms": _latency_summary(latencies),
-    }
 
 
 def _load_fixture(path: Path, regenerate: bool, seed: int, count: int) -> dict[str, Any]:
@@ -257,7 +238,7 @@ def _graph_run(
 
 
 def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
-    """Run fixture validation, graph measurements, and optional API evaluation."""
+    """Run fixture validation and direct graph measurements."""
     fixture_path = args.fixtures
     document = _load_fixture(fixture_path, args.regenerate_fixtures, args.seed, args.count)
     scenarios = document["scenarios"]
@@ -267,29 +248,12 @@ def run_benchmark(args: argparse.Namespace) -> dict[str, Any]:
 
     uri = args.falkordb_url or os.environ.get("FALKORDB_URL")
     graph_report = _graph_run(scenarios, uri, args.graph_name, args.allow_remote_test_db, args.keep_graph)
-    adapter_report: dict[str, Any]
-    if args.kairos_api_url:
-        adapter = HttpJsonEvidenceDriftAdapter(
-            args.kairos_api_url,
-            bearer_token=os.environ.get("KAIROS_BENCH_BEARER_TOKEN"),
-            timeout_seconds=args.api_timeout,
-        )
-        try:
-            adapter_report = _api_summary(scenarios, adapter)
-        except (RuntimeError, TypeError, ValueError, OSError) as exc:
-            adapter_report = {
-                "status": "BLOCKED",
-                "reason": f"{type(exc).__name__}: configured Evidence Drift API did not complete.",
-            }
-    else:
-        adapter_report = {"status": "NOT_RUN", "reason": "No Kairos API endpoint was configured."}
+    adapter_report = {"status": "NOT_RUN", "reason": "Run compare_engines.py for source-verified Kairos API evaluation."}
 
     statuses = (reference_validation["status"], graph_report["status"])
     overall_status = "PASS" if all(status == "PASS" for status in statuses) else (
         "FAIL" if "FAIL" in statuses else "BLOCKED"
     )
-    if adapter_report["status"] not in {"NOT_RUN", "PASS"}:
-        overall_status = "FAIL" if adapter_report["status"] == "FAIL" else "BLOCKED"
     return {
         "benchmark": "evidence-drift-bench",
         "status": overall_status,
@@ -351,8 +315,6 @@ def main() -> int:
     parser.add_argument("--graph-name", help=f"Optional fresh graph name with required {GRAPH_PREFIX} prefix")
     parser.add_argument("--allow-remote-test-db", action="store_true", help="Allow a dedicated remote test FalkorDB instance")
     parser.add_argument("--keep-graph", action="store_true", help="Keep the newly created namespaced graph after the run")
-    parser.add_argument("--kairos-api-url", help="Optional full URL for a compatible Kairos Evidence Drift JSON endpoint")
-    parser.add_argument("--api-timeout", type=float, default=10.0)
     args = parser.parse_args()
 
     report = run_benchmark(args)
