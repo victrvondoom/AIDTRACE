@@ -24,16 +24,17 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from validator import (
     SCHEMA_VERSION,
+    FileResult,
     ValidatorFileError,
     validate_file,
     write_outputs,
 )
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 
-def _exit_code(result, strict: bool) -> int:
-    """0 clean, 1 rejections (or warnings under --strict), 2 file-level error."""
+def _exit_code(result: FileResult, *, strict: bool) -> int:
+    """Return 0 clean, 1 rejections (or warnings under --strict), 2 file error."""
     if result.file_errors:
         return 2
     if result.rejected:
@@ -43,7 +44,10 @@ def _exit_code(result, strict: bool) -> int:
     return 0
 
 
-def _print_report(result, paths, quiet: bool) -> None:
+def _print_report(
+    result: FileResult, paths: dict[str, str], *, quiet: bool
+) -> None:
+    """Print the per-file processing report unless quiet."""
     if quiet:
         return
     summary = result.summary()
@@ -58,7 +62,10 @@ def _print_report(result, paths, quiet: bool) -> None:
     print(f"summary:  {paths['summary']}")
 
 
-def run_single(input_path: str, output_dir: str, strict: bool, quiet: bool) -> int:
+def run_single(
+    input_path: str, output_dir: str, *, strict: bool, quiet: bool
+) -> int:
+    """Validate one CSV file into output_dir; return the exit code."""
     try:
         result = validate_file(input_path)
     except ValidatorFileError as exc:
@@ -75,11 +82,94 @@ def run_single(input_path: str, output_dir: str, strict: bool, quiet: bool) -> i
             print(f"error: no rows processed; see {paths['errors']}")
         return 2
 
-    _print_report(result, paths, quiet)
-    return _exit_code(result, strict)
+    _print_report(result, paths, quiet=quiet)
+    return _exit_code(result, strict=strict)
 
 
-def run_batch(input_dir: str, output_dir: str, strict: bool, quiet: bool) -> int:
+def _batch_output_name(csv_path: Path, index: int, used_names: set[str]) -> str:
+    """Return a unique output-directory name for one batch file.
+
+    "a.csv" and "a.CSV" share a stem, so colliding stems get a numeric
+    suffix; uniqueness is tracked case-insensitively so output paths cannot
+    collide on Windows either.
+    """
+    name = csv_path.stem or f"file{index}"
+    if name.lower() in used_names:
+        suffix = 2
+        while f"{name.lower()}_{suffix}" in used_names:
+            suffix += 1
+        name = f"{name}_{suffix}"
+    used_names.add(name.lower())
+    return name
+
+
+def _process_batch_file(
+    csv_path: Path,
+    file_output: Path,
+    *,
+    strict: bool,
+    quiet: bool,
+    totals: dict[str, int],
+) -> tuple[int, dict[str, object]]:
+    """Validate one batch file, write its outputs, update the shared totals.
+
+    Return (exit code, combined-summary entry for this file).
+    """
+    try:
+        result = validate_file(csv_path)
+    except ValidatorFileError as exc:
+        if not quiet:
+            print(f"error: {csv_path}: {exc}")
+        totals["file_errors"] += 1
+        return 2, {
+            "input_file": str(csv_path),
+            "status": "unusable",
+            "error": str(exc),
+            "output_dir": str(file_output),
+        }
+    write_outputs(result, file_output)
+    summary = result.summary()
+    code = _exit_code(result, strict=strict)
+    totals["total_rows"] += summary["total_rows"]
+    totals["accepted_rows"] += summary["accepted_rows"]
+    totals["rejected_rows"] += summary["rejected_rows"]
+    totals["warning_count"] += summary["warning_count"]
+    if result.file_errors:
+        totals["file_errors"] += 1
+    if not quiet:
+        print(
+            f"{csv_path.name}: {summary['total_rows']} rows, "
+            f"{summary['accepted_rows']} accepted, "
+            f"{summary['rejected_rows']} rejected, "
+            f"{summary['warning_count']} warning(s)"
+        )
+    return code, {
+        "input_file": str(csv_path),
+        "input_sha256": summary["input_sha256"],
+        "status": (
+            "file_error"
+            if result.file_errors
+            else ("rejected_rows" if result.rejected else "ok")
+        ),
+        "exit_code": code,
+        "total_rows": summary["total_rows"],
+        "accepted_rows": summary["accepted_rows"],
+        "rejected_rows": summary["rejected_rows"],
+        "warning_count": summary["warning_count"],
+        "file_error_codes": [
+            file_error["code"] for file_error in result.file_errors
+        ],
+        "output_dir": str(file_output),
+    }
+
+
+def run_batch(
+    input_dir: str, output_dir: str, *, strict: bool, quiet: bool
+) -> int:
+    """Validate every .csv file in input_dir into per-file output dirs.
+
+    Return the worst exit code across the batch.
+    """
     directory = Path(input_dir)
     try:
         csv_files = sorted(
@@ -104,68 +194,22 @@ def run_batch(input_dir: str, output_dir: str, strict: bool, quiet: bool) -> int
         "file_errors": 0,
     }
     worst = 0
+    used_names: set[str] = set()
     for index, csv_path in enumerate(csv_files):
-        name = csv_path.stem or f"file{index}"
+        name = _batch_output_name(csv_path, index, used_names)
         file_output = out / name
-        try:
-            result = validate_file(csv_path)
-        except ValidatorFileError as exc:
-            if not quiet:
-                print(f"error: {csv_path}: {exc}")
-            totals["file_errors"] += 1
-            worst = max(worst, 2)
-            per_file.append(
-                {
-                    "input_file": str(csv_path),
-                    "status": "unusable",
-                    "error": str(exc),
-                    "output_dir": str(file_output),
-                }
-            )
-            continue
-        paths = write_outputs(result, file_output)
-        summary = result.summary()
-        code = _exit_code(result, strict)
-        worst = max(worst, code)
-        totals["total_rows"] += summary["total_rows"]
-        totals["accepted_rows"] += summary["accepted_rows"]
-        totals["rejected_rows"] += summary["rejected_rows"]
-        totals["warning_count"] += summary["warning_count"]
-        if result.file_errors:
-            totals["file_errors"] += 1
-        if not quiet:
-            print(
-                f"{csv_path.name}: {summary['total_rows']} rows, "
-                f"{summary['accepted_rows']} accepted, "
-                f"{summary['rejected_rows']} rejected, "
-                f"{summary['warning_count']} warning(s)"
-            )
-        per_file.append(
-            {
-                "input_file": str(csv_path),
-                "input_sha256": summary["input_sha256"],
-                "status": (
-                    "file_error"
-                    if result.file_errors
-                    else ("rejected_rows" if result.rejected else "ok")
-                ),
-                "exit_code": code,
-                "total_rows": summary["total_rows"],
-                "accepted_rows": summary["accepted_rows"],
-                "rejected_rows": summary["rejected_rows"],
-                "warning_count": summary["warning_count"],
-                "file_error_codes": [
-                    file_error["code"] for file_error in result.file_errors
-                ],
-                "output_dir": str(file_output),
-            }
+        code, entry = _process_batch_file(
+            csv_path, file_output, strict=strict, quiet=quiet, totals=totals
         )
+        worst = max(worst, code)
+        per_file.append(entry)
 
     combined = {
         "schema_version": SCHEMA_VERSION,
         "mode": "batch",
         "input_directory": str(directory),
         "file_count": len(csv_files),
+        "exit_code": worst,
         "totals": dict(sorted(totals.items())),
         "files": per_file,
     }
@@ -187,6 +231,7 @@ def run_batch(input_dir: str, output_dir: str, strict: bool, quiet: bool) -> int
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse CLI arguments and run single-file or batch validation."""
     parser = argparse.ArgumentParser(
         prog="supplier-csv-validator",
         description=(
@@ -215,7 +260,9 @@ def main(argv: list[str] | None = None) -> int:
         "--quiet", action="store_true", help="Suppress progress output."
     )
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {VERSION} (schema {SCHEMA_VERSION})"
+        "--version",
+        action="version",
+        version=f"%(prog)s {VERSION} (schema {SCHEMA_VERSION})",
     )
     args = parser.parse_args(argv)
 
@@ -225,9 +272,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: --output exists and is not a directory: {output_path}")
         return 2
 
-    if input_path.is_dir():
-        return run_batch(str(input_path), str(output_path), args.strict, args.quiet)
-    return run_single(str(input_path), str(output_path), args.strict, args.quiet)
+    try:
+        if input_path.is_dir():
+            return run_batch(
+                str(input_path),
+                str(output_path),
+                strict=args.strict,
+                quiet=args.quiet,
+            )
+        return run_single(
+            str(input_path),
+            str(output_path),
+            strict=args.strict,
+            quiet=args.quiet,
+        )
+    except OSError as exc:
+        print(f"error: {exc}")
+        return 2
 
 
 if __name__ == "__main__":

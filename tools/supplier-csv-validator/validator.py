@@ -24,7 +24,8 @@ from pathlib import Path
 
 SCHEMA_VERSION = "supplier_csv_v1"
 
-# Mirrors VALID_TRANSPORT_MODES in dataset_intakes.py and TRANSPORT_MODES in transport.py.
+# Mirrors VALID_TRANSPORT_MODES in dataset_intakes.py and TRANSPORT_MODES in
+# transport.py.
 VALID_TRANSPORT_MODES = {"sea", "air", "rail", "road"}
 
 # Mirrors ScenarioComponentRequest.current_disclosure_status.
@@ -59,7 +60,8 @@ KNOWN_COLUMNS = REQUIRED_COLUMNS + OPTIONAL_COLUMNS
 
 # Fields parsed as numbers. Values: (parse kind, minimum, maximum, error code).
 # "positive_*" kinds treat the minimum as exclusive (quantity > 0),
-# "float" kinds treat it as inclusive (revenue >= 0.01, like GreenChain ge=0.01).
+# "float" kinds treat it as inclusive (revenue >= 0.01, like GreenChain
+# ge=0.01).
 NUMERIC_FIELDS = {
     "quantity": ("positive_float", 0.0, None, "invalid_quantity"),
     "target_count": ("positive_int", 0.0, None, "invalid_target_count"),
@@ -70,6 +72,7 @@ NUMERIC_FIELDS = {
 
 COUNTRY_FIELDS = ("destination", "current_country")
 PIPE_LIST_FIELDS = ("current_certifications", "countries", "require_certifications")
+MODE_FIELDS = ("transport_mode", "current_disclosure_status")
 
 # Duplicate identity: same product component from the same supplier country.
 DUPLICATE_KEY = ("product", "component", "current_manufacturer", "current_country")
@@ -93,16 +96,16 @@ DEFAULT_MAX_FIELD_LENGTH = 500
 # DANGEROUS_PREFIXES additionally lists in-cell tab/CR, which are injection
 # vectors and never survive into cleaned.csv.
 FORMULA_PREFIXES = ("=", "+", "-", "@")
-DANGEROUS_PREFIXES = FORMULA_PREFIXES + ("\t", "\r")
+DANGEROUS_PREFIXES = (*FORMULA_PREFIXES, "\t", "\r")
 
 # Strict decimal grammar for CSV numeric fields. Deliberately stricter than
 # float(): rejects Python-isms such as "1_000" (underscore separators),
 # "nan", "inf", "0x1F", and localized forms such as "1,000" or "1.000,5".
 _NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$")
 
-# C0 control characters that are neither whitespace handled by the CSV layer
-# (\t, \n, \r) nor acceptable in a text cell (NUL, VT, FF, SOH, ...).
-_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+# C0 control characters (plus DEL) that are neither whitespace handled by the
+# CSV layer (\t, \n, \r) nor acceptable in a text cell (NUL, VT, FF, SOH...).
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 # ISO 3166-1 alpha-2 country codes.
 ISO2_COUNTRIES = frozenset(
@@ -132,7 +135,7 @@ ISO2_COUNTRIES = frozenset(
     WF WS
     YE YT
     ZA ZM ZW
-    """.split()
+    """.split()  # noqa: SIM905 - a running-text table is clearer than a list literal
 )
 
 _WHITESPACE_RE = re.compile(r"\s+")
@@ -144,6 +147,8 @@ class ValidatorFileError(Exception):
 
 @dataclass
 class RowError:
+    """One validation error on one source row and column."""
+
     row: int
     field: str
     code: str
@@ -152,6 +157,8 @@ class RowError:
 
 @dataclass
 class RowWarning:
+    """One advisory on an accepted row (record stays in cleaned.csv)."""
+
     row: int
     field: str
     code: str
@@ -160,6 +167,8 @@ class RowWarning:
 
 @dataclass
 class RejectedRecord:
+    """A rejected source row: its errors and the raw cell values."""
+
     row: int
     errors: list[RowError] = field(default_factory=list)
     raw: dict[str, str] = field(default_factory=dict)
@@ -167,6 +176,8 @@ class RejectedRecord:
 
 @dataclass
 class FileResult:
+    """Complete validation outcome for one CSV input."""
+
     input_file: str
     input_sha256: str = ""
     file_errors: list[dict[str, str]] = field(default_factory=list)
@@ -177,9 +188,11 @@ class FileResult:
 
     @property
     def total_rows(self) -> int:
+        """Count of accepted plus rejected data rows."""
         return len(self.accepted_rows) + len(self.rejected)
 
     def summary(self) -> dict[str, object]:
+        """Build the summary.json document body."""
         rejected_by_code: dict[str, int] = {}
         for record in self.rejected:
             for err in record.errors:
@@ -244,7 +257,7 @@ def parse_number(value: str) -> float | None:
         return None
     try:
         number = float(text)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     if not math.isfinite(number):
         return None
@@ -262,18 +275,25 @@ def _is_dangerous(value: str) -> bool:
 
 
 def _has_control_characters(value: str) -> bool:
-    """NUL, VT, FF and other C0 controls that are not \t, \n or \r."""
+    r"""Detect NUL, DEL, VT, FF and other C0 controls that are not \t, \n or \r."""
     return _CONTROL_RE.search(value) is not None
 
 
-def _check_formula(row: int, name: str, value: str, code: str) -> RowError | None:
+def _formula_error(row: int, name: str, value: str) -> RowError:
+    return RowError(
+        row=row,
+        field=name,
+        code="dangerous_formula_prefix",
+        message=(
+            f"{name} contains a dangerous spreadsheet formula prefix or "
+            f"injection character, got {value.strip()!r}."
+        ),
+    )
+
+
+def _check_formula(row: int, name: str, value: str) -> RowError | None:
     if _is_dangerous(value):
-        return RowError(
-            row=row,
-            field=name,
-            code=code,
-            message=f"{name} starts with a dangerous spreadsheet formula prefix.",
-        )
+        return _formula_error(row, name, value)
     return None
 
 
@@ -284,24 +304,25 @@ def _validate_country(row: int, name: str, value: str) -> RowError | None:
             row=row,
             field=name,
             code="invalid_country_code",
-            message=f"{name} must be an ISO 3166-1 alpha-2 country code, got {value!r}.",
+            message=(
+                f"{name} must be an ISO 3166-1 alpha-2 country code, "
+                f"got {value!r}."
+            ),
         )
     return None
 
 
 def _validate_pipe_countries(row: int, name: str, value: str) -> list[RowError]:
-    errors: list[RowError] = []
-    for item in _split_pipe_list(value):
-        if item.upper() not in ISO2_COUNTRIES:
-            errors.append(
-                RowError(
-                    row=row,
-                    field=name,
-                    code="invalid_country_code",
-                    message=f"{name} contains invalid country code {item!r}.",
-                )
-            )
-    return errors
+    return [
+        RowError(
+            row=row,
+            field=name,
+            code="invalid_country_code",
+            message=f"{name} contains invalid country code {item!r}.",
+        )
+        for item in _split_pipe_list(value)
+        if item.upper() not in ISO2_COUNTRIES
+    ]
 
 
 def _split_pipe_list(value: str) -> list[str]:
@@ -315,11 +336,14 @@ def _join_pipe_list(items: list[str]) -> str:
 def _validate_numeric(
     row: int, name: str, value: str
 ) -> tuple[float | None, list[RowError]]:
-    """Returns (parsed number or None, errors)."""
+    """Validate a numeric field value.
+
+    Return (parsed number or None, errors).
+    """
     kind, minimum, maximum, code = NUMERIC_FIELDS[name]
     number = parse_number(value)
     if number is None:
-        formula_error = _check_formula(row, name, value, "dangerous_formula_prefix")
+        formula_error = _check_formula(row, name, value)
         if formula_error is not None:
             return None, [formula_error]
         return None, [
@@ -349,7 +373,10 @@ def _validate_numeric(
                 row=row,
                 field=name,
                 code=code,
-                message=f"{name} is outside the supported range ({minimum}..{upper_bound}).",
+                message=(
+                    f"{name} is outside the supported range "
+                    f"({minimum}..{upper_bound})."
+                ),
             )
         ]
     if kind == "positive_int" and number != int(number):
@@ -364,10 +391,125 @@ def _validate_numeric(
     return number, []
 
 
-def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[dict[str, str], list[RowError], list[RowWarning]]:
+def _validate_textish_column(
+    row: int, name: str, value: str
+) -> tuple[str, list[RowError]]:
+    """Validate a non-numeric column. Returns (normalized value, errors).
+
+    Covers country columns, pipe lists, the mode columns and plain text
+    (required, optional or unknown pass-through columns).
+    """
+    if name in COUNTRY_FIELDS:
+        normalized = normalize_country(value)
+        country_error = _validate_country(row, name, value)
+        return normalized, [] if country_error is None else [country_error]
+
+    if name in PIPE_LIST_FIELDS:
+        items = _split_pipe_list(normalize_text(value))
+        errors: list[RowError] = []
+        if name == "countries":
+            items = [item.upper() for item in items]
+            errors = _validate_pipe_countries(row, name, value)
+        return _join_pipe_list(items), errors
+
+    if name in MODE_FIELDS:
+        allowed, code = (
+            (VALID_TRANSPORT_MODES, "unsupported_transport_mode")
+            if name == "transport_mode"
+            else (VALID_DISCLOSURE_STATUSES, "unsupported_disclosure_status")
+        )
+        mode = normalize_text(value).lower()
+        if mode in allowed:
+            return mode, []
+        valid = ", ".join(sorted(allowed))
+        return mode, [
+            RowError(
+                row=row,
+                field=name,
+                code=code,
+                message=f"{name} must be one of: {valid}; got {value!r}.",
+            )
+        ]
+
+    # Plain text column (required, optional, or unknown pass-through).
+    text = normalize_text(value)
+    limit = MAX_FIELD_LENGTHS.get(name, DEFAULT_MAX_FIELD_LENGTH)
+    if len(text) > limit:
+        return text, [
+            RowError(
+                row=row,
+                field=name,
+                code="field_too_long",
+                message=(
+                    f"{name} exceeds the maximum length of {limit} characters."
+                ),
+            )
+        ]
+    return text, []
+
+
+def _missing_required_errors(
+    row: int, normalized: dict[str, str], errored_fields: set[str]
+) -> list[RowError]:
+    return [
+        RowError(
+            row=row,
+            field=name,
+            code="missing_value",
+            message=f"{name} is required and must not be empty.",
+        )
+        for name in REQUIRED_COLUMNS
+        if name not in errored_fields and not normalized.get(name, "").strip()
+    ]
+
+
+def _collect_warnings(row: int, raw: dict[str, str]) -> list[RowWarning]:
+    """Collect the warnings for one row.
+
+    Warnings keep the record acceptable, and only fields whose column exists
+    in this file can warn: a file without a `unit` column is not "missing" it.
+    """
+    warnings: list[RowWarning] = []
+    if "unit" in raw and not raw["unit"].strip():
+        warnings.append(
+            RowWarning(
+                row=row,
+                field="unit",
+                code="missing_unit",
+                message=(
+                    "unit is empty; the record is accepted but lacks a unit "
+                    "of measure."
+                ),
+            )
+        )
+    if "current_website" in raw:
+        website = raw["current_website"].strip()
+        if website and not (
+            website.lower().startswith("http://")
+            or website.lower().startswith("https://")
+        ):
+            warnings.append(
+                RowWarning(
+                    row=row,
+                    field="current_website",
+                    code="suspicious_website",
+                    message="current_website does not start with http:// or https://.",
+                )
+            )
+    return warnings
+
+
+def _raw_row_map(row: list[str], headers: list[str]) -> dict[str, str]:
+    """Map a data row onto the headers, padding short rows with empties."""
+    padded = row + [""] * max(0, len(headers) - len(row))
+    return dict(zip(headers, padded, strict=False))
+
+
+def _validate_row(
+    row_number: int, row: list[str], headers: list[str]
+) -> tuple[dict[str, str], list[RowError], list[RowWarning]]:
     """Validate one data row. Returns (normalized values, errors, warnings)."""
     errors: list[RowError] = []
-    warnings: list[RowWarning] = []
     if len(row) > len(headers):
         errors.append(
             RowError(
@@ -377,8 +519,7 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
                 message="Row has more columns than the header.",
             )
         )
-    padded = row + [""] * (len(headers) - len(row))
-    raw = {header: value for header, value in zip(headers, padded)}
+    raw = _raw_row_map(row, headers)
     normalized: dict[str, str] = {}
     errored_fields: set[str] = set()
 
@@ -389,6 +530,12 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
 
     for name, value in raw.items():
         if name in NUMERIC_FIELDS:
+            # A raw tab/CR inside a numeric cell is an injection vector even
+            # when the digits themselves parse ("5\t"); "-" stays legitimate
+            # here so signed values keep their negative-value error codes.
+            if "\t" in value or "\r" in value:
+                fail(_formula_error(row_number, name, value))
+                continue
             if not value.strip():
                 if name in REQUIRED_COLUMNS:
                     fail(
@@ -396,7 +543,9 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
                             row=row_number,
                             field=name,
                             code="missing_value",
-                            message=f"{name} is required and must not be empty.",
+                            message=(
+                                f"{name} is required and must not be empty."
+                            ),
                         )
                     )
                 else:
@@ -410,9 +559,7 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
             continue
 
         if _is_dangerous(value):
-            formula_error = _check_formula(row_number, name, value, "dangerous_formula_prefix")
-            if formula_error is not None:
-                fail(formula_error)
+            fail(_formula_error(row_number, name, value))
             continue
 
         if _has_control_characters(value):
@@ -421,115 +568,32 @@ def _validate_row(row_number: int, row: list[str], headers: list[str]) -> tuple[
                     row=row_number,
                     field=name,
                     code="invalid_control_character",
-                    message=f"{name} contains a control character (NUL, VT, FF or similar).",
+                    message=(
+                        f"{name} contains a control character "
+                        "(NUL, DEL, VT, FF or similar)."
+                    ),
                 )
             )
             continue
 
-        if name in COUNTRY_FIELDS:
-            normalized[name] = normalize_country(value)
-            country_error = _validate_country(row_number, name, value)
-            if country_error is not None:
-                fail(country_error)
-            continue
-
-        if name in PIPE_LIST_FIELDS:
-            items = _split_pipe_list(normalize_text(value))
-            if name == "countries":
-                items = [item.upper() for item in items]
-                for error in _validate_pipe_countries(row_number, name, value):
-                    fail(error)
-            normalized[name] = _join_pipe_list(items)
-            continue
-
-        if name == "transport_mode":
-            mode = normalize_text(value).lower()
-            normalized[name] = mode
-            if mode not in VALID_TRANSPORT_MODES:
-                valid = ", ".join(sorted(VALID_TRANSPORT_MODES))
-                fail(
-                    RowError(
-                        row=row_number,
-                        field=name,
-                        code="unsupported_transport_mode",
-                        message=f"transport_mode must be one of: {valid}; got {value!r}.",
-                    )
-                )
-            continue
-
-        if name == "current_disclosure_status":
-            status = normalize_text(value).lower()
-            normalized[name] = status
-            if status not in VALID_DISCLOSURE_STATUSES:
-                valid = ", ".join(sorted(VALID_DISCLOSURE_STATUSES))
-                fail(
-                    RowError(
-                        row=row_number,
-                        field=name,
-                        code="unsupported_disclosure_status",
-                        message=f"current_disclosure_status must be one of: {valid}; got {value!r}.",
-                    )
-                )
-            continue
-
-        # Plain text column (required, optional, or unknown pass-through).
-        text = normalize_text(value)
-        normalized[name] = text
-        limit = MAX_FIELD_LENGTHS.get(name, DEFAULT_MAX_FIELD_LENGTH)
-        if len(text) > limit:
-            fail(
-                RowError(
-                    row=row_number,
-                    field=name,
-                    code="field_too_long",
-                    message=f"{name} exceeds the maximum length of {limit} characters.",
-                )
-            )
-
-    for name in REQUIRED_COLUMNS:
-        if name in errored_fields:
-            continue
-        if not normalized.get(name, "").strip():
-            fail(
-                RowError(
-                    row=row_number,
-                    field=name,
-                    code="missing_value",
-                    message=f"{name} is required and must not be empty.",
-                )
-            )
-
-    # Warnings (record stays acceptable). Only fields whose column exists in
-    # this file can warn: a file without a `unit` column is not "missing" it.
-    if "unit" in raw and not raw["unit"].strip():
-        warnings.append(
-            RowWarning(
-                row=row_number,
-                field="unit",
-                code="missing_unit",
-                message="unit is empty; the record is accepted but lacks a unit of measure.",
-            )
+        normalized_value, column_errors = _validate_textish_column(
+            row_number, name, value
         )
-    if "current_website" in raw:
-        website = raw["current_website"].strip()
-        if website and not (
-            website.lower().startswith("http://")
-            or website.lower().startswith("https://")
-        ):
-            warnings.append(
-                RowWarning(
-                    row=row_number,
-                    field="current_website",
-                    code="suspicious_website",
-                    message="current_website does not start with http:// or https://.",
-                )
-            )
+        normalized[name] = normalized_value
+        for error in column_errors:
+            fail(error)
 
+    errors.extend(_missing_required_errors(row_number, normalized, errored_fields))
+    warnings = _collect_warnings(row_number, raw)
     return normalized, errors, warnings
 
 
 def _parse_headers(raw_headers: list[str]) -> tuple[list[str], list[dict[str, str]]]:
-    """Normalize header names like dataset_intakes.py: strip + lower."""
+    """Normalize header names like dataset_intakes.py: strip + lower.
+
+    Reports every header problem at once (empty, control-character and
+    duplicate names), plus any missing required columns.
+    """
     headers: list[str] = []
     file_errors: list[dict[str, str]] = []
     seen: set[str] = set()
@@ -539,20 +603,26 @@ def _parse_headers(raw_headers: list[str]) -> tuple[list[str], list[dict[str, st
             file_errors.append(
                 {"code": "empty_header", "message": "Header names cannot be empty."}
             )
-            return [], file_errors
+            continue
         if _has_control_characters(normalized):
             file_errors.append(
                 {
                     "code": "invalid_header",
-                    "message": f"Header name contains a control character: {raw_header!r}.",
+                    "message": (
+                        f"Header name contains a control character: "
+                        f"{raw_header!r}."
+                    ),
                 }
             )
-            return [], file_errors
+            continue
         if normalized in seen:
             file_errors.append(
-                {"code": "duplicate_header", "message": f"Duplicate header: {normalized}"}
+                {
+                    "code": "duplicate_header",
+                    "message": f"Duplicate header: {normalized}",
+                }
             )
-            return [], file_errors
+            continue
         seen.add(normalized)
         headers.append(normalized)
     missing = [name for name in REQUIRED_COLUMNS if name not in seen]
@@ -563,6 +633,8 @@ def _parse_headers(raw_headers: list[str]) -> tuple[list[str], list[dict[str, st
                 "message": "Missing required header(s): " + ", ".join(missing),
             }
         )
+    if file_errors:
+        return [], file_errors
     return headers, file_errors
 
 
@@ -583,14 +655,17 @@ def validate_text(
         input_file=input_name,
         input_sha256=sha256 if sha256 is not None else "",
     )
-    if text.startswith("\ufeff"):  # UTF-8 BOM, mirrors utf-8-sig file decoding
-        text = text[1:]
+    text = text.removeprefix("\ufeff")  # UTF-8 BOM, mirrors utf-8-sig decoding
     if not result.input_sha256:
         result.input_sha256 = _sha256_hex(text)
 
     reader = csv.reader(io.StringIO(text))
+    # Entirely blank lines are skipped, like dataset_intakes.py - including
+    # any that precede the header row.
     header_row = next(reader, None)
-    if header_row is None or not any(cell.strip() for cell in header_row):
+    while header_row is not None and not any(cell.strip() for cell in header_row):
+        header_row = next(reader, None)
+    if header_row is None:
         result.file_errors.append(
             {
                 "code": "empty_file",
@@ -609,11 +684,16 @@ def validate_text(
     for row in reader:
         row_number = reader.line_num
         if not any(cell.strip() for cell in row):
-            continue  # entirely blank lines are skipped, like dataset_intakes.py
+            continue  # entirely blank lines are skipped
         normalized, errors, warnings = _validate_row(row_number, row, headers)
         if errors:
-            raw = {header: value for header, value in zip(headers, row + [""] * (len(headers) - len(row)))}
-            result.rejected.append(RejectedRecord(row=row_number, errors=errors, raw=raw))
+            result.rejected.append(
+                RejectedRecord(
+                    row=row_number,
+                    errors=errors,
+                    raw=_raw_row_map(row, headers),
+                )
+            )
             continue
         key = tuple(normalized.get(name, "") for name in DUPLICATE_KEY)
         if key in seen_keys:
@@ -627,12 +707,12 @@ def validate_text(
                             code="duplicate_supplier_record",
                             message=(
                                 "Duplicate supplier record (product, component, "
-                                "current_manufacturer, current_country already seen at "
-                                f"row {seen_keys[key]})."
+                                "current_manufacturer, current_country already "
+                                f"seen at row {seen_keys[key]})."
                             ),
                         )
                     ],
-                    raw={header: value for header, value in zip(headers, row + [""] * (len(headers) - len(row)))},
+                    raw=_raw_row_map(row, headers),
                 )
             )
             continue
@@ -646,14 +726,22 @@ def validate_file(path: str | Path) -> FileResult:
     """Read a CSV file (UTF-8 / UTF-8 with BOM) and validate it."""
     input_path = Path(path)
     if not input_path.exists():
-        raise ValidatorFileError(f"Input file not found: {input_path}")
+        raise ValidatorFileError(  # noqa: TRY003 - actionable CLI message
+            f"Input file not found: {input_path}"
+        )
     if input_path.is_dir():
-        raise ValidatorFileError(
-            f"Input is a directory: {input_path}. Pass a .csv file (or use batch mode)."
+        raise ValidatorFileError(  # noqa: TRY003 - actionable CLI message
+            f"Input is a directory: {input_path}. "
+            "Pass a .csv file (or use batch mode)."
         )
     if input_path.suffix.lower() != ".csv":
-        raise ValidatorFileError("Only .csv files are supported.")
-    data = input_path.read_bytes()
+        raise ValidatorFileError("Only .csv files are supported.")  # noqa: TRY003
+    try:
+        data = input_path.read_bytes()
+    except OSError as exc:
+        raise ValidatorFileError(  # noqa: TRY003 - actionable CLI message
+            f"Cannot read input file: {exc}"
+        ) from exc
     if not data:
         result = FileResult(input_file=str(input_path), input_sha256=_sha256_hex(""))
         result.file_errors.append(
@@ -666,7 +754,7 @@ def validate_file(path: str | Path) -> FileResult:
     sha256 = hashlib.sha256(data).hexdigest()
     try:
         text = data.decode("utf-8-sig")
-    except UnicodeDecodeError as exc:
+    except UnicodeDecodeError:
         # Still emit outputs for provenance even when decoding fails.
         result = FileResult(input_file=str(input_path), input_sha256=sha256)
         result.file_errors.append(
@@ -687,7 +775,9 @@ def write_outputs(result: FileResult, output_dir: str | Path) -> dict[str, str]:
         if result.headers:
             writer.writerow(result.headers)
         for record in result.accepted_rows:
-            writer.writerow([record.get(header, "") for header in result.headers])
+            writer.writerow(
+                [record.get(header, "") for header in result.headers]
+            )
 
     errors_doc = {
         "input_file": result.input_file,
@@ -698,7 +788,11 @@ def write_outputs(result: FileResult, output_dir: str | Path) -> dict[str, str]:
             {
                 "row": record.row,
                 "errors": [
-                    {"field": err.field, "code": err.code, "message": err.message}
+                    {
+                        "field": err.field,
+                        "code": err.code,
+                        "message": err.message,
+                    }
                     for err in record.errors
                 ],
                 "record": dict(sorted(record.raw.items())),
@@ -706,13 +800,19 @@ def write_outputs(result: FileResult, output_dir: str | Path) -> dict[str, str]:
             for record in result.rejected
         ],
         "warnings": [
-            {"row": warn.row, "field": warn.field, "code": warn.code, "message": warn.message}
+            {
+                "row": warn.row,
+                "field": warn.field,
+                "code": warn.code,
+                "message": warn.message,
+            }
             for warn in result.warnings
         ],
     }
     errors_path = out / "errors.json"
     errors_path.write_text(
-        json.dumps(errors_doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        json.dumps(errors_doc, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
     )
 
     summary_path = out / "summary.json"

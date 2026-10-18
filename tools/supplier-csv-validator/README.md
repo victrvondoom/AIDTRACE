@@ -8,7 +8,7 @@ information or silently turns invalid values into valid-looking data.
 It runs on the Python standard library alone — no API keys, no FalkorDB, no
 network access, no AI model.
 
-Version: 1.1.0 (schema `supplier_csv_v1`).
+Version: 1.1.1 (schema `supplier_csv_v1`).
 
 ## Quick start
 
@@ -75,16 +75,17 @@ human-readable message. The raw record is included for review.
 | `invalid_revenue_usd_m` | `current_revenue_usd_m` is not a number >= 0.01 |
 | `invalid_renewable_pct` | `current_renewable_pct` is not a number in 0..100 |
 | `field_too_long` | a text field exceeds its per-column limit (500 chars for unknown columns) |
-| `dangerous_formula_prefix` | cell starts with `=`, `+`, `-`, `@`, or contains a raw tab/CR — rejected, never sanitized |
-| `invalid_control_character` | cell contains NUL, VT, FF or another control character (outside `\t`, `\n`, `\r`) |
+| `dangerous_formula_prefix` | cell starts with `=`, `+`, `-`, `@`, or contains a raw tab/CR (numeric cells included — `"5\t"` is rejected even though the digits parse) — rejected, never sanitized |
+| `invalid_control_character` | cell contains NUL, DEL, VT, FF or another control character (outside `\t`, `\n`, `\r`) |
 | `unsupported_disclosure_status` | `current_disclosure_status` is not `verified`/`partial`/`none` |
 | `row_has_extra_columns` | row has more columns than the header |
 
-File-level errors (the file cannot be processed at all; no rows are read):
+File-level errors (the file cannot be processed at all; no rows are read).
+Every header problem is reported at once, not just the first:
 
 | Code | Meaning |
 |---|---|
-| `empty_file` | no header row (zero bytes, BOM-only, whitespace-only) |
+| `empty_file` | no header row (zero bytes, BOM-only, whitespace/blank-line-only) |
 | `empty_header` | a header cell is blank |
 | `duplicate_header` | the same header name appears twice |
 | `invalid_header` | a header name contains a control character |
@@ -144,9 +145,10 @@ validation, of the BOM-stripped text) so every report is traceable to the
 exact source file.
 
 In batch mode, each input file additionally gets its own subdirectory under
-`--output` (named after the file), and a top-level
-`combined_summary.json` aggregates per-file status, totals, exit codes and
-hashes.
+`--output` (named after the file; colliding stems such as `a.csv` and
+`a.CSV` get a numeric suffix so outputs cannot overwrite each other), and a
+top-level `combined_summary.json` aggregates per-file status, totals, exit
+codes and hashes (including the batch's overall `exit_code`).
 
 ## CLI reference
 
@@ -174,11 +176,16 @@ Exit codes:
 python -m unittest discover -s tests -v
 ```
 
-127 deterministic unit tests covering valid input, all missing-column cases,
+139 deterministic unit tests covering valid input, all missing-column cases,
 missing values, invalid countries, duplicates, invalid quantities and the
-strict numeric grammar, unsupported transport modes, CSV injection, control
-characters, empty files, Unicode and encodings, normalization, provenance,
-output accuracy, CLI flags, batch mode, and a 2000-row smoke test.
+strict numeric grammar, unsupported transport modes, CSV injection (text and
+numeric cells), control characters including DEL, empty files, Unicode and
+encodings, normalization, provenance, output accuracy, CLI flags, batch mode
+(including output-name dedupe and unreadable files), and a 2000-row smoke
+test.
+
+The code is lint-clean under the tool's own `ruff.toml` ruleset
+(`ruff check .` from this directory).
 
 ## Limitations
 
@@ -188,4 +195,7 @@ output accuracy, CLI flags, batch mode, and a 2000-row smoke test.
 - Row numbers are physical end-of-record line numbers from `csv.reader`, so a
   row with a quoted embedded newline reports the line where the record ends.
 - Entirely blank lines are skipped (like `dataset_intakes.py`) and do not
-  count as rows.
+  count as rows — including blank lines that precede the header row.
+- A signed numeric cell like `-50` in `shipment_weight_kg` keeps its
+  negative-value error code; only tabs/CRs inside numeric cells are treated
+  as injection vectors.
