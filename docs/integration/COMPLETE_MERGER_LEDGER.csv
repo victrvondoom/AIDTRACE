@@ -1,0 +1,26 @@
+feature,source_project,SOURCE_FOUND,AUDITED,CODE_MIGRATED,BACKEND_CONNECTED,FRONTEND_CONNECTED,INTEGRATION_TESTED,BROWSER_VERIFIED,status,note
+Feature host + same-page switching (/hub),Kairos,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,pathname stayed /hub across 8 workspaces; same shell
+"Overview capability graph (2D, clickable)",Kairos,yes,yes,yes,yes,yes,no,yes,OPERATIONAL,node click opened GreenChain in place; NOT 3D
+"GreenChain ML scoring, transport, weights",GreenChain,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,real XGBoost q10/q50/q90; server ranking matched the instant lens
+GreenChain globe,GreenChain,yes,yes,yes,yes,yes,no,yes,OPERATIONAL,original canvas renderer; boundary data fell back offline (outline only)
+"GreenChain decision graph, FalkorDB persistence, what-if",GreenChain,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,saved 27 nodes and 43 relationships; removing the top supplier changed the recommendation
+GreenChain live discovery (Dedalus + Brave MCP),GreenChain,yes,yes,yes,yes,no,no,no,NOT_CONNECTED,needs provider keys and dedalus-labs; routes closed to demo
+GreenChain prompt scenario edit + report memo (K2/Gemini),GreenChain,yes,yes,yes,yes,no,yes,no,NOT_CONNECTED,logic tests pass; provider keys absent; no UI
+GreenChain CSV import / scenario builder UI,GreenChain,yes,yes,no,no,no,no,no,PLANNED,scenario-csv.ts migrated; upload UI not built
+Fraud investigation + agent runtime,track1-agent,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,"32-event trace, 2 proposals, approve with receipt in the UI; stale-evidence refusal tested"
+Fraud: Claude tool-loop planner,track1-agent,yes,yes,yes,yes,yes,no,no,NOT_CONNECTED,deterministic planner verified; no ANTHROPIC_API_KEY
+MCP server,track1-agent,yes,yes,yes,no,no,yes,no,EXPERIMENTAL,tool surface tested; stdio transport cannot import beside pydantic 2.7.4
+ResolveAI consumer remedy engine + console,track1-agent,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,revision hash and verdicts changed after an evidence edit
+Interdict min-cost cut (attribution kept),track1-agent,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,MIT notice in THIRD_PARTY_NOTICES.md
+"ResolveAI agent platform (multi-agent, RAG, 8 domains)",RESOLVE-AI-main,yes,yes,yes,yes,yes,yes,no,NOT_CONNECTED,"gateway tested with a stand-in worker; worker never run (needs Supabase, Qdrant, Neo4j, Redis, model key)"
+ResolveAI domain knowledge corpora (512 MB),RESOLVE-AI-main,yes,no,no,no,no,no,no,PLANNED,stay in RESOLVE-AI-main/knowledge; not copied
+ResolveAI frontend (108 files),RESOLVE-AI-main,yes,yes,no,no,no,no,no,PLANNED,audited; only a case panel exists
+"Graph Lab: 10 engines, 6 views",Kairos (README-derived),yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,min_cut browser-verified; others covered by tests
+Evidence drift on persisted site graph,Kairos,yes,yes,yes,yes,yes,yes,no,VERIFIED_DEMO,Lab blast radius equals the store's own find_impacts on real FalkorDB
+Agent memory (persisted),Kairos,yes,yes,yes,yes,yes,yes,no,EXPERIMENTAL,drift demo sessions only; no unified memory service
+Source library: 98 READMEs + ledger,Kairos,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,95 of 98 READMEs; 3 had none
+Interactive 3D overview,Kairos,no,no,no,no,no,no,no,PLANNED,not built
+Simulations workspace / reports,Kairos,no,no,no,no,no,no,no,PLANNED,not built
+Same-origin /api gateway,Kairos,yes,yes,yes,yes,yes,yes,yes,OPERATIONAL,verified through the Next rewrite
+One-command launcher,Kairos,yes,no,yes,yes,yes,no,no,EXPERIMENTAL,scripts/start-kairos.ps1 written; not run from a clean machine
+Production build,Kairos,yes,no,yes,yes,yes,no,no,NOT_CONNECTED,next build fails offline (Google Fonts fetch); unverified

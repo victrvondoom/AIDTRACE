@@ -10,7 +10,7 @@ export default function SettingsPage() {
       <SystemTabs />
       <PageHeader
         title="System Settings"
-        lede="Tune how Kairos looks on this device: theme and contrast. These are stored in this browser, so they follow the device and not your account."
+        lede="Tune how AIDTRACE looks on this device: theme and contrast. These are stored in this browser, so they follow the device and not your account."
       />
 
       {/* One hairline panel: section list and content share a border, no floating gap. */}

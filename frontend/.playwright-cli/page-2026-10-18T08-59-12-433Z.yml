@@ -1,0 +1,509 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e21] [cursor=pointer]:
+      - /url: "#main"
+    - complementary [ref=e22]:
+      - generic [ref=e24]:
+        - link "Kairos home" [ref=e26] [cursor=pointer]:
+          - /url: /overview
+          - img "Kairos" [ref=e27]
+          - generic [ref=e28]: Kairos
+        - generic [ref=e29]:
+          - button "Search workspace" [ref=e30] [cursor=pointer]:
+            - generic [ref=e33]: Search
+            - generic [ref=e34]: Ctrl K
+          - button "Ingest document" [ref=e35] [cursor=pointer]
+        - navigation [ref=e38]:
+          - list [ref=e39]:
+            - listitem [ref=e40]:
+              - link "Overview" [ref=e41] [cursor=pointer]:
+                - /url: /overview
+            - listitem [ref=e614]:
+              - link "Track 1 Agent" [ref=e615] [cursor=pointer]:
+                - /url: /track1
+            - listitem [ref=e50]:
+              - link "ResolveAI" [ref=e619] [cursor=pointer]:
+                - /url: /resolveai
+            - listitem [ref=e620]:
+              - link "Intelligence Hub" [ref=e621] [cursor=pointer]:
+                - /url: /hub
+            - listitem [ref=e45]:
+              - link "All Features" [ref=e46] [cursor=pointer]:
+                - /url: /workspace
+            - listitem [ref=e55]:
+              - link "Supply Chain" [ref=e56] [cursor=pointer]:
+                - /url: /supply-chain
+          - list "Operate" [ref=e60]:
+            - listitem [ref=e61]:
+              - link "Briefs" [ref=e62] [cursor=pointer]:
+                - /url: /briefs
+            - listitem [ref=e66]:
+              - link "Copilot" [ref=e67] [cursor=pointer]:
+                - /url: /copilot
+            - listitem [ref=e71]:
+              - link "Assets" [ref=e72] [cursor=pointer]:
+                - /url: /assets
+            - listitem [ref=e76]:
+              - link "Events" [ref=e77] [cursor=pointer]:
+                - /url: /events
+          - list "Analyze" [ref=e81]:
+            - listitem [ref=e82]:
+              - link "RCA" [ref=e83] [cursor=pointer]:
+                - /url: /rca
+            - listitem [ref=e87]:
+              - link "Graph" [ref=e88] [cursor=pointer]:
+                - /url: /graph
+            - listitem [ref=e92]:
+              - link "Intelligence Hub" [ref=e93] [cursor=pointer]:
+                - /url: /hub
+            - listitem [ref=e97]:
+              - link "Coverage" [ref=e98] [cursor=pointer]:
+                - /url: /overview/coverage
+          - list "Assure" [ref=e102]:
+            - listitem [ref=e103]:
+              - link "Compliance" [ref=e104] [cursor=pointer]:
+                - /url: /compliance
+            - listitem [ref=e108]:
+              - link "Governance" [ref=e109] [cursor=pointer]:
+                - /url: /governance
+            - listitem [ref=e113]:
+              - link "Audit Trail" [ref=e114] [cursor=pointer]:
+                - /url: /audit
+          - list "Knowledge" [ref=e118]:
+            - listitem [ref=e119]:
+              - link "Documents" [ref=e120] [cursor=pointer]:
+                - /url: /documents
+            - listitem [ref=e124]:
+              - link "Projects" [ref=e125] [cursor=pointer]:
+                - /url: /projects
+            - listitem [ref=e129]:
+              - link "Off-Boarding" [ref=e130] [cursor=pointer]:
+                - /url: /offboarding
+        - generic [ref=e134]:
+          - paragraph [ref=e135]: Appearance
+          - group "Appearance" [ref=e136]:
+            - button "Daylight" [pressed] [ref=e137] [cursor=pointer]
+            - button "Nightlight" [ref=e140] [cursor=pointer]
+        - button "Open user menu" [ref=e144] [cursor=pointer]:
+          - generic [ref=e145]: KA
+          - generic [ref=e146]:
+            - generic [ref=e147]: Kairos user
+            - generic [ref=e148]: engineer
+    - main [ref=e152]:
+      - generic [ref=e155]:
+        - generic [ref=e156]:
+          - generic [ref=e157]:
+            - heading "Plant Overview" [level=1] [ref=e158]
+            - paragraph [ref=e159]: Your plant, intelligence and decisions in one workspace. Explore every capability, then focus on the operational signals that need your attention.
+          - generic [ref=e161]:
+            - 'link "Plant state: Unavailable" [ref=e162] [cursor=pointer]':
+              - /url: /overview/plant-state
+            - link "Cross-site patterns" [ref=e165] [cursor=pointer]:
+              - /url: /overview/cross-site
+        - region [ref=e167]:
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - paragraph [ref=e170]: Kairos · evidence control
+              - heading "Evidence, in plain sight." [level=2] [ref=e171]
+              - paragraph [ref=e172]: "A site-scoped FalkorDB proof: see the source revision, the fact it changed, every dependent decision, and why an earlier approval cannot carry forward."
+            - generic [ref=e173]:
+              - generic [ref=e174]: SYNTHETIC CASE
+              - button "Replay proof" [ref=e848] [cursor=pointer]
+          - generic [ref=e849]:
+            - generic [ref=e850]:
+              - generic [ref=e851]:
+                - paragraph [ref=e852]: 01 · Source changed
+                - generic [ref=e853]:
+                  - generic [ref=e854]: Earlier procedure
+                  - generic [aria-hidden] [ref=e855]: →
+                  - generic [ref=e856]: Current procedure
+                - paragraph [ref=e857]: SUPERSEDED → ACTIVE
+                - paragraph [ref=e858]: "Authority check: REPLACE"
+              - generic [ref=e859]:
+                - paragraph [ref=e860]: 02 · Claim checked
+                - paragraph [ref=e861]: Inspection interval
+                - paragraph [ref=e862]:
+                  - text: Reviewed condition
+                  - strong [ref=e863]: 180 days
+                  - text: · current claim
+                  - strong [ref=e864]: 90 days
+                - paragraph [ref=e865]: Condition no longer holds
+              - generic [ref=e866]:
+                - paragraph [ref=e867]: 03 · Action held
+                - paragraph [ref=e868]: SUSPENDED
+                - paragraph [ref=e869]: Approval belongs to the earlier decision revision.
+                - paragraph [ref=e870]: "External actions executed: no"
+            - generic [ref=e871]:
+              - generic [ref=e872]:
+                - generic [ref=e873]:
+                  - heading "Recorded dependency path" [level=3] [ref=e874]
+                  - generic [ref=e875]: 6 affected records
+                - list "Source to action dependency path" [ref=e876]:
+                  - listitem [ref=e877]:
+                    - generic "DEMO-DRIFT-SOP-V1" [ref=e878]: Earlier procedure
+                    - generic [aria-hidden] [ref=e879]: →
+                  - listitem [ref=e880]:
+                    - generic "DEMO-DRIFT-CLAIM-V1" [ref=e881]: Earlier claim
+                    - generic [aria-hidden] [ref=e882]: →
+                  - listitem [ref=e883]:
+                    - generic "DEMO-DRIFT-MEMORY-001" [ref=e884]: Agent memory
+                    - generic [aria-hidden] [ref=e885]: →
+                  - listitem [ref=e886]:
+                    - generic "DEMO-DRIFT-DECISION-001" [ref=e887]: Decision
+                    - generic [aria-hidden] [ref=e888]: →
+                  - listitem [ref=e889]:
+                    - generic "DEMO-DRIFT-PLAN-001" [ref=e890]: Inspection plan
+                    - generic [aria-hidden] [ref=e891]: →
+                  - listitem [ref=e892]:
+                    - generic "DEMO-DRIFT-ACTION-001" [ref=e893]: Action
+              - generic [ref=e894]:
+                - paragraph [ref=e895]: Case DEMO-DRIFT-HV-001
+                - paragraph [ref=e896]: Current revision 8b6b634ffda3
+                - paragraph [ref=e897]: Audit chain 60161ac98dff
+                - generic [ref=e898]:
+                  - link "Inspect full case" [ref=e899] [cursor=pointer]:
+                    - /url: /resolveai
+                  - link "Open document vault" [ref=e900] [cursor=pointer]:
+                    - /url: /documents
+        - region [ref=e230]:
+          - generic [ref=e231]:
+            - generic:
+              - img "AIDTRACE platform connecting evidence to a reviewed decision and verified outcome"
+            - generic [ref=e232]:
+              - generic [ref=e233]:
+                - paragraph [ref=e234]: One Kairos workspace
+                - heading "See the evidence. Own the decision." [level=2] [ref=e235]
+                - paragraph [ref=e236]: Operations, investigative intelligence and governance, connected. Start with a question or open the tools behind every decision.
+              - link "Explore All Features" [ref=e237] [cursor=pointer]:
+                - /url: /workspace
+            - list "Kairos decision workflow" [ref=e241]:
+              - listitem [ref=e242]:
+                - link "01Understand Assets & source evidence" [ref=e243] [cursor=pointer]:
+                  - /url: /assets
+                  - text: 01Understand
+                  - generic [ref=e244]: Assets & source evidence
+              - listitem [ref=e245]:
+                - link "02Investigate ResolveAI & graph reasoning" [ref=e246] [cursor=pointer]:
+                  - /url: /resolveai
+                  - text: 02Investigate
+                  - generic [ref=e247]: ResolveAI & graph reasoning
+              - listitem [ref=e248]:
+                - link "03Decide Policy & human approval" [ref=e249] [cursor=pointer]:
+                  - /url: /governance
+                  - text: 03Decide
+                  - generic [ref=e250]: Policy & human approval
+              - listitem [ref=e251]:
+                - link "04Verify Coverage & audit evidence" [ref=e252] [cursor=pointer]:
+                  - /url: /compliance
+                  - text: 04Verify
+                  - generic [ref=e253]: Coverage & audit evidence
+          - generic [ref=e254]:
+            - heading "Your Workspaces" [level=3] [ref=e255]
+            - generic [ref=e256]: Tools and workflows, always within reach
+          - generic [ref=e257]:
+            - article [ref=e258]:
+              - generic [ref=e259]: "01"
+              - link "Plant Operations" [ref=e264] [cursor=pointer]:
+                - /url: /assets
+              - paragraph [ref=e267]: Your plant, people, assets and operational signals.
+              - generic [ref=e268]:
+                - link "Asset Inventory" [ref=e269] [cursor=pointer]:
+                  - /url: /assets
+                - link "Work Briefs" [ref=e272] [cursor=pointer]:
+                  - /url: /briefs
+                - link "Operational Events" [ref=e275] [cursor=pointer]:
+                  - /url: /events
+              - generic [ref=e278]:
+                - generic [ref=e279]: Kairos workflows
+                - link "View all" [ref=e280] [cursor=pointer]:
+                  - /url: /workspace?group=operations
+            - article [ref=e281]:
+              - generic [ref=e282]: "02"
+              - link "Investigations" [ref=e287] [cursor=pointer]:
+                - /url: /rca
+              - paragraph [ref=e290]: Follow a question from source evidence to a defensible conclusion.
+              - generic [ref=e291]:
+                - link "Root Cause Analysis" [ref=e292] [cursor=pointer]:
+                  - /url: /rca
+                - link "Evidence Graph" [ref=e295] [cursor=pointer]:
+                  - /url: /graph
+                - link "Kairos Copilot" [ref=e298] [cursor=pointer]:
+                  - /url: /copilot
+              - generic [ref=e301]:
+                - generic [ref=e302]: Kairos workflows
+                - link "View all" [ref=e303] [cursor=pointer]:
+                  - /url: /workspace?group=investigation
+            - article [ref=e304]:
+              - generic [ref=e305]: "03"
+              - link "Agents & Infrastructure" [ref=e310] [cursor=pointer]:
+                - /url: /resolveai
+              - paragraph [ref=e313]: Explore ResolveAI, agent responsibilities and reasoning infrastructure.
+              - generic [ref=e314]:
+                - link "Agent Map" [ref=e315] [cursor=pointer]:
+                  - /url: /resolveai#agents
+                - link "Memory & FalkorDB" [ref=e318] [cursor=pointer]:
+                  - /url: /resolveai#memory
+                - paragraph [ref=e321]:
+                  - text: System Health
+                  - generic [ref=e322]: Restricted
+              - generic [ref=e323]:
+                - generic [ref=e324]: Integration in progress
+                - link "View all" [ref=e325] [cursor=pointer]:
+                  - /url: /workspace?group=intelligence
+            - article [ref=e326]:
+              - generic [ref=e327]: "04"
+              - link "Data & Models" [ref=e332] [cursor=pointer]:
+                - /url: /documents
+              - paragraph [ref=e335]: Curate trusted knowledge and inspect model readiness.
+              - generic [ref=e336]:
+                - link "Document Vault" [ref=e337] [cursor=pointer]:
+                  - /url: /documents
+                - link "Team Data Curation" [ref=e340] [cursor=pointer]:
+                  - /url: /resolveai#curation
+                - link "Models & Fine-tuning" [ref=e343] [cursor=pointer]:
+                  - /url: /resolveai#models
+              - generic [ref=e346]:
+                - generic [ref=e347]: Kairos workflows
+                - link "View all" [ref=e348] [cursor=pointer]:
+                  - /url: /workspace?group=knowledge
+            - article [ref=e349]:
+              - generic [ref=e350]: "05"
+              - link "Governance & Assurance" [ref=e355] [cursor=pointer]:
+                - /url: /governance
+              - paragraph [ref=e358]: Resolve conflicts, review changes and preserve decision history.
+              - generic [ref=e359]:
+                - link "Conflict Resolution" [ref=e360] [cursor=pointer]:
+                  - /url: /governance/conflicts
+                - link "Management of Change" [ref=e363] [cursor=pointer]:
+                  - /url: /governance/moc
+                - link "Audit Trail" [ref=e366] [cursor=pointer]:
+                  - /url: /audit
+              - generic [ref=e369]:
+                - generic [ref=e370]: Kairos workflows
+                - link "View all" [ref=e371] [cursor=pointer]:
+                  - /url: /workspace?group=governance
+            - article [ref=e372]:
+              - generic [ref=e373]: "06"
+              - link "Cyber & Fraud" [ref=e378] [cursor=pointer]:
+                - /url: /resolveai#cyber
+              - paragraph [ref=e381]: Explore how evidence and agent memory can support cyber defense.
+              - generic [ref=e382]:
+                - link "Hidden Problem Discovery" [ref=e383] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+                - link "Fraud & Agent Memory" [ref=e386] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+                - link "Response & Verification" [ref=e389] [cursor=pointer]:
+                  - /url: /resolveai#cyber
+              - generic [ref=e392]:
+                - generic [ref=e393]: Workflow preview
+                - link "View all" [ref=e394] [cursor=pointer]:
+                  - /url: /workspace?group=cyber
+        - generic [ref=e629]:
+          - paragraph [ref=e630]: Couldn't load the overview.
+          - paragraph [ref=e631]: Failed to fetch
+          - button "Retry" [ref=e632] [cursor=pointer]
+        - region [ref=e633]:
+          - generic [ref=e634]:
+            - generic [ref=e635]:
+              - paragraph [ref=e636]: Kairos intelligence
+              - heading "Reasoning & Decision System" [level=2] [ref=e637]
+              - paragraph [ref=e638]: Investigative agents connect plant evidence to governed decisions. Each conclusion stays traceable to its sources and requires the right human approval.
+            - link "Explore evidence graph" [ref=e639] [cursor=pointer]:
+              - /url: /graph
+              - text: Explore evidence graph
+              - generic [aria-hidden] [ref=e640]: →
+          - generic [ref=e641]:
+            - generic [ref=e642]:
+              - generic [ref=e643]:
+                - heading "Agent map" [level=3] [ref=e644]
+                - generic [ref=e645]: Mapped to Kairos workflows. Agent runtime is not yet connected.
+              - generic [ref=e646]:
+                - link "Investigation supervisor 01 Routes work to the smallest relevant specialist team Workflow entry" [ref=e647] [cursor=pointer]:
+                  - /url: /rca
+                  - generic [ref=e651]:
+                    - generic [ref=e652]:
+                      - generic [ref=e653]: Investigation supervisor
+                      - generic [ref=e654]: "01"
+                    - generic [ref=e655]: Routes work to the smallest relevant specialist team
+                    - generic [ref=e656]: Workflow entry
+                - link "Evidence extraction 02 Extracts candidate facts for human review Workflow entry" [ref=e657] [cursor=pointer]:
+                  - /url: /documents
+                  - generic [ref=e661]:
+                    - generic [ref=e662]:
+                      - generic [ref=e663]: Evidence extraction
+                      - generic [ref=e664]: "02"
+                    - generic [ref=e665]: Extracts candidate facts for human review
+                    - generic [ref=e666]: Workflow entry
+                - link "Entity resolution 03 Review asset identity and canonical records Kairos workflow" [ref=e667] [cursor=pointer]:
+                  - /url: /assets
+                  - generic [ref=e671]:
+                    - generic [ref=e672]:
+                      - generic [ref=e673]: Entity resolution
+                      - generic [ref=e674]: "03"
+                    - generic [ref=e675]: Review asset identity and canonical records
+                    - generic [ref=e676]: Kairos workflow
+                - link "Graph investigation 04 Explore connected assets, documents, and events Kairos workflow" [ref=e677] [cursor=pointer]:
+                  - /url: /graph
+                  - generic [ref=e681]:
+                    - generic [ref=e682]:
+                      - generic [ref=e683]: Graph investigation
+                      - generic [ref=e684]: "04"
+                    - generic [ref=e685]: Explore connected assets, documents, and events
+                    - generic [ref=e686]: Kairos workflow
+                - link "Temporal reasoning 05 Inspect when evidence became valid or changed Kairos workflow" [ref=e687] [cursor=pointer]:
+                  - /url: /graph
+                  - generic [ref=e691]:
+                    - generic [ref=e692]:
+                      - generic [ref=e693]: Temporal reasoning
+                      - generic [ref=e694]: "05"
+                    - generic [ref=e695]: Inspect when evidence became valid or changed
+                    - generic [ref=e696]: Kairos workflow
+                - link "Evidence drift 06 Trace conclusions affected by changed evidence Engine in progress" [ref=e697] [cursor=pointer]:
+                  - /url: /resolveai#memory
+                  - generic [ref=e701]:
+                    - generic [ref=e702]:
+                      - generic [ref=e703]: Evidence drift
+                      - generic [ref=e704]: "06"
+                    - generic [ref=e705]: Trace conclusions affected by changed evidence
+                    - generic [ref=e706]: Engine in progress
+                - link "Contradiction analyst 07 Surface competing claims for resolution Kairos workflow" [ref=e707] [cursor=pointer]:
+                  - /url: /governance/conflicts
+                  - generic [ref=e711]:
+                    - generic [ref=e712]:
+                      - generic [ref=e713]: Contradiction analyst
+                      - generic [ref=e714]: "07"
+                    - generic [ref=e715]: Surface competing claims for resolution
+                    - generic [ref=e716]: Kairos workflow
+                - link "Memory curator 08 Review low-confidence knowledge before promotion Human-led" [ref=e717] [cursor=pointer]:
+                  - /url: /governance/quarantine
+                  - generic [ref=e721]:
+                    - generic [ref=e722]:
+                      - generic [ref=e723]: Memory curator
+                      - generic [ref=e724]: "08"
+                    - generic [ref=e725]: Review low-confidence knowledge before promotion
+                    - generic [ref=e726]: Human-led
+                - link "Action coordinator 09 Prepare governed change and work-order decisions Human-led" [ref=e727] [cursor=pointer]:
+                  - /url: /governance/moc
+                  - generic [ref=e731]:
+                    - generic [ref=e732]:
+                      - generic [ref=e733]: Action coordinator
+                      - generic [ref=e734]: "09"
+                    - generic [ref=e735]: Prepare governed change and work-order decisions
+                    - generic [ref=e736]: Human-led
+                - link "Human review 010 Keep material decisions under authorized approval Required" [ref=e737] [cursor=pointer]:
+                  - /url: /governance
+                  - generic [ref=e741]:
+                    - generic [ref=e742]:
+                      - generic [ref=e743]: Human review
+                      - generic [ref=e744]: "010"
+                    - generic [ref=e745]: Keep material decisions under authorized approval
+                    - generic [ref=e746]: Required
+            - generic [ref=e747]:
+              - generic [ref=e748]:
+                - heading "Reasoning infrastructure" [level=3] [ref=e749]
+                - link "System health" [ref=e750] [cursor=pointer]:
+                  - /url: /system-health
+              - paragraph [ref=e751]: Read-only checks refresh every minute while this tab is visible. Unavailable checks retry automatically.
+              - generic [ref=e752]:
+                - generic [ref=e753]:
+                  - term [ref=e754]: FalkorDB reasoning graph
+                  - definition [ref=e755]: Connected
+                - generic [ref=e756]:
+                  - term [ref=e757]: Kairos knowledge graph
+                  - definition [ref=e758]:
+                    - generic [ref=e759]: Not reported
+                - generic [ref=e761]:
+                  - term [ref=e762]: Evidence retrieval
+                  - definition [ref=e763]:
+                    - generic [ref=e764]: Not reported
+                - generic [ref=e766]:
+                  - term [ref=e767]: Model registry
+                  - definition [ref=e768]: 0 configured roles
+          - generic [ref=e769]:
+            - generic [ref=e770]:
+              - generic [ref=e771]:
+                - heading "Data curation with the team" [level=3] [ref=e772]
+                - paragraph [ref=e773]: Human-reviewed labels and held documents prepare safer evidence and evaluation sets.
+              - generic [ref=e774]:
+                - generic [ref=e775]:
+                  - term [ref=e776]: Validation labels
+                  - definition [ref=e777]: Unavailable
+                - generic [ref=e778]:
+                  - term [ref=e779]: Team annotations
+                  - definition [ref=e780]: Unavailable
+                - generic [ref=e781]:
+                  - term [ref=e782]: Corrections, 7 days
+                  - definition [ref=e783]: Unavailable
+              - paragraph [ref=e784]: One or more curation summaries are unavailable. Open the source workflow to retry.
+              - generic [ref=e785]:
+                - link "Review held evidence" [ref=e786] [cursor=pointer]:
+                  - /url: /governance/quarantine
+                  - text: Review held evidence
+                  - generic [aria-hidden] [ref=e787]: →
+                - link "Validation corpus" [ref=e788] [cursor=pointer]:
+                  - /url: /governance/model-gate
+                  - text: Validation corpus
+                  - generic [aria-hidden] [ref=e789]: →
+                - link "Curate source documents" [ref=e790] [cursor=pointer]:
+                  - /url: /documents/ingest
+                  - text: Curate source documents
+                  - generic [aria-hidden] [ref=e791]: →
+            - generic [ref=e792]:
+              - generic [ref=e793]:
+                - heading "Models and evaluation" [level=3] [ref=e794]
+                - generic [ref=e795]: Configuration
+              - generic [ref=e796]:
+                - generic [ref=e797]:
+                  - generic [ref=e798]:
+                    - paragraph [ref=e799]: reasoning
+                    - paragraph [ref=e800]: tokenfactory, nvidia/nemotron-3-super-120b-a12b
+                  - generic [ref=e801]: Not configured
+                - generic [ref=e802]:
+                  - generic [ref=e803]:
+                    - paragraph [ref=e804]: reasoning
+                    - paragraph [ref=e805]: nim, nvidia/nemotron-3-super-120b-a12b
+                  - generic [ref=e806]: Not configured
+                - generic [ref=e807]:
+                  - generic [ref=e808]:
+                    - paragraph [ref=e809]: reasoning
+                    - paragraph [ref=e810]: openrouter, meta-llama/llama-3.1-70b-instruct
+                  - generic [ref=e811]: Not configured
+                - generic [ref=e812]:
+                  - generic [ref=e813]:
+                    - paragraph [ref=e814]: reasoning
+                    - paragraph [ref=e815]: gemini, gemini-2.5-flash-lite
+                  - generic [ref=e816]: Not configured
+                - generic [ref=e817]:
+                  - generic [ref=e818]:
+                    - paragraph [ref=e819]: entity extraction
+                    - paragraph [ref=e820]: NVIDIA NIM, meta/llama-3.2-11b-vision-instruct
+                  - generic [ref=e821]: Not configured
+                - generic [ref=e822]:
+                  - generic [ref=e823]:
+                    - paragraph [ref=e824]: document ocr
+                    - paragraph [ref=e825]: NVIDIA NIM, nvidia/nemotron-ocr-v2
+                  - generic [ref=e826]: Not configured
+                - generic [ref=e827]:
+                  - generic [ref=e828]:
+                    - paragraph [ref=e829]: topology vision
+                    - paragraph [ref=e830]: NVIDIA NIM, meta/llama-3.2-11b-vision-instruct
+                  - generic [ref=e831]: Not configured
+                - generic [ref=e832]:
+                  - generic [ref=e833]:
+                    - paragraph [ref=e834]: embeddings
+                    - paragraph [ref=e835]: Jina, jina-embeddings-v3
+                  - generic [ref=e836]: Not configured
+                - generic [ref=e837]:
+                  - generic [ref=e838]:
+                    - paragraph [ref=e839]: speech to text
+                    - paragraph [ref=e840]: Groq, whisper-large-v3
+                  - generic [ref=e841]: Not configured
+              - generic [ref=e842]:
+                - generic [ref=e843]: Fine-tuned model registry
+                - generic [ref=e844]: Not connected
+              - paragraph [ref=e845]: Kairos supports human-curated evaluation through its validation corpus and model gate. Training jobs and checkpoints are not available in this deployment.
+              - link "Open model evaluation" [ref=e846] [cursor=pointer]:
+                - /url: /governance/model-gate
+                - text: Open model evaluation
+                - generic [aria-hidden] [ref=e847]: →
+  - alert [ref=e20]

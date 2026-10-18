@@ -23,13 +23,23 @@ from api.routers import (
     auth,
     briefs,
     compliance,
+    consumer,
     documents,
+    drift,
+    fraud,
     elicitation,
     events,
     governance,
+    graphlab,
+    greenchain,
     health,
     search,
     resolveai,
+    resolveai_platform,
+    hub,
+    agent_memory,
+    agents,
+    sources,
 )
 from api.services import tenant
 from api.services.search_engine import SearchEngineService
@@ -165,7 +175,16 @@ def create_app() -> FastAPI:
     app.include_router(annotations.router, prefix="/annotations", tags=["Annotations (Layer 3)"])
     app.include_router(audit_log.router, prefix="/audit-log", tags=["Audit Log"])
     app.include_router(resolveai.router, prefix="/resolveai", tags=["ResolveAI"])
-    app.include_router(drift.router, prefix="/drift", tags=["Evidence Drift Cascade"])
+    app.include_router(consumer.router, prefix="/resolveai/consumer", tags=["ResolveAI Consumer"])
+    app.include_router(drift.router, tags=["Evidence Drift Cascade"])
+    app.include_router(graphlab.router, prefix="/graphlab", tags=["Graph Lab"])
+    app.include_router(greenchain.router, prefix="/greenchain", tags=["GreenChain"])
+    app.include_router(fraud.router, prefix="/fraud", tags=["Fraud Investigation"])
+    app.include_router(hub.router, prefix="/hub", tags=["Hub capabilities"])
+    app.include_router(agent_memory.router, prefix="/agent-memory", tags=["Agent memory"])
+    app.include_router(agents.router, prefix="/agents", tags=["Agent operations"])
+    app.include_router(resolveai_platform.router, prefix="/resolveai/platform", tags=["ResolveAI Platform (private worker gateway)"])
+    app.include_router(sources.router, prefix="/sources", tags=["Source Library"])
 
     # -------------------------------------------------------------------------
     # Global exception handler

@@ -19,6 +19,7 @@ import { AttentionList } from "./_components/attention-list";
 import { HealthStrip } from "./_components/health-strip";
 import { SignalsFeed } from "./_components/signals-feed";
 import { ReasoningWorkspace } from "./_components/reasoning-workspace";
+import { EvidenceProof } from "./_components/evidence-proof";
 import { WorkspaceLaunchpad } from "@/components/workspace-launchpad";
 
 const DAY_MS = 86_400_000;
@@ -30,6 +31,7 @@ interface Overview {
   sla: SlaReport | null;
   compliance: ComplianceDashboard | null;
   events: OperationalEvent[];
+  unavailable: string[];
 }
 
 /** The five core situational-awareness sources in parallel; demo when any fell back.
@@ -37,20 +39,38 @@ interface Overview {
  *  store (~2.5s) and must never block the core data or blank the page when a cloud
  *  ping spikes. */
 async function fetchOverview(): Promise<Fetched<Overview>> {
-  const [cr, qr, sr, dr, er] = await Promise.all([
+  const results = await Promise.allSettled([
     getPendingConflicts(),
     getPendingQuarantine(),
     getSlaReport(),
     getComplianceDashboard(),
     getEvents({ limit: 200 }),
   ]);
+  const unavailable: string[] = [];
+  const value = <T,>(index: number, name: string, fallback: T): T => {
+    const result = results[index];
+    if (result?.status === "fulfilled") return result.value.data as T;
+    unavailable.push(name);
+    return fallback;
+  };
+  const conflicts = value<{ total: number } | null>(0, "Open conflicts", null);
+  const quarantine = value<{ total: number } | null>(1, "Quarantine queue", null);
+  const sla = value<SlaReport | null>(2, "SLA report", null);
+  const compliance = value<ComplianceDashboard | null>(3, "Compliance dashboard", null);
+  const events = value<{ items: OperationalEvent[] } | null>(4, "Operational events", null);
+
+  if (unavailable.length === results.length) {
+    throw new Error(`Overview services unavailable: ${unavailable.join(", ")}`);
+  }
+
   return {
     data: {
-      conflictsTotal: cr.data?.total ?? null,
-      quarantineTotal: qr.data?.total ?? null,
-      sla: sr.data,
-      compliance: dr.data,
-      events: er.data?.items ?? [],
+      conflictsTotal: conflicts?.total ?? null,
+      quarantineTotal: quarantine?.total ?? null,
+      sla,
+      compliance,
+      events: events?.items ?? [],
+      unavailable,
     },
     source: "live",
   };
@@ -119,15 +139,16 @@ export default function ManagementPage() {
   return (
     <div data-testid="overview-workspace" className="mx-auto max-w-[1400px]">
       <PageHeader
-        title="Plant Overview"
-        lede="Your plant, intelligence and decisions in one workspace. Explore every capability, then focus on the operational signals that need your attention."
+        className="kairos-overview-header"
+        title="Risk Overview"
+        lede="Supplier risk, cyber exposure and decision validity in one workspace. Explore every capability, then focus on the signals that need your attention."
         actions={
           <div className="flex flex-col items-end gap-2">
             <Link
               href="/overview/plant-state"
               className="inline-flex min-h-11 items-center rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent"
             >
-              <StatusBadge tone={plantTone}>Plant state{plantState ? `: ${plantState}` : ""}</StatusBadge>
+              <StatusBadge tone={plantTone}>Network state{plantState ? `: ${plantState}` : ""}</StatusBadge>
             </Link>
             <ButtonLink href="/overview/cross-site" className="min-h-11 text-caption">
               Cross-site patterns
@@ -136,7 +157,15 @@ export default function ManagementPage() {
         }
       />
 
+      <EvidenceProof />
       <WorkspaceLaunchpad />
+
+      {data?.unavailable.length ? (
+        <section role="status" data-testid="overview-partial" className="mt-6 rounded-xl border border-amber-300/50 bg-amber-50/70 px-5 py-4 text-ink dark:bg-amber-950/20">
+          <p className="text-caption font-semibold">Some overview data is unavailable</p>
+          <p className="mt-1 text-micro text-muted">The dashboard is showing the sources that responded. Unavailable: {data.unavailable.join(", ")}. These values remain blank until the underlying services respond.</p>
+        </section>
+      ) : null}
 
       {state.status === "error" ? (
         <section data-testid="overview-error" className="mt-6 rounded-xl border border-line bg-surface p-8 text-center">

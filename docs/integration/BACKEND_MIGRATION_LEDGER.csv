@@ -1,0 +1,55 @@
+project,source_path,migration_state,kairos_destination,test_evidence
+GreenChain,GREENCHAIN-main/greenchain/backend/ml_scorer.py,INTEGRATION_TESTED,backend/domains/greenchain/ml_scorer.py,tests/greenchain + test_greenchain_integration
+GreenChain,GREENCHAIN-main/greenchain/backend/transport.py,INTEGRATION_TESTED,backend/domains/greenchain/transport.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/naics_classifier.py,INTEGRATION_TESTED,backend/domains/greenchain/naics_classifier.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/verification.py,INTEGRATION_TESTED,backend/domains/greenchain/verification.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/scenario_editing.py,INTEGRATION_TESTED (logic); provider call NOT_CONNECTED,backend/domains/greenchain/scenario_editing.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/report_generation.py,INTEGRATION_TESTED (logic); provider call NOT_CONNECTED,backend/domains/greenchain/report_generation.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/db.py,INTEGRATION_TESTED,backend/domains/greenchain/db.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/dataset_intakes.py,INTEGRATION_TESTED,backend/domains/greenchain/dataset_intakes.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/agents.py,"CODE_MIGRATED, NOT_CONNECTED (Dedalus keys and dedalus-labs SDK absent)",backend/domains/greenchain/agents.py,
+GreenChain,GREENCHAIN-main/greenchain/backend/tools.py,INTEGRATION_TESTED (certification and transport tools),backend/domains/greenchain/tools.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/machine_host.py,"CODE_MIGRATED, NOT_CONNECTED (optional Dedalus Machine)",backend/domains/greenchain/machine_host.py,
+GreenChain,GREENCHAIN-main/greenchain/backend/main.py,CODE_MIGRATED; handlers called through api/routers/greenchain.py,backend/domains/greenchain/main.py,test_greenchain_integration
+GreenChain,GREENCHAIN-main/greenchain/backend/ml_runtime/ml/inference.py,INTEGRATION_TESTED (XGBoost q10/q50/q90 models load and score),backend/domains/greenchain/ml_runtime/ml/inference.py,tests/greenchain
+GreenChain,GREENCHAIN-main/greenchain/backend/ml_runtime/ml/train_model.py,"CODE_MIGRATED (training code, not run)",backend/domains/greenchain/ml_runtime/ml/train_model.py,
+GreenChain,backend/domains/greenchain/kairos_adapter.py (new),INTEGRATION_TESTED,"demo scoring, graph build, FalkorDB persistence, what-if",test_greenchain_integration (9 tests)
+track1-agent,track1-agent/backend/app/agent/policy.py,INTEGRATION_TESTED,backend/domains/fraud/policy.py,tests/fraud
+track1-agent,track1-agent/backend/app/agent/tools.py,INTEGRATION_TESTED,backend/domains/fraud/tools.py,tests/fraud + test_fraud_integration
+track1-agent,track1-agent/backend/app/agent/investigator.py,INTEGRATION_TESTED (deterministic planner); Claude planner NOT_CONNECTED (no key),backend/domains/fraud/investigator.py,tests/fraud + test_fraud_integration
+track1-agent,track1-agent/backend/app/agent/actions.py,INTEGRATION_TESTED (+ revalidation gate added in api/routers/fraud.py),backend/domains/fraud/actions.py,tests/fraud + test_fraud_integration
+track1-agent,track1-agent/backend/app/graph/seed.py,INTEGRATION_TESTED,backend/domains/fraud/seed.py,tests/fraud
+track1-agent,track1-agent/backend/app/mcp_server.py,CODE_MIGRATED; tool surface tested from source; transport BLOCKED by pydantic pin conflict,backend/domains/fraud/mcp_server.py,test_fraud_integration
+track1-agent,track1-agent/backend/app/consumer/actions.py,INTEGRATION_TESTED,backend/api/services/consumer/actions.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/baseline.py,INTEGRATION_TESTED,backend/api/services/consumer/baseline.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/case_data.py,INTEGRATION_TESTED,backend/api/services/consumer/case_data.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/citations.py,INTEGRATION_TESTED,backend/api/services/consumer/citations.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/engine.py,INTEGRATION_TESTED,backend/api/services/consumer/engine.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/evaluate.py,INTEGRATION_TESTED,backend/api/services/consumer/evaluate.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/graphdb.py,INTEGRATION_TESTED,backend/api/services/consumer/graphdb.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/intake.py,INTEGRATION_TESTED,backend/api/services/consumer/intake.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/simulate.py,INTEGRATION_TESTED,backend/api/services/consumer/simulate.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/verifier.py,INTEGRATION_TESTED,backend/api/services/consumer/verifier.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/remedy_conflicts.py,INTEGRATION_TESTED,backend/api/services/consumer/remedy_conflicts.py,test_consumer_port (19 tests)
+track1-agent,track1-agent/backend/app/consumer/interdict_cut.py,INTEGRATION_TESTED,backend/api/services/consumer/interdict_cut.py,test_consumer_port (19 tests)
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/. (2 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/.,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/.ruff_cache (0 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/.ruff_cache,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/agents (47 py files),"BACKEND_CONNECTED (ask, run-case, runs via gateway; stand-in tested only); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/agents,"test_resolveai_platform.py (gateway only, stand-in worker)"
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/api (28 py files),"BACKEND_CONNECTED (cases, domains subset); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/api,"test_resolveai_platform.py (gateway only, stand-in worker)"
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/auth (3 py files),"CODE_MIGRATED + modified: trusted-gateway mode (no second login); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/auth,"test_resolveai_platform.py (gateway only, stand-in worker)"
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/core (5 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/core,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/database (5 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/database,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/knowledge_graph (7 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/knowledge_graph,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/llm (14 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/llm,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/middleware (1 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/middleware,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/models (2 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/models,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/prompts (3 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/prompts,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/rag (16 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/rag,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/schemas (4 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/schemas,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/services (21 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/services,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/storage (2 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/storage,
+RESOLVE-AI-main,RESOLVE-AI-main/backend/app/workflows (1 py files),"CODE_MIGRATED (runs only inside the private worker); NOT run end to end (needs Supabase, Qdrant, Neo4j, Redis, model key)",integrations/resolveai/backend/app/workflows,
+Kairos (new),graphlab (10 engines),INTEGRATION_TESTED,backend/api,"test_graphlab_algorithms (brute-force oracle, drift parity)"
+Kairos (new),sources (98 READMEs + ledger),INTEGRATION_TESTED,backend/api,test_sources_catalog
+Kairos (new),drift.export_graph,INTEGRATION_TESTED,backend/api,test_sources_catalog (live FalkorDB parity)
+Kairos (new),"routers: graphlab, sources, consumer, greenchain, fraud, resolveai_platform",INTEGRATION_TESTED,backend/api,test_authz_boundary + test_tenant_isolation

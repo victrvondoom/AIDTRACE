@@ -11,6 +11,6 @@ describe("getUserInitials", () => {
   });
 
   it("uses both words from the visible account name", () => {
-    expect(getUserInitials("Kairos user")).toBe("KU");
+    expect(getUserInitials("AIDTRACE user")).toBe("AU");
   });
 });

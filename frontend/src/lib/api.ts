@@ -441,6 +441,7 @@ export interface AnnotationStats {
 export interface DriftDemoResult {
   case_id: string;
   scenario: "synthetic_only";
+  sources?: { id: string; status: string; authority_level: number; verification_status: string; confidence: number; event_time: string }[];
   authority_verdict?: string;
   source_before?: string;
   source_after?: string;
@@ -460,11 +461,27 @@ export interface DriftDemoResult {
     matches_current_revision: boolean;
   };
   agent_focus_trace?: { agent_id: string; session_id: string; focus_level: string; scope: string; trace_kind: string }[];
+  focus_plan?: {
+    focus_level: "BROAD" | "TARGETED" | "HYPERFOCUS";
+    focus_scope: string;
+    focus_policy: string;
+    requested_modalities: string[];
+    scenario_modalities: string[];
+    unconnected_modalities: string[];
+    modality_capabilities: {
+      modality: string;
+      status: string;
+      entrypoint: string | null;
+      detail: string;
+    }[];
+    runtime_status: string;
+    media_processing_connected: false;
+  };
   decision_head?: { revision_n: number | null; current_revision_id: string | null };
   approval?: Record<string, unknown> | null;
   agent_sessions?: Record<string, unknown>[];
   action_eligibility?: string;
-  statuses: Record<string, string>;
+  statuses: Record<string, string | null>;
   audit_chain_hash?: string;
   external_actions_executed: false;
   seeded?: boolean;
@@ -475,8 +492,14 @@ export async function getDriftDemo(): Promise<Fetched<DriftDemoResult>> {
   return { data, source: "live" };
 }
 
-export function runDriftDemo(): Promise<DriftDemoResult> {
-  return postJson<DriftDemoResult>("/resolveai/drift/demo", {});
+export function runDriftDemo(
+  focusLevel: "BROAD" | "TARGETED" | "HYPERFOCUS" = "HYPERFOCUS",
+  inputModalities: string[] = ["DOCUMENT", "TEXT"],
+): Promise<DriftDemoResult> {
+  return postJson<DriftDemoResult>("/resolveai/drift/demo", {
+    focus_level: focusLevel,
+    input_modalities: inputModalities,
+  });
 }
 
 // Live-only policy: give real queries room to land (cold Neo4j/Supabase calls run
@@ -1759,7 +1782,7 @@ export async function getEvents(params?: { event_type?: string; limit?: number }
   const qs = new URLSearchParams();
   if (params?.event_type) qs.set("event_type", params.event_type);
   if (params?.limit) qs.set("limit", String(params.limit));
-  const data = await getJson<EventsResponse>(`/events/?${qs}`);
+  const data = await getJson<EventsResponse>(`/events?${qs}`);
   // An empty list from a successful call is a VALID live state — no events match the
   // filter. This used to swap in fixtures on empty, which is worse than the catch-branch
   // fallbacks: it fabricated data on a *successful* request. Same defect the briefs

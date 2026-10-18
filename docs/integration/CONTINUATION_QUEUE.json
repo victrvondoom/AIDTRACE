@@ -1,0 +1,16 @@
+{
+  "as_of": "2026-10-18",
+  "state": "Kairos holds working GreenChain, Track 01 (consumer + fraud + agent trace), Graph Lab and a gateway to the RESOLVE-AI-main worker. See COMPLETE_MERGER_LEDGER.csv.",
+  "next": [
+    {"id": 1, "do": "Run the RESOLVE-AI-main worker (configure Supabase, Qdrant, Neo4j, Redis, a model key), set KAIROS_GATEWAY_SECRET / RESOLVEAI_GATEWAY_SECRET, then verify create-case and run-case through /resolveai/platform and from the UI.", "blocked_by": "services and keys"},
+    {"id": 2, "do": "Port the RESOLVE-AI-main frontend features (108 files; see FRONTEND_MIGRATION_LEDGER.csv) into features/resolveai, domain pack by domain pack.", "blocked_by": "none"},
+    {"id": 3, "do": "Configure Dedalus/Brave/K2/Gemini keys and verify GreenChain live discovery, prompt edit and report memo; add the CSV upload UI.", "blocked_by": "provider keys"},
+    {"id": 4, "do": "Resolve the pydantic pin conflict (or run a private MCP process) so the Track 01 MCP server can be exercised.", "blocked_by": "dependency decision"},
+    {"id": 5, "do": "Merge the four agent frameworks behind one runtime interface (task, handoff, memory, trace, approval).", "blocked_by": "design"},
+    {"id": 6, "do": "Build a 3D overview, simulations workspace and report builder.", "blocked_by": "none"},
+    {"id": 7, "do": "Fix next build offline (self-host fonts), then verify the production build, restart persistence, mobile and failure isolation in a browser, with a real login.", "blocked_by": "none"},
+    {"id": 8, "do": "Implement more of the ~60 unimplemented README mechanisms; fix the 3 stale tests in tests/test_drift.py and the overview test mock.", "blocked_by": "none"}
+  ],
+  "tests_failing_not_caused_by_this_work": ["frontend overview/page.test.tsx (3)", "tests/test_drift.py (3)"],
+  "preserved_originals": ["RESOLVE-AI-main", "track1-agent", "track1-agent/EXTERNAL_REPOS", "GREENCHAIN-main"]
+}

@@ -254,6 +254,7 @@ def test_demo_role_has_an_explicit_allow_list_and_is_not_in_the_catch_all():
     assert _demo_grants() == {
         "read_search", "read_briefs", "read_assets", "read_documents", "read_events",
         "read_compliance", "read_nonconformance", "read_audit", "read_governance", "read_other",
+        "read_resolveai",
         "synthesize", "rca_pack", "answer_feedback",
         # The showcase writes. Each route is fenced to showcase rows by the API, not by this table.
         "write_api", "ingest_document", "ingest_event", "write_assets",
@@ -284,6 +285,9 @@ def test_demo_role_has_an_explicit_allow_list_and_is_not_in_the_catch_all():
         ("/governance/conflicts", "read_nonconformance"),
         ("/governance/model-gate/history", "read_governance"),
         ("/audit-log/", "read_audit"),
+        ("/resolveai/drift/demo", "read_resolveai"),
+        ("/graphlab/scenarios", "read_resolveai"),
+        ("/sources/repos", "read_resolveai"),
         ("/elicitation/offboarding", "read_other"),
         ("/annotations/", "read_other"),
         ("/some/route/added/later", "read_other"),
@@ -303,6 +307,8 @@ def test_demo_can_read_everything_an_admin_reads(path, action):
         ("POST", "/search/rca-pack", "rca_pack"),
         ("POST", "/search/feedback", "answer_feedback"),
         ("POST", "/documents/ingest", "ingest_document"),
+        ("POST", "/resolveai/drift/demo", "write_api"),
+        ("POST", "/graphlab/analyze", "read_resolveai"),
         ("POST", "/assets/", "write_assets"),
         ("POST", "/events/work-order", "ingest_event"),
         ("POST", "/governance/quarantine/Q-1/promote", "promote_quarantine"),
@@ -338,7 +344,24 @@ def test_every_write_route_the_demo_role_can_reach_is_one_the_fence_lists():
             if action in granted and (method, path) not in tenant.DEMO_WRITE_ALLOWED:
                 unlisted_but_policy_admitted.add((method, path))
     # Policy admits these through `write_api`; the fence (and an admin-only role gate) refuse them.
-    assert unlisted_but_policy_admitted == {("POST", "/governance/model-gate/run")}
+    assert unlisted_but_policy_admitted == {
+        ("POST", "/governance/model-gate/run"),
+        # Provider-backed GreenChain routes: admitted by policy, refused by the fence (and by their own handler).
+        ("POST", "/greenchain/search"), ("POST", "/greenchain/search/stream"),
+        ("POST", "/greenchain/scenario/edit"), ("POST", "/greenchain/scenario/report"),
+        ("POST", "/resolveai/platform/cases"), ("POST", "/resolveai/platform/agents/ask"),
+        ("POST", "/resolveai/platform/agents/run-case"),
+        ("POST", "/resolveai/platform/agents/investigate"),
+        ("POST", "/resolveai/platform/search"),
+        # Agent memory and evidence revision write to the site graph; closed to the demo role until listed.
+        ("POST", "/agent-memory/greenchain/record"),
+        ("POST", "/agent-memory/greenchain/revise"),
+        ("POST", "/agent-memory/greenchain/preview-revision"),
+        ("POST", "/agent-memory/actions/approve"),
+        ("POST", "/agent-memory/recall"),
+        ("POST", "/agent-memory/resolveai/remember"),
+        ("POST", "/agents/tools/invoke"),
+    }
 
 
 def test_the_fence_is_installed_on_the_app_so_an_unlisted_write_route_stays_closed_to_demo():

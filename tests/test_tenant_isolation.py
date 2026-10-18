@@ -396,6 +396,25 @@ def test_the_routes_a_demo_write_cannot_reach_are_exactly_the_ones_that_should_s
         ("POST", "/auth/login"),
         ("POST", "/governance/moc/webhook"),
         ("POST", "/governance/model-gate/run"),
+        # GreenChain routes that call paid providers (Dedalus, K2, Gemini): closed to the demo role by design.
+        ("POST", "/greenchain/search"),
+        ("POST", "/greenchain/search/stream"),
+        ("POST", "/greenchain/scenario/edit"),
+        ("POST", "/greenchain/scenario/report"),
+        # ResolveAI platform gateway: the worker calls paid models, so every write is closed to the demo role.
+        ("POST", "/resolveai/platform/cases"),
+        ("POST", "/resolveai/platform/agents/ask"),
+        ("POST", "/resolveai/platform/agents/run-case"),
+        ("POST", "/resolveai/platform/agents/investigate"),
+        ("POST", "/resolveai/platform/search"),
+        # Agent memory and evidence revision write to the site graph; closed to the demo role until listed.
+        ("POST", "/agent-memory/greenchain/record"),
+        ("POST", "/agent-memory/greenchain/revise"),
+        ("POST", "/agent-memory/greenchain/preview-revision"),
+        ("POST", "/agent-memory/actions/approve"),
+        ("POST", "/agent-memory/recall"),
+        ("POST", "/agent-memory/resolveai/remember"),
+        ("POST", "/agents/tools/invoke"),
     }
 
 

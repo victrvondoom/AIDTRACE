@@ -1,0 +1,6 @@
+# Final single-application report
+
+**Done:** one Intelligence Hub inside Kairos (`/hub`), one same-origin `/api` gateway, ResolveAI consumer remedy ported natively (tenant-scoped, role-gated, authenticated reviewer), 10 graph engines with 6 views, the 98-README library and ledger, `scripts/start-kairos.ps1`, `scripts/integration-check.ps1`.
+**Verified:** 213 backend tests pass, including authz boundary and tenant isolation; `tsc` clean; ruff clean on new files; frontend 379 of 382 tests pass (3 failures in `overview/page.test.tsx`, a missing `getFalkorHealth` mock from separate in-progress work). Browser results in `BROWSER_VERIFICATION_RESULTS.md`.
+**Not done (do not treat as operational):** agent runtime and MCP, Track 01 fraud flow, RESOLVE-AI-main, simulations workspace, reports, ~60 README mechanisms, production build, restart/mobile/failure-isolation browser tests, hardcoded-link audit. Sidebar navigation between existing Kairos pages still changes the pathname; only the hub workspaces switch in place.
+**Also fixed:** a missing `truck` icon (from an unfinished `/supply-chain` entry) that crashed the whole shell.

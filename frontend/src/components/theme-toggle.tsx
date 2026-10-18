@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Icon } from "@/components/icon";
 type Theme = "light" | "dark";
 
-/** Flips the single Kairos UI between its light and dark palettes. */
+/** Flips the single AIDTRACE UI between its light and dark palettes. */
 export function ThemeToggle({ className = "", labeled = false }: { className?: string; labeled?: boolean }) {
   const [theme, setTheme] = useState<Theme>("light");
 

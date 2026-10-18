@@ -12,12 +12,16 @@ export const dynamic = "force-dynamic";
 // group sets its own <title>, and AppShell doesn't either — a route missing from this
 // list, or listed only under a shorter prefix, shows the wrong title in both cases,
 // not just on refresh, which is how /system-benchmarks (since removed) and /overview/coverage were
-// found and fixed 2026-08-24: the first had no entry at all (bare "Kairos"), the second
-// fell through to the generic "/overview" entry ("Kairos: Overview") because a
+// found and fixed 2026-08-24: the first had no entry at all (bare "AIDTRACE"), the second
+// fell through to the generic "/overview" entry ("AIDTRACE: Overview") because a
 // specific one wasn't listed above it. `.find()` returns the first array match, so a
 // specific prefix MUST be listed before any shorter prefix it also satisfies.
 const ROUTE_LABELS: [string, string][] = [
   ["/resolveai", "ResolveAI Intelligence"],
+  ["/hub", "Workspace"],
+  ["/graph-lab", "Graph Lab"],
+  ["/sources", "Source Library"],
+  ["/supply-chain", "Supply Chain"],
   ["/workspace", "All Features"],
   ["/briefs", "Briefs"],
   ["/copilot", "Copilot"],
@@ -63,7 +67,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const label = ROUTE_LABELS.find(
     ([prefix]) => pathname === prefix || pathname.startsWith(prefix + "/"),
   )?.[1];
-  return { title: label ? `Kairos: ${label}` : "Kairos" };
+  return { title: label ? `AIDTRACE: ${label}` : "AIDTRACE" };
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

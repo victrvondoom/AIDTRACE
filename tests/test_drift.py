@@ -131,10 +131,12 @@ class TestValueEncoding:
         result = encode_value([1, 2, 3])
         assert json.loads(result) == [1, 2, 3]
 
-    def test_nested(self) -> None:
-        result = encode_value({"nested": {"value": 1}})
-        parsed = json.loads(result)
-        assert parsed == {"nested": {"value": 1}}
+    def test_nested_values_are_rejected(self) -> None:
+        # Fact values are scalars or flat lists of scalars (what a condition can compare); nesting is a contract error.
+        with pytest.raises(ContractError, match="value"):
+            encode_value({"nested": {"value": 1}})
+        with pytest.raises(ContractError, match="value"):
+            encode_value([1, [2, 3]])
 
     def test_invalid_nested_object(self) -> None:
         with pytest.raises(ContractError, match="value"):
@@ -340,7 +342,7 @@ class TestLabelsAndRelationships:
     def test_all_labels_exist(self) -> None:
         expected = {
             "Document", "SourceVersion", "Claim", "Agent", "AgentSession",
-            "Memory", "Decision", "Plan", "ActionProposal", "Approval",
+            "Memory", "Decision", "DecisionRevision", "Plan", "ActionProposal", "Approval",
             "ChangeEvent", "AuditEvent", "Asset",
         }
         actual = {label.value for label in Label}
@@ -374,7 +376,8 @@ class TestImpactPath:
         assert d["node_id"] == "decision1"
         assert d["depth"] == 2
         assert d["path"] == ["claim1", "memory1", "decision1"]
-        assert d["changed"] is True
+        # Changed roots are never returned, so an impact path carries no "changed" flag.
+        assert set(d) == {"node_id", "depth", "path"}
 
 
 class TestDependencyEdge:

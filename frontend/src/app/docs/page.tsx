@@ -7,7 +7,7 @@ export default function DocsIndexPage() {
     <div className="mx-auto max-w-5xl">
       <h1 className="text-[44px] text-(--lp-ink) sm:text-[56px]">Documentation</h1>
       <p className="mt-5 max-w-3xl text-[17px] leading-7 text-(--lp-muted)">
-        How Kairos is built, how to run and deploy it, and how it is tested. The architecture and the API reference are the places to start.
+        How AIDTRACE is built, how to run and deploy it, and how it is tested. The architecture and the API reference are the places to start.
       </p>
       {groups.length === 0 && (
         <p className="mt-10 border border-(--lp-line) bg-(--lp-band) p-5 text-[15px] text-(--lp-muted)">

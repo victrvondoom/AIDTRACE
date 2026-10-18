@@ -11,7 +11,7 @@ export type DocMeta = { slug: string; file: string; label: string; group: string
 
 const NAV: [group: string, entries: [file: string, label: string, summary: string][]][] = [
   ["Start here", [
-    ["ARCHITECTURE", "Architecture", "The thirteen layers of Kairos, what each one does and how knowledge moves from a source document to a cited answer."],
+    ["ARCHITECTURE", "Architecture", "The thirteen layers of AIDTRACE, what each one does and how knowledge moves from a source document to a cited answer."],
     ["DIAGRAMS", "System diagrams", "The system design diagrams: the whole platform, then one drill-down each for the client, core, orchestration, services, data stores and model plane."],
     ["DATASET", "Datasets", "The golden dataset the benchmarks are measured against, and the second, larger showcase plant that fills a demo login."],
   ]],

@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
+import { SATELLITE_TILE_ORIGINS } from "./src/lib/greenchain/cesium-imagery";
 
 // The one cross-origin host the browser talks to is the API (NEXT_PUBLIC_API_URL, baked in at build).
 function apiOrigin(apiUrl: string | undefined): string {
+  // A relative URL ("/api") is same-origin, which 'self' already covers: add nothing.
+  if (apiUrl?.startsWith("/")) return "";
   try {
     return new URL(apiUrl ?? "http://localhost:8000").origin;
   } catch {
@@ -14,18 +17,21 @@ function apiOrigin(apiUrl: string | undefined): string {
  *  need per-request rendering, which turns the static landing page and every cached shell dynamic.
  *  The rest is tight: no plugins, no foreign frames, no off-site form posts, and only the API,
  *  YouTube's cookie-less embed and self-hosted fonts are reachable. */
-export function contentSecurityPolicy(apiUrl: string | undefined, dev = false): string {
+export function contentSecurityPolicy(apiUrl: string | undefined, dev = false, ionEnabled = false): string {
   const api = apiOrigin(apiUrl);
+  // The Cesium globe fetches satellite tiles straight from these hosts (as images, and via fetch for decoding).
+  // Cesium ion hosts are only reachable when a token is configured for the deployment.
+  const tiles = [...SATELLITE_TILE_ORIGINS, ...(ionEnabled ? ["https://api.cesium.com", "https://*.cesium.com"] : [])].join(" ");
   return [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob: ${tiles}`,
     "font-src 'self' data:",
     "media-src 'self' blob:",
-    `connect-src 'self' ${api}`,
+    `connect-src ${["'self'", api, tiles].filter(Boolean).join(" ")}`,
     "frame-src https://www.youtube-nocookie.com",
-    "worker-src 'self'",
+    "worker-src 'self' blob:",
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -36,8 +42,8 @@ export function contentSecurityPolicy(apiUrl: string | undefined, dev = false): 
 
 const nextConfig: NextConfig = {
   // Emit a self-contained production server (.next/standalone/server.js)
-  // for a minimal, non-root Docker runtime image. No effect on `next dev`.
-  output: "standalone",
+  // for a minimal, non-root Docker runtime image. Windows local builds avoid EBUSY lock on standalone.
+  output: process.env.BUILD_STANDALONE === "true" ? "standalone" : undefined,
 
   // The dev-tools overlay defaults to a Next.js logo pinned bottom-left, which
   // lands inside every screenshot tools/capture_landing_shots.sh takes for the
@@ -49,6 +55,13 @@ const nextConfig: NextConfig = {
     return [{ source: "/management/:path*", destination: "/overview/:path*", permanent: true }];
   },
 
+  // Same-origin API gateway: with NEXT_PUBLIC_API_URL=/api the browser only ever talks to this origin and
+  // Next forwards /api/* to the private backend (API_INTERNAL_URL). Additive: an absolute NEXT_PUBLIC_API_URL
+  // keeps working exactly as before.
+  async rewrites() {
+    return [{ source: "/api/:path*", destination: `${process.env.API_INTERNAL_URL ?? "http://localhost:8000"}/:path*` }];
+  },
+
   async headers() {
     return [
       {
@@ -56,7 +69,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: contentSecurityPolicy(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV !== "production"),
+            value: contentSecurityPolicy(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV !== "production", Boolean(process.env.NEXT_PUBLIC_CESIUM_ION_TOKEN)),
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

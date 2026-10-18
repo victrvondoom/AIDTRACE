@@ -7,7 +7,7 @@ export default function NotFound() {
         {/* Plain <img>, not next/image — the root not-found renders inside the
             _global-error boundary at build time, where <Image>'s config context is null. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="Kairos" width={48} height={48} className="mx-auto size-12 rounded-xl object-cover" />
+        <img src="/logo.png" alt="AIDTRACE" width={48} height={48} className="mx-auto size-12 rounded-xl object-cover" />
         <p className="tabular mt-5 text-body font-semibold text-muted">404</p>
         <h1 className="mt-1 text-display font-semibold">Page not found</h1>
         <p className="mt-1.5 text-body leading-relaxed text-muted">

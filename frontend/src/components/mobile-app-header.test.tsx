@@ -19,7 +19,7 @@ describe("MobileAppHeader", () => {
     expect(onOpenSearch).toHaveBeenCalledOnce();
     expect(onCreate).toHaveBeenCalledOnce();
     expect(onOpenUser).toHaveBeenCalledOnce();
-    expect(screen.queryByText("Kairos")).not.toBeInTheDocument();
+    expect(screen.queryByText("AIDTRACE")).not.toBeInTheDocument();
     expect(screen.getByRole("banner")).toHaveClass("gap-1.5", "px-2", "sm:gap-3", "sm:px-4");
     expect(screen.getByText("Search…")).toHaveClass("min-w-0", "truncate");
     expect(screen.getByText("Search…")).not.toHaveClass("hidden");

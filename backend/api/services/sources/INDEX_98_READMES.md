@@ -1,0 +1,136 @@
+# Graph Hacks: 98 repository README index
+
+Third-party README text is untrusted reference material. Summaries come from the research ledger, not from tested behaviour. Missing READMEs are marked ABSENT, never invented.
+
+## Cross-domain decision & evidence (2)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [himanshu748/embodiweave](https://github.com/himanshu748/embodiweave) | [readmes/himanshu748__embodiweave.md](readmes/himanshu748__embodiweave.md) | Uses graph-linked provenance and regression evidence to choose robot retraining checkpoints; rejects regressed offspring. |
+| [NishaadG/blastradius](https://github.com/NishaadG/blastradius) | [readmes/NishaadG__blastradius.md](readmes/NishaadG__blastradius.md) | Combines OSV advisory, lockfile graph, ownership and past remediation to produce reproducible verdicts. |
+
+## Fraud, transactions & trust (10)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [akachi11/fraud-graph](https://github.com/akachi11/fraud-graph) | [readmes/akachi11__fraud-graph.md](readmes/akachi11__fraud-graph.md) | Follows accounts/devices/merchants and detects circular money flows and structuring. |
+| [Akshat-mohanty/Graph-Hacks](https://github.com/Akshat-mohanty/Graph-Hacks) | [readmes/Akshat-mohanty__Graph-Hacks.md](readmes/Akshat-mohanty__Graph-Hacks.md) | Applies Gemini tool calls to detect fraud syndicates and writes a synthetic quarantine state. |
+| [gagan-gag/FraudTrace-AI](https://github.com/gagan-gag/FraudTrace-AI) | [readmes/gagan-gag__FraudTrace-AI.md](readmes/gagan-gag__FraudTrace-AI.md) | Graph connects transactions, devices, IPs, merchants; deterministic investigative summaries and PDF reporting. |
+| [Manasa-L-Hegde/RingWatch](https://github.com/Manasa-L-Hegde/RingWatch) | [readmes/Manasa-L-Hegde__RingWatch.md](readmes/Manasa-L-Hegde__RingWatch.md) | Finds multi-hop fraud rings and remembers analyst feedback per case in isolated graphs. |
+| [Manasi-Choudhari/Graph_Hacks](https://github.com/Manasi-Choudhari/Graph_Hacks) | [readmes/Manasi-Choudhari__Graph_Hacks.md](readmes/Manasi-Choudhari__Graph_Hacks.md) | Computes unlabeled fraud communities, PageRank hubs and max-flow-like money movement; approvals for actions. |
+| [manav-Mnv/hound-aml](https://github.com/manav-Mnv/hound-aml) | [readmes/manav-Mnv__hound-aml.md](readmes/manav-Mnv__hound-aml.md) | Builds SAR narratives sentence-by-sentence from cited Cypher evidence; rejects unsupported financial claims. |
+| [ManjariYagnik/GraphHacks](https://github.com/ManjariYagnik/GraphHacks) | [readmes/ManjariYagnik__GraphHacks.md](readmes/ManjariYagnik__GraphHacks.md) | Investigates potential coordinated refund abuse over account→order→device→address edges; major features planned only. |
+| [Mihir-Rabari/ledgerlens](https://github.com/Mihir-Rabari/ledgerlens) | [readmes/Mihir-Rabari__ledgerlens.md](readmes/Mihir-Rabari__ledgerlens.md) | Uses graph ring connectivity and tenant-isolated history for freeze/escalate/file financial investigation lifecycle. |
+| [mirah227/walletrace](https://github.com/mirah227/walletrace) | [readmes/mirah227__walletrace.md](readmes/mirah227__walletrace.md) | Traces relationships between blockchain wallets and their indirect transfer paths; README very brief. |
+| [ShaktiEighteen/Financial_Crime_Agent](https://github.com/ShaktiEighteen/Financial_Crime_Agent) | [readmes/ShaktiEighteen__Financial_Crime_Agent.md](readmes/ShaktiEighteen__Financial_Crime_Agent.md) | Investigates laundering rings, shell firms and split payment funnels using a graph crime cockpit. |
+
+## Physical operations & allocation (16)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [aadi-harale/graphhacks](https://github.com/aadi-harale/graphhacks) | [readmes/aadi-harale__graphhacks.md](readmes/aadi-harale__graphhacks.md) | Finds delivery shortfalls by connecting conflicting bill, receipt and supplier promises before settlement. |
+| [abhishiv17/Graph-hacks](https://github.com/abhishiv17/Graph-hacks) | [readmes/abhishiv17__Graph-hacks.md](readmes/abhishiv17__Graph-hacks.md) | Finds compatible kidney/liver donor swap loops, then repairs failed crossmatches using CP-SAT and human approval. |
+| [aggarmoksh/GraphDispatch](https://github.com/aggarmoksh/GraphDispatch) | [readmes/aggarmoksh__GraphDispatch.md](readmes/aggarmoksh__GraphDispatch.md) | Finds emergency units, accessible road travel, hospital suitability and remembered location hazards in a dispatch graph. |
+| [amarjithkumar2007-wq/blood-network-graph-hacks](https://github.com/amarjithkumar2007-wq/blood-network-graph-hacks) | [readmes/amarjithkumar2007-wq__blood-network-graph-hacks.md](readmes/amarjithkumar2007-wq__blood-network-graph-hacks.md) | Donor/request/facility graph with atomic reservation and simulated contact/decline escalation. |
+| [harshitdeora/lastmile](https://github.com/harshitdeora/lastmile) | [readmes/harshitdeora__lastmile.md](readmes/harshitdeora__lastmile.md) | Investigates contradictory flood-road reports, values new inspections, allocates relief and replays ten simulated worlds. |
+| [Harshith121212/GraphHacks-BidGraphAI](https://github.com/Harshith121212/GraphHacks-BidGraphAI) | ABSENT | Bidding graph concept; public README inaccessible so concrete feature unverified. |
+| [Hemu585/campaign-context-agent](https://github.com/Hemu585/campaign-context-agent) | [readmes/Hemu585__campaign-context-agent.md](readmes/Hemu585__campaign-context-agent.md) | Selects replacement influencers using dated inventory, fee, exclusivity and refusal rules with human signoff. |
+| [HIZMALI/rippleproof-ai](https://github.com/HIZMALI/rippleproof-ai) | [readmes/HIZMALI__rippleproof-ai.md](readmes/HIZMALI__rippleproof-ai.md) | Explains supplier interruption consequences and evaluates feasible recovery alternatives with evidence receipts. |
+| [ionfwsrijan/BatchZero](https://github.com/ionfwsrijan/BatchZero) | [readmes/ionfwsrijan__BatchZero.md](readmes/ionfwsrijan__BatchZero.md) | Links foodborne illness clusters to specific food lots and suppliers via protocolized four-agent investigation. |
+| [jjohnson5253/brickmedic](https://github.com/jjohnson5253/brickmedic) | [readmes/jjohnson5253__brickmedic.md](readmes/jjohnson5253__brickmedic.md) | Uses connected-brick structure to propose repairs of disconnected digital brick models; README is minimal. |
+| [london160771/StepFree](https://github.com/london160771/StepFree) | [readmes/london160771__StepFree.md](readmes/london160771__StepFree.md) | Routes wheelchair-accessible journeys through actual TfL station topology and live elevator disruptions. |
+| [murthyroshan/LastLift](https://github.com/murthyroshan/LastLift) | [readmes/murthyroshan__LastLift.md](readmes/murthyroshan__LastLift.md) | Treats broken public-transit elevators as capacity bottlenecks; returns affected accessible platforms through a flow graph. |
+| [PugarHuda/irops-brain](https://github.com/PugarHuda/irops-brain) | [readmes/PugarHuda__irops-brain.md](readmes/PugarHuda__irops-brain.md) | Reconstructs flight→crew→aircraft→passenger connections and coordinates multi-agent recovery from public flight history. |
+| [Raghav8826/second-act](https://github.com/Raghav8826/second-act) | [readmes/Raghav8826__second-act.md](readmes/Raghav8826__second-act.md) | Creates creative production plans that respect graph-linked material/equipment inventory and dates; no real booking. |
+| [SharanyaRamSR/heatpath-hackathon](https://github.com/SharanyaRamSR/heatpath-hackathon) | [readmes/SharanyaRamSR__heatpath-hackathon.md](readmes/SharanyaRamSR__heatpath-hackathon.md) | Requires provenance-complete comparable evidence before prioritizing urban-heat risk; abstains otherwise. |
+| [sonarsushant/recall-tracer](https://github.com/sonarsushant/recall-tracer) | [readmes/sonarsushant__recall-tracer.md](readmes/sonarsushant__recall-tracer.md) | Coordinates product recall tracing with multi-agent response; public README only one-line summary. |
+
+## Research, evidence & law (17)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [adarsh-bhati/Safecortex](https://github.com/adarsh-bhati/Safecortex) | [readmes/adarsh-bhati__Safecortex.md](readmes/adarsh-bhati__Safecortex.md) | Graph blackboard isolates planner, verifier, executor and curator; safety constraints block unsafe tasks. |
+| [AjaySingh-a/firstdomino](https://github.com/AjaySingh-a/firstdomino) | [readmes/AjaySingh-a__firstdomino.md](readmes/AjaySingh-a__firstdomino.md) | Traces possible medication prescribing cascades and explicitly requests missing clinician evidence. |
+| [AnonyPotamus/precedent-graph](https://github.com/AnonyPotamus/precedent-graph) | [readmes/AnonyPotamus__precedent-graph.md](readmes/AnonyPotamus__precedent-graph.md) | Uses real Indian Supreme Court case citations to trace overruling chains and legal authority, rather than one-hop labels. |
+| [aryangorde6/shaky-ground](https://github.com/aryangorde6/shaky-ground) | [readmes/aryangorde6__shaky-ground.md](readmes/aryangorde6__shaky-ground.md) | Weights citation dependence on retracted research; explores multi-hop intellectual contamination with a source trail. |
+| [dharmikchandel/lineage](https://github.com/dharmikchandel/lineage) | [readmes/dharmikchandel__lineage.md](readmes/dharmikchandel__lineage.md) | Decomposes viral statements into evolving claim lineage, provenance and abstention under uncertainty. |
+| [divyashy20-boop/graph-hacks-2026](https://github.com/divyashy20-boop/graph-hacks-2026) | [readmes/divyashy20-boop__graph-hacks-2026.md](readmes/divyashy20-boop__graph-hacks-2026.md) | Normalizes multiple input formats into typed evidence-backed graphs, then reasons across dependencies. |
+| [grasped-dev/staircase](https://github.com/grasped-dev/staircase) | [readmes/grasped-dev__staircase.md](readmes/grasped-dev__staircase.md) | Maps individualized education goals backward through standards prerequisites and isolates districts by graph. |
+| [HusseinAdeiza/graphhacks-refusal-agent](https://github.com/HusseinAdeiza/graphhacks-refusal-agent) | [readmes/HusseinAdeiza__graphhacks-refusal-agent.md](readmes/HusseinAdeiza__graphhacks-refusal-agent.md) | Inspects a protocol call graph, detects exploited routes and refuses certification by creating graph-backed BLOCKED requests. |
+| [ibnweb3/bedrock](https://github.com/ibnweb3/bedrock) | [readmes/ibnweb3__bedrock.md](readmes/ibnweb3__bedrock.md) | Flags bibliographies depending on retracted research; reports exact lineage rather than unreliable future-retraction prediction. |
+| [kharedhruva-tech/ThreatNexus](https://github.com/kharedhruva-tech/ThreatNexus) | [readmes/kharedhruva-tech__ThreatNexus.md](readmes/kharedhruva-tech__ThreatNexus.md) | Voice-first local threat intelligence agent combines graph memory, audio UI and a security portal. |
+| [maitreyaaaaa/official](https://github.com/maitreyaaaaa/official) | [readmes/maitreyaaaaa__official.md](readmes/maitreyaaaaa__official.md) | Checks launch promises against actual audience/rollout/test state; missing facts remain unknown rather than published. |
+| [Mike-Demo/gaming-multiverse-reasoner](https://github.com/Mike-Demo/gaming-multiverse-reasoner) | [readmes/Mike-Demo__gaming-multiverse-reasoner.md](readmes/Mike-Demo__gaming-multiverse-reasoner.md) | Computes hidden similarity bridges and communities over a large real-world video game relationship graph. |
+| [n0y0nD/CircuitDoctor](https://github.com/n0y0nD/CircuitDoctor) | [readmes/n0y0nD__CircuitDoctor.md](readmes/n0y0nD__CircuitDoctor.md) | Checks KiCad circuit nets and Arduino power rails through a graph plus Gemini explanations. |
+| [pinectar/clearance](https://github.com/pinectar/clearance) | [readmes/pinectar__clearance.md](readmes/pinectar__clearance.md) | Blocks legal client onboarding when family/subsidiary relationship causes a hidden conflict until lawyer signs. |
+| [qinheyi/compgraph](https://github.com/qinheyi/compgraph) | [readmes/qinheyi__compgraph.md](readmes/qinheyi__compgraph.md) | Recommends suitable competitions using Person→Resource→Requirement→Competition links (README declares Track 03 primary). |
+| [sivaratrisrinivas/pathflip](https://github.com/sivaratrisrinivas/pathflip) | [readmes/sivaratrisrinivas__pathflip.md](readmes/sivaratrisrinivas__pathflip.md) | Presents strongest support and counter-paths; writes accepted counter-evidence back to graph with full trace. |
+| [Sourabh-Kumar04/graph-hacks-verdict](https://github.com/Sourabh-Kumar04/graph-hacks-verdict) | [readmes/Sourabh-Kumar04__graph-hacks-verdict.md](readmes/Sourabh-Kumar04__graph-hacks-verdict.md) | Computes SOURCE→EVIDENCE→CLAIM proofs, PageRank-weighted authority, and SUPPORTED/REFUTED/UNVERIFIED. |
+
+## SRE & incident response (17)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [AgentAhmed/blast-radius](https://github.com/AgentAhmed/blast-radius) | [readmes/AgentAhmed__blast-radius.md](readmes/AgentAhmed__blast-radius.md) | Links OTel-style incidents, topology, ownership and paging, then remembers resolutions in agent episodes. |
+| [aniruddhaadak80/meridian-graphhacks](https://github.com/aniruddhaadak80/meridian-graphhacks) | [readmes/aniruddhaadak80__meridian-graphhacks.md](readmes/aniruddhaadak80__meridian-graphhacks.md) | Four agents cooperate on company/incident graph and replay actionable Cypher paths (also Tracks 02/03). |
+| [aniruddhaadak80/unspool](https://github.com/aniruddhaadak80/unspool) | [readmes/aniruddhaadak80__unspool.md](readmes/aniruddhaadak80__unspool.md) | Stores every agent Cypher call, memory recall and touched entity as a replayable incident trace graph. |
+| [AWS-env/agentblame](https://github.com/AWS-env/agentblame) | ABSENT | Attribution concept; public README could not be retrieved, so functionality is unverified. |
+| [beyondions/rootcause-agent](https://github.com/beyondions/rootcause-agent) | [readmes/beyondions__rootcause-agent.md](readmes/beyondions__rootcause-agent.md) | Minimal on-call dependency root-cause and owner assignment from an incident graph. |
+| [CARLEELTECH0/scout-falkordb](https://github.com/CARLEELTECH0/scout-falkordb) | [readmes/CARLEELTECH0__scout-falkordb.md](readmes/CARLEELTECH0__scout-falkordb.md) | Joins enterprise people/assets/permissions/incidents and offers graph-based security containment (all tracks). |
+| [dayveedd/sre-sentinel](https://github.com/dayveedd/sre-sentinel) | [readmes/dayveedd__sre-sentinel.md](readmes/dayveedd__sre-sentinel.md) | Correlates services, logs, deploys and spoken incident war-room information to look for indirect root causes. |
+| [jeeva5655/falkor-nexus](https://github.com/jeeva5655/falkor-nexus) | [readmes/jeeva5655__falkor-nexus.md](readmes/jeeva5655__falkor-nexus.md) | Combines organization, incident, memory and graph algorithms in one multi-track enterprise command demo. |
+| [kalp-cg/graph-hacks](https://github.com/kalp-cg/graph-hacks) | [readmes/kalp-cg__graph-hacks.md](readmes/kalp-cg__graph-hacks.md) | Investigates production failures and writes approved remediations plus incident memory. |
+| [KHARSHAVARDHAN-eng/CausalTrace-GraphHacks](https://github.com/KHARSHAVARDHAN-eng/CausalTrace-GraphHacks) | [readmes/KHARSHAVARDHAN-eng__CausalTrace-GraphHacks.md](readmes/KHARSHAVARDHAN-eng__CausalTrace-GraphHacks.md) | Correlates deployment changes with symptoms, service dependency paths and causal incident hypotheses. |
+| [kushalkumarcs372/blast-radius](https://github.com/kushalkumarcs372/blast-radius) | [readmes/kushalkumarcs372__blast-radius.md](readmes/kushalkumarcs372__blast-radius.md) | Three cooperating agents pass incident state as graph Episode nodes, so no prompt-level handoff is required. |
+| [LENGND123/clearpath](https://github.com/LENGND123/clearpath) | [readmes/LENGND123__clearpath.md](readmes/LENGND123__clearpath.md) | Pins synthetic Harbor Pay on-call state, paged owners, prior decisions and conflict-aware graph answers. |
+| [Mugunth007/aegis-graph](https://github.com/Mugunth007/aegis-graph) | [readmes/Mugunth007__aegis-graph.md](readmes/Mugunth007__aegis-graph.md) | Rehearses outages and rollbacks in ephemeral FalkorDB copies, retaining procedural memory. |
+| [nightmoose/lineagegate](https://github.com/nightmoose/lineagegate) | [readmes/nightmoose__lineagegate.md](readmes/nightmoose__lineagegate.md) | Checks data warehouse lineage and contracts to identify affected downstream columns/consumers and past incidents. |
+| [Rakesh9742/relayops](https://github.com/Rakesh9742/relayops) | [readmes/Rakesh9742__relayops.md](readmes/Rakesh9742__relayops.md) | Investigate→plan→verify incident agents share prior decisions and evidence graph rather than text handoffs. |
+| [Sandeep-Hipparagi/NexusGraph](https://github.com/Sandeep-Hipparagi/NexusGraph) | [readmes/Sandeep-Hipparagi__NexusGraph.md](readmes/Sandeep-Hipparagi__NexusGraph.md) | SRE agent analyzes services, change history, PageRank and organization knowledge plus MCP tools. |
+| [sevenhiremath/blastradius](https://github.com/sevenhiremath/blastradius) | [readmes/sevenhiremath__blastradius.md](readmes/sevenhiremath__blastradius.md) | Correlates deploys, owners, service hops, affected customers and past incident memory; opens evidence-backed ticket. |
+
+## Security attack paths (18)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [Aadrit555/we-make-devs-GRAPH_HACKS](https://github.com/Aadrit555/we-make-devs-GRAPH_HACKS) | [readmes/Aadrit555__we-make-devs-GRAPH_HACKS.md](readmes/Aadrit555__we-make-devs-GRAPH_HACKS.md) | Uses betweenness-centrality and copied shadow attack graphs for low-collateral-damage breach containment. |
+| [adiroy28852/PathGuard](https://github.com/adiroy28852/PathGuard) | [readmes/adiroy28852__PathGuard.md](readmes/adiroy28852__PathGuard.md) | Models effective IAM identity-to-restricted-data access and simulates whether removing edges closes every route. |
+| [anandharshit712/Argus-SOC](https://github.com/anandharshit712/Argus-SOC) | ABSENT | Security operations concept; public README could not be retrieved, so functionality is unverified. |
+| [humidyfier/Fjord-Agent](https://github.com/humidyfier/Fjord-Agent) | [readmes/humidyfier__Fjord-Agent.md](readmes/humidyfier__Fjord-Agent.md) | Uses graph reachability and MILP to choose Kubernetes NetworkPolicy changes, verified on copied graph. |
+| [HusseinAdeiza/graphhacks-patchweaver](https://github.com/HusseinAdeiza/graphhacks-patchweaver) | [readmes/HusseinAdeiza__graphhacks-patchweaver.md](readmes/HusseinAdeiza__graphhacks-patchweaver.md) | Solves npm version-constraint cascade upgrades; repairs parent dependencies needed to reach safe child. |
+| [kaushikkannan2/exploit-path](https://github.com/kaushikkannan2/exploit-path) | [readmes/kaushikkannan2__exploit-path.md](readmes/kaushikkannan2__exploit-path.md) | Combines CISA KEV and OSV with real npm dependency trees to identify the minimal patch chokepoint. |
+| [kishorekanth-blackhole/aegisgraph](https://github.com/kishorekanth-blackhole/aegisgraph) | [readmes/kishorekanth-blackhole__aegisgraph.md](readmes/kishorekanth-blackhole__aegisgraph.md) | Traverses exploitable permission routes and attempts autonomous hardening of chained cloud vulnerabilities. |
+| [PranavRaam/rewire-falkordb-agent](https://github.com/PranavRaam/rewire-falkordb-agent) | [readmes/PranavRaam__rewire-falkordb-agent.md](readmes/PranavRaam__rewire-falkordb-agent.md) | Produces a scoped graph-authenticated plan and action receipt with executable authorization/reconciliation. |
+| [priyanshu499/Scam-Graph-AI-](https://github.com/priyanshu499/Scam-Graph-AI-) | [readmes/priyanshu499__Scam-Graph-AI-.md](readmes/priyanshu499__Scam-Graph-AI-.md) | Finds scam networks connecting messages, domains, phones and payment IDs to shared incidents. |
+| [Rakesh9742/blast-radius](https://github.com/Rakesh9742/blast-radius) | [readmes/Rakesh9742__blast-radius.md](readmes/Rakesh9742__blast-radius.md) | Links CVEs to reachable HTTP entrypoints, ownership and real branch/PR patch workflow. |
+| [sahilposwal35-wq/patchpilot](https://github.com/sahilposwal35-wq/patchpilot) | [readmes/sahilposwal35-wq__patchpilot.md](readmes/sahilposwal35-wq__patchpilot.md) | Prioritizes runtime-exploitable dependency risk instead of raw severity; proposes graph-guided patches. |
+| [SaswatSRoy/ThreatPath](https://github.com/SaswatSRoy/ThreatPath) | [readmes/SaswatSRoy__ThreatPath.md](readmes/SaswatSRoy__ThreatPath.md) | Links identity, host, process, network, ATT&CK, KEV and asset paths; simulates containment verification. |
+| [sdkharade12/blast-shield-graph-hacks](https://github.com/sdkharade12/blast-shield-graph-hacks) | [readmes/sdkharade12__blast-shield-graph-hacks.md](readmes/sdkharade12__blast-shield-graph-hacks.md) | Confirms synthetic cloud-security investigation/containment on FalkorDB, not an actual tenant remediation. |
+| [Shivansh1824/ExploitReach](https://github.com/Shivansh1824/ExploitReach) | [readmes/Shivansh1824__ExploitReach.md](readmes/Shivansh1824__ExploitReach.md) | Links API route exposure to vulnerable functions and proposes source-level vulnerability remediations. |
+| [Vardhan-Mittal/keystone](https://github.com/Vardhan-Mittal/keystone) | [readmes/Vardhan-Mittal__keystone.md](readmes/Vardhan-Mittal__keystone.md) | Finds supply chain compromise through human maintainer control and authority, not just package CVEs. |
+| [vivekonkarnathbharati/BreachGraph](https://github.com/vivekonkarnathbharati/BreachGraph) | [readmes/vivekonkarnathbharati__BreachGraph.md](readmes/vivekonkarnathbharati__BreachGraph.md) | Investigates cyber incident blast radius and minimizes containment cost via min-cut path severance. |
+| [yasharyas/Graph-Hacks-hackathon](https://github.com/yasharyas/Graph-Hacks-hackathon) | [readmes/yasharyas__Graph-Hacks-hackathon.md](readmes/yasharyas__Graph-Hacks-hackathon.md) | Checks installed lockfile state just before hijack advisory publication; captures pre-advisory exposure. |
+| [YashSoni998265/interdict](https://github.com/YashSoni998265/interdict) | [readmes/YashSoni998265__interdict.md](readmes/YashSoni998265__interdict.md) | Optimizes safe Kubernetes egress cuts, then rechecks residual attack paths by independent methods and produces model-only certificate. |
+
+## Software change & dependencies (18)
+
+| Repository | README | Mechanism (README-derived) |
+|---|---|---|
+| [986036734/blastradius](https://github.com/986036734/blastradius) | [readmes/986036734__blastradius.md](readmes/986036734__blastradius.md) | Parses Python calls and computes shortest dependency chains and hotspots; local Gemma only narrates. |
+| [Bhav-ikkk/GraphHacks](https://github.com/Bhav-ikkk/GraphHacks) | [readmes/Bhav-ikkk__GraphHacks.md](readmes/Bhav-ikkk__GraphHacks.md) | Syzygy EDL: explicit proceed/hold/review/insufficient-evidence states; blocks unsafe code review without evidence. |
+| [chapaevv123/patchpath-falkordb-agent](https://github.com/chapaevv123/patchpath-falkordb-agent) | [readmes/chapaevv123__patchpath-falkordb-agent.md](readmes/chapaevv123__patchpath-falkordb-agent.md) | Checks transitive vulnerability upgrades against parent version constraints and rejects unsafe upgrade plans. |
+| [chief-07/ghostgraph](https://github.com/chief-07/ghostgraph) | [readmes/chief-07__ghostgraph.md](readmes/chief-07__ghostgraph.md) | Uses decompiled binary call graphs to reconstruct C candidates; compilation and differential tests feed failure memory. |
+| [darshans2006/Open-Source-Maintainer-Triage-Agent](https://github.com/darshans2006/Open-Source-Maintainer-Triage-Agent) | [readmes/darshans2006__Open-Source-Maintainer-Triage-Agent.md](readmes/darshans2006__Open-Source-Maintainer-Triage-Agent.md) | Finds hidden PR merge conflicts through dependency and issue/PR/code graphs in public repos. |
+| [DevAnuragT/reachable](https://github.com/DevAnuragT/reachable) | [readmes/DevAnuragT__reachable.md](readmes/DevAnuragT__reachable.md) | Distinguishes definite CALLS from MAYBE_CALLS, maps reachable CVEs, rebuilds graph and tests fix before PR. |
+| [estatic-coder/Graph_Hacks](https://github.com/estatic-coder/Graph_Hacks) | [readmes/estatic-coder__Graph_Hacks.md](readmes/estatic-coder__Graph_Hacks.md) | Connects AST/code/config/branch/queue nodes to verify code-change effects with graph tool orchestration. |
+| [fexx301/downstream](https://github.com/fexx301/downstream) | [readmes/fexx301__downstream.md](readmes/fexx301__downstream.md) | Replays old and new Python library versions in sealed containers to prove direct and transitive API breakage. |
+| [fncreator22/invarix](https://github.com/fncreator22/invarix) | [readmes/fncreator22__invarix.md](readmes/fncreator22__invarix.md) | Architecture policy graph for cumulative exceptions/CI gates; README says a different hackathon (Nebius). |
+| [kanchan0505/GraphHacks](https://github.com/kanchan0505/GraphHacks) | [readmes/kanchan0505__GraphHacks.md](readmes/kanchan0505__GraphHacks.md) | Syzygy EDL by another owner; same engineering risk family, evidence completeness determines action gate. |
+| [mahesh-mettireddy/FalkorTrace](https://github.com/mahesh-mettireddy/FalkorTrace) | [readmes/mahesh-mettireddy__FalkorTrace.md](readmes/mahesh-mettireddy__FalkorTrace.md) | Measures graph plus sandbox-verifier impact versus lexical retrieval; version-fingerprinted memory avoids stale reuse. |
+| [MaybeSomeone-arc18/patchpath](https://github.com/MaybeSomeone-arc18/patchpath) | [readmes/MaybeSomeone-arc18__patchpath.md](readmes/MaybeSomeone-arc18__patchpath.md) | Pins a public GitHub issue to commit and maps candidate symbols, callers, tests and overlapping PRs without claiming a fix. |
+| [Noah-zipit/timetrace](https://github.com/Noah-zipit/timetrace) | [readmes/Noah-zipit__timetrace.md](readmes/Noah-zipit__timetrace.md) | Builds temporal graphs from Git commits to answer impact “as of” a historical revision; tracks owner changes. |
+| [nobl3Y/ghostgraph](https://github.com/nobl3Y/ghostgraph) | [readmes/nobl3Y__ghostgraph.md](readmes/nobl3Y__ghostgraph.md) | Alternate GhostGraph repository with similar binary reconstruction concept; distinct owner but similarity needs code verification. |
+| [pintu544/blastradius](https://github.com/pintu544/blastradius) | [readmes/pintu544__blastradius.md](readmes/pintu544__blastradius.md) | Finds hard-coded secrets/unsafe code patterns in GitHub repo and computes how far affected call paths spread. |
+| [ProthamD/graph-hacks](https://github.com/ProthamD/graph-hacks) | [readmes/ProthamD__graph-hacks.md](readmes/ProthamD__graph-hacks.md) | Team Zero Degree combines code impact, CVE shortest paths, PageRank, ownership and agent incident memory. |
+| [Reet24-del/supply-chain-blast-radius](https://github.com/Reet24-del/supply-chain-blast-radius) | [readmes/Reet24-del__supply-chain-blast-radius.md](readmes/Reet24-del__supply-chain-blast-radius.md) | Traces package supply-chain compromise through lockfiles and finds the accountable repository owner. |
+| [Suchit-2004/RepoSageAI](https://github.com/Suchit-2004/RepoSageAI) | [readmes/Suchit-2004__RepoSageAI.md](readmes/Suchit-2004__RepoSageAI.md) | Static Python dependency/function graph plus Gemini for readable code-change impact. |

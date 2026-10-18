@@ -150,8 +150,95 @@ class Verification(StrEnum):
     QUARANTINED = "QUARANTINED"
 
 
+class AgentFocusLevel(StrEnum):
+    BROAD = "BROAD"
+    TARGETED = "TARGETED"
+    HYPERFOCUS = "HYPERFOCUS"
+
+
+class InputModality(StrEnum):
+    DOCUMENT = "DOCUMENT"
+    TEXT = "TEXT"
+    VOICE = "VOICE"
+    IMAGE = "IMAGE"
+    VIDEO = "VIDEO"
+    TELEMETRY = "TELEMETRY"
+
+
 class ContractError(ValueError):
     """Input that violates the graph contract. Routers map it to HTTP 422."""
+
+
+def build_agent_focus_plan(
+    focus_level: AgentFocusLevel | str,
+    requested_modalities: list[InputModality | str],
+) -> dict[str, Any]:
+    """Describe the synthetic investigation focus and the existing Kairos modality boundaries.
+
+    Focus changes investigation emphasis and the operator-facing plan. It never reduces the
+    dependency traversal or revision-bound action checks used for safety decisions.
+    """
+    try:
+        level = AgentFocusLevel(focus_level)
+        modalities = [InputModality(modality) for modality in requested_modalities]
+    except ValueError as exc:
+        raise ContractError("unknown focus level or input modality") from exc
+    scopes = {
+        AgentFocusLevel.BROAD: "case-wide evidence, agent handoffs, decisions, and action state",
+        AgentFocusLevel.TARGETED: "changed source, linked claims, and dependent decision",
+        AgentFocusLevel.HYPERFOCUS: "one changed source through its transitive decision-to-action path",
+    }
+    scenario_modalities = {InputModality.DOCUMENT.value, InputModality.TEXT.value}
+    requested = sorted({modality.value for modality in modalities})
+    modality_capabilities = [
+        {
+            "modality": InputModality.DOCUMENT.value,
+            "status": "KAIROS_PIPELINE_NOT_CASE_LINKED",
+            "entrypoint": "POST /documents/ingest",
+            "detail": "Kairos document vault and extraction are available separately; this demo uses a synthetic source and does not ingest a file.",
+        },
+        {
+            "modality": InputModality.TEXT.value,
+            "status": "SYNTHETIC_FIXTURE_ONLY",
+            "entrypoint": "ResolveAI Evidence Drift demo",
+            "detail": "The scenario's source and claims are generated fixtures; no user text or transcript is attached.",
+        },
+        {
+            "modality": InputModality.VOICE.value,
+            "status": "KAIROS_PIPELINE_NOT_CASE_LINKED",
+            "entrypoint": "POST /elicitation/{work_order_id}/voice",
+            "detail": "Kairos has a separate work-order voice transcription flow; its transcript is not attached to this ResolveAI case.",
+        },
+        {
+            "modality": InputModality.IMAGE.value,
+            "status": "KAIROS_PIPELINE_NOT_CASE_LINKED",
+            "entrypoint": "POST /documents/ingest (image OCR)",
+            "detail": "Kairos document extraction accepts supported raster formats; this demo does not upload or link an image.",
+        },
+        {
+            "modality": InputModality.VIDEO.value,
+            "status": "NO_PROCESSOR_CONNECTED",
+            "entrypoint": None,
+            "detail": "No video evidence processor is connected to this ResolveAI workflow.",
+        },
+        {
+            "modality": InputModality.TELEMETRY.value,
+            "status": "KAIROS_PIPELINE_NOT_CASE_LINKED",
+            "entrypoint": "POST /events/*",
+            "detail": "Kairos operational event ingestion exists separately; events are not linked to this demo's evidence dependency graph.",
+        },
+    ]
+    return {
+        "focus_level": level.value,
+        "focus_scope": scopes[level],
+        "focus_policy": "Complete bounded impact traversal and revision-bound action checks run at every focus level; focus changes investigation emphasis only.",
+        "requested_modalities": requested,
+        "scenario_modalities": sorted(scenario_modalities),
+        "unconnected_modalities": sorted(set(requested) - scenario_modalities),
+        "modality_capabilities": modality_capabilities,
+        "runtime_status": "SYNTHETIC_TRACE_ONLY",
+        "media_processing_connected": False,
+    }
 
 
 def now_iso() -> str:

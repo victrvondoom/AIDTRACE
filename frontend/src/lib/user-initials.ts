@@ -1,5 +1,5 @@
 export function getUserInitials(email?: string): string {
-  const localPart = email?.split("@", 1)[0] ?? "Kairos";
+  const localPart = email?.split("@", 1)[0] ?? "AIDTRACE";
   const words = localPart.split(/[^a-zA-Z0-9]+/).filter(Boolean);
 
   if (words.length > 1) {

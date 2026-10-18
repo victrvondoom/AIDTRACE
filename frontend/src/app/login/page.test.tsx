@@ -56,17 +56,21 @@ describe("LoginPage", () => {
 
     expect(screen.getByTestId("login-workspace")).toHaveClass("lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]");
     expect(screen.getByTestId("login-context")).toHaveTextContent("Evidence-linked operations");
-    expect(screen.getByTestId("login-form-panel")).toHaveTextContent("Sign in to Kairos");
+    expect(screen.getByTestId("login-form-panel")).toHaveTextContent("Sign in to AIDTRACE");
     expect(screen.getByLabelText(/email/i)).toHaveClass("min-h-11");
   });
 
-  it("hides the demo button when no demo credentials are configured", async () => {
+  it("shows the demo button even without credentials and navigates directly to /overview", async () => {
     vi.stubEnv("NEXT_PUBLIC_DEMO_EMAIL", "");
     vi.stubEnv("NEXT_PUBLIC_DEMO_PASSWORD", "");
     const Page = await loadPage();
     render(<Page />);
 
-    expect(screen.queryByRole("button", { name: /live demo/i })).toBeNull();
+    const demoBtn = screen.getByRole("button", { name: /live demo/i });
+    expect(demoBtn).toBeTruthy();
+
+    fireEvent.click(demoBtn);
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/overview"));
   });
 
   it("signs the demo button in with the configured read-only credentials and lands on the Copilot", async () => {

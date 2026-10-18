@@ -58,7 +58,7 @@ export function CapabilityDirectory() {
         <p role="status" className="text-caption text-muted">{filtered.length} of {CAPABILITIES.length} capabilities</p>
         <Button onClick={reset} className="text-caption">Reset filters</Button>
       </div>
-      <p className="mb-6 max-w-3xl text-caption leading-relaxed text-muted">Workspaces open existing Kairos tools. Integrations show their current connection state. Workflow previews describe capabilities still being built; they do not execute investigations or responses.</p>
+      <p className="mb-6 max-w-3xl text-caption leading-relaxed text-muted">Workspaces open existing AIDTRACE tools. Integrations show their current connection state. Workflow previews describe capabilities still being built; they do not execute investigations or responses.</p>
       {filtered.length === 0 ? <div className="border border-line bg-surface-2 p-8 text-center"><h2 className="text-title font-semibold">No matching features</h2><p className="mt-2 text-body text-muted">Try another term or reset the filters.</p></div> : CAPABILITY_GROUPS.map((section) => {
         const items = filtered.filter((feature) => feature.group === section.id);
         return items.length > 0 && <section key={section.id} aria-labelledby={`group-${section.id}`} className="mb-8">

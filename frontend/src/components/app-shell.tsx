@@ -31,6 +31,7 @@ const STAFF_AND_COMPLIANCE: Role[] = [...STAFF, "compliance"];
 const NAV_ICON = {
   management: "squares-four", briefs: "clipboard-text", copilot: "sparkle", assets: "cube",
   events: "pulse", voice: "waveform", alert: "flag", rca: "target", graph: "graph",
+  supply: "truck",
   coverage: "chart-pie-slice", compliance: "shield-check", governance: "scales",
   audit: "clock-counter-clockwise", documents: "file-text", projects: "folders",
   offboarding: "handshake", settings: "gear-six", chevron: "caret-right",
@@ -54,43 +55,29 @@ const NAV: { group: string; items: NavItem[] }[] = [
   {
     group: "",
     items: [
-      { href: "/overview", label: "Overview", icon: "management", roles: STAFF },
-      { href: "/workspace", label: "All Features", icon: "management", roles: STAFF },
-      { href: "/resolveai", label: "ResolveAI RDS", icon: "graph", roles: STAFF },
+      // The AIDTRACE workspace is the one primary experience; every other page is a legacy route kept for compatibility.
+      { href: "/hub", label: "Workspace", icon: "graph", roles: STAFF },
     ],
   },
   {
-    group: "Operate",
+    group: "Legacy pages",
     items: [
+      { href: "/overview", label: "Risk Overview", icon: "management", roles: STAFF },
+      { href: "/supply-chain", label: "Supply Chain", icon: "supply", roles: STAFF },
       { href: "/briefs", label: "Briefs", icon: "briefs" },
       { href: "/copilot", label: "Copilot", icon: "copilot" },
-      { href: "/assets", label: "Assets", icon: "assets" },
+      { href: "/assets", label: "Suppliers & Assets", icon: "assets" },
       { href: "/events", label: "Events", icon: "events", roles: STAFF },
       { href: "/field/voice", label: "Voice", icon: "voice", roles: ["field_worker", "admin"] },
       { href: "/field/deviation", label: "Deviation", icon: "alert", roles: ["field_worker", "admin"] },
-    ],
-  },
-  {
-    group: "Analyze",
-    items: [
       { href: "/rca", label: "RCA", icon: "rca", roles: STAFF },
       { href: "/graph", label: "Graph", icon: "graph", roles: STAFF },
       { href: "/overview/coverage", label: "Coverage", icon: "coverage", roles: STAFF },
-    ],
-  },
-  {
-    group: "Assure",
-    items: [
       // The compliance auditor sees exactly these two and nothing else in the sidebar —
       // matching `read_compliance` / `read_audit` in kairos.rego and ROUTE_ACCESS.
       { href: "/compliance", label: "Compliance", icon: "compliance", roles: STAFF_AND_COMPLIANCE },
       { href: "/governance", label: "Governance", icon: "governance", roles: STAFF },
       { href: "/audit", label: "Audit Trail", icon: "audit", roles: STAFF_AND_COMPLIANCE },
-    ],
-  },
-  {
-    group: "Knowledge",
-    items: [
       { href: "/documents", label: "Documents", icon: "documents", roles: STAFF },
       { href: "/projects", label: "Projects", icon: "projects", roles: STAFF },
       { href: "/offboarding", label: "Off-Boarding", icon: "offboarding", roles: STAFF },
@@ -462,7 +449,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     onSearch: () => setPalette(true),
     onCreate: () => router.push("/documents/ingest"),
     onOpenUser: () => setAccountOpen((open) => !open),
-    accountName: user?.email ?? "Kairos user",
+    accountName: user?.email ?? "AIDTRACE user",
     accountInitials: getUserInitials(user?.email),
   };
 
@@ -570,7 +557,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             of a centred column, visible once the viewport is wider than the column. */}
         <main id="main" className="kairos-spatial flex min-w-0 flex-1 flex-col overflow-x-clip">
           <SpatialInteraction />
-          {pathname === "/copilot" ? (
+          {pathname === "/copilot" || pathname === "/hub" ? (
             <div key={pathname} className="app-route flex-1">{children}</div>
           ) : (
             <div className="relative mx-auto flex w-full max-w-[1464px] flex-1 flex-col xl:border-x print:border-0">
@@ -583,7 +570,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* No mobile bottom tab bar. `BottomTabs` was deleted on 2026-08-15 — it had been
           commented out since the mobile UX was deferred, so it was neither shipped nor
           removed. Mobile navigates via the hamburger sidebar; recover from git if revived. */}
-      <AccountMenu open={accountOpen} onClose={() => setAccountOpen(false)} name={user?.email ?? "Kairos user"} role={role} onSignOut={signOut} />
+      <AccountMenu open={accountOpen} onClose={() => setAccountOpen(false)} name={user?.email ?? "AIDTRACE user"} role={role} onSignOut={signOut} />
     </div>
   );
 }

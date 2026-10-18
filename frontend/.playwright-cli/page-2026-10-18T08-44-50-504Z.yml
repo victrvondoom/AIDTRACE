@@ -1,0 +1,9 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [aria-hidden] [ref=e3]:
+      - link [ref=e5] [cursor=pointer]:
+        - /url: /overview
+        - generic [ref=e7]: Kairos
+    - main [ref=e9]:
+      - generic "Loading" [ref=e10]
+  - alert [ref=e20]

@@ -1,0 +1,9 @@
+# ResolveAI migration
+
+Two sources feed "ResolveAI" in Kairos:
+1. **track1-agent consumer engine** (done): ported to `backend/api/services/consumer`, 19 tests, native console with revision-bound approval.
+2. **RESOLVE-AI-main platform** (code migrated, not running): `integrations/resolveai/backend` (229 files: agents, RAG, LLM, knowledge graph, services, 8 domain agent packs). Its dependencies conflict with Kairos's pins (pydantic, FastAPI, supabase) and it needs Supabase, Qdrant, Neo4j, Redis and a Gemini or NVIDIA key, so it runs as a **private worker** reached only through `/resolveai/platform/*`.
+
+**One login:** the worker's auth was patched (copy only) with a trusted-gateway mode. If `KAIROS_GATEWAY_SECRET` is set it accepts nothing but the gateway secret plus the forwarded identity, and case ownership is namespaced `<site>:<user>`. Kairos forwards identity, never the browser token; the demo role is closed; only domains, cases and agent run/ask/runs are exposed (never its admin or upload routes).
+**Verified:** gateway behaviour against a stand-in worker (6 tests): identity headers, tenant namespacing, no call without a secret, unreachable worker reported NOT_CONNECTED, error mapping, allow-list.
+**Not verified:** the worker itself, any real agent run, retrieval, and the 8 domain corpora (the 512 MB `knowledge/` stays in the original). Its 108-file frontend is not ported beyond a case panel. To enable: set `RESOLVEAI_GATEWAY_SECRET` (Kairos) and `KAIROS_GATEWAY_SECRET` (worker, same value), configure the worker's services, start it on port 8200, set `RESOLVEAI_WORKER_URL`.

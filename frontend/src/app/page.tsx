@@ -70,14 +70,14 @@ const problemStats: { figure: string; label: string; body: string; source: strin
 
 /**
  * One story, followed end to end. This is the highest-leverage explainer on the
- * page: a reader who skims everything else still leaves knowing what Kairos
+ * page: a reader who skims everything else still leaves knowing what AIDTRACE
  * does, because they watched it do one thing.
  */
 const scenario: { tag: string; title: string; body: string }[] = [
   {
     tag: "The trigger",
     title: "A work order is raised on pump P-1101A",
-    body: "A technician is assigned to a seal failure. Nobody searches for anything. Kairos sees the work order the moment it is created, and starts gathering what the person doing this job needs to know.",
+    body: "A technician is assigned to a seal failure. Nobody searches for anything. AIDTRACE sees the work order the moment it is created, and starts gathering what the person doing this job needs to know.",
   },
   {
     tag: "What it finds",
@@ -87,7 +87,7 @@ const scenario: { tag: string; title: string; body: string }[] = [
   {
     tag: "The check",
     title: "Each fact is ranked by who said it",
-    body: "A regulation outranks a vendor manual, and a vendor manual outranks a local note. Nobody has verified the voice note, so Kairos labels it as unverified instead of mixing it in with established fact.",
+    body: "A regulation outranks a vendor manual, and a vendor manual outranks a local note. Nobody has verified the voice note, so AIDTRACE labels it as unverified instead of mixing it in with established fact.",
   },
   {
     tag: "The delivery",
@@ -97,7 +97,7 @@ const scenario: { tag: string; title: string; body: string }[] = [
   {
     tag: "The refusal",
     title: "When the evidence is thin, it says so",
-    body: "Ask a safety-critical question, such as a pressure limit or a torque value. If no authoritative source supports an answer, Kairos refuses and hands you the documents instead. A confident guess at that moment is more dangerous than no answer at all.",
+    body: "Ask a safety-critical question, such as a pressure limit or a torque value. If no authoritative source supports an answer, AIDTRACE refuses and hands you the documents instead. A confident guess at that moment is more dangerous than no answer at all.",
   },
 ];
 
@@ -122,7 +122,7 @@ const capabilities: {
     Mock: BriefsMock,
     eyebrow: "Briefs",
     title: "Told before you ask, but never spammed",
-    body: "Kairos sends you what you need to know before a job starts, and caps it at six an hour. Flood someone with notifications and they stop reading all of them. That is why plant alarm systems have a cap by standard (EEMUA-191). Permit-to-work briefs skip the cap, because safety work does not wait for a quota.",
+    body: "AIDTRACE sends you what you need to know before a job starts, and caps it at six an hour. Flood someone with notifications and they stop reading all of them. That is why plant alarm systems have a cap by standard (EEMUA-191). Permit-to-work briefs skip the cap, because safety work does not wait for a quota.",
   },
   {
     id: "copilot",
@@ -140,7 +140,7 @@ const capabilities: {
     Mock: RcaMock,
     eyebrow: "Maintenance intelligence",
     title: "Root cause, assembled from the record",
-    body: "Kairos combines work order history, failure records, vendor manuals, inspection findings and live operating conditions into a ranked list of likely root causes. Each one comes with the documents behind it and a timeline of what actually happened, so it connects facts that no single person on the team holds.",
+    body: "AIDTRACE combines work order history, failure records, vendor manuals, inspection findings and live operating conditions into a ranked list of likely root causes. Each one comes with the documents behind it and a timeline of what actually happened, so it connects facts that no single person on the team holds.",
   },
   {
     id: "compliance",
@@ -149,7 +149,7 @@ const capabilities: {
     Mock: ComplianceMock,
     eyebrow: "Quality and regulatory",
     title: "Gaps found before the auditor finds them",
-    body: "The demo loads twelve clauses from OISD-117 and ISO 45001, and seven more are named in the framework catalogue and need their clauses loaded, among them PESO, CEA, IEC 62443 and FDA 21 CFR Part 11. Kairos checks them continuously against current procedures, equipment state and inspection records. Every finding is tied to one clause: a gap means no document of the type that clause requires is linked to that asset. You can export an audit evidence pack at any time.",
+    body: "The demo loads twelve clauses from OISD-117 and ISO 45001, and seven more are named in the framework catalogue and need their clauses loaded, among them PESO, CEA, IEC 62443 and FDA 21 CFR Part 11. AIDTRACE checks them continuously against current procedures, equipment state and inspection records. Every finding is tied to one clause: a gap means no document of the type that clause requires is linked to that asset. You can export an audit evidence pack at any time.",
   },
   {
     id: "ingestion",
@@ -167,7 +167,7 @@ const capabilities: {
     Mock: AssetsMock,
     eyebrow: "Assets",
     title: "Every asset, and what was true when",
-    body: "One place for an asset's documents, failure history and drawing connections, and all of it is dated. When a fact stops being true, Kairos closes it rather than deleting it. An investigation months later can still ask what the plant knew back in March.",
+    body: "One place for an asset's documents, failure history and drawing connections, and all of it is dated. When a fact stops being true, AIDTRACE closes it rather than deleting it. An investigation months later can still ask what the plant knew back in March.",
   },
   {
     id: "governance",
@@ -176,7 +176,7 @@ const capabilities: {
     Mock: GovernanceMock,
     eyebrow: "Governance",
     title: "Nothing uncertain reaches the graph",
-    body: "Anything Kairos extracts with less than 0.7 confidence goes to quarantine and stays there. Only a person can release it. Nothing is released automatically, and contradictions show up before the job starts, not after.",
+    body: "Anything AIDTRACE extracts with less than 0.7 confidence goes to quarantine and stays there. Only a person can release it. Nothing is released automatically, and contradictions show up before the job starts, not after.",
   },
   {
     id: "field",
@@ -349,7 +349,7 @@ const evalSuites: {
     name: "Time to a trusted answer",
     headline: "−19.9%",
     headlineNote: "Modelled, compared against BM25 keyword search",
-    rows: [["Traditional", "124.0 min / 46 q"], ["Kairos", "99.4 min / 46 q"], ["Docs opened", "1.00 vs 1.35"], ["Raw machine time", "loses: 9.6 s vs 28 ms"]],
+    rows: [["Traditional", "124.0 min / 46 q"], ["AIDTRACE", "99.4 min / 46 q"], ["Docs opened", "1.00 vs 1.35"], ["Raw machine time", "loses: 9.6 s vs 28 ms"]],
   },
   {
     name: "Concurrency sweep",
@@ -400,7 +400,7 @@ const capabilityList: [string, string][] = [
   // /compliance/nonconformance reads conflicts + quarantine; moc_items runs
   // draft → pending_approval → approved, with approved_by and approved_at.
   ["Non-conformance register", "Conflicts and quarantined extractions tracked in one place, with an owner against each"],
-  ["Management of Change", "A safety parameter never updates itself. Kairos drafts the change request and waits for a named approval."],
+  ["Management of Change", "A safety parameter never updates itself. AIDTRACE drafts the change request and waits for a named approval."],
   // document_pipeline.py: every activity carries DEFAULT_RETRY, maximum_attempts 5.
   ["Durable ingestion", "A Temporal workflow per document, so a crash resumes at the activity that failed rather than at the first page"],
   // GraphService.get_blast_radius, surfaced by /governance.
@@ -437,8 +437,8 @@ const faqGroups = [
   {
     name: "Basics",
     items: [
-      ["What does Kairos actually do?", "It turns the documents, drawings, asset history and field notes a plant already owns into answers people can act on. Every answer shows the source it came from, how authoritative that source is, and how confident the system is."],
-      ["How is this different from a chatbot over our documents?", "A chatbot gives you text. Kairos gives you text plus proof of where it came from, and refuses to answer when a safety-critical question has weak evidence behind it. We grade retrieval and citations with fixed rules, not with another model."],
+      ["What does AIDTRACE actually do?", "It turns the documents, drawings, asset history and field notes a plant already owns into answers people can act on. Every answer shows the source it came from, how authoritative that source is, and how confident the system is."],
+      ["How is this different from a chatbot over our documents?", "A chatbot gives you text. AIDTRACE gives you text plus proof of where it came from, and refuses to answer when a safety-critical question has weak evidence behind it. We grade retrieval and citations with fixed rules, not with another model."],
       ["What does it need to get started?", "The documents you already have. Drawings, procedures, vendor manuals and maintenance history all go through the ingestion pipeline. Nothing has to be rewritten first."],
     ],
   },
@@ -448,13 +448,13 @@ const faqGroups = [
       ["What happens when the system is not sure?", "Anything extracted with less than 0.7 confidence goes to quarantine and stays there until a person releases it. Nothing uncertain reaches the knowledge graph on its own."],
       ["Can it refuse to answer?", "Yes, and it does. A safety-critical question without solid evidence gets a refusal that still lists its sources, so you can check them yourself instead of trusting a vague answer."],
       ["Why limit how many briefs someone gets?", "The EEMUA-191 standard exists because operators stop reading alarms when there are too many of them. The same happens with knowledge. So the limit is six an hour, and permit-to-work briefs are always exempt."],
-      ["Who gets told when Kairos finds something?", "Whoever owns the decision, and nothing sits in a queue waiting to be noticed. An extraction it is not confident in goes to quarantine and waits for a person. Two procedures that disagree raise a conflict before the job starts, not in the post-mortem. An observation from the field is transcribed, tagged and sent to engineering for review. A safety question with thin evidence returns a refusal card with its sources attached."],
+      ["Who gets told when AIDTRACE finds something?", "Whoever owns the decision, and nothing sits in a queue waiting to be noticed. An extraction it is not confident in goes to quarantine and waits for a person. Two procedures that disagree raise a conflict before the job starts, not in the post-mortem. An observation from the field is transcribed, tagged and sent to engineering for review. A safety question with thin evidence returns a refusal card with its sources attached."],
     ],
   },
   {
     name: "Data",
     items: [
-      ["Is anything ever deleted?", "No. The vault is permanent and stored files are never changed. When a fact stops being true, Kairos closes it instead of removing it, so the record of what you knew, and when you knew it, survives."],
+      ["Is anything ever deleted?", "No. The vault is permanent and stored files are never changed. When a fact stops being true, AIDTRACE closes it instead of removing it, so the record of what you knew, and when you knew it, survives."],
       ["Can we see where an answer came from?", "Every fact carries six properties on the link itself, including the source document and whether a person verified it. Every answer lists its sources."],
       ["Does it work without connectivity?", "Field capture does. Notes are held on the device and sent once there is signal again."],
     ],
@@ -473,7 +473,7 @@ const faqGroups = [
       ["How was it evaluated?", "Forty-six domain-expert questions, written against a fixed answer key, across fifteen categories and graded by fixed rules. Retrieval, answer quality and sourcing are scored separately, and a refusal counts as correct when refusing was the right call."],
       ["Why quote a confidence interval for answer quality?", "Because 40 out of 46 is a sample, not a fixed rate. The interval says the honest thing a single percentage hides: on this set of questions the true rate sits somewhere around 74 to 94 percent. Retrieval and sourcing are graded by fixed rules and stay at 46 out of 46. Every run is also checked for validity, and we never quote a run in which more than a tenth of the answers came from a fallback model."],
       ["What do these numbers not cover?", "Four things, and we would rather name them. The soak test ran for one hour, so it says nothing about days. The validation set is small: 40 labels in total and only 3 for ORGANIZATION, so quote a per-type score with the number of labels behind it. Fifty virtual users against a demo-sized dataset is not evidence that the system handles a 10,000-asset plant. And hybrid retrieval reaches 35 of 37, which is exactly what semantic search alone reaches, so we report it as matching the best single method rather than beating it."],
-      ["Is any of this running against a real plant?", "No. Every figure is measured against a golden dataset we wrote ourselves, and Kairos is not connected to any live plant. That is the intended limit of this MVP. We would rather say so than let a number imply otherwise."],
+      ["Is any of this running against a real plant?", "No. Every figure is measured against a golden dataset we wrote ourselves, and AIDTRACE is not connected to any live plant. That is the intended limit of this MVP. We would rather say so than let a number imply otherwise."],
       ["Can we see the failures too?", "Yes. The test harness, the question set and every raw run are in the repository, including the runs where the answer was wrong."],
     ],
   },
@@ -947,7 +947,7 @@ function DemoPlayer({ videoId }: { videoId: string }) {
           <iframe
             className="absolute inset-0 size-full"
             src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-            title="Kairos demo"
+            title="AIDTRACE demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
@@ -955,7 +955,7 @@ function DemoPlayer({ videoId }: { videoId: string }) {
           <button
             type="button"
             onClick={() => setPlaying(true)}
-            aria-label="Play the Kairos demo"
+            aria-label="Play the AIDTRACE demo"
             className="group absolute inset-0 grid place-items-center"
           >
             <span className="grid size-16 place-items-center bg-(--lp-accent-strong) text-white transition-transform duration-150 ease-out group-hover:scale-105 group-active:scale-95 sm:size-20">
@@ -1343,10 +1343,10 @@ export default function Home() {
       {/* Solid, no backdrop blur: the reference header is opaque #f8f8f8. */}
       <header className="sticky top-0 z-30 border-b border-(--lp-line) bg-(--lp-band)">
         <nav className="lp-frame flex h-[49px] items-stretch">
-          <Link href="/" aria-label="Kairos home" className="flex items-center gap-2.5 border-r border-(--lp-line) px-4 sm:px-5">
+          <Link href="/" aria-label="AIDTRACE home" className="flex items-center gap-2.5 border-r border-(--lp-line) px-4 sm:px-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="" width={24} height={24} className="object-cover" />
-            <span className="lp-display text-[18px] text-(--lp-ink)">Kairos</span>
+            <span className="lp-display text-[18px] text-(--lp-ink)">AIDTRACE</span>
           </Link>
 
           <div className="hidden items-stretch lg:flex">
@@ -1392,7 +1392,7 @@ export default function Home() {
 
           <div className="lg:pt-4">
             <p className="max-w-md text-[18px] leading-7 text-(--lp-muted)">
-              <strong className="font-semibold text-(--lp-ink)">Kairos reads a plant&apos;s drawings,
+              <strong className="font-semibold text-(--lp-ink)">AIDTRACE reads a plant&apos;s drawings,
                 procedures and maintenance history into one system</strong> that answers in plain
               language, with the source behind every answer.
             </p>
@@ -1437,7 +1437,7 @@ export default function Home() {
               The product, running.
             </h2>
             <p className="mt-5 max-w-xl text-[16px] leading-6 text-(--lp-muted)">
-              One pass through Kairos: a document goes into the vault, a question comes back with
+              One pass through AIDTRACE: a document goes into the vault, a question comes back with
               its source, and a safety-critical question is refused rather than guessed.
             </p>
             <DemoPlayer videoId={demoVideoId} />
@@ -1479,7 +1479,7 @@ export default function Home() {
             Search alone cannot fix this, because the most dangerous gaps are the ones nobody knows
             to search for. A technician who has never heard that this pump failed this way before
             does not think to go looking.{" "}
-            <span className="text-(--lp-accent)">So Kairos does not wait to be asked.</span>
+            <span className="text-(--lp-accent)">So AIDTRACE does not wait to be asked.</span>
           </p>
         </div>
       </section>
@@ -1552,7 +1552,7 @@ export default function Home() {
                 Answers paired with{" "}<br />their <Box>evidence.</Box>
               </h2>
               <p className="mt-6 max-w-md text-[16px] leading-6 text-(--lp-muted)">
-                Kairos already knows the plant&apos;s documents, assets and history. Every screen works
+                AIDTRACE already knows the plant&apos;s documents, assets and history. Every screen works
                 the same way, so nothing is claimed without a way to check it.
               </p>
 
@@ -1778,7 +1778,7 @@ export default function Home() {
                   <p className="mt-3 text-[15px] leading-6 text-white/85">{audiences[audience].body}</p>
                 </div>
                 <div className="mt-6 border border-white/20 p-2 sm:p-3">
-                  <Shot src={audiences[audience].shot} alt={`Kairos workspace: ${audiences[audience].title.toLowerCase()}`} />
+                  <Shot src={audiences[audience].shot} alt={`AIDTRACE workspace: ${audiences[audience].title.toLowerCase()}`} />
                 </div>
               </div>
             </div>
@@ -1943,7 +1943,7 @@ export default function Home() {
 
           <div data-reveal className="lp-media lp-dither relative mt-12 p-3 sm:p-6">
             <div className="border border-white/20 p-2 sm:p-3">
-              <Shot src="graph" alt="The Kairos knowledge graph: assets and facts joined by time-aware edges, each carrying its source and authority." />
+              <Shot src="graph" alt="The AIDTRACE knowledge graph: assets and facts joined by time-aware edges, each carrying its source and authority." />
             </div>
           </div>
 
@@ -2087,7 +2087,7 @@ export default function Home() {
               <div className="flex items-center gap-2.5">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="" width={26} height={26} className="object-cover" />
-                <span className="lp-display text-[22px] text-(--lp-ink)">Kairos</span>
+                <span className="lp-display text-[22px] text-(--lp-ink)">AIDTRACE</span>
               </div>
               <p className="mt-4 max-w-xs text-[14px] leading-5 text-(--lp-muted)">
                 The right knowledge to the right person at the moment of action.
@@ -2126,14 +2126,14 @@ export default function Home() {
         <div className="lp-frame px-4 pb-8 pt-6 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-[12px] uppercase tracking-[0.08em] text-(--lp-muted)">
-              © 2026 Kairos Inc
+              © 2026 AIDTRACE Inc
             </p>
             <div className="flex items-center gap-2">
               <a
                 href={GITHUB_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                aria-label="Kairos on GitHub"
+                aria-label="AIDTRACE on GitHub"
                 className="grid size-9 place-items-center bg-(--lp-ink) text-white transition-colors hover:bg-(--lp-accent-strong)"
               >
                 <GithubIcon />
@@ -2142,7 +2142,7 @@ export default function Home() {
                 href={demoVideoId ? `https://www.youtube.com/watch?v=${demoVideoId}` : DEMO_FALLBACK_URL}
                 target="_blank"
                 rel="noreferrer noopener"
-                aria-label="Watch the Kairos demo"
+                aria-label="Watch the AIDTRACE demo"
                 className="grid size-9 place-items-center bg-[#ff0000] text-white transition-opacity hover:opacity-80"
               >
                 <YoutubeIcon />

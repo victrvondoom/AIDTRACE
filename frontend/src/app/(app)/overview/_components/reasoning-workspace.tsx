@@ -7,11 +7,11 @@ import { useFetch } from "@/lib/use-fetch";
 const AGENTS = [
   { name: "Investigation supervisor", purpose: "Routes work to the smallest relevant specialist team", href: "/rca", icon: "magnifying-glass", state: "Workflow entry" },
   { name: "Evidence extraction", purpose: "Extracts candidate facts for human review", href: "/documents", icon: "file-text", state: "Workflow entry" },
-  { name: "Entity resolution", purpose: "Review asset identity and canonical records", href: "/assets", icon: "cube", state: "Kairos workflow" },
-  { name: "Graph investigation", purpose: "Explore connected assets, documents, and events", href: "/graph", icon: "graph", state: "Kairos workflow" },
-  { name: "Temporal reasoning", purpose: "Inspect when evidence became valid or changed", href: "/graph", icon: "clock-counter-clockwise", state: "Kairos workflow" },
+  { name: "Entity resolution", purpose: "Review asset identity and canonical records", href: "/assets", icon: "cube", state: "AIDTRACE workflow" },
+  { name: "Graph investigation", purpose: "Explore connected assets, documents, and events", href: "/graph", icon: "graph", state: "AIDTRACE workflow" },
+  { name: "Temporal reasoning", purpose: "Inspect when evidence became valid or changed", href: "/graph", icon: "clock-counter-clockwise", state: "AIDTRACE workflow" },
   { name: "Evidence drift", purpose: "Trace conclusions affected by changed evidence", href: "/resolveai#memory", icon: "warning-circle", state: "Engine in progress" },
-  { name: "Contradiction analyst", purpose: "Surface competing claims for resolution", href: "/governance/conflicts", icon: "warning-circle", state: "Kairos workflow" },
+  { name: "Contradiction analyst", purpose: "Surface competing claims for resolution", href: "/governance/conflicts", icon: "warning-circle", state: "AIDTRACE workflow" },
   { name: "Memory curator", purpose: "Review low-confidence knowledge before promotion", href: "/governance/quarantine", icon: "clipboard-text", state: "Human-led" },
   { name: "Action coordinator", purpose: "Prepare governed change and work-order decisions", href: "/governance/moc", icon: "scales", state: "Human-led" },
   { name: "Human review", purpose: "Keep material decisions under authorized approval", href: "/governance", icon: "shield-check", state: "Required" },
@@ -46,7 +46,7 @@ export function ReasoningWorkspace({ health, loading }: { health: HealthDetailed
     <section aria-labelledby="rds-heading" data-testid="overview-rds" className="mt-8 border-y border-line py-7">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-micro font-bold uppercase tracking-[0.1em] text-muted">Kairos intelligence</p>
+          <p className="text-micro font-bold uppercase tracking-[0.1em] text-muted">AIDTRACE intelligence</p>
           <h2 id="rds-heading" className="mt-1 text-title font-semibold text-ink">Reasoning &amp; Decision System</h2>
           <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Investigative agents connect plant evidence to governed decisions. Each conclusion stays traceable to its sources and requires the right human approval.</p>
         </div>
@@ -59,7 +59,7 @@ export function ReasoningWorkspace({ health, loading }: { health: HealthDetailed
         <div id="agents" className="min-w-0 scroll-mt-6">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2">
             <h3 className="text-label font-semibold text-ink">Agent map</h3>
-            <span className="text-micro text-muted">Mapped to Kairos workflows. Agent runtime is not yet connected.</span>
+            <span className="text-micro text-muted">Mapped to AIDTRACE workflows. Agent runtime is not yet connected.</span>
           </div>
           <div className="grid gap-2 pt-2 sm:grid-cols-2 xl:grid-cols-3">
             {AGENTS.map((agent, index) => (
@@ -83,7 +83,7 @@ export function ReasoningWorkspace({ health, loading }: { health: HealthDetailed
           <p className="mt-1 text-caption text-muted">Read-only checks refresh every minute while this tab is visible. Unavailable checks retry automatically.</p>
           <dl className="mt-4 divide-y divide-line">
             <div className="flex items-center justify-between gap-3 py-2"><dt className="text-caption text-ink">FalkorDB reasoning graph</dt><dd><span className="text-caption text-muted">{falkorLabel}</span></dd></div>
-            <div className="flex items-center justify-between gap-3 py-2"><dt className="text-caption text-ink">Kairos knowledge graph</dt><dd><ServiceMark service={graph} loading={loading} /></dd></div>
+            <div className="flex items-center justify-between gap-3 py-2"><dt className="text-caption text-ink">AIDTRACE knowledge graph</dt><dd><ServiceMark service={graph} loading={loading} /></dd></div>
             <div className="flex items-center justify-between gap-3 py-2"><dt className="text-caption text-ink">Evidence retrieval</dt><dd><ServiceMark service={vector} loading={loading} /></dd></div>
             <div className="flex items-center justify-between gap-3 py-2"><dt className="text-caption text-ink">Model registry</dt><dd><span className="text-caption text-muted">{modelState.status === "loading" ? "Loading" : modelState.status === "error" ? "Unavailable" : `${catalog?.models.filter((model) => model.configured).length ?? 0} configured roles`}</span></dd></div>
           </dl>
@@ -124,7 +124,7 @@ export function ReasoningWorkspace({ health, loading }: { health: HealthDetailed
             )) : <p className="py-3 text-caption text-muted">{modelState.status === "loading" ? "Loading model configuration…" : modelState.status === "error" ? "Model catalog is unavailable." : "No model roles are registered."}</p>}
           </div>
           <div className="flex items-center justify-between gap-3 border-b border-line py-2"><span className="text-caption text-ink">Fine-tuned model registry</span><span className="text-caption text-muted">{catalog ? catalog.fine_tuning.status === "not_connected" ? "Not connected" : "Connected" : modelState.status === "loading" ? "Checking" : "Unavailable"}</span></div>
-          <p className="mt-2 text-caption leading-relaxed text-muted">Kairos supports human-curated evaluation through its validation corpus and model gate. Training jobs and checkpoints are not available in this deployment.</p>
+          <p className="mt-2 text-caption leading-relaxed text-muted">AIDTRACE supports human-curated evaluation through its validation corpus and model gate. Training jobs and checkpoints are not available in this deployment.</p>
           <Link href="/governance/model-gate" className="mt-2 inline-flex min-h-11 items-center gap-2 text-caption font-semibold text-accent hover:underline">Open model evaluation <span aria-hidden="true">&rarr;</span></Link>
         </div>
       </div>

@@ -15,7 +15,7 @@ import { roleHome } from "@/components/use-role";
 // so they are public by design: they must only ever be that account's credentials. Unset = no button.
 const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL;
 const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD;
-const DEMO_ENABLED = Boolean(DEMO_EMAIL && DEMO_PASSWORD);
+const HAS_DEMO_CREDENTIALS = Boolean(DEMO_EMAIL && DEMO_PASSWORD);
 
 function workspacePath(role?: string) {
   if (role === "demo") return roleHome("demo");
@@ -53,14 +53,22 @@ export default function LoginPage() {
     void doLogin(email, password);
   }
 
-  // One-click demo → signs into the read-only demo account (never an admin credential).
+  // One-click demo → if credentials are configured, signs into the real demo account.
+  // Otherwise bypasses auth entirely and navigates straight to the dashboard.
+  // The AppShell's auth flow defaults to engineer role when no token exists and strict
+  // auth is off, so the user sees the full application without needing a running backend.
   function tryDemo() {
-    if (DEMO_EMAIL && DEMO_PASSWORD) void doLogin(DEMO_EMAIL, DEMO_PASSWORD);
+    if (HAS_DEMO_CREDENTIALS && DEMO_EMAIL && DEMO_PASSWORD) {
+      void doLogin(DEMO_EMAIL, DEMO_PASSWORD);
+    } else {
+      setBusy(true);
+      router.push("/overview");
+    }
   }
 
   return (
     <main className="relative grid min-h-dvh place-items-center bg-canvas px-5 py-16">
-      <title>Kairos: Sign in</title>
+      <title>AIDTRACE: Sign in</title>
       <Link href="/" aria-label="Back to landing page" className="absolute left-5 top-5 grid size-10 place-items-center border border-line bg-surface text-muted transition-colors hover:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
         <Icon name="caret-left" className="size-4" />
       </Link>
@@ -112,8 +120,8 @@ export default function LoginPage() {
 
         <section data-testid="login-form-panel" className="flex items-center justify-center border-line px-5 py-10 sm:px-10 lg:border-l">
           <div className="w-full max-w-sm">
-            <Image src="/logo.png" alt="Kairos" width={40} height={40} priority className="size-10 object-cover" />
-            <h1 className="display mt-6 text-display text-ink sm:text-hero">Sign in to Kairos</h1>
+            <Image src="/logo.png" alt="AIDTRACE" width={40} height={40} priority className="size-10 object-cover" />
+            <h1 className="display mt-6 text-display text-ink sm:text-hero">Sign in to AIDTRACE</h1>
             <p className="mt-2 text-body text-muted">The right knowledge, at the moment of action.</p>
 
             <form onSubmit={signIn} className="mt-8 flex flex-col gap-4">
@@ -152,11 +160,16 @@ export default function LoginPage() {
                 {busy ? "Signing in…" : "Sign in"}
                 {!busy && <span aria-hidden="true">›</span>}
               </Button>
-              {DEMO_ENABLED && (
-                <Button type="button" onClick={tryDemo} disabled={busy} className="min-h-11 w-full bg-surface text-sm font-medium">
-                  Explore the live demo
-                </Button>
-              )}
+              <Button
+                type="button"
+                id="demo-sign-in"
+                onClick={tryDemo}
+                disabled={busy}
+                className="min-h-11 w-full border border-accent/30 bg-[color-mix(in_srgb,var(--accent)_8%,var(--surface))] text-sm font-medium text-accent transition-all hover:bg-[color-mix(in_srgb,var(--accent)_15%,var(--surface))] hover:border-accent/50"
+              >
+                <Icon name="sparkle" className="size-4" />
+                {busy ? "Entering demo…" : "Explore the live demo"}
+              </Button>
             </form>
           </div>
         </section>
@@ -164,3 +177,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

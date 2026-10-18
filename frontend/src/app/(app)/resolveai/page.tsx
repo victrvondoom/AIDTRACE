@@ -9,6 +9,13 @@ import { useFetch } from "@/lib/use-fetch";
 import { ReasoningWorkspace } from "../overview/_components/reasoning-workspace";
 import { DriftDemoPanel } from "./_components/drift-demo-panel";
 
+import dynamic from "next/dynamic";
+
+const ConsumerWorkspace = dynamic(
+  () => import("@/features/resolveai/consumer-workspace").then((m) => m.ConsumerWorkspace),
+  { loading: () => <p role="status" className="p-6 text-caption text-muted">Loading remedy workspace…</p>, ssr: false }
+);
+
 const STEPS = [
   { title: "Observe", role: "Evidence collector", input: "A sensitive account-change request and its source records.", output: "Timestamped evidence with source identity and provenance.", check: "Missing or stale records leave the assessment UNKNOWN." },
   { title: "Recall", role: "Memory investigator", input: "Verified historical relationships, previous decisions and evidence expiry.", output: "Relevant prior patterns, including contradictions and missing context.", check: "A similar past event is a lead, never proof of fraud." },
@@ -19,23 +26,68 @@ const STEPS = [
 
 export default function ResolveAIPage() {
   const health = useFetch(getHealthDetailed);
+  const [activeTab, setActiveTab] = useState<"remedy" | "drift" | "overview">("remedy");
   const [step, setStep] = useState(0);
   const selected = STEPS[step];
   return (
     <div className="mx-auto max-w-[1400px]">
-      <PageHeader title="ResolveAI Intelligence" lede="Kairos owns the workflow and the decision. ResolveAI contributes investigative intelligence, connected evidence and specialist reasoning." actions={<ButtonLink href="/workspace">All Features</ButtonLink>} />
-      <nav aria-label="Intelligence sections" className="mt-6 flex flex-wrap gap-2 border-y border-line py-3">
-        {[["agents", "Agent Map"], ["infrastructure", "Infrastructure"], ["memory", "Agent Memory"], ["curation", "Data Curation"], ["models", "Models & Fine-tuning"], ["cyber", "Cyber & Fraud"]].map(([id, title]) => <Link key={id} href={`#${id}`} className="inline-flex min-h-11 items-center px-3 text-caption font-medium text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent">{title}</Link>)}
+      <PageHeader title="ResolveAI Intelligence" lede="AIDTRACE owns the workflow and the decision. ResolveAI contributes investigative intelligence, connected evidence and specialist reasoning." actions={<ButtonLink href="/workspace">All Features</ButtonLink>} />
+
+      <nav aria-label="ResolveAI sub-modules" className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
+        <Button
+          variant={activeTab === "remedy" ? "primary" : "ghost"}
+          onClick={() => setActiveTab("remedy")}
+          className="min-h-11"
+        >
+          Consumer Remedy Investigation
+        </Button>
+        <Button
+          variant={activeTab === "drift" ? "primary" : "ghost"}
+          onClick={() => setActiveTab("drift")}
+          className="min-h-11"
+        >
+          Evidence Drift Cascade
+        </Button>
+        <Button
+          variant={activeTab === "overview" ? "primary" : "ghost"}
+          onClick={() => setActiveTab("overview")}
+          className="min-h-11"
+        >
+          Architecture & System Map
+        </Button>
       </nav>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {[
-          ["Kairos", "Experience & governance", "Workspaces, approval boundaries and accountable decisions."],
-          ["ResolveAI", "Investigation integration", "Specialist mapping is visible; agent runtime is not connected."],
-          ["FalkorDB", "Reasoning infrastructure", "Connection status is reported below from the health endpoint."],
-        ].map(([title, subtitle, description]) => <article key={title} className="border border-line bg-surface p-5"><p className="text-caption text-muted">{subtitle}</p><h2 className="mt-2 text-title font-semibold text-ink">{title}</h2><p className="mt-2 text-caption leading-relaxed text-muted">{description}</p></article>)}
-      </div>
-      <ReasoningWorkspace health={health.status === "live" ? health.data : null} loading={health.status === "loading"} />
-      <DriftDemoPanel />
+
+      {activeTab === "remedy" && (
+        <div className="mt-6">
+          <ConsumerWorkspace />
+        </div>
+      )}
+
+      {activeTab === "drift" && (
+        <div className="mt-6 space-y-6">
+          <DriftDemoPanel />
+        </div>
+      )}
+
+      {activeTab === "overview" && (
+        <div className="mt-6 space-y-6">
+          <nav aria-label="Intelligence sections" className="flex flex-wrap gap-2 border-y border-line py-3">
+            {[["agents", "Agent Map"], ["infrastructure", "Infrastructure"], ["memory", "Agent Memory"], ["curation", "Data Curation"], ["models", "Models & Fine-tuning"], ["cyber", "Cyber & Fraud"]].map(([id, title]) => <Link key={id} href={`#${id}`} className="inline-flex min-h-11 items-center px-3 text-caption font-medium text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent">{title}</Link>)}
+          </nav>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["AIDTRACE", "Experience & governance", "Workspaces, approval boundaries and accountable decisions."],
+              ["ResolveAI", "Investigation integration", "Specialist mapping is visible; agent runtime is not connected."],
+              ["FalkorDB", "Reasoning infrastructure", "Connection status is reported below from the health endpoint."],
+            ].map(([title, subtitle, description]) => <article key={title} className="border border-line bg-surface p-5"><p className="text-caption text-muted">{subtitle}</p><h2 className="mt-2 text-title font-semibold text-ink">{title}</h2><p className="mt-2 text-caption leading-relaxed text-muted">{description}</p></article>)}
+          </div>
+          <ReasoningWorkspace health={health.status === "live" ? health.data : null} loading={health.status === "loading"} />
+        </div>
+      )}
+      <section aria-label="Graph Lab" className="mt-4 flex flex-wrap items-center justify-between gap-3 border border-line bg-surface-2 p-4">
+        <p className="max-w-3xl text-caption leading-relaxed text-muted">Explore this evidence graph beyond the single scenario: run blast-radius, decision-gate, containment-cut and other engines on it, and view the result as a network, layers, matrix or timeline.</p>
+        <div className="flex gap-2"><ButtonLink href="/hub">Open the Intelligence Hub</ButtonLink></div>
+      </section>
       <section id="memory" aria-labelledby="memory-heading" className="scroll-mt-6 border-b border-line py-8">
         <div className="flex items-center gap-3"><Icon name="graph" className="size-6 text-accent" /><h2 id="memory-heading" className="text-title font-semibold">Evidence Memory</h2></div>
         <p className="mt-2 max-w-3xl text-body leading-relaxed text-muted">The integration design connects what was observed, what must remain true, and which decisions depend on that evidence. This is the memory contract; a live memory inspector is not yet connected.</p>

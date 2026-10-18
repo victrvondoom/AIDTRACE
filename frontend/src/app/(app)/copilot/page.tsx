@@ -41,7 +41,7 @@ function InfoPopover({ turnCount, asOf, onClose }: { turnCount: number; asOf: st
         </div>
         <h3 className="mt-1.5 text-title font-semibold">Evidence before prose</h3>
         <p className="mt-2 text-caption leading-relaxed text-muted">
-          Kairos cites governed sources, exposes uncertainty, and refuses safety-critical answers when confidence is insufficient.
+          AIDTRACE cites governed sources, exposes uncertainty, and refuses safety-critical answers when confidence is insufficient.
         </p>
         <div className="mt-4 space-y-3 border-t border-line pt-4">
           <div>
@@ -267,7 +267,7 @@ export default function CopilotPage() {
                     </div>
                   </div>
 
-                  {/* Kairos avatar + answer */}
+                  {/* AIDTRACE avatar + answer */}
                   <div className="flex items-start gap-3">
                     <div className="mt-1 grid size-8 shrink-0 place-items-center rounded-full bg-accent-soft">
                       <Icon name="chat-centered-text" className="size-4 text-accent" />

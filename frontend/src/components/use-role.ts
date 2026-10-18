@@ -70,7 +70,13 @@ const STAFF_AND_COMPLIANCE: Role[] = [...STAFF_ONLY, "compliance"];
 // the app shell so no page can be reached by URL without the right role.
 const ROUTE_ACCESS: ReadonlyArray<{ prefix: string; roles: Role[] }> = [
   { prefix: "/workspace", roles: STAFF_ONLY },
+  { prefix: "/track1", roles: STAFF_ONLY },
   { prefix: "/resolveai", roles: STAFF_ONLY },
+  { prefix: "/capabilities", roles: STAFF_ONLY },
+  { prefix: "/hub", roles: STAFF_ONLY },
+  { prefix: "/graph-lab", roles: STAFF_ONLY },
+  { prefix: "/sources", roles: STAFF_ONLY },
+  { prefix: "/supply-chain", roles: STAFF_ONLY },
   { prefix: "/system-health", roles: ADMIN_ROLES },
   { prefix: "/overview", roles: STAFF_ONLY },
   { prefix: "/events", roles: STAFF_ONLY },

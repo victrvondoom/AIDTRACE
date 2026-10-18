@@ -13,7 +13,7 @@ import Home from "./page";
 describe("Home", () => {
   afterEach(cleanup);
 
-  it("shows the public Kairos landing page instead of redirecting visitors", () => {
+  it("shows the public AIDTRACE landing page instead of redirecting visitors", () => {
     render(<Home />);
 
     expect(screen.getByRole("heading", { level: 1, name: /the plant already knows/i })).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe("Home", () => {
     expect(screen.getByRole("link", { name: /see how it works/i })).toHaveAttribute("href", "#how");
   });
 
-  // Readers who did not already know the domain could not tell what Kairos was.
+  // Readers who did not already know the domain could not tell what AIDTRACE was.
   // The problem and the worked scenario are the fix, so they are load-bearing:
   // if either is dropped the page goes back to answering a question nobody asked.
   it("states the problem and walks one scenario before it makes a product claim", () => {
@@ -207,7 +207,7 @@ describe("Home", () => {
     // One category's questions at a time; the first answer starts open.
     const disclosures = container.querySelectorAll("details");
     expect(disclosures).toHaveLength(3);
-    expect(disclosures[0].querySelector("summary")).toHaveTextContent(/what does kairos actually do/i);
+    expect(disclosures[0].querySelector("summary")).toHaveTextContent(/what does aidtrace actually do/i);
     expect(disclosures[0]).toHaveAttribute("open");
   });
 
@@ -215,12 +215,12 @@ describe("Home", () => {
     render(<Home />);
 
     const answers = document.getElementById("faq-answers") as HTMLElement;
-    expect(answers).toHaveTextContent(/what does kairos actually do/i);
+    expect(answers).toHaveTextContent(/what does aidtrace actually do/i);
 
     fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
 
     expect(answers).toHaveTextContent(/how was it evaluated/i);
-    expect(answers).not.toHaveTextContent(/what does kairos actually do/i);
+    expect(answers).not.toHaveTextContent(/what does aidtrace actually do/i);
   });
 
   it("keeps every footer link pointed at a real destination", () => {

@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Cesium's generated runtime bundle is copied here by prebuild; lint the source modules, not vendor output.
+    "public/cesium/**",
     "next-env.d.ts",
   ]),
 ]);

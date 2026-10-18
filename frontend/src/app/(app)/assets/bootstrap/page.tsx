@@ -105,7 +105,7 @@ export default function BootstrapPage() {
         <div className="min-w-0">
           <p className="text-body font-semibold text-ink">Human confirmation required</p>
           <p className="mt-0.5 max-w-3xl text-caption leading-relaxed text-muted">
-            Extracted knowledge remains quarantined until a qualified user confirms its asset identity. Kairos never invents the missing identity.
+            Extracted knowledge remains quarantined until a qualified user confirms its asset identity. AIDTRACE never invents the missing identity.
           </p>
         </div>
       </div>

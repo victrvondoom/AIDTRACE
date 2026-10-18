@@ -1,0 +1,7 @@
+# GreenChain migration
+
+Source: `GREENCHAIN-main/greenchain` (MIT per its README; the tree has no LICENSE file). Originally a HackPrinceton project, so it must be credited as imported work, not as new Kairos work.
+
+**Working in Kairos (real code, real models):** manufacturer enrichment and scoring with the vendored XGBoost q10/q50/q90 models, USEEIO 1,016 NAICS factors, Ember grid data, ND-GAIN climate risk and GLEC transport factors; transport re-scoring; composite ranking with adjustable weights; the original canvas globe; the instant client-side scoring lens; a supplier decision graph (Decision to Supplier to Certification, Country, Estimate to Dataset) persisted per tenant in FalkorDB; what-if supplier removal. Original tests: 54 pass under `backend/tests/greenchain`; Kairos integration tests: 9.
+**Honest limits:** demo candidates are labelled illustrative and are not real suppliers; certifications are unverified claims, so impact through them is only "possible"; emissions are modelled intensities, not factory measurements; the globe's country boundaries fall back to an outline offline.
+**Not connected:** live discovery (Dedalus, Brave MCP), prompt scenario editing (K2) and report memo (Gemini): code and routes exist, provider keys do not, and they are closed to the demo role. **Not built:** CSV upload UI, the 4,412-line force-directed graph (replaced by Kairos graph views), the landing/onboarding flow.

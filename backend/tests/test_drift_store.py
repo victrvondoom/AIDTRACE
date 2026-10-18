@@ -94,6 +94,22 @@ def test_local_falkordb_resolveai_memory_decision_action_cascade_is_idempotent(l
     assert store.read_node(site_id, "DEMO-DRIFT-DECISION-REV-001")["properties"]["graph_revision"] == result["decision_revision"]["previous_graph_revision"]
     assert store.read_node(site_id, "DEMO-DRIFT-APPROVAL-REV-001")["properties"]["graph_revision"] != result["decision_revision"]["current_graph_revision"]
 
+    with pytest.raises(RuntimeError, match="compare-and-set failed"):
+        store.append_decision_revision(
+            site_id,
+            decision_id="DEMO-DRIFT-DECISION-001",
+            revision_id="DEMO-DRIFT-DECISION-REV-STALE",
+            expected_revision_n=1,
+            previous_revision_id="DEMO-DRIFT-DECISION-REV-001",
+            graph_revision="a" * 64,
+            status="INVALIDATED",
+            conditions_json="[]",
+            dependency_ids=["DEMO-DRIFT-CLAIM-V2"],
+            created_at="2026-10-18T08:00:00+00:00",
+            reason="stale write must not advance the decision head",
+        )
+    assert store.read_node(site_id, "DEMO-DRIFT-DECISION-REV-STALE") is None
+
 
 def test_local_resolveai_api_runs_site_scoped_cascade_and_blocks_nonstaff(local_drift_store) -> None:
     store, (site_id, other_site_id) = local_drift_store
@@ -104,12 +120,24 @@ def test_local_resolveai_api_runs_site_scoped_cascade_and_blocks_nonstaff(local_
     app.dependency_overrides[get_falkor_drift_store] = lambda: store
     client = TestClient(app)
 
-    response = client.post("/resolveai/drift/demo")
+    response = client.post("/resolveai/drift/demo", json={
+        "focus_level": "TARGETED", "input_modalities": ["DOCUMENT", "VOICE", "IMAGE"]
+    })
     assert response.status_code == 200, response.text
     assert response.json()["action_eligibility"] == "SUSPENDED"
+    assert response.json()["focus_plan"]["focus_level"] == "TARGETED"
+    assert response.json()["focus_plan"]["unconnected_modalities"] == ["IMAGE", "VOICE"]
     status_response = client.get("/resolveai/drift/demo")
     assert status_response.status_code == 200
     assert status_response.json()["statuses"]["DEMO-DRIFT-ACTION-001"] == "SUSPENDED"
+    assert status_response.json()["source_before"] == "DEMO-DRIFT-SOP-V1"
+    assert status_response.json()["source_after"] == "DEMO-DRIFT-SOP-V2"
+    assert status_response.json()["sources"][1]["authority_level"] == 2
+    assert status_response.json()["condition_results"][0]["actual"] == 90
+    assert status_response.json()["condition_results"][0]["holds"] is False
+    assert status_response.json()["action_eligibility"] == "SUSPENDED"
+    assert status_response.json()["impact_paths"][-1]["node_id"] == "DEMO-DRIFT-ACTION-001"
+    assert status_response.json()["audit_chain_hash"] == response.json()["audit_chain_hash"]
     assert store.read_node(other_site_id, "DEMO-DRIFT-ACTION-001") is None
 
     app.dependency_overrides[get_current_user] = lambda: {

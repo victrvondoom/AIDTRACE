@@ -55,3 +55,57 @@ describe("useFetch state transitions", () => {
     expect(calls).toBe(2);
   });
 });
+
+
+describe("live refresh policy", () => {
+  it("refreshes by default, pauses while hidden, and resumes on focus", async () => {
+    vi.useFakeTimers();
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+    const fn = vi.fn().mockResolvedValue({ data: 1, source: "live" });
+    const { result, unmount } = renderHook(() => useFetch(fn));
+    try {
+      await act(async () => {});
+      fn.mockResolvedValue({ data: 2, source: "live" });
+      await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+      expect(result.current).toEqual({ status: "live", data: 2 });
+      hidden.mockReturnValue(true);
+      await act(async () => { await vi.advanceTimersByTimeAsync(90000); });
+      expect(fn).toHaveBeenCalledTimes(2);
+      hidden.mockReturnValue(false);
+      await act(async () => { window.dispatchEvent(new Event("focus")); });
+      expect(fn).toHaveBeenCalledTimes(3);
+    } finally { unmount(); hidden.mockRestore(); vi.useRealTimers(); }
+  });
+
+  it("does not overlap requests and restarts after reconnecting", async () => {
+    vi.useFakeTimers();
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(true);
+    let resolve!: (value: Fetched<number>) => void;
+    const fn = vi.fn().mockImplementation(() => new Promise<Fetched<number>>((r) => { resolve = r; }));
+    const { unmount } = renderHook(() => useFetch(fn));
+    try {
+      await act(async () => { window.dispatchEvent(new Event("focus")); await vi.advanceTimersByTimeAsync(60000); });
+      expect(fn).toHaveBeenCalledTimes(1);
+      await act(async () => { resolve({ data: 1, source: "live" }); });
+      online.mockReturnValue(false);
+      await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+      expect(fn).toHaveBeenCalledTimes(1);
+      online.mockReturnValue(true);
+      await act(async () => { window.dispatchEvent(new Event("online")); });
+      expect(fn).toHaveBeenCalledTimes(2);
+    } finally { unmount(); online.mockRestore(); vi.useRealTimers(); }
+  });
+
+  it("keeps explicit one-shot reads opt-out and ignores old dependency results", async () => {
+    let resolveOld!: (value: Fetched<number>) => void;
+    const old = new Promise<Fetched<number>>((resolve) => { resolveOld = resolve; });
+    const fn = vi.fn().mockReturnValueOnce(old).mockResolvedValue({ data: 2, source: "live" });
+    const { result, rerender, unmount } = renderHook(({ id }) => useFetch(fn, [id], 0), { initialProps: { id: 1 } });
+    rerender({ id: 2 });
+    await waitFor(() => expect(result.current).toEqual({ status: "live", data: 2 }));
+    await act(async () => { resolveOld({ data: 1, source: "live" }); window.dispatchEvent(new Event("focus")); });
+    expect(result.current).toEqual({ status: "live", data: 2 });
+    expect(fn).toHaveBeenCalledTimes(2);
+    unmount();
+  });
+});

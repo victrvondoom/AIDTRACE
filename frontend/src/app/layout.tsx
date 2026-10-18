@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Noto_Sans_Devanagari } from "next/font/google";
+import "@fontsource-variable/geist-mono";
+// Multi-script fallback for Hindi/Hinglish/Devanagari content (Layer 3)
+import "@fontsource-variable/noto-sans-devanagari";
 import "./globals.css";
 import { CanvasTokensProvider } from "@/lib/graph-theme";
 import { dmSans, instrumentSans } from "./landing-fonts";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Multi-script fallback for Hindi/Hinglish/Devanagari content (Layer 3)
-const notoDevanagari = Noto_Sans_Devanagari({
-  variable: "--font-noto-devanagari",
-  subsets: ["devanagari"],
-  weight: ["400", "500", "600"],
-});
-
 export const metadata: Metadata = {
-  title: "Kairos",
+  title: "AIDTRACE",
   description:
     "The right knowledge to the right person at the moment of action. Governed industrial operational intelligence.",
   icons: { icon: "/logo.png", apple: "/logo.png" },
@@ -35,7 +25,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="light"
-      className={`${dmSans.variable} ${instrumentSans.variable} ${geistMono.variable} ${notoDevanagari.variable} h-full`}
+      className={`${dmSans.variable} ${instrumentSans.variable} kairos-font-mono kairos-font-devanagari h-full`}
       suppressHydrationWarning
     >
       <head>

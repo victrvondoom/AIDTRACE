@@ -124,6 +124,21 @@ class FalkorDriftStore:
         if result.result_set and result.result_set[0][0] == 0:
             raise KeyError("both endpoint nodes must exist in this site's drift graph")
 
+    def unlink(self, site_id: str, source_id: str, relationship: str | Rel, target_id: str) -> int:
+        """Remove one allow-listed relationship between two nodes (history lives on immutable DecisionRevision nodes)."""
+        relationship_value = relationship.value if isinstance(relationship, Rel) else relationship
+        if relationship_value not in _ALLOWED_RELS:
+            raise ContractError("relationship is not in the drift schema")
+        check_id(source_id, "source_id")
+        check_id(target_id, "target_id")
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return 0
+        result = self._graph(site_id).query(
+            f"MATCH (a {{id: $s}})-[r:{relationship_value}]->(b {{id: $t}}) DELETE r RETURN count(r)",
+            {"s": source_id, "t": target_id}, timeout=self._query_timeout_ms,
+        )
+        return int(result.result_set[0][0]) if result.result_set else 0
+
     def find_impacts(self, site_id: str, changed_ids: Sequence[str] | set[str]) -> list[ImpactPath]:
         """Read bounded one-hop edges from FalkorDB, then apply the deterministic Python closure."""
         roots = sorted({check_id(node_id, "changed_id") for node_id in changed_ids})
@@ -256,6 +271,12 @@ class FalkorDriftStore:
             "revision_n": expected_revision_n + 1,
             "previous_revision_id": previous_revision_id,
             "graph_revision": graph_revision,
+            "status": status,
+            "conditions_json": conditions_json,
+            "dependency_ids": list(dependency_ids),
+            "created_at": created_at,
+            "reason": reason,
+            "site_id": scoped_site,
             "props": props,
         }
         if expected_revision_n == 0:
@@ -264,7 +285,9 @@ class FalkorDriftStore:
                 "WHERE coalesce(d.revision_n, 0) = $expected_revision_n "
                 "MERGE (r:DecisionRevision {id: $revision_id}) ON CREATE SET r += $props "
                 "WITH d, r WHERE r.decision_id = $decision_id AND r.revision_n = $revision_n "
-                "AND r.graph_revision = $graph_revision "
+                "AND r.graph_revision = $graph_revision AND r.status = $status "
+                "AND r.conditions_json = $conditions_json AND r.dependency_ids = $dependency_ids "
+                "AND r.created_at = $created_at AND r.reason = $reason AND r.site_id = $site_id "
                 "MERGE (d)-[:HAS_REVISION]->(r) "
                 "SET d.revision_n = $revision_n, d.current_revision_id = $revision_id, d.status = r.status "
                 "RETURN r.id, r.revision_n, r.graph_revision, r.status"
@@ -277,7 +300,9 @@ class FalkorDriftStore:
                 "AND prev.decision_id = $decision_id AND prev.revision_n = $expected_revision_n "
                 "MERGE (r:DecisionRevision {id: $revision_id}) ON CREATE SET r += $props "
                 "WITH d, prev, r WHERE r.decision_id = $decision_id AND r.revision_n = $revision_n "
-                "AND r.graph_revision = $graph_revision "
+                "AND r.graph_revision = $graph_revision AND r.status = $status "
+                "AND r.conditions_json = $conditions_json AND r.dependency_ids = $dependency_ids "
+                "AND r.created_at = $created_at AND r.reason = $reason AND r.site_id = $site_id "
                 "MERGE (d)-[:HAS_REVISION]->(r) MERGE (r)-[:PREVIOUS]->(prev) "
                 "SET d.revision_n = $revision_n, d.current_revision_id = $revision_id, d.status = r.status "
                 "RETURN r.id, r.revision_n, r.graph_revision, r.status"
@@ -297,12 +322,121 @@ class FalkorDriftStore:
                 and current.get("revision_n") == expected_revision_n + 1
                 and current.get("graph_revision") == graph_revision
                 and current.get("status") == status
+                and current.get("conditions_json") == conditions_json
+                and current.get("dependency_ids") == list(dependency_ids)
+                and current.get("created_at") == created_at
+                and current.get("reason") == reason
+                and current.get("site_id") == scoped_site
             )
             if same:
                 return {"revision_id": revision_id, "revision_n": current["revision_n"],
                         "graph_revision": current["graph_revision"], "status": current["status"]}
             raise ContractError("revision id already exists with different immutable content")
         raise RuntimeError("decision revision compare-and-set failed; the head changed or parent is missing")
+
+    def list_nodes(self, site_id: str, label: str | Label, *, limit: int = 200) -> list[dict[str, Any]]:
+        """Read-only, bounded listing of one allow-listed label in the caller's site graph (never creates a graph)."""
+        label_value = label.value if isinstance(label, Label) else label
+        if label_value not in _ALLOWED_LABELS:
+            raise ContractError("node label is not in the drift schema")
+        if not 1 <= limit <= 1000:
+            raise ContractError("limit must be between 1 and 1000")
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return []
+        rows = self._graph(site_id).ro_query(
+            f"MATCH (n:{label_value}) RETURN n.id, properties(n) ORDER BY n.id LIMIT {limit}", timeout=self._query_timeout_ms
+        ).result_set
+        return [{"id": str(node_id), **{k: v for k, v in dict(props).items() if k not in {"id", "site_id"}}} for node_id, props in rows]
+
+    def edges_of(self, site_id: str, node_id: str) -> dict[str, list[dict[str, Any]]]:
+        """Outgoing and incoming relationships of one node: [{rel, id, label}]. Bounded; empty if the graph is absent."""
+        check_id(node_id)
+        empty: dict[str, list[dict[str, Any]]] = {"out": [], "in": []}
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return empty
+        graph = self._graph(site_id)
+        out_rows = graph.ro_query("MATCH (n {id: $id})-[r]->(m) RETURN type(r), m.id, labels(m) LIMIT 500", {"id": node_id}, timeout=self._query_timeout_ms).result_set
+        in_rows = graph.ro_query("MATCH (m)-[r]->(n {id: $id}) RETURN type(r), m.id, labels(m) LIMIT 500", {"id": node_id}, timeout=self._query_timeout_ms).result_set
+        shape = lambda rows: [{"rel": str(r), "id": str(i), "label": (lab[0] if lab else "")} for r, i, lab in rows if i is not None]  # noqa: E731
+        return {"out": shape(out_rows), "in": shape(in_rows)}
+
+    def handoffs(self, site_id: str, *, limit: int = 200) -> list[dict[str, Any]]:
+        """Who produced a memory and which other agent sessions recalled it: the cross-agent sharing record."""
+        if not 1 <= limit <= 1000:
+            raise ContractError("limit must be between 1 and 1000")
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return []
+        rows = self._graph(site_id).ro_query(
+            "MATCH (m:Memory)-[:RECALLED_IN]->(s:AgentSession) "
+            f"RETURN m.id, m.agent_id, m.status, s.id, s.agent_id, s.started_at ORDER BY s.started_at DESC LIMIT {limit}",
+            timeout=self._query_timeout_ms,
+        ).result_set
+        return [{"memory_id": str(m), "produced_by": pa, "memory_status": ms, "recall_session": str(sid), "recalled_by": ra, "at": at}
+                for m, pa, ms, sid, ra, at in rows]
+
+    def memory_lineage(self, site_id: str, *, limit: int = 200) -> list[dict[str, Any]]:
+        """Every Memory with the claims it derives from and those claims' source versions, in one bounded read."""
+        if not 1 <= limit <= 1000:
+            raise ContractError("limit must be between 1 and 1000")
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return []
+        rows = self._graph(site_id).ro_query(
+            "MATCH (m:Memory) "
+            "OPTIONAL MATCH (m)-[:DERIVED_FROM]->(c:Claim) "
+            "OPTIONAL MATCH (c)-[:SUPPORTED_BY]->(s:SourceVersion) "
+            "OPTIONAL MATCH (s)-[:VERSION_OF]->(d:Document) "
+            "RETURN m.id, properties(m), c.id, c.fact_key, c.fact_value, c.status, s.id, s.status, d.id, s.content_sha256 "
+            f"ORDER BY m.id LIMIT {limit * 8}",
+            timeout=self._query_timeout_ms,
+        ).result_set
+        out: dict[str, dict[str, Any]] = {}
+        for mid, props, cid, ckey, cval, cstatus, sid, sstatus, did, sha in rows:
+            entry = out.setdefault(str(mid), {"id": str(mid), **{k: v for k, v in dict(props).items() if k not in {"id", "site_id"}}, "claims": [], "sources": []})
+            if cid is not None and all(c["id"] != cid for c in entry["claims"]):
+                entry["claims"].append({"id": str(cid), "fact_key": ckey, "fact_value": cval, "status": cstatus})
+            if sid is not None and all(x["id"] != sid for x in entry["sources"]):
+                entry["sources"].append({"id": str(sid), "status": sstatus, "document_id": did, "content_sha256": sha})
+        return list(out.values())[:limit]
+
+    def export_graph(self, site_id: str, max_nodes: int = 500, max_edges: int = 2000) -> dict[str, Any]:
+        """Bounded read-only export of the caller's site graph in Graph Lab shape.
+
+        Edges keep the store's "dependent -> dependency" direction. Only SUPPORTED_BY / DERIVED_FROM /
+        DEPENDS_ON edges take part in analysis (the same set `find_impacts` follows); every other
+        relationship is exported `disabled` so views can show it. Logical/policy edges are `definite`;
+        context edges export as `maybe` because they advise review but never invalidate.
+        Never creates a graph; an absent site graph exports as empty.
+        """
+        if not 1 <= max_nodes <= 2000 or not 1 <= max_edges <= 10000:
+            raise ContractError("export bounds are outside the Graph Lab limits")
+        if self.graph_name(site_id) not in self._client.list_graphs():
+            return {"nodes": [], "edges": [], "truncated": False}
+        graph = self._graph(site_id)
+        node_rows = graph.ro_query(
+            f"MATCH (n) WHERE n.id IS NOT NULL RETURN n.id, labels(n), properties(n) ORDER BY n.id LIMIT {max_nodes + 1}",
+            timeout=self._query_timeout_ms,
+        ).result_set
+        edge_rows = graph.ro_query(
+            "MATCH (a)-[r]->(b) WHERE a.id IS NOT NULL AND b.id IS NOT NULL "
+            f"RETURN a.id, b.id, type(r), properties(r) ORDER BY a.id, b.id, type(r) LIMIT {max_edges + 1}",
+            timeout=self._query_timeout_ms,
+        ).result_set
+        truncated = len(node_rows) > max_nodes or len(edge_rows) > max_edges
+        nodes, kept = [], set()
+        for node_id, labels, props in node_rows[:max_nodes]:
+            clean = {k: v for k, v in dict(props).items() if k not in {"id", "site_id"} and isinstance(v, (str, int, float, bool))}
+            kept.add(str(node_id))
+            nodes.append({"id": str(node_id), "type": (labels[0] if labels else "node"),
+                          "label": str(clean.get("title") or clean.get("name") or node_id), "props": clean})
+        edges = []
+        for source, target, rel, props in edge_rows[:max_edges]:
+            if str(source) in kept and str(target) in kept:
+                kind = dict(props).get("kind", "logical")
+                edges.append({"source": str(source), "target": str(target), "rel": str(rel),
+                              "certainty": "definite" if kind in _PROPAGATING else "maybe",
+                              # Metadata relationships (SUPERSEDES, HAS_SESSION, ...) stay visible but never propagate.
+                              "disabled": str(rel) not in _DEPENDENCY_RELS})
+        return {"nodes": nodes, "edges": edges, "truncated": truncated}
 
     def _graph(self, site_id: str):
         return self._client.select_graph(self.graph_name(site_id))

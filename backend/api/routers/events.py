@@ -1011,6 +1011,7 @@ async def get_plant_state_endpoint(
 
 
 @router.get("/", summary="List operational events")
+@router.get("", include_in_schema=False)
 async def list_events(
     current_user: CurrentUserDep,
     supabase: SupabaseDep,

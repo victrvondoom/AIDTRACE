@@ -134,7 +134,7 @@ export function Answer({ data, query = "", streaming }: {
     return (
       <div className="space-y-3 rounded-2xl rounded-bl-sm border border-line bg-surface-2 p-4">
         <div className="flex items-center gap-2">
-          <StatusBadge tone="neutral">About Kairos</StatusBadge>
+          <StatusBadge tone="neutral">About AIDTRACE</StatusBadge>
           <span className="text-caption text-muted">Not a knowledge answer — no sources cited</span>
         </div>
         <div className="space-y-2 text-sm leading-relaxed text-ink">

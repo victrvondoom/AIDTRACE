@@ -186,6 +186,19 @@ describe("events: empty and offline are honest", () => {
     expect(result.source).toBe("live");
     expect(result.data.items).toHaveLength(0);
   });
+
+  it("uses the no-slash API route so the browser stays on the same origin", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      items: [], total: 0, limit: 50, offset: 0,
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { getEvents } = await import("./api");
+    await getEvents({ limit: 200 });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("/events?limit=200");
+    expect(fetchMock.mock.calls[0]?.[0]).not.toContain("/events/?");
+  });
 });
 
 describe("empty lists and the stream error frame", () => {

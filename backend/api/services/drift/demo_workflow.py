@@ -5,14 +5,17 @@ import json
 
 from .model import (
     ActionStatus,
+    AgentFocusLevel,
     DerivedStatus,
     EvidenceStrength,
     Label,
     MemoryKind,
+    InputModality,
     Rel,
     SourceStatus,
     Verification,
     Verdict,
+    build_agent_focus_plan,
     evaluate_conditions,
     parse_conditions,
     resolve_authority,
@@ -42,14 +45,25 @@ DECISION_REVISION_2 = "DEMO-DRIFT-DECISION-REV-002"
 APPROVAL = "DEMO-DRIFT-APPROVAL-REV-001"
 
 
-def run_evidence_supersession(store: FalkorDriftStore, site_id: str) -> dict:
+def run_evidence_supersession(
+    store: FalkorDriftStore,
+    site_id: str,
+    *,
+    focus_level: AgentFocusLevel | str = AgentFocusLevel.HYPERFOCUS,
+    requested_modalities: list[InputModality | str] | None = None,
+) -> dict:
     """Persist a repeatable source change, find dependent memory and suspend its action."""
     created_at = "2026-10-18T08:00:00+00:00"
+    focus_plan = build_agent_focus_plan(
+        focus_level,
+        [InputModality.DOCUMENT, InputModality.TEXT]
+        if requested_modalities is None else requested_modalities,
+    )
     store.upsert_node(site_id, Label.ASSET, ASSET, {
         "case_id": CASE, "asset_tag": "DEMO-HV-PUMP-001", "synthetic": True,
     })
     store.upsert_node(site_id, Label.DOCUMENT, DOCUMENT, {
-        "case_id": CASE, "title": "Synthetic pump inspection procedure", "synthetic": True,
+        "case_id": CASE, "title": "Synthetic supplier security-audit procedure", "synthetic": True,
     })
     store.upsert_node(site_id, Label.SOURCE_VERSION, OLD_SOURCE, {
         "case_id": CASE, "status": SourceStatus.SUPERSEDED.value, "authority_level": 4,
@@ -74,32 +88,38 @@ def run_evidence_supersession(store: FalkorDriftStore, site_id: str) -> dict:
         "synthetic": True,
     })
     store.upsert_node(site_id, Label.AGENT, INVESTIGATOR, {
-        "case_id": CASE, "name": "ResolveAI Maintenance Specialist", "specialty": "inspection decisions",
+        "case_id": CASE, "name": "ResolveAI Supplier Risk Specialist", "specialty": "supplier audit decisions",
         "synthetic": True,
     })
     store.upsert_node(site_id, Label.AGENT_SESSION, CURATOR_SESSION, {
-        "case_id": CASE, "focus_level": "HYPERFOCUS", "focus_scope": "approved source revision",
+        "case_id": CASE, "focus_level": focus_plan["focus_level"],
+        "focus_scope": f"source curator: {focus_plan['focus_scope']}",
+        "requested_modalities": focus_plan["requested_modalities"],
+        "unconnected_modalities": focus_plan["unconnected_modalities"],
         "trace_kind": "synthetic_demo", "synthetic": True,
     })
     store.upsert_node(site_id, Label.AGENT_SESSION, INVESTIGATOR_SESSION, {
-        "case_id": CASE, "focus_level": "HYPERFOCUS", "focus_scope": "inspection interval decision",
+        "case_id": CASE, "focus_level": focus_plan["focus_level"],
+        "focus_scope": f"decision investigator: {focus_plan['focus_scope']}",
+        "requested_modalities": focus_plan["requested_modalities"],
+        "unconnected_modalities": focus_plan["unconnected_modalities"],
         "trace_kind": "synthetic_demo", "synthetic": True,
     })
     store.upsert_node(site_id, Label.MEMORY, MEMORY, {
         "case_id": CASE, "status": DerivedStatus.STALE.value, "memory_kind": MemoryKind.PROCEDURAL.value,
-        "summary": "Prior inspection interval recalled by a second specialist agent.",
+        "summary": "Prior supplier audit interval recalled by a second specialist agent.",
         "agent_id": INVESTIGATOR, "source_agent_id": CURATOR, "synthetic": True,
     })
     existing_decision = store.read_node(site_id, DECISION)
     if not existing_decision:
         store.upsert_node(site_id, Label.DECISION, DECISION, {
             "case_id": CASE, "status": DerivedStatus.VALID.value, "revision_n": 0,
-            "summary": "Schedule the inspection using the prior approved procedure.",
+            "summary": "Schedule the supplier audit using the prior approved procedure.",
             "conditions": json.dumps([{"key": "inspection_interval_days", "op": "==", "value": 180, "material": True}]),
             "generated_at": created_at, "synthetic": True,
         })
     store.upsert_node(site_id, Label.PLAN, PLAN, {
-        "case_id": CASE, "status": DerivedStatus.STALE.value, "summary": "Schedule the pump inspection.",
+        "case_id": CASE, "status": DerivedStatus.STALE.value, "summary": "Schedule the supplier audit.",
         "synthetic": True,
     })
     if not store.read_node(site_id, ACTION):
@@ -160,7 +180,7 @@ def run_evidence_supersession(store: FalkorDriftStore, site_id: str) -> dict:
     store.upsert_node(site_id, Label.APPROVAL, APPROVAL, {
         "case_id": CASE, "decision_id": DECISION, "revision_id": DECISION_REVISION_1,
         "graph_revision": first_revision["graph_revision"], "approval_status": "VALID",
-        "approved_by": "synthetic maintenance reviewer", "approved_at": created_at,
+        "approved_by": "synthetic procurement reviewer", "approved_at": created_at,
         "synthetic": True,
     })
     store.link(site_id, Label.APPROVAL, APPROVAL, Rel.ON_REVISION, Label.DECISION_REVISION, DECISION_REVISION_1)
@@ -182,7 +202,7 @@ def run_evidence_supersession(store: FalkorDriftStore, site_id: str) -> dict:
         expected_revision_n=1, previous_revision_id=DECISION_REVISION_1,
         graph_revision=current_revision_hash, status=current_status,
         conditions_json=conditions_json, dependency_ids=current_dependencies,
-        created_at=created_at, reason="The newer approved procedure changed the inspection interval.",
+        created_at=created_at, reason="The newer approved procedure changed the audit interval.",
     )
     store.link(site_id, Label.DECISION_REVISION, DECISION_REVISION_2, Rel.DEPENDS_ON, Label.CLAIM, NEW_CLAIM)
     paths = store.find_impacts(site_id, [OLD_SOURCE])
@@ -236,11 +256,14 @@ def run_evidence_supersession(store: FalkorDriftStore, site_id: str) -> dict:
             "matches_current_revision": approval_matches,
         },
         "agent_focus_trace": [
-            {"agent_id": CURATOR, "session_id": CURATOR_SESSION, "focus_level": "HYPERFOCUS",
-             "scope": "approved source revision", "trace_kind": "synthetic_demo"},
-            {"agent_id": INVESTIGATOR, "session_id": INVESTIGATOR_SESSION, "focus_level": "HYPERFOCUS",
-             "scope": "inspection interval decision", "trace_kind": "synthetic_demo"},
+            {"agent_id": CURATOR, "session_id": CURATOR_SESSION,
+             "focus_level": focus_plan["focus_level"],
+             "scope": f"source curator: {focus_plan['focus_scope']}", "trace_kind": "synthetic_demo"},
+            {"agent_id": INVESTIGATOR, "session_id": INVESTIGATOR_SESSION,
+             "focus_level": focus_plan["focus_level"],
+             "scope": f"decision investigator: {focus_plan['focus_scope']}", "trace_kind": "synthetic_demo"},
         ],
+        "focus_plan": focus_plan,
         "action_eligibility": "APPROVED" if action_status == ActionStatus.APPROVED.value else "SUSPENDED",
         "statuses": statuses,
         "audit_chain_hash": stable_hash({"case": CASE, "change": CHANGE, "paths": [item.as_dict() for item in paths],

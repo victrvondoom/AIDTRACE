@@ -6,7 +6,7 @@ import type { NextRequest } from "next/server";
 // can resolve the correct page title on SSR/refresh. It must be set on the
 // request (via NextResponse.next({ request })), not the response — server
 // components read incoming request headers, so a response header is invisible
-// to generateMetadata (which is why refresh fell back to the bare "Kairos" title).
+// to generateMetadata (which is why refresh fell back to the bare "AIDTRACE" title).
 export function proxy(req: NextRequest) {
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-pathname", req.nextUrl.pathname);

@@ -4,8 +4,8 @@ import { groupedDocs } from "@/lib/docs";
 import { DocsNav } from "./_components/docs-nav";
 
 export const metadata: Metadata = {
-  title: "Kairos documentation",
-  description: "Architecture, API reference, deployment, tests and benchmarks for Kairos.",
+  title: "AIDTRACE documentation",
+  description: "Architecture, API reference, deployment, tests and benchmarks for AIDTRACE.",
 };
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
@@ -14,10 +14,10 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     <div className="landing min-h-dvh">
       <header className="sticky top-0 z-30 border-b border-(--lp-line) bg-(--lp-band)">
         <nav className="lp-frame flex h-[49px] items-stretch">
-          <Link href="/" aria-label="Kairos home" className="flex items-center gap-2.5 border-r border-(--lp-line) px-4 sm:px-5">
+          <Link href="/" aria-label="AIDTRACE home" className="flex items-center gap-2.5 border-r border-(--lp-line) px-4 sm:px-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="" width={24} height={24} className="object-cover" />
-            <span className="lp-display text-[18px] text-(--lp-ink)">Kairos</span>
+            <span className="lp-display text-[18px] text-(--lp-ink)">AIDTRACE</span>
           </Link>
           <Link href="/docs" className="flex items-center border-r border-(--lp-line) px-4 text-[13px] font-medium text-(--lp-ink) sm:px-5">
             Documentation

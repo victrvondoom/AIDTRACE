@@ -1,0 +1,3 @@
+# Legacy source preservation
+
+Nothing was deleted or moved. `track1-agent`, `RESOLVE-AI-main` and `track1-agent/EXTERNAL_REPOS` (98 clones) remain exactly where they were, with their Git histories, as reference sources. They are not part of the Kairos build or launch. Code taken from them: the consumer module (copied, imports rewritten) and the Interdict min-cost-cut adapter (MIT, notice in `docs/integration/THIRD_PARTY_NOTICES.md`). Everything in `graphlab` is a clean-room standard algorithm; READMEs were used only as requirements. Archive them after the not-migrated items above are done.

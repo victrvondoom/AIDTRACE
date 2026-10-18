@@ -11,7 +11,9 @@ export type FetchState<T> =
   | { status: "live"; data: T }
   | { status: "error"; error: Error; retry: () => void };
 
-/** Drives a `Fetched<T>` fetcher through loading → live/error. `retry`
+/** Refreshes mounted reads every 30 seconds (pass 0 for a one-shot read), and on
+ *  focus/reconnection. Background and offline polling pauses; reads never overlap.
+ *  Drives a `Fetched<T>` fetcher through loading → live/error. `retry`
  *  re-runs the fetcher; a generation counter ignores out-of-date resolutions
  *  (StrictMode double-invoke, rapid dep changes).
  *
@@ -19,7 +21,7 @@ export type FetchState<T> =
  *  result `source: "demo"`, which this hook mapped straight to an error — so the fixture
  *  was built, then discarded, on every failure. Fetchers now throw and the fixtures are
  *  gone; the only paths are live data, a skeleton, or error+retry. */
-export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.DependencyList = [], refreshMs = 0): FetchState<T> {
+export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.DependencyList = [], refreshMs = 30000): FetchState<T> {
   const [state, setState] = useState<FetchState<T>>({ status: "loading" });
   const [generation, setGeneration] = useState(0);
 
@@ -28,7 +30,8 @@ export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.Dependenc
     let inFlight = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const load = async (initial = false) => {
-      if (inFlight || stale) return;
+      if (inFlight || stale || (!initial && (document.hidden || !navigator.onLine))) return;
+      clearTimeout(timer);
       inFlight = true;
       if (initial) setState({ status: "loading" });
       try {
@@ -61,11 +64,13 @@ export function useFetch<T>(fn: () => Promise<Fetched<T>>, deps: React.Dependenc
     };
     document.addEventListener("visibilitychange", resume);
     window.addEventListener("online", resume);
+    window.addEventListener("focus", resume);
     return () => {
       stale = true;
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", resume);
       window.removeEventListener("online", resume);
+      window.removeEventListener("focus", resume);
     };
     // `fn` is intentionally excluded: callers pass inline closures; `deps` is
     // the caller-declared dependency list (useEffect semantics).

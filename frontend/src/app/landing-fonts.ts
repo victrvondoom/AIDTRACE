@@ -1,17 +1,8 @@
-import { DM_Sans, Instrument_Sans } from "next/font/google";
+// Shared brand typefaces, self-hosted from node_modules (OFL-1.1 @fontsource-variable packages) so the production build
+// needs no network. Each export keeps the `.variable` shape `next/font` had: a class that defines the CSS variable the
+// stylesheet reads. The class rules live in globals.css (.kairos-font-*).
+import "@fontsource-variable/dm-sans";
+import "@fontsource-variable/instrument-sans";
 
-// Shared brand typefaces. Declared in their own module (no "use client") so
-// both the root layout and the client-side landing can use the same font files.
-export const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-});
-
-export const dmSans = DM_Sans({
-  variable: "--font-dm",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-});
+export const instrumentSans = { variable: "kairos-font-instrument" };
+export const dmSans = { variable: "kairos-font-dm" };

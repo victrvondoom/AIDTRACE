@@ -16,7 +16,7 @@ export function generateStaticParams(): Params[] {
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const doc = getDoc((await params).slug.join("/"));
-  return doc ? { title: `${doc.meta.label} | Kairos documentation`, description: doc.meta.summary } : {};
+  return doc ? { title: `${doc.meta.label} | AIDTRACE documentation`, description: doc.meta.summary } : {};
 }
 
 /** Diagram ids with a pre-rendered SVG (tools/render_diagrams.sh writes them from docs/DIAGRAMS.md). */

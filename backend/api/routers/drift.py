@@ -17,15 +17,28 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
-from ..dependencies import get_current_user, SettingsDep
+from ..dependencies import CurrentUserDep, SettingsDep, require_role, site_scope
 from ..services.drift import model
 from ..services.drift.engine import DependencyEdge, ImpactPath, find_impacted_dependents
 from ..services.drift.store import FalkorDriftStore, TraversalLimitExceeded
-from ..services.tenant import guard_site
+from ..services import tenant
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/drift", tags=["Evidence Drift Cascade"])
+STAFF = ("engineer", "reliability", "admin")
+
+
+def _site_for_user(current_user: dict, requested: str | None, *, write: bool) -> str | None:
+    """Bind graph access to the verified user's site and the demo showcase fence."""
+    if tenant.is_demo_user(current_user):
+        site_id = requested or "SITE_DEMO"
+        tenant.guard_site(current_user, site_id)
+        return site_id
+    site_id = site_scope(current_user, requested or current_user.get("site_id"), write=write)
+    if requested is not None and site_id != requested:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Site access denied.")
+    return site_id
 
 # ----------------------------------------------------------------------------------------
 # Request / Response schemas
@@ -109,12 +122,12 @@ async def get_drift_store_async(settings: SettingsDep) -> AsyncIterator[FalkorDr
 @router.get("/health", summary="Drift store connectivity")
 async def drift_health(
     settings: SettingsDep,
-    current_user: dict = Depends(get_current_user),
+    current_user: CurrentUserDep,
+    _staff: dict = Depends(require_role(*STAFF)),
 ) -> dict[str, bool]:
     """Check FalkorDB connectivity and site-graph existence."""
-    guard_site(current_user, None)
+    site_id = _site_for_user(current_user, None, write=False)
     store = get_drift_store(settings)
-    site_id = current_user.get("site_id", "")
     try:
         return store.inspect_site(site_id)
     finally:
@@ -126,10 +139,13 @@ async def create_node(
     site_id: str,
     request: NodeCreateRequest,
     settings: SettingsDep,
-    current_user: dict = Depends(get_current_user),
+    current_user: CurrentUserDep,
+    _staff: dict = Depends(require_role(*STAFF)),
 ) -> dict[str, str]:
     """Insert one node. Fails if the label is not in the drift schema."""
-    guard_site(current_user, site_id)
+    tenant.guard_site(current_user, site_id)
+    site_id = _site_for_user(current_user, site_id, write=True)
+    assert site_id is not None
     store = get_drift_store(settings)
     try:
         store.upsert_node(site_id, request.label, request.node_id, request.properties)
@@ -149,10 +165,13 @@ async def create_edge(
     site_id: str,
     request: EdgeCreateRequest,
     settings: SettingsDep,
-    current_user: dict = Depends(get_current_user),
+    current_user: CurrentUserDep,
+    _staff: dict = Depends(require_role(*STAFF)),
 ) -> dict[str, str]:
     """Link two existing nodes. Fails if either node does not exist."""
-    guard_site(current_user, site_id)
+    tenant.guard_site(current_user, site_id)
+    site_id = _site_for_user(current_user, site_id, write=True)
+    assert site_id is not None
     store = get_drift_store(settings)
     props = request.properties
     props["kind"] = request.kind.value
@@ -192,7 +211,8 @@ async def compute_impact(
     site_id: str,
     request: ImpactRequest,
     settings: SettingsDep,
-    current_user: dict = Depends(get_current_user),
+    current_user: CurrentUserDep,
+    _staff: dict = Depends(require_role(*STAFF)),
 ) -> ImpactResponse:
     """
     Find all decisions, memories, plans and actions transitively dependent on changed_ids.
@@ -207,7 +227,9 @@ async def compute_impact(
     - Trigger re-evaluation only for impacted decisions.
     - Never execute actions whose supporting evidence has drifted.
     """
-    guard_site(current_user, site_id)
+    tenant.guard_site(current_user, site_id)
+    site_id = _site_for_user(current_user, site_id, write=False)
+    assert site_id is not None
     store = get_drift_store(settings)
     try:
         paths = store.find_impacts(site_id, request.changed_ids)
@@ -243,7 +265,11 @@ async def compute_impact(
     summary="Pure impact computation (no database)",
     response_model=list[dict],
 )
-async def pure_impact(request: ImpactRequest) -> list[dict]:
+async def pure_impact(
+    request: ImpactRequest,
+    current_user: CurrentUserDep,
+    _staff: dict = Depends(require_role(*STAFF)),
+) -> list[dict]:
     """
     Compute impact from a list of edges you supply, not from the database.
     
@@ -252,6 +278,8 @@ async def pure_impact(request: ImpactRequest) -> list[dict]:
     - Demonstrating the cascade logic without a running FalkorDB
     - Verifying that the same edges always produce the same impact set
     """
+    if tenant.is_demo_user(current_user):
+        tenant.guard_site(current_user, "SITE_DEMO")
     changed_ids = request.changed_ids
     # For this demo endpoint, we'll use the existing Track01 dependency structure
     # In production, edges come from the actual FalkorDB graph

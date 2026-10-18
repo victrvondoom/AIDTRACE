@@ -1,0 +1,1 @@
+{"browser_verified_engines": ["min_cut"], "note": "min_cut ran from a preset in the Intelligence Hub in a real browser on 2026-10-18 (verified cut, matrix view rendered). Other engines are tested by pytest but not yet browser-verified."}

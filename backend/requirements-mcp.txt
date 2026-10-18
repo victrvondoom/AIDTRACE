@@ -1,0 +1,4 @@
+# Environment for the fraud MCP server only. It must NOT share an environment with backend/requirements.txt:
+# the MCP SDK requires a newer pydantic than the 2.7.4 that Kairos pins.
+mcp>=1.2,<2
+falkordb>=1.0.10

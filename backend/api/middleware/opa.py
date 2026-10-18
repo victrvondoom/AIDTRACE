@@ -32,7 +32,10 @@ _ACTION_MAP = (
     ("/governance/conflicts", "resolve_admin_conflict"),
     ("/documents", "ingest_document"),
     ("/assets", "write_assets"),
-    # The Copilot's POSTs get their own actions so the `demo` role can use them without being
+    # Graph Lab analysis is a pure function of its input graph: POST here reads, it changes no state.
+    ("/graphlab", "read_resolveai"),
+    ("/greenchain", "read_resolveai"),
+    #The Copilot's POSTs get their own actions so the `demo` role can use them without being
     # granted the `write_api` catch-all. Each only appends to the audit log. Every other role gets
     # them from the catch-all as before.
     ("/search/synthesize", "synthesize"),
@@ -84,7 +87,15 @@ _READ_ACTION_MAP = (
     ("/governance/quarantine", "read_nonconformance"),
     ("/governance", "read_governance"),
     ("/documents", "read_documents"),
+    ("/drift", "read_resolveai"),
     ("/resolveai", "read_resolveai"),
+    ("/graphlab", "read_resolveai"),
+    ("/greenchain", "read_resolveai"),
+    ("/fraud", "read_resolveai"),
+    ("/sources", "read_resolveai"),
+    ("/hub", "read_resolveai"),
+    ("/agent-memory", "read_resolveai"),
+    ("/agents", "read_resolveai"),
     ("/events", "read_events"),
 )
 

@@ -96,3 +96,11 @@ pytest-timeout==2.4.0
 # `pkg_resources`, which setuptools 78+ removed, so lifting it alone crashed `api.main` on import.
 # Safe only now that OTEL is >=0.49b0. Floor covers the advisories needing >=78.1.1 / >=83.0.0.
 setuptools>=84.0.0
+
+# GreenChain engines (migrated; pins match the versions the models were trained with)
+xgboost==2.1.1
+scikit-learn==1.5.0
+pandas==2.2.2
+joblib==1.4.2
+beautifulsoup4==4.12.3
+# optional live discovery: dedalus-labs (needs provider keys; absent = NOT_CONNECTED)

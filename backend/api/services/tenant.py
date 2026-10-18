@@ -228,9 +228,35 @@ DEMO_UNGUARDED = frozenset({
     ("POST", "/search/synthesize/stream"),
     ("POST", "/search/feedback"),
     ("POST", "/search/rca-pack"),
+    # Graph Lab analysis is a pure function of the submitted graph: it writes nothing. Its only data
+    # source besides the request body is the caller's site graph, which `_site_for_user` pins to SITE_DEMO.
+    ("POST", "/graphlab/analyze"),
+    ("POST", "/resolveai/consumer/intake"),  # stateless parser: nothing is written
+    # GreenChain scoring, rescoring, what-if and graph building are pure computations over the request body.
+    # Live search, scenario edit and report call paid providers and are deliberately NOT listed (closed to demo).
+    ("POST", "/greenchain/score"),
+    ("POST", "/greenchain/rescore-transport"),
+    ("POST", "/greenchain/whatif/remove-supplier"),
+    ("POST", "/greenchain/graph"),
 })
 DEMO_GUARDED = frozenset({
+    ("POST", "/fraud/seed"),
+    ("POST", "/fraud/investigations"),
+    ("POST", "/fraud/actions/approve"),
+    ("POST", "/fraud/actions/reject"),
+    ("POST", "/greenchain/graph/persist"),
+    ("POST", "/resolveai/consumer/case/load"),
+    ("POST", "/resolveai/consumer/analyze"),
+    ("POST", "/resolveai/consumer/evidence"),
+    ("POST", "/resolveai/consumer/source"),
+    ("POST", "/resolveai/consumer/edges/drop"),
+    ("POST", "/resolveai/consumer/actions/approve"),
+    ("POST", "/resolveai/consumer/actions/reject"),
     ("POST", "/resolveai/drift/demo"),
+    ("POST", "/drift/nodes/{site_id}"),
+    ("POST", "/drift/edges/{site_id}"),
+    ("POST", "/drift/impact/{site_id}"),
+    ("POST", "/drift/impact/pure"),
     ("POST", "/annotations/"),
     ("POST", "/assets/"),
     ("POST", "/assets/bulk"),

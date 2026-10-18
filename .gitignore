@@ -145,3 +145,11 @@ logs/
 backend/.benchmark_runs/
 
 .vercel
+
+# Preserved source archives and the original GreenChain tree (kept on disk, not committed); duplicate of backend/domains/greenchain/data
+source-archives/
+GREENCHAIN-main/
+integrations/greenchain/data/
+
+# runtime state for private workers (ResolveAI stores, gateway secret)
+/var/
