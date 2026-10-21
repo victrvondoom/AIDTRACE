@@ -51,5 +51,32 @@ class _NoSupabase:
 
 app.dependency_overrides[deps.get_supabase] = lambda: _NoSupabase()
 
+
+def _seed_baseline_if_empty() -> None:
+    try:
+        from api.dependencies import get_settings
+        from api.services.drift.store import FalkorDriftStore
+        from api.services.memory.agent_memory import AgentMemory
+        from api.services.memory import greenchain_decisions
+
+        settings = get_settings()
+        store = FalkorDriftStore(
+            settings.FALKORDB_URL,
+            graph_prefix=settings.FALKORDB_GRAPH_PREFIX,
+            query_timeout_ms=settings.FALKORDB_QUERY_TIMEOUT_MS,
+            max_depth=settings.DRIFT_MAX_DEPTH,
+            max_edges=settings.DRIFT_MAX_EDGES,
+        )
+        for site_id in ("SITE_001", "SITE_DEMO"):
+            mem = AgentMemory(store, site_id)
+            snap = mem.snapshot()
+            if not snap.get("decisions"):
+                greenchain_decisions.record_scenario(mem, scenario_id="demo_baseline", transport_mode="sea")
+                print(f"[dev_harness] Seeded initial GreenChain baseline scenario for {site_id}")
+    except Exception as exc:
+        print(f"[dev_harness] Notice: baseline seeding deferred: {exc}")
+
+
 if __name__ == "__main__":
+    _seed_baseline_if_empty()
     uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("KAIROS_API_PORT", "8100")), log_level="info")

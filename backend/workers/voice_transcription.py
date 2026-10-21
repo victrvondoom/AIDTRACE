@@ -48,6 +48,7 @@ def transcribe_voice_note(
     sha256: str,
     submitted_by: str,
     filename: str,
+    requested_language: str = "auto",
 ) -> dict[str, Any]:
     log.info("voice_transcription.started",
              work_order_id=work_order_id, storage_path=storage_path)
@@ -70,7 +71,12 @@ def transcribe_voice_note(
 
     # Transcribe via Groq Whisper API
     from api.services.whisper import WhisperService
-    transcript = WhisperService().transcribe(audio_bytes, filename)
+    transcript = WhisperService().transcribe(
+        audio_bytes,
+        filename,
+        language=None if requested_language == "auto" else requested_language,
+        context_hint=work_order_id,
+    )
     if not transcript.get("text"):
         log.warning("voice_transcription.empty_transcript",
                     work_order_id=work_order_id, error=transcript.get("error"))
@@ -125,6 +131,7 @@ def transcribe_voice_note(
         "review_status": "pending",
         "session_context": {
             "language": transcript["language"],
+            "requested_language": requested_language,
             "confidence": transcript["confidence"],
             "storage_path": storage_path,
             "sha256": sha256,

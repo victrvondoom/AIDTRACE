@@ -31,6 +31,8 @@ const NAV_ICON = {
   management: "squares-four", briefs: "clipboard-text", copilot: "sparkle", assets: "cube",
   events: "pulse", voice: "waveform", alert: "flag", rca: "target", graph: "graph",
   supply: "truck",
+  procurement: "truck",
+  agentSandbox: "chat-centered-text",
   coverage: "chart-pie-slice", compliance: "shield-check", governance: "scales",
   audit: "clock-counter-clockwise", documents: "file-text", projects: "folders",
   offboarding: "handshake", settings: "gear-six", chevron: "caret-right",
@@ -57,8 +59,10 @@ const NAV: { group: string; items: NavItem[] }[] = [
     group: "",
     items: [
       { href: "/hub", label: "Workspace", icon: "graph", roles: STAFF },
+      { href: "/procurement", label: "Procurement", icon: "procurement", roles: STAFF },
+      { href: "/agent-sandbox", label: "Agent Sandbox", icon: "agentSandbox", roles: STAFF },
       { href: "/briefs", label: "Briefs", icon: "briefs", only: ["field_worker"] },
-      { href: "/field/voice", label: "Voice note", icon: "voice", only: ["field_worker"] },
+      { href: "/field/voice", label: "Voice notes", icon: "voice", only: ["field_worker"] },
       { href: "/field/deviation", label: "Deviation flag", icon: "alert", only: ["field_worker"] },
       // The compliance auditor sees exactly these two and nothing else in the sidebar —
       // matching `read_compliance` / `read_audit` in kairos.rego and ROUTE_ACCESS.

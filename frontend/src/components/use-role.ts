@@ -74,6 +74,8 @@ const ROUTE_ACCESS: ReadonlyArray<{ prefix: string; roles: Role[] }> = [
   { prefix: "/resolveai", roles: STAFF_ONLY },
   { prefix: "/capabilities", roles: STAFF_ONLY },
   { prefix: "/hub", roles: STAFF_ONLY },
+  { prefix: "/procurement", roles: STAFF_ONLY },
+  { prefix: "/agent-sandbox", roles: STAFF_ONLY },
   { prefix: "/graph-lab", roles: STAFF_ONLY },
   { prefix: "/sources", roles: STAFF_ONLY },
   { prefix: "/supply-chain", roles: STAFF_ONLY },

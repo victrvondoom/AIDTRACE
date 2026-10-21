@@ -9,8 +9,10 @@ Pure constants. No stack, no secrets, no network.
 """
 
 import sys
+from pathlib import Path
 
 sys.path.insert(0, "/app/benchmark")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "benchmark"))
 
 from run_cross_functional import FUNCTION_OF, _reached  # noqa: E402
 

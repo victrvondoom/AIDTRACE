@@ -1095,13 +1095,14 @@ export function submitElicitationResponses(
   );
 }
 
-export function submitVoiceNote(workOrderId: string, blob: Blob, submittedBy: string) {
+export function submitVoiceNote(workOrderId: string, blob: Blob, submittedBy: string, language = "auto") {
   const form = new FormData();
   // Endpoint expects the field named "file" (UploadFile param in elicitation router).
   // Keep an uploaded file's real name: Whisper infers the audio format from the extension, so a WAV or
   // MP3 sent as "recording.webm" was decoded as the wrong container.
   form.append("file", blob, blob instanceof File ? blob.name : "recording.webm");
   form.append("submitted_by", submittedBy);
+  form.append("language", language);
   // `status: "duplicate"` means this exact audio is already in quarantine and no transcription runs.
   return postMultipart<{ task_id?: string; status: string; message?: string }>(`/elicitation/${encodeURIComponent(workOrderId)}/voice`, form);
 }

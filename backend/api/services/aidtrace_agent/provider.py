@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, get_args
 
 from api.config import Settings
 
@@ -18,6 +18,7 @@ READY = "ready"
 DISABLED = "disabled"
 NO_KEY = "no_api_key"
 NO_SDK = "sdk_missing"
+UNSUPPORTED_MODEL = "unsupported_model"
 FALLBACK = "graph-only"
 
 
@@ -44,9 +45,19 @@ def readiness(settings: Settings) -> Readiness:
         return Readiness(NO_KEY, model, "No Anthropic key is configured. Questions answer from the graph engines.")
     try:
         import anthropic  # noqa: F401
+        from anthropic.types import Model
     except ImportError:
         return Readiness(NO_SDK, model, "The anthropic package is not installed. Run pip install -r requirements.txt.")
-    return Readiness(READY, model, "Claude reasoning is enabled.")
+    model_ids = {
+        value
+        for item in get_args(Model)
+        for value in (get_args(item) or (item,))
+        if isinstance(value, str)
+    }
+    if model not in model_ids:
+        return Readiness(UNSUPPORTED_MODEL, model, "The configured model ID is not present in the installed Anthropic SDK. No model request was made.")
+    return Readiness(READY, model,
+                    "The model ID is supported by the installed SDK. Account-level access is verified only by an explicit model request.")
 
 
 class ProviderError(Exception):

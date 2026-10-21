@@ -5,6 +5,10 @@ Requires `make dev` to be running before executing the suite.
 
 import os
 import sys
+
+os.environ.setdefault("OTEL_SDK_DISABLED", "true")
+os.environ.setdefault("KAIROS_SKIP_TEST_CLEANUP", "1")
+
 import asyncio
 from pathlib import Path
 
@@ -12,7 +16,10 @@ import pytest
 import httpx
 from uuid import uuid4
 
-BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+_api_base = os.getenv("KAIROS_API_BASE_URL") or os.getenv("API_BASE_URL", "http://localhost:8000")
+if "huggingface.co" in _api_base:
+    _api_base = "http://localhost:8000"
+BASE_URL = _api_base
 
 # Session teardown purges the test residue these fixtures create (see scripts/purge_test_data.py).
 # In the container PYTHONPATH=/app already exposes `scripts`; on the host shortcut, add backend/.

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui";
 import { useMe } from "@/components/use-role";
 
 import { Icon } from "@/components/icon";
+import type { VoiceLanguage } from "@/lib/voice-languages";
 type Stage = "record" | "submitting" | "done" | "error";
 
 // Ad-hoc voice capture reached from the field bottom-tab (no work order in the
@@ -17,6 +18,7 @@ export default function VoiceCapturePage() {
   const [stage, setStage] = useState<Stage>("record");
   const [taskId, setTaskId] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [language, setLanguage] = useState<VoiceLanguage>("auto");
   const [duplicate, setDuplicate] = useState(false);
   const me = useMe();
 
@@ -25,7 +27,7 @@ export default function VoiceCapturePage() {
     setStage("submitting");
     try {
       // The reviewer sees "Submitted by" in quarantine; a hardcoded "field_user" made every note anonymous.
-      const res = await submitVoiceNote(tag.trim(), blob, me?.email || me?.user_id || "field_user");
+      const res = await submitVoiceNote(tag.trim(), blob, me?.email || me?.user_id || "field_user", language);
       setDuplicate(res.status === "duplicate");
       setTaskId(res.task_id ?? null);
       setStage("done");
@@ -39,8 +41,8 @@ export default function VoiceCapturePage() {
     <div data-testid="field-voice-workspace" className="mx-auto max-w-[1400px]">
       <PageHeader
         className="mb-6"
-        title="Voice Note"
-        lede="Say what you see in your own words. The recording is transcribed, tagged to the equipment you name, and held in the review queue until an engineer verifies it, so a field observation is never lost and never trusted blindly."
+        title="Multilingual Voice Note"
+        lede="Record a field observation in your language. Choose a spoken language or let transcription detect it. Your asset tag guides equipment-name spelling; the transcript stays in review until an engineer verifies it."
       />
 
       <div data-testid="field-voice-layout" className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -61,7 +63,7 @@ export default function VoiceCapturePage() {
           </div>
 
           <div className="flex flex-col items-center gap-6 py-4">
-            <VoiceRecorder onBlob={setBlob} />
+            <VoiceRecorder onBlob={setBlob} language={language} onLanguageChange={setLanguage} />
             {blob && (
               <button
                 onClick={submit}

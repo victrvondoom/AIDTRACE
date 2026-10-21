@@ -50,6 +50,10 @@ def setup_telemetry(app: FastAPI | None = None) -> None:
 
         from api.config import settings
 
+        if os.environ.get("OTEL_SDK_DISABLED", "").lower() in ("true", "1") or settings.APP_ENV == "test":
+            log.info("telemetry.disabled", reason="OTEL_SDK_DISABLED or APP_ENV=test")
+            return
+
         endpoint = settings.OTEL_EXPORTER_OTLP_ENDPOINT
         raw_headers = os.environ.get("OTEL_EXPORTER_OTLP_HEADERS", "")
         headers = _parse_otlp_headers(raw_headers) if raw_headers else {}

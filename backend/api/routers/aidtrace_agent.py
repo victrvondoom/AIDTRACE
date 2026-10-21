@@ -7,8 +7,9 @@ workspace keeps its deterministic routes, which stay the first answer path for e
 
 from __future__ import annotations
 
+import asyncio
 import time
-from typing import Any
+from typing import Any, Literal
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,7 +18,7 @@ from pydantic import BaseModel, Field
 from api.dependencies import CurrentUserDep, FalkorDriftDep, RedisDep, SettingsDep, demo_llm_budget, require_role
 from api.routers.resolveai import _site_for_user
 from api.services import tenant
-from api.services.aidtrace_agent import orchestrator
+from api.services.aidtrace_agent import graph_chat, orchestrator
 from api.services.aidtrace_agent.provider import readiness
 from api.services.memory.agent_memory import AgentMemory
 
@@ -27,8 +28,15 @@ STAFF = ("engineer", "reliability", "admin")
 OPERATORS = ("admin",)  # token usage and cost estimates are for operators only
 
 
+class HistoryTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=500)
+
+
 class AskBody(BaseModel):
     question: str = Field(min_length=3, max_length=orchestrator.QUESTION_MAX_CHARS)
+    history: list[HistoryTurn] = Field(default_factory=list, max_length=6)
+    mode: Literal["model", "auto", "graph"] = "model"
 
 
 async def _user_budget(user: dict[str, Any], redis: Any, settings: Any) -> None:
@@ -54,13 +62,16 @@ async def _user_budget(user: dict[str, Any], redis: Any, settings: Any) -> None:
 
 @router.get("/status", summary="Whether model reasoning is available, and the reason when it is not")
 async def agent_status(settings: SettingsDep, _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
-    return readiness(settings).as_dict()
+    return {**readiness(settings).as_dict(), "graph_chat_available": True}
 
 
 @router.post("/ask", summary="Answer a question from the site graph, with Claude reasoning when it is enabled")
 async def ask(body: AskBody, user: CurrentUserDep, store: FalkorDriftDep, redis: RedisDep, settings: SettingsDep,
               _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
     state = readiness(settings)
+    if body.mode == "graph" or (body.mode == "auto" and not state.ready):
+        memory = AgentMemory(store, _site_for_user(user, write=False))
+        return await asyncio.to_thread(graph_chat.answer, body.question, memory)
     if not state.ready:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
                             {"status": state.state, "message": state.reason, "fallback": "graph-only"})
@@ -70,4 +81,6 @@ async def ask(body: AskBody, user: CurrentUserDep, store: FalkorDriftDep, redis:
         await _user_budget(user, redis, settings)
     # Built from the authenticated site, so every tool call stays inside it.
     memory = AgentMemory(store, _site_for_user(user, write=False))
-    return await orchestrator.answer(body.question, memory=memory, settings=settings, include_usage=user.get("role") in OPERATORS)
+    return await orchestrator.answer(body.question, memory=memory, settings=settings,
+                                     include_usage=user.get("role") in OPERATORS,
+                                     history=[turn.model_dump() for turn in body.history])

@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-# `backend.ml_bridge` (imported above) puts backend/ml_runtime on sys.path.
+import domains.greenchain.ml_bridge  # noqa: F401 — puts backend/ml_runtime on sys.path
 from ml.inference import EmissionsModel, certification_adjustment  # type: ignore
 from ml.reference_data import (  # type: ignore
     EMBER_GRID_INTENSITY,

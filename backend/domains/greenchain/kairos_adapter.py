@@ -1,7 +1,7 @@
 """Kairos adapter for the migrated GreenChain engines.
 
 Everything numeric here comes from GreenChain's own code (`_enrich_manufacturer`, `compute_composite_scores`,
-`rescore_transport`: XGBoost q10/q50/q90, USEEIO, Ember, ND-GAIN, GLEC). This module only (1) supplies a clearly
+`rescore_transport`: CatBoost-first q10/q50/q90 (legacy XGBoost supported), USEEIO, Ember, ND-GAIN, GLEC). This module only (1) supplies a clearly
 labelled ILLUSTRATIVE candidate set for demo mode, (2) turns scored results into a Graph Lab graph and persists it
 in FalkorDB, and (3) re-ranks when a supplier or an input dataset is removed.
 

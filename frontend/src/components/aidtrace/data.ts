@@ -2,7 +2,8 @@
 
 // Shared data for the AIDTRACE workspace. Every value comes from an existing backend route (GreenChain scoring, the FalkorDB agent-memory snapshot,
 // Graph Lab). A failing source reports its own error and leaves the others working; nothing is replaced by an invented value.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useLiveQuery } from "@/lib/use-live-query";
 import { apiResultToScenario } from "@/lib/greenchain/api-to-scenario";
 import type { ManufacturerResult } from "@/lib/greenchain/api";
 import type { ScenarioSearchCsv } from "@/lib/greenchain/csv-to-search";
@@ -11,8 +12,8 @@ import type { SupplyScenario } from "@/lib/greenchain/supply-chain-scenario";
 import type { LabGraph } from "@/lib/graph-layout";
 import { buildLineage, isUnsafe, type Lineage } from "@/lib/aidtrace-lineage";
 import {
-  analyzeLab, getSiteGraph, greenchainDemo, greenchainHealth, greenchainWhatIf, memoryHandoffs, memorySnapshot,
-  type GreenchainDemo, type GreenchainHealth, type Handoff, type MemorySnapshot,
+  agentChat, analyzeLab, getSiteGraph, greenchainDemo, greenchainHealth, greenchainWhatIf, memoryHandoffs, memorySnapshot,
+  type AgentChatResponse, type GreenchainDemo, type GreenchainHealth, type Handoff, type MemorySnapshot,
 } from "@/lib/lab-api";
 
 export type ViewId = "globe" | "graph" | "lineage" | "timeline";
@@ -49,53 +50,45 @@ export interface AidtraceData {
   /** The persisted FalkorDB graph itself, read back through Graph Lab. */
   site: SiteGraph | null;
   scenario: SupplyScenario | null; lineage: Lineage | null;
-  errors: { supply?: string; memory?: string };
+  errors: { supply?: string; memory?: string; site?: string; handoffs?: string };
   loading: boolean;
+  refreshing?: boolean;
+  updatedAt?: { supply: string | null; memory: string | null; site: string | null };
+  refreshAll?: () => Promise<void>;
   /** Re-read agent memory and the FalkorDB graph; resolves with what it read so a workflow can continue from fresh state. */
   refreshMemory: () => Promise<{ snap: MemorySnapshot | null; site: SiteGraph | null }>;
 }
 
 export function useAidtraceData(): AidtraceData {
-  const [demo, setDemo] = useState<GreenchainDemo | null>(null);
-  const [health, setHealth] = useState<GreenchainHealth | null>(null);
-  const [snap, setSnap] = useState<MemorySnapshot | null>(null);
-  const [handoffs, setHandoffs] = useState<Handoff[]>([]);
-  const [site, setSite] = useState<SiteGraph | null>(null);
-  const [errors, setErrors] = useState<AidtraceData["errors"]>({});
-  const [loading, setLoading] = useState(true);
-
+  const supplyQuery = useCallback(async () => {
+    const [demo, health] = await Promise.all([greenchainDemo("sea"), greenchainHealth()]);
+    return { demo, health };
+  }, []);
+  const memoryQuery = useCallback(async () => normalizeSnapshot(await memorySnapshot()), []);
+  const handoffQuery = useCallback(async () => (await memoryHandoffs()).handoffs ?? [], []);
+  const siteQuery = useCallback(async () => (await getSiteGraph()).data, []);
+  const supply = useLiveQuery(supplyQuery);
+  const memory = useLiveQuery(memoryQuery);
+  const handoff = useLiveQuery(handoffQuery);
+  const graph = useLiveQuery(siteQuery);
+  const demo = supply.data?.demo ?? null;
+  const health = supply.data?.health ?? null;
+  const snap = memory.data;
+  const handoffs = handoff.data ?? [];
+  const site = graph.data;
+  const errors = { supply: supply.error ?? undefined, memory: memory.error ?? undefined, site: graph.error ?? undefined, handoffs: handoff.error ?? undefined };
+  const loading = supply.loading || memory.loading || graph.loading || handoff.loading;
+  const refresh = memory.refresh;
+  const refreshGraph = graph.refresh;
+  const refreshHandoffs = handoff.refresh;
+  const refreshSupply = supply.refresh;
   const refreshMemory = useCallback(async () => {
-    try {
-      const [s, h, g] = await Promise.all([memorySnapshot(), memoryHandoffs(), getSiteGraph().then((r) => r.data).catch(() => null)]);
-      const next = normalizeSnapshot(s);
-      setSnap(next); setHandoffs(h.handoffs ?? []); setSite(g); setErrors((e) => ({ ...e, memory: undefined }));
-      return { snap: next, site: g };
-    } catch (e) {
-      setErrors((x) => ({ ...x, memory: message(e, "Agent memory could not be read.") }));
-      return { snap: null, site: null };
-    }
-  }, []);
-
-  useEffect(() => {
-    let live = true;
-    // The first request after a backend restart can fail while the ML models load, so retry twice before reporting the service down.
-    const withRetry = async <T,>(fn: () => Promise<T>): Promise<T> => {
-      for (let attempt = 0; ; attempt++) {
-        try { return await fn(); } catch (e) {
-          if (attempt >= 2 || !live) throw e;
-          await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-        }
-      }
-    };
-    const supply = Promise.all([withRetry(() => greenchainDemo("sea")), withRetry(() => greenchainHealth())])
-      .then(([d, h]) => { if (live) { setDemo(d); setHealth(h); } })
-      .catch((e: unknown) => { if (live) setErrors((x) => ({ ...x, supply: message(e, "GreenChain could not load.") })); });
-    const memory = Promise.all([memorySnapshot(), memoryHandoffs(), getSiteGraph().then((r) => r.data).catch(() => null)])
-      .then(([s, h, g]) => { if (live) { setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setSite(g); } })
-      .catch((e: unknown) => { if (live) setErrors((x) => ({ ...x, memory: message(e, "Agent memory could not be read.") })); });
-    void Promise.all([supply, memory]).then(() => { if (live) setLoading(false); });
-    return () => { live = false; };
-  }, []);
+    const [nextSnap, nextSite] = await Promise.all([refresh(), refreshGraph(), refreshHandoffs()]);
+    return { snap: nextSnap, site: nextSite };
+  }, [refresh, refreshGraph, refreshHandoffs]);
+  const refreshAll = useCallback(async () => {
+    await Promise.all([refreshMemory(), refreshSupply()]);
+  }, [refreshMemory, refreshSupply]);
 
   const scenario = useMemo(() => {
     if (!demo) return null;
@@ -111,7 +104,9 @@ export function useAidtraceData(): AidtraceData {
   }, [demo]);
 
   const lineage = useMemo(() => (snap ? buildLineage(snap) : null), [snap]);
-  return { demo, health, snap, handoffs, site, scenario, lineage, errors, loading, refreshMemory };
+  return { demo, health, snap, handoffs, site, scenario, lineage, errors, loading, refreshMemory, refreshAll,
+    refreshing: supply.refreshing || memory.refreshing || graph.refreshing || handoff.refreshing,
+    updatedAt: { supply: supply.updatedAt, memory: memory.updatedAt, site: graph.updatedAt } };
 }
 
 // ---- Connected-risk propagation (Graph Lab blast_radius on the supplier graph) -------------------------------------------------------------
@@ -149,9 +144,9 @@ export async function propagateSite(site: SiteGraph, anchors: string[]): Promise
 }
 
 // ---- Question routing ------------------------------------------------------------------------------------------------------------------
-// There is no language model here. A question is routed to the engine that can answer it; anything else is declined, with what is supported.
+// Deterministic local graph engines answer first. Unsupported questions go to the bounded, read-only site agent API.
 
-export interface AgentAnswer { question: string; at: string; route: string; ok: boolean; text: string; lines: string[]; select?: Selection }
+export interface AgentAnswer { question: string; at: string; route: string; ok: boolean; text: string; lines: string[]; select?: Selection; records?: NonNullable<Selection>[] }
 
 export const SUGGESTED_QUESTIONS = [
   "Which suppliers become risky if this component manufacturer is compromised?",
@@ -163,7 +158,7 @@ export const SUGGESTED_QUESTIONS = [
 
 const plain = (name: string) => name.replace("Illustrative ", "");
 
-export async function askAgent(question: string, ctx: { demo: GreenchainDemo | null; scenario: SupplyScenario | null; snap: MemorySnapshot | null; selected: Selection }): Promise<AgentAnswer> {
+export async function askAgent(question: string, ctx: { demo: GreenchainDemo | null; scenario: SupplyScenario | null; snap: MemorySnapshot | null; site?: SiteGraph | null; selected: Selection }, signal?: AbortSignal): Promise<AgentAnswer> {
   const q = question.toLowerCase();
   const at = new Date().toISOString();
   const done = (route: string, text: string, lines: string[] = [], ok = true, select?: Selection): AgentAnswer => ({ question, at, route, ok, text, lines, select });
@@ -211,7 +206,34 @@ export async function askAgent(question: string, ctx: { demo: GreenchainDemo | n
       return done("Graph Lab blast_radius over the supplier graph", `${p.dependents.length} record(s) depend on ${node.label}; it depends on ${p.dependencies.length}. Model-only: no live security feed is connected, so this shows reach, not an observed compromise.`, lines, true, { kind: "node", id: node.id, label: node.label });
     }
   } catch (e) {
-    return done("backend", `The backend could not answer: ${message(e, "request failed")}.`, [], false);
+    if (signal?.aborted) throw e;
+    // A local engine may be temporarily unavailable; the site-scoped API can still answer from graph tools.
   }
-  return done("not supported", "AIDTRACE answers from its graph engines rather than a language model. Ask about compromised suppliers, outdated approvals, affected facilities, what the agent previously learned, or lower-risk alternatives.", SUGGESTED_QUESTIONS, false);
+  try {
+    const response: AgentChatResponse = await agentChat(question, [], signal);
+    const answer = response.answer;
+    const text = answer ? [answer.finding, answer.why, answer.next_step].filter(Boolean).join("\n\n") : response.message || `The site agent returned ${response.status}.`;
+    const ids = [...new Set([...(answer?.affected ?? []), ...(answer?.citations ?? [])])];
+    const records: NonNullable<Selection>[] = ids.map((id) => {
+      const memory = ctx.snap?.memories.find((item) => item.id === id);
+      if (memory) return { kind: "memory", id, label: memory.summary };
+      const decision = ctx.snap?.decisions.find((item) => item.id === id);
+      if (decision) return { kind: "decision", id, label: decision.summary };
+      const action = ctx.snap?.actions.find((item) => item.id === id);
+      if (action) return { kind: "action", id, label: action.summary };
+      const source = ctx.snap?.sources.find((item) => item.id === id);
+      if (source) return { kind: "source", id, label: source.title };
+      const node = ctx.site?.graph.nodes.find((item) => item.id === id);
+      return { kind: node?.type === "Claim" ? "claim" : "node", id, label: node?.label ?? id };
+    });
+    return {
+      question, at, route: `AIDTRACE ${response.answered_by} · ${response.model} · ${response.status}`,
+      ok: response.status === "answered" || response.status === "complete", text,
+      lines: answer ? [...answer.citations.map((id) => `Evidence: ${id}`), ...response.tool_calls.map((call) => `${call.tool.replaceAll("_", " ")}: ${call.ok ? "read" : call.error ?? "unavailable"}`)] : [],
+      select: records[0], records,
+    };
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    return done("AIDTRACE site agent", `The graph engines and site agent could not answer: ${message(e, "request failed")}.`, [], false);
+  }
 }

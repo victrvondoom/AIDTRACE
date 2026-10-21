@@ -189,7 +189,7 @@ _supabase_client: Client | None = None
 
 def get_optional_supabase(settings: SettingsDep) -> Client | None:
     global _supabase_client
-    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_ROLE_KEY:
+    if settings is None or not getattr(settings, "SUPABASE_URL", None) or not getattr(settings, "SUPABASE_SERVICE_ROLE_KEY", None):
         return None
     if _supabase_client is None:
         _supabase_client = create_client(
@@ -385,7 +385,11 @@ async def showcase_read_fence(request: Request, settings: SettingsDep, supabase:
     if request.method not in ("GET", "HEAD") or not request.path_params:
         return
     if supabase is None:
-        return
+        if request and hasattr(request, "app") and get_supabase in getattr(request.app, "dependency_overrides", {}):
+            override = request.app.dependency_overrides[get_supabase]
+            supabase = override() if callable(override) else override
+        else:
+            return
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
         return

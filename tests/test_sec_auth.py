@@ -179,7 +179,7 @@ def test_unrecognised_env_still_refuses_default_admin_key(env):
 def test_rate_limit_is_off_only_in_development():
     import api.main as main
 
-    src = Path(main.__file__).read_text()
+    src = Path(main.__file__).read_text(encoding="utf-8", errors="replace")
     assert "0 if settings.is_development else settings.RATE_LIMIT_PER_MINUTE" in src
 
 
@@ -393,7 +393,7 @@ def test_no_seeded_password_is_committed_in_owned_files():
             f = root / name
             if f.is_file():
                 seen += 1
-                assert not _OLD_PASSWORD.search(f.read_text()), f"seeded password found in {f}"
+                assert not _OLD_PASSWORD.search(f.read_text(encoding="utf-8", errors="replace")), f"seeded password found in {f}"
     assert seen >= 1
 
 

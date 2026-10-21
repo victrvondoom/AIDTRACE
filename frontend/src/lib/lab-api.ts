@@ -146,7 +146,7 @@ export const consumerApprove = (id: string, revision: string) => post(`${C}/acti
 export const consumerIntake = (text: string) => post<ConsumerIntake>(`${C}/intake`, { text });
 
 // ---- GreenChain procurement intelligence (/greenchain/*) ----
-export interface GreenchainHealth { ml_models: boolean; reference_data: boolean; live_discovery: string; missing_provider_keys: string[]; demo_mode: string }
+export interface GreenchainHealth { ml_models: boolean; model_backend?: string | null; reference_data: boolean; live_discovery: string; missing_provider_keys: string[]; demo_mode: string }
 export interface GreenchainDemo {
   mode: string; notice: string; product: string; destination: string; transport_mode: string; results: Record<string, unknown>[]; graph: LabGraph;
 }
@@ -239,8 +239,35 @@ export interface GcPreview { read_only: true; counterfactual: true; dataset: str
 export interface ImpactPreview { source_id: string; read_only: true; would_mark_stale: { id: string; label: string; status: string; depth: number; via: string[]; summary: string }[] }
 export interface Handoff { memory_id: string; produced_by: string; recalled_by: string; memory_status: string; recall_session: string; at: string; usable: boolean }
 export interface RecallResult { agent_id: string; usable: MemoryRecord[]; blocked: MemoryRecord[]; influenced_by: string[] }
+export interface EvidenceIntakeClaim { fact_key: string; fact_value: string | number | boolean }
+export interface EvidenceIntakeRequest {
+  request_id: string; title: string; version_label: string; content: string; claims: EvidenceIntakeClaim[];
+  supersedes_source_id?: string; human_verified: boolean; expected_source_hash?: string; expected_source_revision?: string;
+}
+export interface EvidenceImpactItem { id: string; label: string; status: string; depth: number; via: string[]; summary: string }
+export interface EvidenceImportPreview {
+  read_only: true; request_id: string; content_sha256: string; source_id: string; document_id: string; claim_ids: string[]; memory_id: string;
+  verification_status: string; authority_level: number; confidence: number; confidence_basis: string; supersedes_source_id: string | null; expected_source_hash: string | null;
+  expected_source_revision: string | null; verdict: "IMPORT" | "REPLACE" | "CONTEST" | "REJECT";
+  impact: { source_id: string; would_mark_stale: EvidenceImpactItem[]; read_only: true } | null;
+}
+export type EvidenceImportResult = Omit<EvidenceImportPreview, "read_only"> & {
+  read_only: false; imported: true; duplicate: boolean; observed_at: string; verified: boolean; invalidated: EvidenceImpactItem[]; note: string;
+};
 const M = "/agent-memory";
 export const memorySnapshot = () => call<MemorySnapshot>(`${M}/snapshot`, {}, 30000);
+export interface EngineeringMemory { id: string; summary: string; text: string; status: string; recorded_at: string; tags?: string[] }
+export interface EngineeringVault { vault: string; isolation: string; status: string; complete: boolean; total_memories_scanned: number; memories: EngineeringMemory[] }
+export const engineeringMemorySnapshot = () => call<EngineeringVault>(`${M}/engineering`, {}, 30000);
+export const saveEngineeringMemory = (body: { text: string; title: string; tags: string[] }) => post<{ memory_id: string; status: string; text: string }>(`${M}/engineering`, body);
+export const engineeringMemoryRules = () => call<{ rules: string; mcp_config: Record<string, unknown>; active_memories: number; vault: string }>(`${M}/engineering/rules`, {}, 30000);
+export const transcribeEngineeringMemory = async (blob: Blob) => {
+  const form = new FormData();
+  form.append("audio", blob, blob instanceof File ? blob.name : "engineering-judgment.webm");
+  const response = await fetchWithSession(`${M}/engineering/transcribe`, { method: "POST", body: form }, 120000);
+  if (!response.ok) throw new Error(`${M}/engineering/transcribe → HTTP ${response.status}`);
+  return await response.json() as { text: string; language: string; confidence: number; review_required: true };
+};
 export const memoryRecordScenario = (transport_mode = "sea") => post<GcRecorded>(`${M}/greenchain/record`, { transport_mode });
 export const memoryRevise = (b: { scenario_id: string; dataset: string; country: string; factor: number; label: string }) => post<GcRevised>(`${M}/greenchain/revise`, b);
 export const memoryPreviewRevision = (b: { scenario_id: string; dataset: string; country: string; factor: number; label: string }) => post<GcPreview>(`${M}/greenchain/preview-revision`, b);
@@ -248,6 +275,8 @@ export const memoryImpactPreview = (source_id: string) => call<ImpactPreview>(`$
 export const memoryApprove = (action_id: string, note = "") => post<{ approved: true; approval_id: string; graph_revision: string; reviewer: string }>(`${M}/actions/approve`, { action_id, note });
 export const memoryRecall = (agent_id: string, fact_key?: string) => post<RecallResult>(`${M}/recall`, { agent_id, fact_key: fact_key || null, limit: 10 });
 export const memoryHandoffs = () => call<{ handoffs: Handoff[] }>(`${M}/handoffs`, {}, 30000);
+export const previewEvidenceImport = (body: EvidenceIntakeRequest) => post<EvidenceImportPreview>(`${M}/evidence/preview`, body);
+export const importEvidence = (body: EvidenceIntakeRequest) => post<EvidenceImportResult>(`${M}/evidence/import`, body);
 export const memoryRememberCase = (case_id: string) => post<{ remembered: boolean; memory_id?: string; claims?: string[]; independent_sources?: number; verified?: boolean; reason?: string }>(`${M}/resolveai/remember`, { case_id });
 export const memoryGreenchainReport = (scenario_id: string) => call<{ scenario_id: string; markdown: string; decisions: number; revisions: number; approvals: number }>(`${M}/greenchain/report?scenario_id=${encodeURIComponent(scenario_id)}`, {}, 30000);
 
@@ -261,5 +290,114 @@ export const agentRuntimes = () => call<AgentRuntimes>("/agents/runtimes", {}, 3
 export const agentRuns = (limit = 30) => call<{ runs: AgentRun[]; by_system: Record<string, number> }>(`/agents/runs?limit=${limit}`, {}, 30000);
 export const agentInvoke = (runtime: string, tool: string, args: Record<string, unknown>) => post<{ runtime: string; tool: string; read_only: boolean; result: Record<string, unknown>; trace: Record<string, string> }>("/agents/tools/invoke", { runtime, tool, args });
 
+export interface AgentChatReadiness { state: string; ready: boolean; model: string; reason: string; fallback: string; graph_chat_available?: boolean }
+export interface AgentChatTurn { role: "user" | "assistant"; content: string }
+export interface AgentChatResponse {
+  status: string; answered_by: string; model: string; question: string; message: string;
+  answer: { finding: string; why: string; affected: string[]; next_step: string; citations: string[] } | null;
+  evidence: { tool: string; result: Record<string, unknown> }[];
+  tool_calls: { tool: string; ok: boolean; error?: string }[];
+}
+export const agentChatReadiness = () => call<AgentChatReadiness>("/aidtrace-agent/status", {}, 15000);
+export const agentChat = (question: string, history: AgentChatTurn[], signal?: AbortSignal) =>
+  call<AgentChatResponse>("/aidtrace-agent/ask", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, history, mode: "auto" }),
+    signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(450000)]) : undefined,
+  }, 450000);
+
 export const getSourceLedger = () => live<{ stages: SourceStage[]; items: SourceRepo[] }>("/sources/ledger", 30000);
 export const getSourceReadme = (slug: string) => live<SourceReadme>(`/sources/readme?slug=${encodeURIComponent(slug)}`);
+
+// ---- Multi-Agent Coordination ----------------------------------------------------------------------------------------------------
+
+export interface CoordinationCapability {
+  capability_id: string;
+  display_name: string;
+  domain: string;
+  version: string;
+  description: string;
+  pack: string;
+  read_tools: string[];
+  write_tools: string[];
+  required_role: string;
+  risk_level: string;
+  availability: string;
+  supports_simulation: boolean;
+  supports_evidence_trace: boolean;
+  input_schema?: Record<string, unknown>;
+  output_schema?: Record<string, unknown>;
+  required_services?: string[];
+  required_credentials?: string[];
+  supports_replay?: boolean;
+  supports_checkpointing?: boolean;
+  test_evidence?: string[];
+  source_provenance?: string[];
+}
+
+export interface CoordinationTask {
+  task_id: string;
+  run_id: string;
+  domain: string;
+  capability_id: string;
+  goal: string;
+  depends_on: string[];
+  assigned_role: string;
+  status: string;
+  attempt: number;
+  requires_human_review: boolean;
+  evidence_ids?: string[];
+  timeout_seconds?: number;
+  next_attempt_at?: string | null;
+  lease_expires_at?: string | null;
+  claimed_by?: string | null;
+  result_data?: Record<string, unknown> | null;
+  error?: string | null;
+}
+
+export interface CoordinationRun {
+  run_id: string;
+  site_id: string;
+  campaign_goal: string;
+  domain: string;
+  status: string;
+  task_ids: string[];
+  context_summary: string;
+  precedent_run_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CoordinationEvent {
+  event_id: string;
+  run_id: string;
+  task_id?: string | null;
+  event_type: string;
+  agent_id: string;
+  role: string;
+  payload: Record<string, unknown>;
+  timestamp: string;
+  idempotency_key?: string;
+}
+
+export interface CoordinationRunExecution {
+  run_id: string;
+  status: string;
+  cycle_count: number;
+  checkpoint_id: string;
+  tasks: CoordinationTask[];
+  event_count: number;
+  events: CoordinationEvent[];
+  findings_count: number;
+  domain_analysis_performed?: boolean;
+}
+
+export const getCoordinationCapabilities = () => call<{ total: number; capabilities: CoordinationCapability[] }>("/coordination/capabilities");
+export const getCoordinationRuns = (domain = "all") => call<{ total: number; runs: CoordinationRun[] }>(`/coordination/runs?domain=${encodeURIComponent(domain)}`);
+export const startCoordinationRun = (goal: string, domain = "general", context_ids: string[] = []) =>
+  post<{ run: CoordinationRun; execution?: CoordinationRunExecution; tasks?: CoordinationTask[] }>("/coordination/runs", { goal, domain, context_ids, execute_now: true });
+export const getCoordinationRunDetails = (runId: string) => call<{ run: CoordinationRun; tasks: CoordinationTask[]; events: CoordinationEvent[]; checkpoint?: Record<string, unknown> }>(`/coordination/runs/${encodeURIComponent(runId)}`);
+export const cancelCoordinationTask = (runId: string, taskId: string) =>
+  post<{ run_id: string; task_id: string; status: string }>(`/coordination/runs/${encodeURIComponent(runId)}/tasks/${encodeURIComponent(taskId)}/cancel`, {});
+export const verifiedUnlearn = (entity_id: string, entity_type: string, reason: string) =>
+  post<{ status: string; receipt: Record<string, unknown> }>("/coordination/unlearning/delete", { entity_id, entity_type, reason });

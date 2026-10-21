@@ -22,6 +22,7 @@ const AgentMemoryWorkspace = dynamic(() => import("@/components/features/memory/
 const AgentOpsWorkspace = dynamic(() => import("@/components/features/agents/AgentOpsWorkspace").then((m) => m.AgentOpsWorkspace), { loading: Loading });
 const SimulationsWorkspace = dynamic(() => import("@/components/features/simulations/SimulationsWorkspace").then((m) => m.SimulationsWorkspace), { loading: Loading });
 const ReportsWorkspace = dynamic(() => import("@/components/features/reports/ReportsWorkspace").then((m) => m.ReportsWorkspace), { loading: Loading });
+const CoordinationWorkspace = dynamic(() => import("@/components/features/coordination/CoordinationWorkspace").then((m) => m.CoordinationWorkspace), { loading: Loading });
 
 type Status = "INTEGRATED_TESTED" | "PARTIAL";
 interface Feature { id: string; name: string; category: string; backend: string; status: Status; summary: string; render: (open: (id: string) => void) => ReactNode }
@@ -32,7 +33,7 @@ export const FEATURES: Feature[] = [
   { id: "overview", name: "Overview", category: "Hub", backend: "/hub/capabilities", status: "INTEGRATED_TESTED",
     summary: "A live 3D graph of every capability, coloured by whether its runtime answered just now.", render: (open) => <Overview onSelect={open} /> },
   { id: "greenchain", name: "GreenChain", category: "Supply chain", backend: "/greenchain/*", status: "INTEGRATED_TESTED",
-    summary: "Sustainable procurement: XGBoost quantile emissions scoring, a satellite globe of suppliers and routes, transport what-ifs, supplier graph and decision memory. Candidates are illustrative; live discovery needs provider keys.",
+    summary: "Sustainable procurement: CatBoost-first quantile emissions scoring with legacy XGBoost support, a satellite globe of suppliers and routes, transport what-ifs, supplier graph and decision memory. Candidates are illustrative; live discovery needs provider keys.",
     render: () => <GreenChainWorkspace /> },
   { id: "resolveai", name: "Resolve", category: "Investigation", backend: "/resolveai/platform/*", status: "INTEGRATED_TESTED",
     summary: "Case investigations on the real Resolve worker with FALKOR DB: routing, retrieval over eight domain packs, evidence scoring, citations, agents, graph and reports.", render: () => <ResolveAIWorkspace /> },
@@ -59,6 +60,9 @@ export const FEATURES: Feature[] = [
     summary: "Case reports, procurement memos and approval receipts, written only from what ran and exportable.", render: () => <ReportsWorkspace /> },
   { id: "capabilities", name: "Capability Workbench", category: "Registry", backend: "/sources/*", status: "INTEGRATED_TESTED",
     summary: "The 98 source repositories, their READMEs and an evidence-based ledger of what AIDTRACE has built from each.", render: () => <SourceLibrary /> },
+  { id: "coordination", name: "Multi-Agent Coordination & Swarm Brain", category: "Investigation", backend: "/coordination/*", status: "INTEGRATED_TESTED",
+    summary: "Coordinator agent with DAG dependency scheduling, parallel Worker A (Evidence) & Worker B (Validation), Company Brain persistence, verified unlearning, and Capability Packs A through I.",
+    render: () => <CoordinationWorkspace /> },
 ];
 
 /** Work that is NOT done. Listed here so the product never advertises it as operational. */

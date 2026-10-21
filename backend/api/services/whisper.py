@@ -5,6 +5,7 @@ Falls back gracefully when GROQ_API_KEY is not configured.
 """
 
 import os
+import re
 from typing import Any
 
 import httpx
@@ -25,7 +26,13 @@ class WhisperService:
         self.api_key = os.getenv("GROQ_API_KEY", "")
         self.model = os.getenv("GROQ_WHISPER_MODEL", "whisper-large-v3")
 
-    def transcribe(self, audio_bytes: bytes, filename: str = "audio.wav") -> dict[str, Any]:
+    def transcribe(
+        self,
+        audio_bytes: bytes,
+        filename: str = "audio.wav",
+        language: str | None = None,
+        context_hint: str | None = None,
+    ) -> dict[str, Any]:
         """
         Transcribe audio bytes via Groq API.
         Returns {text, language, confidence, segments}.
@@ -49,12 +56,21 @@ class WhisperService:
             ".flac": "audio/flac", ".webm": "audio/webm",
         }.get(ext, "audio/wav")
 
+        # A bounded equipment/work-order identifier can improve proper-name recognition.
+        # Strip everything outside identifier characters; never pass arbitrary user text as a prompt.
+        safe_hint = re.sub(r"[^A-Za-z0-9._/-]", "", context_hint or "")[:80]
+        data = {"model": self.model, "response_format": "verbose_json"}
+        if language:
+            data["language"] = language
+        if safe_hint:
+            data["prompt"] = safe_hint
+
         try:
             resp = httpx.post(
                 _GROQ_TRANSCRIPTION_URL,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 files={"file": (filename, audio_bytes, mime)},
-                data={"model": self.model, "response_format": "verbose_json"},
+                data=data,
                 timeout=60.0,
             )
             resp.raise_for_status()

@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn, localDateString } from "@/lib/utils";
 
 import { Icon } from "@/components/icon";
+import { VOICE_LANGUAGES, type VoiceLanguage } from "@/lib/voice-languages";
 // Web Speech API — not available in all browsers; typed as any to avoid lib conflicts.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecogAny = any;
@@ -22,8 +23,12 @@ export function Composer({
   onAsOfChange: (v: string) => void;
 }) {
   const [listening, setListening] = useState(false);
+  const [voiceLanguage, setVoiceLanguage] = useState<VoiceLanguage>("en");
+  const [voiceError, setVoiceError] = useState("");
   const [showAsOf, setShowAsOf] = useState(false);
   const recogRef = useRef<SpeechRecogAny>(null);
+  const dictatedRef = useRef("");
+  const dictationBaseRef = useRef("");
   const hasSpeech =
     typeof window !== "undefined" &&
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,6 +36,16 @@ export function Composer({
 
   const today =
     typeof window !== "undefined" ? localDateString() : undefined;
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("kairos-voice-language") as VoiceLanguage | null;
+      if (saved && VOICE_LANGUAGES.some((item) => item.code === saved && item.code !== "auto")) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- restore the saved browser dictation preference
+        setVoiceLanguage(saved);
+      }
+    } catch { /* browser storage may be disabled */ }
+  }, []);
 
   function toggleVoice() {
     if (listening) {
@@ -41,19 +56,43 @@ export function Composer({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const win = window as any;
     const SR = win.SpeechRecognition ?? win.webkitSpeechRecognition;
-    const r = new SR();
-    r.lang = "en-IN";
-    r.interimResults = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    r.onresult = (e: any) => {
-      const transcript = e.results[0]?.[0]?.transcript ?? "";
-      if (transcript) onChange((value ? value + " " : "") + transcript);
-    };
-    r.onend = () => setListening(false);
-    r.onerror = () => setListening(false);
-    r.start();
-    recogRef.current = r;
-    setListening(true);
+    try {
+      const r = new SR();
+      r.lang = VOICE_LANGUAGES.find((item) => item.code === voiceLanguage)?.speechLocale || "en-IN";
+      r.continuous = true;
+      r.interimResults = false;
+      dictatedRef.current = "";
+      dictationBaseRef.current = value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      r.onresult = (e: any) => {
+        const transcript = Array.from(e.results as ArrayLike<{ 0?: { transcript?: string }; isFinal?: boolean }>)
+          .slice(e.resultIndex ?? 0)
+          .filter((result) => result.isFinal !== false)
+          .map((result) => result[0]?.transcript ?? "")
+          .filter(Boolean)
+          .join(" ");
+        if (transcript) {
+          dictatedRef.current = [dictatedRef.current, transcript].filter(Boolean).join(" ");
+          onChange([dictationBaseRef.current, dictatedRef.current].filter(Boolean).join(" "));
+        }
+      };
+      r.onend = () => {
+        setListening(false);
+        if (!dictatedRef.current) setVoiceError("No speech was captured. Try again or type your question.");
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      r.onerror = (event: any) => {
+        setListening(false);
+        setVoiceError(event.error === "not-allowed" ? "Microphone permission was denied. You can type your question instead." : "Voice input stopped. Check your microphone or type your question.");
+      };
+      r.start();
+      recogRef.current = r;
+      setVoiceError("");
+      setListening(true);
+    } catch {
+      setVoiceError("Voice input could not start in this browser. Type your question instead.");
+      setListening(false);
+    }
   }
 
   return (
@@ -96,9 +135,33 @@ export function Composer({
         }}
         className="flex min-h-11 items-center gap-2 rounded-2xl border border-line bg-surface py-2 pl-4 pr-2 focus-within:border-[color-mix(in_srgb,var(--accent)_45%,var(--line))]"
       >
+        {hasSpeech && (
+          <select
+            aria-label="Voice input language"
+            value={voiceLanguage}
+            disabled={listening}
+            onChange={(event) => {
+              const next = event.target.value as VoiceLanguage;
+              setVoiceLanguage(next);
+              try { window.localStorage.setItem("kairos-voice-language", next); } catch { /* browser storage may be disabled */ }
+              setVoiceError("");
+            }}
+            className="max-w-24 shrink-0 bg-transparent text-xs text-muted outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            {VOICE_LANGUAGES.filter((item) => item.code !== "auto").map((item) => (
+              <option key={item.code} value={item.code}>{item.label}</option>
+            ))}
+          </select>
+        )}
         <input
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            if (listening) {
+              dictationBaseRef.current = e.target.value;
+              dictatedRef.current = "";
+            }
+            onChange(e.target.value);
+          }}
           placeholder="Ask about an asset, failure, procedure, or requirement…"
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
           aria-label="Ask the copilot"
@@ -147,6 +210,7 @@ export function Composer({
           <Icon name="paper-plane-right" size={17} className="relative z-10" />
         </button>
       </form>
+      {voiceError && <p role="status" className="px-2 text-caption text-muted">{voiceError}</p>}
     </div>
   );
 }

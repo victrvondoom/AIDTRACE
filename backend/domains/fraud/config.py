@@ -14,4 +14,4 @@ MAX_RING_RELS = int(os.getenv("MAX_RING_RELS", "6"))
 MIN_RING_SIZE = int(os.getenv("MIN_RING_SIZE", "3"))
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5-5")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")

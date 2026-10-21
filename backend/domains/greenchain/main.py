@@ -161,7 +161,7 @@ def _startup() -> None:
     init_db()
     _warn_if_dedalus_sdk_missing()
     _warn_if_search_tools_misconfigured()
-    # Prime the XGBoost models so the first /search doesn't pay the model load.
+    # Prime the configured emissions model so the first /search doesn't pay the model load.
     try:
         from .ml_bridge import get_emissions_model
         get_emissions_model()

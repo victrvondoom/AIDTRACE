@@ -4,7 +4,7 @@ inference.py
 GreenChain ML inference module — loaded once at FastAPI startup.
 
 Provides:
-  EmissionsModel        — XGBoost quantile regression wrapper
+  EmissionsModel        — CatBoost-first quantile regression wrapper, with XGBoost compatibility
   TransportCalculator   — pure-formula GLEC transport emissions
   ScoreAssembler        — combines all 5 dimensions into composite score
 
@@ -62,13 +62,15 @@ MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 # ============================================================
 class EmissionsModel:
     """
-    Wraps 3 XGBoost quantile models (q10, q50, q90).
+    Wraps three quantile models (q10, q50, q90). New training defaults to CatBoost;
+    an explicit manifest selects the backend, and legacy XGBoost artifacts still load.
     Call .predict() to get tCO2e estimates for a supplier config.
     """
 
-    def __init__(self, models: dict, feature_cols: list):
+    def __init__(self, models: dict, feature_cols: list, backend: str = "xgboost"):
         self.models        = models       # {0.10: xgb, 0.50: xgb, 0.90: xgb}
         self.feature_cols  = feature_cols
+        self.model_backend = backend
         self._country_set  = set()
         self._naics2_set   = set()
         self._naics_index  = self._build_naics_prefix_index()  # fast NAICS lookup
@@ -81,25 +83,48 @@ class EmissionsModel:
 
     @classmethod
     def load(cls, model_dir: str = MODEL_DIR) -> "EmissionsModel":
-        import xgboost as xgb
-
+        manifest_path = os.path.join(model_dir, "model_manifest.json")
+        manifest = None
+        if os.path.isfile(manifest_path):
+            with open(manifest_path, encoding="utf-8") as f:
+                manifest = json.load(f)
+        backend = manifest.get("backend") if isinstance(manifest, dict) else None
+        if backend is None:
+            # Backward-compatible discovery for old deployments and checkouts.
+            backend = "catboost" if all(
+                os.path.isfile(os.path.join(model_dir, f"catboost_q{q:02d}.cbm"))
+                for q in (10, 50, 90)
+            ) else "xgboost"
         models = {}
-        for q_int in [10, 50, 90]:
-            native_path = os.path.join(model_dir, f"xgb_q{q_int:02d}.ubj")
-            if os.path.exists(native_path):
-                # XGBoost's own format: portable across versions, and loading it
-                # avoids the "serialized model" warning pickles trigger.
-                model = xgb.XGBRegressor()
-                model.load_model(native_path)
-            else:
-                # Fallback for checkouts without .ubj files. joblib unpickles,
-                # so only point model_dir at the repo's own vendored models.
-                model = joblib.load(os.path.join(model_dir, f"xgb_q{q_int:02d}.joblib"))
-            models[q_int / 100] = model
-        with open(os.path.join(model_dir, "feature_columns.json")) as f:
+        try:
+            for q_int in [10, 50, 90]:
+                if backend == "catboost":
+                    from catboost import CatBoostRegressor
+
+                    model = CatBoostRegressor()
+                    model.load_model(os.path.join(model_dir, f"catboost_q{q_int:02d}.cbm"), format="cbm")
+                elif backend == "xgboost":
+                    import xgboost as xgb
+
+                    native_path = os.path.join(model_dir, f"xgb_q{q_int:02d}.ubj")
+                    if os.path.isfile(native_path):
+                        model = xgb.XGBRegressor()
+                        model.load_model(native_path)
+                    else:
+                        # Legacy pickle fallback; only load repo-controlled model artifacts.
+                        model = joblib.load(os.path.join(model_dir, f"xgb_q{q_int:02d}.joblib"))
+                else:
+                    raise ValueError(f"Unsupported emissions model backend in manifest: {backend}")
+                models[q_int / 100] = model
+        except (ImportError, OSError, ValueError) as exc:
+            raise RuntimeError(f"Could not load configured {backend} emissions models: {exc}") from exc
+        feature_path = os.path.join(model_dir, f"{backend}_feature_columns.json")
+        if not os.path.isfile(feature_path):
+            feature_path = os.path.join(model_dir, "feature_columns.json")
+        with open(feature_path, encoding="utf-8") as f:
             feature_cols = json.load(f)
-        print(f"[EmissionsModel] Loaded 3 quantile models ({len(feature_cols)} features)")
-        return cls(models, feature_cols)
+        print(f"[EmissionsModel] Loaded 3 {backend} quantile models ({len(feature_cols)} features)")
+        return cls(models, feature_cols, backend)
 
     @staticmethod
     def _build_naics_prefix_index() -> dict:
@@ -145,7 +170,7 @@ class EmissionsModel:
         log_useeio = math.log(max(useeio_val, 1_000))
         log_grid   = math.log(max(grid, 5))
 
-        row: dict[str, float] = {col: 0 for col in self.feature_cols}
+        row: dict[str, object] = {col: 0 for col in self.feature_cols if col not in ("country_iso", "naics2")}
         row["log_revenue"]     = math.log10(max(revenue_usd_m, 0.1))
         row["log_grid"]        = log_grid
         row["year_offset"]     = year - 2018
@@ -158,10 +183,14 @@ class EmissionsModel:
         if "useeio_x_ctry" in row:
             row["useeio_x_ctry"] = log_useeio * ctry_mult
 
-        if f"ctry_{country_iso}" in row:
-            row[f"ctry_{country_iso}"] = 1
-        if f"nac_{naics2}" in row:
-            row[f"nac_{naics2}"]       = 1
+        if self.model_backend == "catboost":
+            row["country_iso"] = str(country_iso)
+            row["naics2"] = str(naics2)
+        else:
+            if f"ctry_{country_iso}" in row:
+                row[f"ctry_{country_iso}"] = 1
+            if f"nac_{naics2}" in row:
+                row[f"nac_{naics2}"] = 1
         return cast(pd.DataFrame, pd.DataFrame([row])[self.feature_cols])
 
     def predict(self, country_iso: str, naics4: str,

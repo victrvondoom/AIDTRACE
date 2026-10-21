@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - link "Skip to content" [ref=e20] [cursor=pointer]:
+      - /url: "#main"
+    - complementary [ref=e21]:
+      - generic [ref=e23]:
+        - link "AIDTRACE home" [ref=e25] [cursor=pointer]:
+          - /url: /overview
+          - img "AIDTRACE" [ref=e26]
+          - generic [ref=e27]: AIDTRACE
+        - generic [ref=e28]:
+          - button "Search workspace" [ref=e29] [cursor=pointer]:
+            - generic [ref=e32]: Search
+            - generic [ref=e33]: Ctrl K
+          - button "Ingest document" [ref=e34] [cursor=pointer]
+        - navigation [ref=e37]:
+          - list [ref=e38]:
+            - listitem [ref=e39]:
+              - link "Workspace" [ref=e40] [cursor=pointer]:
+                - /url: /hub
+            - listitem [ref=e44]:
+              - link "Procurement" [ref=e45] [cursor=pointer]:
+                - /url: /procurement
+            - listitem [ref=e49]:
+              - link "Agent Sandbox" [ref=e50] [cursor=pointer]:
+                - /url: /agent-sandbox
+        - generic [ref=e54]:
+          - paragraph [ref=e55]: Appearance
+          - group "Appearance" [ref=e56]:
+            - button "Daylight" [pressed] [ref=e57] [cursor=pointer]
+            - button "Nightlight" [ref=e60] [cursor=pointer]
+        - button "Open user menu" [ref=e64] [cursor=pointer]:
+          - generic [ref=e65]: AI
+          - generic [ref=e66]:
+            - generic [ref=e67]: AIDTRACE user
+            - generic [ref=e68]: engineer
+    - main [ref=e72]:
+      - main [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - paragraph [ref=e78]: AIDTRACE · Safe test space
+            - heading "Agent Sandbox" [level=1] [ref=e81]
+            - paragraph [ref=e82]: Talk through questions about your current site’s evidence graph. The agent can inspect sources and explain its reasoning, while every tool in this sandbox is read-only.
+          - generic [ref=e83]: Read-only tools · no approvals or writes
+        - generic [ref=e85]:
+          - region "Agent conversation" [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - heading "AIDTRACE site agent" [level=2] [ref=e89]
+                - paragraph [ref=e90]: Current site · evidence-backed answers
+              - button "New chat" [disabled] [ref=e91]
+            - generic [ref=e93]:
+              - heading "Start a grounded conversation" [level=3] [ref=e97]
+              - paragraph [ref=e98]: Ask about graph evidence, decision history, agent handoffs, or a source revision. Each message triggers a fresh, site-scoped investigation.
+              - generic [ref=e99]:
+                - button "What decisions and actions are currently in my site's graph?" [ref=e100] [cursor=pointer]
+                - button "Show me recent agent handoffs and whether they are still usable." [ref=e101] [cursor=pointer]
+                - button "What would be affected if I revise a source?" [ref=e102] [cursor=pointer]
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - generic [ref=e105]: Message the AIDTRACE agent
+                - textbox "Message the AIDTRACE agent" [ref=e106]:
+                  - /placeholder: Ask the agent about this site's evidence…
+                - button "Send message" [disabled] [ref=e107]
+              - paragraph [ref=e110]: 0/500 · Enter to send · Shift+Enter for a new line
+          - complementary [ref=e111]:
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Agent readiness
+              - paragraph [ref=e134]: Graph answers available
+              - paragraph [ref=e136]: Model reasoning is switched off. Questions answer from the graph engines.
+              - generic [ref=e137]:
+                - generic [ref=e138]:
+                  - term [ref=e139]: Model
+                  - definition [ref=e140]: claude-opus-5-5
+                - generic [ref=e141]:
+                  - term [ref=e142]: Fallback
+                  - definition [ref=e143]: graph-only
+              - button "Refresh readiness" [ref=e115] [cursor=pointer]
+              - paragraph [ref=e144]: Checked 2:02:27 PM ? refreshes automatically
+            - generic [ref=e116]:
+              - heading "Sandbox boundaries" [level=3] [ref=e117]
+              - list [ref=e118]:
+                - listitem [ref=e119]: Reads evidence from your authenticated site only.
+                - listitem [ref=e122]: Shows cited record IDs and the tools it used.
+                - listitem [ref=e125]: Cannot write, approve, or execute operational actions.
+                - listitem [ref=e128]: Conversation is temporary and sent as bounded context with each request.
+            - generic [ref=e131]:
+              - strong [ref=e132]: Check evidence before acting.
+              - text: Agent replies are interpretations; linked records and the current workspace remain authoritative.
+  - alert [ref=e133]

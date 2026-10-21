@@ -64,11 +64,11 @@ def _store(settings, site_id: str) -> GraphStore:
 @router.get("/health", summary="Model, reference-data and provider readiness (no secrets)")
 async def health(_staff: dict = Depends(require_role(*STAFF))) -> dict:
     def work() -> dict:
-        from domains.greenchain.ml_bridge import ML_ROOT
-        models = (ML_ROOT / "models")
+        from domains.greenchain.ml_bridge import get_model_backend
+        backend = get_model_backend()
         data_ok = bool(__import__("os").path.isdir(__import__("os").environ.get("GREENCHAIN_DATA_DIR", "")))
         missing = gc._missing_component_agent_keys()
-        return {"ml_models": all((models / f"xgb_{q}.joblib").is_file() for q in ("q10", "q50", "q90")), "reference_data": data_ok,
+        return {"ml_models": backend is not None, "model_backend": backend, "reference_data": data_ok,
                 "live_discovery": "NOT_CONNECTED" if missing else "CONFIGURED", "missing_provider_keys": missing,
                 "demo_mode": "ILLUSTRATIVE_DEMO available"}
     return await asyncio.to_thread(work)
@@ -83,7 +83,7 @@ async def demo(transport_mode: str = "sea", _staff: dict = Depends(require_role(
     return {**scenario, "graph": adapter.scenario_graph(scenario["results"])}
 
 
-@router.post("/score", summary="Rank candidates with the XGBoost quantile models and composite scorer")
+@router.post("/score", summary="Rank candidates with the configured quantile model and composite scorer")
 async def score(req: gc.ScoreRequest, _staff: dict = Depends(require_role(*STAFF))) -> dict:
     _bounded(req.manufacturers)
     try:

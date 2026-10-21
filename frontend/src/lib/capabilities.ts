@@ -21,13 +21,16 @@ export type Capability = {
 // A product directory, not a health registry. A workspace entry means a route exists;
 // service availability and permissions are still resolved by its destination.
 export const CAPABILITIES: readonly Capability[] = [
+  { title: "Agent Sandbox", description: "Talk with the site-scoped AIDTRACE agent and teach coding agents durable engineering judgments through voice, an isolated memory vault, MCP recall, and rules export.", href: "/agent-sandbox", group: "intelligence", kind: "workspace" },
+  { title: "Engineering Memory Vault", description: "Dictate human-authored coding guidance once, store it in a separate site-shared graph, and export fail-closed AGENTS.md rules plus a read-only MCP server configuration.", href: "/agent-sandbox#engineering-memory-heading", group: "intelligence", kind: "workspace" },
   { title: "Risk Overview", description: "Decision KPIs, attention queue and recent supply-chain signals.", href: "/overview", group: "operations", kind: "workspace" },
   { title: "Supplier & Asset Inventory", description: "Suppliers, facilities and assets with ownership, evidence and events.", href: "/assets", group: "operations", kind: "workspace" },
+  { title: "Procurement & Sourcing Desk", description: "Compare GreenChain supplier signals, build quote briefs, and follow a guided path from sourcing to payment readiness.", href: "/procurement", group: "operations", kind: "workspace" },
   { title: "Register Supplier or Asset", description: "Create a governed supplier or facility record.", href: "/assets/register", group: "operations", kind: "workspace" },
   { title: "Master Data Bootstrap", description: "Bootstrap supplier master data and canonical identities.", href: "/assets/bootstrap", group: "operations", kind: "workspace" },
   { title: "Supply Events", description: "Search disruption and risk events with their source and timeline.", href: "/events", group: "operations", kind: "workspace" },
   { title: "Decision Briefs", description: "Review procurement decisions, evidence and required acknowledgements.", href: "/briefs", group: "operations", kind: "workspace" },
-  { title: "Voice Workspace", description: "Capture field observations by voice for supplier and site inspections.", href: "/field/voice", group: "operations", kind: "workspace" },
+  { title: "Voice Workspace", description: "Capture multilingual field observations with language selection or auto-detection for supplier and site inspections.", href: "/field/voice", group: "operations", kind: "workspace" },
   { title: "Field Deviations", description: "Report observations that differ from approved supplier requirements.", href: "/field/deviation", group: "operations", kind: "workspace" },
   { title: "Network State", description: "Review operating state and governed state changes.", href: "/overview/plant-state", group: "operations", kind: "workspace" },
   { title: "Root Cause Analysis", description: "Investigate disruptions with traceable supporting evidence.", href: "/rca", group: "investigation", kind: "workspace" },

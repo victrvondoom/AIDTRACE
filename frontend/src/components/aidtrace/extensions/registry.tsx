@@ -67,6 +67,12 @@ export interface AidtraceExtension {
 const f = (id: string, label: string): ExtensionTab => ({ id: `feature-${id}`, label, body: featureBody(id) });
 
 export const EXTENSIONS: AidtraceExtension[] = [
+  { id: "agent-sandbox", title: "Agent Sandbox", category: "Investigation & Intelligence", icon: "chat-centered-text", contextual: false, permissionPath: "/agent-sandbox",
+    description: "Talk with the site agent, inspect current graph evidence, and check model readiness.", keywords: ["chat", "agent", "sandbox", "conversation"],
+    tabs: [{ id: "chat", label: "Conversation", path: "/agent-sandbox" }], backend: ["/aidtrace-agent/*"] },
+  { id: "procurement", title: "Procurement", category: "Supply Chain Intelligence", icon: "truck", contextual: false, permissionPath: "/procurement",
+    description: "Compare supplier scenarios by transport mode and prepare a sourcing shortlist.", keywords: ["procurement", "suppliers", "quote", "shortlist"],
+    tabs: [{ id: "sourcing", label: "Sourcing desk", path: "/procurement" }], backend: ["/greenchain/*"] },
   // ---- The single workflow: every graph-backed panel on one page, in review order.
   { id: "workflow", title: "Investigation Workflow", category: "Investigation & Intelligence", icon: "target", contextual: true, permissionPath: "/hub",
     description: "One page from risk to audit: investigate, check the evidence, review the decision and trace its provenance, all from the FalkorDB graph.",
@@ -111,8 +117,8 @@ export const EXTENSIONS: AidtraceExtension[] = [
     description: "Organise investigations, scenarios, supporting documents and case history.", keywords: ["projects", "cases", "investigations", "scenarios", "workspaces", "history"],
     tabs: [{ id: "projects", label: "Workspaces", path: "/projects" }], backend: ["/projects/*"] },
   { id: "field-capture", title: "Field Capture", category: "Evidence & Knowledge", icon: "pulse", contextual: false,
-    description: "Voice notes and deviation flags captured on site.", keywords: ["voice", "field", "deviation", "capture", "observation", "inspection"],
-    tabs: [{ id: "voice", label: "Voice note", path: "/field/voice" }, { id: "deviation", label: "Deviation flag", path: "/field/deviation" }], backend: ["/field/*", "/elicitation/*"] },
+    description: "Multilingual voice notes and deviation flags captured on site.", keywords: ["voice", "multilingual", "field", "deviation", "capture", "observation", "inspection"],
+    tabs: [{ id: "voice", label: "Voice notes", path: "/field/voice" }, { id: "deviation", label: "Deviation flag", path: "/field/deviation" }], backend: ["/field/*", "/elicitation/*"] },
   // ---- D. Decision Governance
   { id: "governance", title: "Governance", category: "Decision Governance", icon: "shield-check", contextual: true, permissionPath: "/governance", header: DecisionValidity,
     description: "Decision validity and approvals, conflicting claims, quarantined evidence, controlled changes and review deadlines.", keywords: ["governance", "approval", "conflicts", "quarantine", "change", "moc", "sla", "review", "decision", "validity", "drift"],
@@ -147,6 +153,10 @@ export const EXTENSIONS: AidtraceExtension[] = [
   { id: "agents", title: "Agent Operations", category: "Specialist AI Engines", icon: "pulse", contextual: false, permissionPath: "/hub",
     description: "The four agent runtimes: live status, tools, runs and handoffs.", keywords: ["agents", "runtimes", "tools", "runs", "handoffs", "operations"],
     tabs: [f("agents", "Runtimes")], backend: ["/agents/*"] },
+  { id: "coordination", title: "Multi-Agent Swarm", category: "Specialist AI Engines", icon: "graph", contextual: false, permissionPath: "/hub",
+    description: "Coordinator & parallel Workers on a shared FalkorDB graph: DAG dependency scheduling, Company Brain recall, and cryptographically verified unlearning.",
+    keywords: ["coordination", "swarm", "multi-agent", "coordinator", "worker", "falkordb", "company brain", "unlearning", "dag", "parallel", "scheduler"],
+    tabs: [f("coordination", "Multi-Agent Swarm")], backend: ["/coordination/*"] },
   { id: "reports", title: "Reports", category: "Specialist AI Engines", icon: "file-text", contextual: false, permissionPath: "/hub",
     description: "Case reports, procurement memos and approval receipts, written only from what ran.", keywords: ["reports", "memo", "export", "receipts"],
     tabs: [f("reports", "Reports")], backend: ["/resolveai/platform/report", "/agent-memory/greenchain/report"] },

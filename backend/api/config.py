@@ -199,7 +199,7 @@ class Settings(BaseSettings):
     # no Anthropic request is made and every question answers from the graph engines.
     # -------------------------------------------------------------------------
     ANTHROPIC_API_KEY: str = ""
-    ANTHROPIC_MODEL: str = "claude-opus-5-5"
+    ANTHROPIC_MODEL: str = "claude-opus-5"
     AIDTRACE_LLM_ENABLED: bool = False
     AIDTRACE_LLM_FALLBACK: Literal["graph-only"] = "graph-only"
     AIDTRACE_LLM_MAX_OUTPUT_TOKENS: int = 2048

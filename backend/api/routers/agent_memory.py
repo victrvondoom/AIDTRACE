@@ -7,11 +7,13 @@ with specific reasons. Nothing here executes an external action.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import uuid
 from typing import Any
+from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
 
 from api.dependencies import CurrentUserDep, FalkorDriftDep, require_role
@@ -22,7 +24,9 @@ from api.services.drift.model import ContractError
 from api.services.drift.store import TraversalLimitExceeded
 from api.services.memory import greenchain_decisions, resolveai_memory
 from api.services.memory.agent_memory import AgentMemory
+from api.services.memory import evidence_intake
 from api.services.memory.context import build_llm_context
+from api.services.memory.engineering_vault import EngineeringMemoryVault, EngineeringVaultIncomplete
 
 log = structlog.get_logger(__name__)
 router = APIRouter()
@@ -65,6 +69,39 @@ class ContextBody(BaseModel):
     limit: int = Field(default=5, ge=1, le=10)
 
 
+class EvidenceClaimBody(BaseModel):
+    fact_key: str = Field(min_length=1, max_length=200)
+    fact_value: str | int | float | bool
+
+
+class EvidenceIntakeBody(BaseModel):
+    request_id: UUID
+    title: str = Field(min_length=1, max_length=200)
+    version_label: str = Field(min_length=1, max_length=80)
+    content: str = Field(min_length=1, max_length=20_000)
+    claims: list[EvidenceClaimBody] = Field(min_length=1, max_length=20)
+    supersedes_source_id: str | None = Field(default=None, pattern=ID)
+    human_verified: bool = False
+    expected_source_hash: str | None = Field(default=None, max_length=128)
+    expected_source_revision: str | None = Field(default=None, max_length=128)
+
+
+class EngineeringMemoryBody(BaseModel):
+    text: str = Field(min_length=12, max_length=4000)
+    title: str = Field(default="Engineering judgment", min_length=1, max_length=120)
+    tags: list[str] = Field(default_factory=list, max_length=8)
+
+
+def _engineering_vault(user: dict, store) -> EngineeringMemoryVault:
+    site = _site_for_user(user, write=False)
+    isolated_site = "eng_" + hashlib.sha256(site.encode("utf-8")).hexdigest()[:32]
+    return EngineeringMemoryVault(AgentMemory(store, isolated_site), isolated_site)
+
+
+def _evidence_body(body: EvidenceIntakeBody, reviewer: str | None = None) -> dict[str, Any]:
+    return {**body.model_dump(exclude_none=True), "claims": [claim.model_dump() for claim in body.claims], "reviewed_by": reviewer}
+
+
 async def _run(fn):
     try:
         return await asyncio.to_thread(fn)
@@ -72,8 +109,13 @@ async def _run(fn):
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
     except LookupError as exc:
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    except EngineeringVaultIncomplete as exc:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
+                            {"status": "VAULT_INCOMPLETE", "message": str(exc)}) from exc
     except TraversalLimitExceeded as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "The impact traversal exceeded its safety limit.") from exc
+    except evidence_intake.EvidenceIntakeConflict as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -157,6 +199,24 @@ async def handoffs(user: CurrentUserDep, store: FalkorDriftDep, _staff: dict = D
     return {"handoffs": await _run(mem.handoffs)}
 
 
+@router.post("/evidence/preview", summary="Preview a text source and its impact without writing to the site graph")
+async def evidence_preview(body: EvidenceIntakeBody, user: CurrentUserDep, store: FalkorDriftDep,
+                           _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    mem = _memory(user, store, write=False)
+    return await _run(lambda: evidence_intake.preview(mem, _evidence_body(body)))
+
+
+@router.post("/evidence/import", summary="Import a new immutable text source version; impact preview is required before supersession")
+async def evidence_import(body: EvidenceIntakeBody, user: CurrentUserDep, store: FalkorDriftDep,
+                          _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    mem = _memory(user, store, write=True)
+    try:
+        reviewer = str(user.get("email") or user.get("user_id") or "unknown")
+        return await _run(lambda: evidence_intake.import_evidence(mem, _evidence_body(body, reviewer)))
+    except evidence_intake.EvidenceIntakeConflict as exc:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+
 @router.post("/resolveai/remember", summary="Store a case's latest ResolveAI evidence investigation as memory another agent can recall")
 async def remember_case(body: RememberCaseBody, user: CurrentUserDep, store: FalkorDriftDep, _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
     mem = _memory(user, store, write=True)
@@ -178,3 +238,41 @@ async def greenchain_report(user: CurrentUserDep, store: FalkorDriftDep, scenari
                             _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
     mem = _memory(user, store, write=False)
     return await _run(lambda: greenchain_decisions.scenario_report(mem, scenario_id=scenario_id))
+
+
+@router.get("/engineering", summary="Read the isolated, site-shared engineering memory vault")
+async def engineering_snapshot(user: CurrentUserDep, store: FalkorDriftDep,
+                               _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    return await _run(_engineering_vault(user, store).snapshot)
+
+
+@router.post("/engineering", summary="Save a human-authored engineering judgment to the isolated sandbox vault")
+async def engineering_remember(body: EngineeringMemoryBody, user: CurrentUserDep, store: FalkorDriftDep,
+                               _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    site = _site_for_user(user, write=True)
+    tenant.guard_site(user, site)
+    vault = _engineering_vault(user, store)
+    return await _run(lambda: vault.remember(body.model_dump(), author=str(user.get("email") or user.get("user_id") or "unknown")))
+
+
+@router.get("/engineering/rules", summary="Export the fail-closed coding-agent memory rules")
+async def engineering_rules(user: CurrentUserDep, store: FalkorDriftDep,
+                            _staff: dict = Depends(require_role(*STAFF))) -> dict[str, Any]:
+    return await _run(_engineering_vault(user, store).export_rules)
+
+
+@router.post("/engineering/transcribe", summary="Transcribe a dictated engineering judgment for review before saving")
+async def engineering_transcribe(user: CurrentUserDep, _staff: dict = Depends(require_role(*STAFF)),
+                                 audio: UploadFile = File(...)) -> dict[str, Any]:
+    _site_for_user(user, write=False)
+    content_type = (audio.content_type or "").split(";", maxsplit=1)[0].strip().lower()
+    if content_type not in {"audio/wav", "audio/x-wav", "audio/webm", "audio/mpeg", "audio/mp4", "audio/ogg", "audio/flac", "audio/x-m4a"}:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Use WAV, WebM, MP3, M4A, OGG, or FLAC audio.")
+    payload = await audio.read(10 * 1024 * 1024 + 1)
+    if not payload or len(payload) > 10 * 1024 * 1024:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Audio must be between 1 byte and 10 MB.")
+    from api.services.whisper import WhisperService
+    result = await _run(lambda: WhisperService().transcribe(payload, filename=audio.filename or "voice.webm"))
+    if result.get("error") or not result.get("text"):
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, {"status": "TRANSCRIPTION_UNAVAILABLE", "message": "Voice transcription is unavailable. Your recording was not saved."})
+    return {"text": result["text"], "language": result.get("language", "unknown"), "confidence": result.get("confidence", 0.0), "review_required": True}

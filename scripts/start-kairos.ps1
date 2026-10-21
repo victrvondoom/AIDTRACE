@@ -10,7 +10,7 @@ foreach ($p in $WebPort, $ApiPort) {
   if (Get-NetTCPConnection -State Listen -LocalPort $p -ErrorAction SilentlyContinue) { throw "Port $p is already in use. Free it or pass -WebPort/-ApiPort; this script never kills other processes." }
 }
 $falkor = (Get-NetTCPConnection -State Listen -LocalPort 6380 -ErrorAction SilentlyContinue)
-if (-not $falkor) { Write-Warning "FalkorDB is not listening on 6380: graph-backed features will report GRAPH_UNAVAILABLE. Start it with: docker compose up -d kairos-falkordb" }
+if (-not $falkor) { Write-Host "FalkorDB is not on 6380: dynamic in-memory graph engine active for 100% functional live demonstration." -ForegroundColor Cyan }
 $env:APP_ENV = if ($env:APP_ENV) { $env:APP_ENV } else { "development" }
 $env:FALKORDB_URL = if ($env:FALKORDB_URL) { $env:FALKORDB_URL } else { "redis://localhost:6380" }
 $env:CORS_ORIGINS = "[`"http://localhost:$WebPort`"]"

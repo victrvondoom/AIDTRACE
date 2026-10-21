@@ -6,7 +6,7 @@ JSON schema from type hints + docstrings automatically, so these need accurate
 signatures and useful docstrings.
 
 All tools are SYNCHRONOUS because the underlying ML calls are CPU-bound
-(XGBoost inference + lookup tables). They return plain dicts that the agent
+(CatBoost-first quantile inference + lookup tables). They return plain dicts that the agent
 can thread back into its final JSON output.
 
 These tools are thin wrappers over the real ML layer in
@@ -69,7 +69,7 @@ def lookup_emission_factor(
     """
     Look up manufacturing emission intensity for a supplier.
 
-    Runs the trained XGBoost quantile model (q10/q50/q90) to estimate
+    Runs the configured quantile model (CatBoost by default; XGBoost remains supported) to estimate
     tCO2e for the given industry (NAICS), country, and revenue.
 
     Args:

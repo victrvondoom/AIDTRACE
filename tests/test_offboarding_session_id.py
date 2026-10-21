@@ -87,7 +87,7 @@ def test_handlers_use_maybe_single_not_single():
 
     import api.routers.elicitation as module
 
-    source = Path(module.__file__).read_text()
+    source = Path(module.__file__).read_text(encoding="utf-8", errors="replace")
     assert "OffboardingSessionIdDep" in source, "handlers must take the shared validated dep"
     offboarding = source[source.index('@router.post("/offboarding"') :]
     assert ".single()" not in offboarding, (

@@ -2,7 +2,7 @@
 
 // AIDTRACE workspace: one page, three panels. Left = Investigate (one input, three actions), centre = Globe / Graph / Lineage / Timeline, right = Risk /
 // Evidence / Decision inspector. The Globe is always the first thing shown. Secondary tools open in the centre and never leave the page.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Boundary } from "@/features/feature-host";
 import { useRole } from "@/components/use-role";
@@ -15,7 +15,7 @@ import { GlobeView, GraphView, LineageView, TimelineView, type RunLogEntry } fro
 import { AidtraceProvider, type AidtraceContextValue } from "./extensions/context";
 import { ExtensionLauncher } from "./extensions/launcher";
 import { ExtensionPanel } from "./extensions/panel";
-import { EXTENSIONS, extensionById, isAvailable } from "./extensions/registry";
+import { extensionById, isAvailable } from "./extensions/registry";
 
 const VIEWS: { id: ViewId; label: string }[] = [{ id: "globe", label: "Globe" }, { id: "graph", label: "Graph" }, { id: "lineage", label: "Lineage" }, { id: "timeline", label: "Timeline" }];
 const EXAMPLES = ["Which suppliers are exposed?", "What changed since the last review?", "Which decision needs attention?"];
@@ -133,22 +133,40 @@ function StoryModal({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 function LeftPanel(props: {
   data: AidtraceData; selection: Selection; onSelect: (s: Selection) => void; run: RunState | null; busy: boolean;
-  onInvestigate: () => void; onUpdate: () => void; onReview: () => void; extension: string | null; onOpenExtensions: () => void; onShow: (kind: "memory" | "node" | "supplier") => void;
+  onInvestigate: () => void; onUpdate: () => void; onReview: () => void; extension: string | null; onOpenExtensions: () => void; onShow: (kind: "memory" | "node" | "supplier" | "source" | "claim" | "decision" | "action") => void;
   onOpenStory: () => void;
 }) {
   const { data, selection, run, busy, extension, onOpenStory } = props;
-  const { demo, snap } = data;
+  const { snap } = data;
+  const graphConnected = !data.errors.memory && !data.errors.site && Boolean(data.snap && data.site);
+  const graphStatus = data.loading ? "Checking graph" : graphConnected ? "FalkorDB connected" : "Graph unavailable";
   const [question, setQuestion] = useState("");
   const [focused, setFocused] = useState(false);
   const [asking, setAsking] = useState(false);
   const [answer, setAnswer] = useState<AgentAnswer | null>(null);
+  const answerRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => { answerRequest.current?.abort(); answerRequest.current = null; }, []);
 
   async function ask(text: string) {
     const q = text.trim();
     if (!q || asking) return;
-    setAsking(true); setQuestion("");
-    setAnswer(await askAgent(q, { demo: data.demo, scenario: data.scenario, snap: data.snap, selected: selection }));
-    setAsking(false);
+    const controller = new AbortController();
+    answerRequest.current = controller;
+    setAsking(true); setQuestion(""); setAnswer(null);
+    try {
+      const fresh = await data.refreshMemory();
+      if (answerRequest.current !== controller) return;
+      const response = await askAgent(q, { demo: data.demo, scenario: data.scenario, snap: fresh.snap ?? data.snap,
+        site: fresh.site ?? data.site, selected: selection }, controller.signal);
+      if (answerRequest.current === controller) setAnswer(response);
+    } catch (error) {
+      if (answerRequest.current === controller && !controller.signal.aborted) {
+        setAnswer({ question: q, at: new Date().toISOString(), route: "AIDTRACE site agent", ok: false,
+          text: error instanceof Error ? error.message : "The graph question failed. Refresh the graph and try again.", lines: [] });
+      }
+    } finally {
+      if (answerRequest.current === controller) { answerRequest.current = null; setAsking(false); }
+    }
   }
   const reviewable = (snap?.decisions.length ?? 0) > 0;
   return (
@@ -167,8 +185,8 @@ function LeftPanel(props: {
         </div>
         <p className="text-[11px] font-medium text-muted">Powered by FalkorDB</p>
         <p className="mt-1 flex items-center gap-1.5 text-micro text-muted">
-          <span className="size-1.5 rounded-full bg-verified animate-pulse" aria-hidden="true" />
-          <span className="font-semibold text-verified">FalkorDB Memory</span>
+          <span className={`size-1.5 rounded-full ${graphConnected ? "bg-verified" : data.loading ? "bg-caution animate-pulse" : "bg-danger"}`} aria-hidden="true" />
+          <span className={`font-semibold ${graphConnected ? "text-verified" : data.loading ? "text-caution" : "text-danger"}`}>{graphStatus}</span>
           <span>· GraphBLAS OpenCypher</span>
         </p>
       </div>
@@ -180,6 +198,7 @@ function LeftPanel(props: {
             placeholder="Ask about a supplier, risk, or decision…" autoComplete="off"
             className="h-10 min-w-0 flex-1 border border-line bg-canvas px-3 text-caption text-ink placeholder:text-muted focus-visible:outline-2 focus-visible:outline-accent" />
           <Button type="submit" variant="primary" disabled={asking || !question.trim()} aria-label="Send question">{asking ? "…" : "Ask"}</Button>
+          {asking && <Button type="button" variant="ghost" onClick={() => { answerRequest.current?.abort(); answerRequest.current = null; setAsking(false); }}>Stop</Button>}
         </div>
         {focused && !question && (
           <ul className="absolute inset-x-4 top-[calc(100%-0.5rem)] z-10 border border-line bg-surface shadow-sm" aria-label="Examples">
@@ -230,7 +249,7 @@ function LeftPanel(props: {
           <p className="mt-1 text-ink">{answer.text}</p>
           {answer.lines.length > 0 && answer.ok && <ul className="mt-1 max-h-32 space-y-0.5 overflow-y-auto text-micro text-muted">{answer.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>}
           <p className="mt-1 text-micro text-muted">{answer.route}</p>
-          {answer.select && <Button className="mt-1" variant="ghost" onClick={() => { props.onSelect(answer.select!); props.onShow(answer.select!.kind === "memory" ? "memory" : answer.select!.kind === "node" ? "node" : "supplier"); }}>Show in workspace</Button>}
+          {answer.records?.length ? <div className="mt-2 flex flex-wrap gap-1.5">{answer.records.map((record) => <Button key={`${record.kind}-${record.id}`} variant="ghost" className="max-w-full truncate" onClick={() => { props.onSelect(record); props.onShow(record.kind); }}>Inspect {record.label}</Button>)}</div> : answer.select && <Button className="mt-1" variant="ghost" onClick={() => { props.onSelect(answer.select!); props.onShow(answer.select!.kind === "memory" ? "memory" : answer.select!.kind === "node" ? "node" : "supplier"); }}>Show in workspace</Button>}
         </section>
       )}
 
@@ -332,7 +351,10 @@ export function AidtraceWorkspace() {
   }
   function onReview() { setRightOpen(true); setSection("decision"); }
 
-  const connected = !data.errors.memory && Boolean(data.snap);
+  const connected = !data.errors.memory && !data.errors.site && Boolean(data.snap && data.site);
+  const refreshing = data.refreshing;
+  const loading = data.loading;
+  const refreshAll = data.refreshAll;
   const ext = extension ? extensionById(extension.id) : null;
   const shared: AidtraceContextValue = { data, selection, select, investigation, evidence, recommended, view, runs, openExtension };
   const common = { data, selection, onSelect: select };
@@ -342,9 +364,10 @@ export function AidtraceWorkspace() {
   const topbar = useMemo(() => (
     <>
       <span className="hidden truncate text-caption text-ink xl:inline" title={scenarioName}>{scenarioName}</span>
-      <span className={`ml-auto flex items-center gap-1.5 text-micro ${connected ? "text-ink" : "text-danger"}`} role="status"><span className={`size-1.5 rounded-full ${connected ? "bg-verified" : "bg-danger"}`} aria-hidden="true" />{data.loading ? "Connecting…" : connected ? "Graph connected" : "Graph unavailable"}</span>
+      <span className={`ml-auto flex items-center gap-1.5 text-micro ${connected ? "text-ink" : "text-danger"}`} role="status"><span className={`size-1.5 rounded-full ${connected ? "bg-verified" : "bg-danger"}`} aria-hidden="true" />{loading ? "Connecting…" : connected ? "Graph current" : "Graph read unavailable"}</span>
+      <button type="button" disabled={refreshing} onClick={() => void refreshAll?.()} className="ml-2 text-micro text-muted underline underline-offset-2 disabled:opacity-50">{refreshing ? "Refreshing…" : "Refresh graph"}</button>
     </>
-  ), [scenarioName, connected, data.loading]);
+  ), [scenarioName, connected, loading, refreshing, refreshAll]);
 
   function onKey(e: React.KeyboardEvent) {
     const i = VIEWS.findIndex((v) => v.id === view);
@@ -364,7 +387,7 @@ export function AidtraceWorkspace() {
           <div className="relative size-full">
             <button type="button" aria-label="Collapse investigate panel" onClick={() => setLeftOpen(false)} className="absolute right-2 top-2.5 z-10 hidden size-7 place-items-center text-muted hover:text-ink lg:grid">‹</button>
             <LeftPanel data={data} selection={selection} onSelect={select} run={run} busy={busy} onInvestigate={() => void onInvestigate()} onUpdate={() => void onUpdate()} onReview={onReview}
-              extension={extension?.id ?? null} onOpenExtensions={() => setLauncherOpen(true)} onOpenStory={() => setStoryOpen(true)} onShow={(k) => changeView(k === "memory" ? "lineage" : k === "node" ? "graph" : "globe")} />
+              extension={extension?.id ?? null} onOpenExtensions={() => setLauncherOpen(true)} onOpenStory={() => setStoryOpen(true)} onShow={(k) => changeView(k === "supplier" ? "globe" : k === "node" || k === "claim" ? "graph" : "lineage")} />
           </div>
         ) : <button type="button" aria-label="Expand investigate panel" onClick={() => setLeftOpen(true)} className="hidden size-full place-items-start justify-center pt-3 text-muted hover:text-ink lg:grid">›</button>}
       </aside>

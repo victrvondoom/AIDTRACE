@@ -41,7 +41,8 @@ export default function LoginPage() {
     try {
       await login(em, pw);
       const user = await getMe();
-      router.push(workspacePath(user?.role));
+      const requestedDestination = new URLSearchParams(window.location.search).get("next");
+      router.push(requestedDestination === "field-voice" && user?.role === "field_worker" ? "/field/voice" : workspacePath(user?.role));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign-in failed.");
       setBusy(false);
@@ -105,7 +106,7 @@ export default function LoginPage() {
             {[
               { icon: "squares-four", title: "Procurement leads", desc: "See which sourcing decisions no longer stand on current evidence." },
               { icon: "scales", title: "Risk investigators", desc: "Trace any claim from a supplier to its source and the decisions that rest on it." },
-              { icon: "waveform", title: "Field teams", desc: "Voice notes and deviation flags, sized for a phone on site." },
+              { icon: "waveform", title: "Field teams", desc: "Multilingual voice notes and deviation flags, sized for a phone on site." },
             ].map((row) => (
               <div key={row.title} className="flex items-start gap-3 bg-surface px-4 py-3.5">
                 <Icon name={row.icon as "squares-four"} className="mt-0.5 size-[18px] shrink-0 text-accent" />

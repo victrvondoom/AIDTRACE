@@ -38,7 +38,7 @@ _TOOL_MENU = """\
 You have these tools — use them, do not hallucinate manufacturers:
   • web_search(query)             — Brave search; returns title + url + snippet
   • fetch_url(url)                — retrieves text content of a webpage
-  • lookup_emission_factor        — XGBoost manufacturing emissions estimate
+  • lookup_emission_factor        — CatBoost-first quantile manufacturing emissions estimate (legacy XGBoost supported)
   • calculate_transport_emissions — GLEC framework transport CO2
   • score_certifications          — sustainability certification scoring"""
 

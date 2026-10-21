@@ -3,7 +3,7 @@
 // Agent memory and the evidence cascade, on the site's FalkorDB graph. Everything shown is read back from the graph: what each agent
 // remembered, the evidence behind it, which memories are still usable, and whether a human approval still applies. The dataset
 // revision is a counterfactual the user enters (country and factor); the cascade and the re-ranking that follow are real.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { normalizeSnapshot } from "@/components/aidtrace/data";
 import { Button, StatusBadge } from "@/components/ui";
 import {
@@ -56,12 +56,37 @@ export function AgentMemoryWorkspace() {
   const [factKey, setFactKey] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const generation = useRef(0);
+  const pending = useRef<Promise<void> | null>(null);
+  const mounted = useRef(true);
 
-  const refresh = useCallback(async () => {
-    try { const [s, h] = await Promise.all([memorySnapshot(), memoryHandoffs()]); setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setError(null); }
-    catch (e) { setError(e instanceof Error ? e.message : "Agent memory could not be read."); }
+  const refresh = useCallback(async (force = false) => {
+    if (pending.current && !force) return pending.current;
+    const request = ++generation.current;
+    setRefreshing(true);
+    const work = (async () => {
+      try {
+        const [s, h] = await Promise.all([memorySnapshot(), memoryHandoffs()]);
+        if (mounted.current && request === generation.current) { setSnap(normalizeSnapshot(s)); setHandoffs(h.handoffs ?? []); setError(null); setUpdatedAt(new Date().toISOString()); }
+      } catch (e) {
+        if (mounted.current && request === generation.current) setError(e instanceof Error ? e.message : "Agent memory could not be read.");
+      } finally {
+        if (mounted.current && request === generation.current) { setRefreshing(false); pending.current = null; }
+      }
+    })();
+    pending.current = work;
+    return work;
   }, []);
-  useEffect(() => { const t = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(t); }, [refresh]);
+  useEffect(() => {
+    mounted.current = true;
+    const initial = window.setTimeout(() => void refresh(), 0);
+    const timer = window.setInterval(() => { if (!document.hidden && navigator.onLine) void refresh(); }, 30000);
+    const resume = () => { if (!document.hidden && navigator.onLine) void refresh(); };
+    document.addEventListener("visibilitychange", resume); window.addEventListener("focus", resume); window.addEventListener("online", resume);
+    return () => { mounted.current = false; window.clearTimeout(initial); window.clearInterval(timer); document.removeEventListener("visibilitychange", resume); window.removeEventListener("focus", resume); window.removeEventListener("online", resume); };
+  }, [refresh]);
 
   const scenarios = useMemo(() => [...new Set((snap?.decisions ?? []).map((d) => scenarioOf(d.id)).filter((x): x is string => Boolean(x)))], [snap]);
   const active = scenario ?? scenarios[0] ?? null;
@@ -78,27 +103,28 @@ export function AgentMemoryWorkspace() {
   function resetResults() { setRevised(null); setPreview(null); setReceipt(null); setRefusal(null); }
   async function record() {
     const r = await run("record", () => memoryRecordScenario());
-    if (r) { setScenario(r.scenario_id); resetResults(); await refresh(); }
+    if (r) { setScenario(r.scenario_id); resetResults(); await refresh(true); }
   }
   async function approve(actionId: string) {
     setRefusal(null); setReceipt(null); setBusy("approve");
     try { const r = await memoryApprove(actionId); setReceipt(`Approved revision ${r.graph_revision.slice(0, 10)}… as ${r.reviewer}. Nothing was sent or purchased.`); }
     catch (e) { setRefusal({ action: actionId, message: e instanceof Error ? e.message : "Approval was refused." }); }
-    finally { setBusy(null); await refresh(); }
+    finally { setBusy(null); await refresh(true); }
   }
   const body = () => ({ scenario_id: active!, dataset: form.dataset, country: form.country, factor: form.factor, label: form.label });
   async function doPreview() { const r = await run("preview", () => memoryPreviewRevision(body())); if (r) setPreview(r); }
   async function doRevise() {
     const r = await run("revise", () => memoryRevise(body()));
-    if (r) { setRevised(r); setPreview(null); setReceipt(null); setRefusal(null); await refresh(); }
+    if (r) { setRevised(r); setPreview(null); setReceipt(null); setRefusal(null); await refresh(true); }
   }
-  async function doRecall() { const r = await run("recall", () => memoryRecall(agent, factKey)); if (r) { setRecall(r); await refresh(); } }
+  async function doRecall() { const r = await run("recall", () => memoryRecall(agent, factKey)); if (r) { setRecall(r); await refresh(true); } }
 
   return (
     <section className="space-y-5" aria-labelledby="memory-heading">
       <div>
         <h2 id="memory-heading" className="text-title font-semibold">Agent memory and evidence drift</h2>
         <p className="mt-1 max-w-3xl text-caption leading-relaxed text-muted">Agents record what they concluded together with the evidence behind it. When a source is superseded, AIDTRACE traces which memories, decisions and approvals rested on it, marks them stale, and refuses to approve anything that no longer holds. Stored in this site&apos;s FalkorDB graph.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-micro text-muted"><Button variant="ghost" disabled={refreshing} onClick={() => void refresh(true)}>{refreshing ? "Refreshing…" : "Refresh graph"}</Button><span>{error && snap ? "Showing the last successful graph read." : updatedAt ? `Updated ${new Date(updatedAt).toLocaleTimeString()} · checks again every 30 seconds` : "Reading live graph data…"}</span></div>
       </div>
       {error && <p role="alert" className="border-l-2 border-danger bg-surface p-3 text-caption text-danger">{error}</p>}
       {!snap && !error && <p role="status" className="text-caption text-muted">Reading the memory graph…</p>}

@@ -16,7 +16,7 @@ def _read(rel: str) -> str:
     p = ROOT / rel
     if not p.exists():
         pytest.skip(f"{rel} is not mounted in this environment")
-    return p.read_text()
+    return p.read_text(encoding="utf-8", errors="replace")
 
 
 def _rls_tables(sql: str) -> set[str]:
@@ -68,7 +68,7 @@ def test_third_party_actions_are_pinned_to_commit_shas():
         pytest.skip(".github is not mounted in this environment")
     loose = []
     for f in sorted(wf.glob("*.yml")):
-        for line in f.read_text().splitlines():
+        for line in f.read_text(encoding="utf-8", errors="replace").splitlines():
             m = re.match(r"\s*(?:-\s*)?uses:\s*([^@\s]+)@(\S+)", line)
             if not m or m[1].startswith(("actions/", "github/", "./")):
                 continue

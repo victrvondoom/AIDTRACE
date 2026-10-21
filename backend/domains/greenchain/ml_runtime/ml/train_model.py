@@ -1,7 +1,7 @@
 """
 train_model.py
 --------------
-Trains the GreenChain XGBoost quantile regression emissions estimator.
+Trains the GreenChain CatBoost quantile regression emissions estimator by default.
 
 Model output: tCO2e per $1M spend (log-transformed during training).
 Three models are trained (one per quantile): q10, q50, q90.
@@ -11,15 +11,19 @@ Validation metric: Spearman rank correlation on held-out country-industry pairs.
 (Rank ordering matters more than absolute accuracy.)
 
 Run:
-    python ml/train_model.py
+    python ml/train_model.py                    # CatBoost (default)
+    python ml/train_model.py --model xgboost    # explicit legacy backend
 Outputs:
-    models/xgb_q10.ubj, xgb_q10.joblib   (native XGBoost format + pickle)
-    models/xgb_q50.ubj, xgb_q50.joblib
-    models/xgb_q90.ubj, xgb_q90.joblib
+    models/catboost_q10.cbm
+    models/catboost_q50.cbm
+    models/catboost_q90.cbm
     models/feature_columns.json
+    models/catboost_feature_columns.json
+    models/model_manifest.json
     models/training_report.txt
 """
 
+import argparse
 import json
 import os
 import sys
@@ -29,7 +33,6 @@ from typing import Any, cast
 import joblib
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from scipy import stats
 from sklearn.model_selection import GroupShuffleSplit
 
@@ -63,7 +66,7 @@ def load_data() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # 2. Feature engineering
 # ---------------------------------------------------------------------------
-def build_features(df: pd.DataFrame):
+def build_features(df: pd.DataFrame, backend: str = "catboost"):
     """
     Returns X (DataFrame), y (log-transformed target), feature_names list.
     Features:
@@ -77,8 +80,8 @@ def build_features(df: pd.DataFrame):
                                  KEY for within-country ranking: steel mill in dirty-grid
                                  country >> software in same country
       - useeio_x_ctry          : interaction log_useeio_base × ctry_mult
-      - country_iso            : categorical → one-hot
-      - naics2                 : categorical → one-hot (coarse sector signal)
+      - country_iso            : CatBoost categorical (one-hot for XGBoost)
+      - naics2                 : CatBoost categorical (one-hot for XGBoost)
     """
     from ml.reference_data import NAICS_DETAIL
 
@@ -108,15 +111,20 @@ def build_features(df: pd.DataFrame):
                        "ctry_mult", "log_useeio_base",
                        "useeio_x_grid", "useeio_x_ctry"]
 
-    # One-hot encode country and naics2
-    country_dummies = pd.get_dummies(df["country_iso"], prefix="ctry", drop_first=False)
-    naics_dummies   = pd.get_dummies(df["naics2"],      prefix="nac",  drop_first=False)
-
-    X = pd.concat([
-        df[continuous_cols].reset_index(drop=True),
-        country_dummies.reset_index(drop=True),
-        naics_dummies.reset_index(drop=True),
-    ], axis=1)
+    if backend == "catboost":
+        # Preserve the two categorical signals so CatBoost can learn ordered
+        # target statistics instead of seeing a sparse one-hot expansion.
+        X = df[continuous_cols + ["country_iso", "naics2"]].reset_index(drop=True).copy()
+        X["country_iso"] = X["country_iso"].astype(str)
+        X["naics2"] = X["naics2"].astype(str)
+    else:
+        country_dummies = pd.get_dummies(df["country_iso"], prefix="ctry", drop_first=False)
+        naics_dummies = pd.get_dummies(df["naics2"], prefix="nac", drop_first=False)
+        X = pd.concat([
+            df[continuous_cols].reset_index(drop=True),
+            country_dummies.reset_index(drop=True),
+            naics_dummies.reset_index(drop=True),
+        ], axis=1)
 
     y = df["log_target"].values
     return X, y, df
@@ -137,28 +145,39 @@ def split_data(X, y, df):
 
 
 # ---------------------------------------------------------------------------
-# 4. Train XGBoost quantile models
+# 4. Train backend-selected quantile models (CatBoost by default)
 # ---------------------------------------------------------------------------
-def train_quantile_model(X_train, y_train, quantile: float):
-    model = xgb.XGBRegressor(
-        objective="reg:quantileerror",
-        quantile_alpha=quantile,
-        n_estimators=600,
-        max_depth=7,
-        learning_rate=0.04,
-        subsample=0.85,
-        colsample_bytree=0.75,
-        min_child_weight=3,
-        reg_alpha=0.05,
-        reg_lambda=1.5,
-        random_state=SEED,
-        n_jobs=-1,
-        tree_method="hist",
-    )
-    model.fit(X_train, y_train,
-              eval_set=[(X_train, y_train)],
-              verbose=False)
-    return model
+def train_quantile_model(X_train, y_train, quantile: float, backend: str = "catboost"):
+    """Train one emissions quantile model; CatBoost is the default backend."""
+    if backend == "catboost":
+        from catboost import CatBoostRegressor
+
+        model = CatBoostRegressor(
+            loss_function=f"Quantile:alpha={quantile}",
+            iterations=1000,
+            depth=8,
+            learning_rate=0.035,
+            l2_leaf_reg=5.0,
+            random_seed=SEED,
+            thread_count=-1,
+            verbose=False,
+            allow_writing_files=False,
+        )
+        model.fit(X_train, y_train, cat_features=["country_iso", "naics2"], verbose=False)
+        return model
+    if backend == "xgboost":
+        import xgboost as xgb
+
+        model = xgb.XGBRegressor(
+            objective="reg:quantileerror", quantile_alpha=quantile,
+            n_estimators=600, max_depth=7, learning_rate=0.04,
+            subsample=0.85, colsample_bytree=0.75, min_child_weight=3,
+            reg_alpha=0.05, reg_lambda=1.5, random_state=SEED,
+            n_jobs=-1, tree_method="hist",
+        )
+        model.fit(X_train, y_train, eval_set=[(X_train, y_train)], verbose=False)
+        return model
+    raise ValueError(f"Unsupported model backend: {backend}")
 
 
 # ---------------------------------------------------------------------------
@@ -209,11 +228,18 @@ def evaluate(model_q50, X_test, y_test, df_test):
 # 6. Main
 # ---------------------------------------------------------------------------
 def main():
+    parser = argparse.ArgumentParser(description="Train GreenChain emissions quantile models")
+    parser.add_argument(
+        "--model", choices=("catboost", "xgboost"), default="catboost",
+        help="Training backend (default: catboost; xgboost remains available explicitly)",
+    )
+    args = parser.parse_args()
+    backend = args.model
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     # ── Load ──
     df = load_data()
-    X, y, df_feat = build_features(df)
+    X, y, df_feat = build_features(df, backend=backend)
 
     # ── Split ──
     X_train, X_test, y_train, y_test, df_test = split_data(X, y, df_feat)
@@ -222,20 +248,35 @@ def main():
 
     # ── Save feature column list for inference ──
     feature_cols = list(X_train.columns)
-    with open(os.path.join(MODEL_DIR, "feature_columns.json"), "w") as f:
+    # Preserve the original XGBoost schema before replacing the legacy shared
+    # feature file, so the explicit fallback remains loadable after CatBoost training.
+    xgb_features_path = os.path.join(MODEL_DIR, "xgboost_feature_columns.json")
+    legacy_features_path = os.path.join(MODEL_DIR, "feature_columns.json")
+    if backend == "catboost" and not os.path.isfile(xgb_features_path) and os.path.isfile(legacy_features_path):
+        with open(legacy_features_path, encoding="utf-8") as f:
+            legacy_features = json.load(f)
+        with open(xgb_features_path, "w", encoding="utf-8") as f:
+            json.dump(legacy_features, f, indent=2)
+    with open(os.path.join(MODEL_DIR, f"{backend}_feature_columns.json"), "w", encoding="utf-8") as f:
+        json.dump(feature_cols, f, indent=2)
+    with open(legacy_features_path, "w", encoding="utf-8") as f:
         json.dump(feature_cols, f, indent=2)
 
     # ── Train 3 quantile models ──
     models = {}
     for q in QUANTILES:
-        print(f"\nTraining XGBoost q={q:.2f}...", end=" ", flush=True)
+        print(f"\nTraining {backend.title()} q={q:.2f}...", end=" ", flush=True)
         t0 = time.time()
-        model = train_quantile_model(X_train, y_train, quantile=q)
+        model = train_quantile_model(X_train, y_train, quantile=q, backend=backend)
         elapsed = time.time() - t0
-        fname = os.path.join(MODEL_DIR, f"xgb_q{int(q*100):02d}.joblib")
-        joblib.dump(model, fname)
-        # Native XGBoost format — what inference.EmissionsModel.load prefers.
-        model.save_model(os.path.join(MODEL_DIR, f"xgb_q{int(q*100):02d}.ubj"))
+        fname = os.path.join(MODEL_DIR, f"{backend}_q{int(q*100):02d}")
+        if backend == "catboost":
+            fname += ".cbm"
+            model.save_model(fname, format="cbm")
+        else:
+            fname += ".joblib"
+            joblib.dump(model, fname)
+            model.save_model(os.path.join(MODEL_DIR, f"xgb_q{int(q*100):02d}.ubj"))
         models[q] = model
         print(f"done ({elapsed:.1f}s) → {fname}")
 
@@ -245,7 +286,8 @@ def main():
 
     report = []
     report.append("=" * 60)
-    report.append("GreenChain XGBoost Emissions Model — Training Report")
+    report.append(f"GreenChain {backend.title()} Emissions Model — Training Report")
+    report.append("Backend is selected by --model; default is CatBoost with native country/industry categoricals.")
     report.append("=" * 60)
     report.append(f"Training records : {len(X_train)}")
     report.append(f"Test records     : {len(X_test)}")
@@ -256,14 +298,16 @@ def main():
         report.append(f"  {k:<35} {v}")
     report.append("")
     report.append("── Key insight ──")
-    report.append("  Spearman rank correlation >> 0.70 means the model")
-    report.append("  reliably orders suppliers from low to high emissions.")
-    report.append("  Portugal < China < India ordering is preserved.")
+    report.append("  The source is cdp_synthetic.csv; metrics do not establish real-world accuracy.")
+    report.append("  CatBoost is the default challenger, not proven superior to XGBoost until both")
+    report.append("  are trained and compared on the same held-out split.")
     report.append("")
     report.append("── Feature importance (top 10, q50 model) ──")
 
-    booster = models[0.50].get_booster()
-    imp = booster.get_score(importance_type="gain")
+    if backend == "catboost":
+        imp = dict(zip(feature_cols, models[0.50].get_feature_importance()))
+    else:
+        imp = models[0.50].get_booster().get_score(importance_type="gain")
     top10 = sorted(imp.items(), key=lambda x: -x[1])[:10]
     for feat, score in top10:
         report.append(f"  {feat:<35} {score:.1f}")
@@ -273,6 +317,12 @@ def main():
 
     with open(os.path.join(MODEL_DIR, "training_report.txt"), "w") as f:
         f.write(report_text)
+
+    manifest_path = os.path.join(MODEL_DIR, "model_manifest.json")
+    manifest_tmp = manifest_path + ".tmp"
+    with open(manifest_tmp, "w", encoding="utf-8") as f:
+        json.dump({"backend": backend, "quantiles": QUANTILES, "feature_count": len(feature_cols)}, f, indent=2)
+    os.replace(manifest_tmp, manifest_path)
 
     print(f"\nAll models saved to {MODEL_DIR}/")
     return metrics

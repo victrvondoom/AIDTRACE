@@ -258,9 +258,16 @@ async def ingest_voice_note(
     work_order_id: str,
     file: UploadFile,
     submitted_by: str | None = Form(None),  # ignored: the submitter is the authenticated user
+    language: str = Form("auto"),
     current_user: CurrentUserDep = None,
     supabase: SupabaseDep = None,
 ) -> dict:
+    supported_languages = {
+        "auto", "en", "hi", "bn", "te", "mr", "ta", "ur", "gu", "kn", "ml", "pa", "or",
+        "es", "fr", "pt", "ar", "zh", "ja",
+    }
+    if language not in supported_languages:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Unsupported voice transcription language.")
     settings = get_settings()
     submitted_by = current_user.get("user_id", "unknown")
     await tenant.guard_work_order(supabase, current_user, work_order_id)
@@ -320,6 +327,7 @@ async def ingest_voice_note(
         sha256=sha256,
         submitted_by=submitted_by,
         filename=safe_name,
+        requested_language=language,
     )
 
     log.info("elicitation.voice_note_queued",

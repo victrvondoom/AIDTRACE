@@ -45,7 +45,7 @@ const MODELS: { key: string; sub: string }[] = [
   { key: "openrouter", sub: "LLM fallback, llama-3.1-70b" },
   { key: "gemini", sub: "LLM fallback, gemini-2.5-flash-lite" },
   { key: "jina", sub: "Embeddings, powers Search & RAG" },
-  { key: "groq", sub: "Whisper STT, voice notes" },
+  { key: "groq", sub: "Whisper STT, multilingual voice notes" },
 ];
 
 const TONE = { healthy: "verified", degraded: "caution", down: "danger" } as const;

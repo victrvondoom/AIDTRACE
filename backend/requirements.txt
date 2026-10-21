@@ -103,6 +103,7 @@ pytest-timeout==2.4.0
 setuptools>=84.0.0
 
 # GreenChain engines (migrated; pins match the versions the models were trained with)
+catboost==1.2.10
 xgboost==2.1.1
 scikit-learn==1.5.0
 pandas==2.2.2

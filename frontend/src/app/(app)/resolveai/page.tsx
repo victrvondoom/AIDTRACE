@@ -8,6 +8,7 @@ import { getHealthDetailed } from "@/lib/api";
 import { useFetch } from "@/lib/use-fetch";
 import { ReasoningWorkspace } from "../overview/_components/reasoning-workspace";
 import { DriftDemoPanel } from "./_components/drift-demo-panel";
+import { EvidenceIntakeWorkspace } from "./_components/evidence-intake-workspace";
 
 import dynamic from "next/dynamic";
 
@@ -32,6 +33,8 @@ export default function ResolveAIPage() {
   return (
     <div className="mx-auto max-w-[1400px]">
       <PageHeader title="Resolve Intelligence" lede="AIDTRACE owns the workflow and the decision. Resolve contributes investigative intelligence, connected evidence and specialist reasoning on FALKOR DB." actions={<ButtonLink href="/workspace">All Features</ButtonLink>} />
+
+      <div className="mt-6"><EvidenceIntakeWorkspace /></div>
 
       <nav aria-label="Resolve sub-modules" className="mt-6 flex flex-wrap gap-2 border-b border-line pb-3">
         <Button

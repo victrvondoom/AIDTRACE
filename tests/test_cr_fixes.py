@@ -276,8 +276,8 @@ def test_every_workflow_activity_is_registered_with_the_temporal_worker():
 
     root = Path(__file__).resolve().parents[1]
     base = next(c for c in (root / "backend", Path("/app")) if (c / "workflows" / "document_pipeline.py").exists())
-    pipeline = (base / "workflows" / "document_pipeline.py").read_text()
-    worker = (base / "workers" / "temporal_worker.py").read_text()
+    pipeline = (base / "workflows" / "document_pipeline.py").read_text(encoding="utf-8", errors="replace")
+    worker = (base / "workers" / "temporal_worker.py").read_text(encoding="utf-8", errors="replace")
     activities = re.findall(r"@activity\.defn\s*\n(?:async )?def (\w+)", pipeline)
     assert activities, "no activities found"
     registered = worker.split("activities=[")[1]

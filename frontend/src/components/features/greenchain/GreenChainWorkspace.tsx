@@ -26,7 +26,7 @@ const CesiumGlobe = dynamic(() => import("@/components/features/greenchain/Cesiu
 const COMPONENT = "Corrugated packaging";
 const incumbent = (demo: GreenchainDemo) => demo.results.find((r) => (r as { is_current?: boolean }).is_current) as ManufacturerResult | undefined;
 
-/** GreenChain procurement intelligence inside AIDTRACE. Scores come from the migrated XGBoost quantile models and
+/** GreenChain procurement intelligence inside AIDTRACE. Scores come from the configured quantile model (CatBoost-first, legacy XGBoost supported) and
  *  public reference data on the server; the globe and the instant re-ranking lens are GreenChain's own code. */
 export function GreenChainWorkspace() {
   const [demo, setDemo] = useState<GreenchainDemo | null>(null);
@@ -139,7 +139,7 @@ export function GreenChainWorkspace() {
                 <Button variant="ghost" onClick={() => { setWeights(DEFAULT_SCORING_WEIGHTS); setServer(null); }}>Reset weights</Button>
                 <Button variant="primary" disabled={busy} onClick={() => void verifyOnServer()}>Verify on server</Button>
               </div>
-              {serverOrder && <p role="status" className="mt-3 text-micro text-muted">Server ranking (XGBoost pipeline): <strong className="text-ink">{serverTop}</strong> first. {serverOrder === clientOrder ? "Matches the instant lens." : "Order differs from the instant lens: the server result is authoritative."}</p>}
+              {serverOrder && <p role="status" className="mt-3 text-micro text-muted">Server ranking ({health?.model_backend === "catboost" ? "CatBoost" : health?.model_backend === "xgboost" ? "XGBoost" : "quantile model"} pipeline): <strong className="text-ink">{serverTop}</strong> first. {serverOrder === clientOrder ? "Matches the instant lens." : "Order differs from the instant lens: the server result is authoritative."}</p>}
             </div>
             <div className="border border-line bg-surface p-4">
               <h3 className="text-body font-semibold">What if a supplier leaves?</h3>

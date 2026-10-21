@@ -53,10 +53,10 @@ def _falkor_reachable(drift_store, site_id: str | None) -> dict[str, Any]:
 
 def _greenchain() -> dict[str, Any]:
     from domains.greenchain import main as gc
-    from domains.greenchain.ml_bridge import ML_ROOT
-    models = all((ML_ROOT / "models" / f"xgb_{q}.joblib").is_file() for q in ("q10", "q50", "q90"))
+    from domains.greenchain.ml_bridge import get_model_backend
+    backend = get_model_backend()
     data = os.path.isdir(os.environ.get("GREENCHAIN_DATA_DIR", ""))
-    return {"models": models, "data": data, "missing_provider_keys": gc._missing_component_agent_keys()}
+    return {"models": backend is not None, "model_backend": backend, "data": data, "missing_provider_keys": gc._missing_component_agent_keys()}
 
 
 @router.get("/capabilities", summary="Live status of every hub capability (probed now)")
@@ -87,7 +87,8 @@ async def capabilities(user: CurrentUserDep, settings: SettingsDep, drift_store:
 
     if gc["models"] and gc["data"]:
         gl = ["Supplier candidates are illustrative; live discovery needs provider keys."] if gc["missing_provider_keys"] else []
-        caps.append(_cap("greenchain", "GreenChain", "LIMITED" if gl else "OPERATIONAL", "XGBoost emissions models and reference data loaded.",
+        backend_name = {"catboost": "CatBoost", "xgboost": "XGBoost"}.get(gc["model_backend"], "Quantile")
+        caps.append(_cap("greenchain", "GreenChain", "LIMITED" if gl else "OPERATIONAL", f"{backend_name} emissions models and reference data loaded.",
                          limits=gl, metrics={"missing_provider_keys": len(gc["missing_provider_keys"])}))
     else:
         caps.append(_cap("greenchain", "GreenChain", "UNAVAILABLE", "Emissions models or reference data are missing."))

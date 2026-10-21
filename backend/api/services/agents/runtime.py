@@ -76,10 +76,10 @@ FRAUD = Adapter(
     limits=("Runs on a synthetic transfer network. It does not yet read or write shared agent memory.",),
 )
 GREENCHAIN = Adapter(
-    id="greenchain", name="GreenChain scorer", framework="Deterministic XGBoost scoring pipeline (optional LLM scenario agents)", origin="GREENCHAIN-main",
+    id="greenchain", name="GreenChain scorer", framework="Deterministic CatBoost-first quantile scoring pipeline with legacy XGBoost support (optional LLM scenario agents)", origin="GREENCHAIN-main",
     interfaces={"task_execution": NATIVE, "tool_invocation": NATIVE, "evidence_retrieval": NATIVE, "graph_queries": VIA_KAIROS, "memory": VIA_KAIROS, "handoffs": VIA_KAIROS,
                 "approval": VIA_KAIROS, "result_persistence": VIA_KAIROS, "execution_trace": NONE},
-    tools=(Tool("score_suppliers", "task_execution", "Score and rank candidates with the XGBoost models and reference data", invokable=True),
+    tools=(Tool("score_suppliers", "task_execution", "Score and rank candidates with the configured CatBoost-first quantile models and reference data", invokable=True),
            Tool("what_if_remove_supplier", "task_execution", "Re-rank without one supplier"),
            Tool("record_decision", "memory", "Store the recommendation as evidence-backed memory", read_only=False)),
     limits=("No per-run execution trace of its own; its decisions are traced through agent memory.", "Live discovery needs provider keys."),

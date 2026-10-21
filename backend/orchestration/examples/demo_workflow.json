@@ -1,0 +1,31 @@
+{
+  "name": "brief-from-notes",
+  "agents": {
+    "analyst": {
+      "system": "Extract the three most important facts from the notes as short bullet points. You may use word_count to keep each bullet short.",
+      "max_steps": 3,
+      "tools": ["word_count"]
+    },
+    "writer": {
+      "system": "Write a two-sentence executive brief from the bullet points you are given.",
+      "max_steps": 2
+    }
+  },
+  "tasks": [
+    {
+      "id": "extract",
+      "agent": "analyst",
+      "input": "Notes: SGLang serves an OpenAI-compatible chat endpoint. Tools must be granted per agent. Retries apply only to failures the backend marks retryable."
+    },
+    {
+      "id": "brief",
+      "agent": "writer",
+      "input": "Bullet points:\n{extract}",
+      "depends_on": ["extract"],
+      "retries": 1,
+      "timeout_s": 60
+    }
+  ],
+  "failure_policy": "fail_fast",
+  "max_parallel": 2
+}

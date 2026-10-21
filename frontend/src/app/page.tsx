@@ -28,6 +28,7 @@ const navLinks = [
   ["Problem", "#problem"],
   ["How it works", "#how"],
   ["Intelligence", "#capabilities"],
+  ["Voice", "#voice"],
   ["Architecture", "#system"],
   ["Extensions", "#field"],
   ["Evaluation", "#evidence"],
@@ -670,7 +671,7 @@ function FieldMock() {
           ))}
         </div>
         <p className="mt-4 bg-black/45 px-3 py-2 text-[11px] text-white/85">
-          Transcribed and tagged on the device. Sent the moment the radio returns.
+          Multilingual field notes with language selection or auto-detection, routed for engineering review.
         </p>
       </div>
     </div>
@@ -687,7 +688,7 @@ function IngestionMock() {
     ["Security finding", "Connected record"],
     ["Spreadsheet", "xlsx · xls · ods"],
     ["Email archive", "eml · mbox + attachments"],
-    ["Voice note", "Speech to text"],
+    ["Multilingual voice", "Speech to text"],
   ] as const;
   return (
     <div>
@@ -1414,8 +1415,62 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Graph Hacks banner: the event this build was made for. Same card as the
-          provenance section's header, and its link goes to the Track 01 tab below. ── */}
+      {/* A prominent entry point for field capture, placed directly below the hero. */}
+      <section id="voice" aria-labelledby="voice-feature-title" className="lp-band border-y border-(--lp-line)">
+        <div className="lp-frame relative grid gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1fr_0.85fr] lg:items-center">
+          <div data-reveal>
+            <Eyebrow>Multilingual field capture</Eyebrow>
+            <h2 id="voice-feature-title" className="mt-5 max-w-2xl text-[32px] text-(--lp-ink) sm:text-[46px]">
+              Speak the observation.{" "}<br />
+              <Box>Keep the evidence intact.</Box>
+            </h2>
+            <p className="mt-5 max-w-xl text-[16px] leading-6 text-(--lp-muted)">
+              Capture a site note in 18 selectable languages or let transcription detect the language.
+              Check your mic signal, pause when you need to, and send the recording into engineering review.
+              Work-order and asset tags guide equipment-name spelling.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/login?next=field-voice"
+                className="group relative inline-flex min-h-11 items-center justify-center gap-2 overflow-hidden bg-(--lp-accent-strong) px-5 py-3 text-[14px] font-medium text-white transition-transform duration-150 ease-out active:scale-[0.98]"
+              >
+                <PixelFill />
+                <span className="relative z-10">Open field voice capture</span>
+                <span aria-hidden="true" className="relative z-10">›</span>
+              </Link>
+              <a href="#field" className="inline-flex min-h-11 items-center justify-center border border-(--lp-line) px-5 py-3 text-[14px] font-medium text-(--lp-ink) transition-colors hover:border-(--lp-accent)">
+                Explore the workflow
+              </a>
+            </div>
+          </div>
+          <div data-reveal className="lp-card lp-media lp-dither relative border border-transparent p-5 sm:p-7">
+            <div className="border border-white/20 bg-black/20 p-5 sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/70">Voice note · field workflow</p>
+                  <p className="lp-display mt-2 text-[22px] text-white sm:text-[26px]">Hindi · Auto-detect available</p>
+                </div>
+                <span className="shrink-0 border border-white/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/85">Review required</span>
+              </div>
+              <div className="mt-8 flex h-16 items-center justify-center gap-1.5" role="img" aria-label="Illustration of microphone signal levels">
+                {[18, 28, 42, 26, 58, 38, 72, 46, 32, 64, 42, 24, 52, 34, 18, 40, 60, 30, 20].map((height, index) => (
+                  <span key={index} className="w-1.5 rounded-full bg-(--lp-accent)" style={{ height: height + "px" }} />
+                ))}
+              </div>
+              <div className="mt-7 grid grid-cols-3 border-t border-white/20 pt-4 text-center">
+                {[["01", "Choose language"], ["02", "Capture + sound check"], ["03", "Engineer review"]].map(([number, label]) => (
+                  <div key={number} className="px-1">
+                    <span className="block text-[10px] font-semibold text-(--lp-accent)">{number}</span>
+                    <span className="mt-1 block text-[10px] leading-4 text-white/80 sm:text-[12px]">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Graph Hacks banner: its link goes to the Track 01 section below. */}
       <section aria-label="Built for Graph Hacks" className="lp-frame relative px-4 pb-14 sm:px-6">
         <div data-reveal className="lp-card border border-(--lp-line) bg-(--lp-surface)">
           <div className="border-b border-(--lp-line) bg-(--lp-accent-strong) px-5 py-4 sm:px-7">

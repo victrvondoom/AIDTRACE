@@ -243,14 +243,14 @@ _WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
 
 def _demo_grants() -> set[str]:
-    text = _REGO.read_text()
+    text = _REGO.read_text(encoding="utf-8", errors="replace")
     line = next(ln for ln in text.splitlines() if ln.strip().startswith('"demo":'))
     return set(re.findall(r'"([a-z_*]+)"', line.split(":", 1)[1]))
 
 
 @_needs_rego
 def test_demo_role_has_an_explicit_allow_list_and_is_not_in_the_catch_all():
-    text = _REGO.read_text()
+    text = _REGO.read_text(encoding="utf-8", errors="replace")
     assert _demo_grants() == {
         "read_search", "read_briefs", "read_assets", "read_documents", "read_events",
         "read_compliance", "read_nonconformance", "read_audit", "read_governance", "read_other",
@@ -359,7 +359,18 @@ def test_every_write_route_the_demo_role_can_reach_is_one_the_fence_lists():
         ("POST", "/agent-memory/greenchain/preview-revision"),
         ("POST", "/agent-memory/actions/approve"),
         ("POST", "/agent-memory/recall"),
+        ("POST", "/agent-memory/context"),
         ("POST", "/agent-memory/resolveai/remember"),
+        ("POST", "/agent-memory/evidence/import"),
+        ("POST", "/agent-memory/evidence/preview"),
+        ("POST", "/agent-memory/engineering"),
+        ("POST", "/agent-memory/engineering/transcribe"),
+        ("POST", "/coordination/runs"),
+        ("POST", "/coordination/runs/{run_id}/resume"),
+        ("POST", "/coordination/runs/{run_id}/tasks/{task_id}/cancel"),
+        ("POST", "/coordination/unlearning/delete"),
+        ("POST", "/graphlab/site-cypher"),
+        ("POST", "/aidtrace-agent/ask"),
         ("POST", "/agents/tools/invoke"),
     }
 

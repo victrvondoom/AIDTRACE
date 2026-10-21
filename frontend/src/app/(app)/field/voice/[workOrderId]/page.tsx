@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui";
 import { useMe } from "@/components/use-role";
 
 import { Icon } from "@/components/icon";
+import type { VoiceLanguage } from "@/lib/voice-languages";
 type Stage = "record" | "submitting" | "done" | "error";
 
 export default function VoicePage() {
@@ -16,6 +17,7 @@ export default function VoicePage() {
   const [stage, setStage] = useState<Stage>("record");
   const [taskId, setTaskId] = useState<string | null>(null);
   const [blob, setBlob] = useState<Blob | null>(null);
+  const [language, setLanguage] = useState<VoiceLanguage>("auto");
   const [duplicate, setDuplicate] = useState(false);
   const me = useMe();
 
@@ -28,7 +30,7 @@ export default function VoicePage() {
     setStage("submitting");
     try {
       // Attributed to the signed-in technician; a hardcoded "field_user" made every note anonymous in review.
-      const res = await submitVoiceNote(workOrderId, blob, me?.email || me?.user_id || "field_user");
+      const res = await submitVoiceNote(workOrderId, blob, me?.email || me?.user_id || "field_user", language);
       setDuplicate(res.status === "duplicate");
       setTaskId(res.task_id ?? null);
       setStage("done");
@@ -43,15 +45,15 @@ export default function VoicePage() {
       <PageHeader
         compact
         className="mb-6"
-        title="Voice Note"
-        lede={`Work order ${workOrderId}. Record a field observation. It is transcribed, tagged to this work order and held in the review queue until an engineer verifies it.`}
+        title="Multilingual Voice Note"
+        lede={`Work order ${workOrderId}. Record a field observation in your language. This tag guides equipment-name spelling; choose a language or let transcription detect it, then review the transcript before promotion.`}
       />
 
       <div data-testid="work-order-voice-layout" className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <main data-testid="work-order-voice-capture" className="min-w-0 rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-6">
       {stage === "record" && (
         <div className="flex flex-col items-center gap-6 py-8">
-          <VoiceRecorder onBlob={handleBlob} />
+          <VoiceRecorder onBlob={handleBlob} language={language} onLanguageChange={setLanguage} />
           {blob && (
             <button
               onClick={submit}

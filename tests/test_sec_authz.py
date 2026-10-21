@@ -195,7 +195,7 @@ REGO = Path(__file__).resolve().parents[1] / "infra" / "policies" / "kairos.rego
 
 @pytest.mark.skipif(not REGO.exists(), reason="infra/ is not mounted in this container")
 def test_rego_grants_ingest_event_to_staff_only_and_marks_it_sensitive():
-    text = REGO.read_text()
+    text = REGO.read_text(encoding="utf-8", errors="replace")
 
     def role_actions(role):
         line = next(ln for ln in text.splitlines() if ln.strip().startswith(f'"{role}":'))
@@ -467,7 +467,7 @@ async def test_scoped_asset_fails_closed_for_an_account_with_no_site():
 
 
 def test_single_asset_create_is_create_only_and_site_scoped():
-    source = Path(assets_router.__file__).read_text()
+    source = Path(assets_router.__file__).read_text(encoding="utf-8", errors="replace")
     single = source[source.index('@router.post("/", summary="Register a new canonical asset"'):]
     single = single[: single.index("async def _issue_counts")]
     assert ".upsert(" not in single and ".insert(supabase_row)" in single
@@ -628,7 +628,7 @@ def test_voice_upload_path_is_sanitised_and_submitter_is_the_token_user(monkeypa
 
 
 def test_inbox_filters_recipients_with_in_not_an_or_string():
-    source = Path(briefs_router.__file__).read_text()
+    source = Path(briefs_router.__file__).read_text(encoding="utf-8", errors="replace")
     assert "recipient_user_id.eq.{" not in source
     # a hostile site claim is just another value in the list, never extra filter syntax
     hostile = {"user_id": "u1", "role": "field_worker", "site_id": "S,recipient_user_id.neq.x"}
@@ -854,7 +854,7 @@ _DEMO_ROUTES = [
 def test_a_demo_token_reads_everything_and_the_policy_admits_the_showcase_writes(monkeypatch):
     from api.middleware.opa import OPAMiddleware
 
-    text = REGO.read_text()
+    text = REGO.read_text(encoding="utf-8", errors="replace")
     line = next(ln for ln in text.splitlines() if ln.strip().startswith('"demo":'))
     grants = set(re.findall(r'"([a-z_*]+)"', line.split(":", 1)[1]))
 

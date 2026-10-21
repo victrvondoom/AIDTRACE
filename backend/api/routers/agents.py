@@ -104,7 +104,8 @@ async def _status_greenchain(ctx: Context) -> dict[str, Any]:
     gc = await asyncio.to_thread(_greenchain)
     if not (gc["models"] and gc["data"]):
         return {"state": "UNAVAILABLE", "detail": "Emissions models or reference data are missing."}
-    return {"state": "LIMITED" if gc["missing_provider_keys"] else "OPERATIONAL", "detail": "XGBoost models and reference data loaded."
+    backend = {"catboost": "CatBoost", "xgboost": "XGBoost"}.get(gc.get("model_backend"), "Quantile")
+    return {"state": "LIMITED" if gc["missing_provider_keys"] else "OPERATIONAL", "detail": f"{backend} models and reference data loaded."
             + (" Live discovery needs provider keys." if gc["missing_provider_keys"] else ""), "metrics": {"missing_provider_keys": len(gc["missing_provider_keys"])}}
 
 

@@ -18,6 +18,8 @@ const page = (p: Promise<unknown>) => p as Promise<PageModule>;
 
 // Specific patterns precede parameterised ones so "/assets/register" is never read as an asset id.
 export const LEGACY_ROUTES: LegacyRoute[] = [
+  { pattern: "/agent-sandbox", extension: "agent-sandbox", load: () => page(import("@/app/(app)/agent-sandbox/page")) },
+  { pattern: "/procurement", extension: "procurement", load: () => page(import("@/app/(app)/procurement/page")) },
   // Supply Chain Intelligence
   { pattern: "/assets", extension: "supplier-registry", serverPage: true, load: () => page(import("@/app/(app)/assets/page")) },
   { pattern: "/assets/register", extension: "supplier-registry", load: () => page(import("@/app/(app)/assets/register/page")) },

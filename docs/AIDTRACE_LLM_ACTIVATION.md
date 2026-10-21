@@ -1,4 +1,4 @@
-# AIDTRACE: activating Claude Opus 5.5
+# AIDTRACE: activating Claude reasoning
 
 **Status: prepared and tested with mocks. Live Anthropic connectivity is not verified** until a key is set and the
 opt-in smoke test in step 5 below passes. Until then every question is answered from the graph engines, as before.
@@ -27,7 +27,7 @@ Set these in the backend environment. `.env.example` lists them with the safe de
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` | empty | The key. Never commit it, paste it into chat, or put it in a screenshot. |
-| `ANTHROPIC_MODEL` | `claude-opus-5-5` | Checked against the `Model` type in the installed SDK (anthropic 1.14.0). |
+| `ANTHROPIC_MODEL` | `claude-opus-5` | Active model ID in Anthropic's current API model list and present in the installed SDK (anthropic 1.14.0). |
 | `AIDTRACE_LLM_ENABLED` | `false` | Master switch. While `false`, no Anthropic request is ever made. |
 | `AIDTRACE_LLM_FALLBACK` | `graph-only` | The only supported fallback. A failure keeps the deterministic answers. |
 | `AIDTRACE_LLM_MAX_OUTPUT_TOKENS` | `2048` | Output cap per model call. |
@@ -41,6 +41,8 @@ Set these in the backend environment. `.env.example` lists them with the safe de
 Usage and cost estimates appear only in responses to `admin` users.
 
 ## Activation: Windows local development
+
+The installed SDK's `Model` type also contains `claude-opus-5-5`, but Anthropic's current API model-status page lists `claude-opus-5` as active and does not list Opus 5.5. A key is present in this local environment, but no live request was made, so account-level model access has not been queried. Keep the supported Opus 5 default until an operator verifies any alternative with the opt-in smoke test. The key value is never printed or included in this report.
 
 1. Create the key in the Anthropic console.
 2. Put it in the backend environment file, which Git ignores. Copy `.env.example` to `kairos-main\.env` if you have not already,
@@ -73,9 +75,9 @@ Usage and cost estimates appear only in responses to `admin` users.
 
 ## Things to decide before enabling
 
-- **The fraud investigator shares `ANTHROPIC_MODEL`.** `backend/domains/fraud/config.py` reads the same variable (default
-  `claude-sonnet-5-5`). Once a key is set, setting `ANTHROPIC_MODEL=claude-opus-5-5` also changes the fraud planner's
-  model. If the planner should stay on Sonnet, give AIDTRACE its own variable name before enabling.
+- **The fraud investigator shares `ANTHROPIC_MODEL`.** `backend/domains/fraud/config.py` uses the same environment
+  variable, defaulting to the currently active Sonnet 5 model when no shared value is set. An environment override for
+  the AIDTRACE agent also changes the fraud planner. Give each adapter a separate variable before selecting different models.
 - **Prices are not set.** Cost estimates stay hidden until `AIDTRACE_LLM_PRICE_*` are entered from the current price sheet.
 
 ## What the answers guarantee

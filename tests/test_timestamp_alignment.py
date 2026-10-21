@@ -146,7 +146,7 @@ def test_no_string_property_is_compared_to_the_datetime_function():
     offenders = [
         f"{p}:{i}"
         for p in _cypher_sources()
-        for i, line in enumerate(p.read_text().splitlines(), 1)
+        for i, line in enumerate(p.read_text(encoding="utf-8", errors="replace").splitlines(), 1)
         if _BROKEN.search(line)
     ]
     assert not offenders, (

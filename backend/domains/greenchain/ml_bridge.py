@@ -46,13 +46,43 @@ _emissions_model = None
 
 
 def get_emissions_model():
-    """Return a cached EmissionsModel instance (loads XGBoost joblibs once)."""
+    """Return the cached CatBoost-first emissions model (or legacy XGBoost model)."""
     global _emissions_model
     if _emissions_model is None:
         from ml.inference import EmissionsModel  # type: ignore
 
         _emissions_model = EmissionsModel.load()
     return _emissions_model
+
+
+def get_model_backend() -> str | None:
+    """Report the configured and present model artifacts without importing ML runtimes."""
+    import json
+
+    model_dir = ML_ROOT / "models"
+    manifest_path = model_dir / "model_manifest.json"
+    if manifest_path.is_file():
+        try:
+            parsed_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            backend = parsed_manifest.get("backend") if isinstance(parsed_manifest, dict) else None
+        except (OSError, ValueError):
+            return None
+        if backend == "catboost" and all((model_dir / f"catboost_q{q:02d}.cbm").is_file() for q in (10, 50, 90)):
+            return backend
+        if backend == "xgboost" and all(
+            (model_dir / f"xgb_q{q:02d}.ubj").is_file() or (model_dir / f"xgb_q{q:02d}.joblib").is_file()
+            for q in (10, 50, 90)
+        ):
+            return backend
+        return None
+    if all((model_dir / f"catboost_q{q:02d}.cbm").is_file() for q in (10, 50, 90)):
+        return "catboost"
+    if all(
+        (model_dir / f"xgb_q{q:02d}.ubj").is_file() or (model_dir / f"xgb_q{q:02d}.joblib").is_file()
+        for q in (10, 50, 90)
+    ):
+        return "xgboost"
+    return None
 
 
 def get_transport_calculator():

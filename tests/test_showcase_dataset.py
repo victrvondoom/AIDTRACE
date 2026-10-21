@@ -92,7 +92,7 @@ def _golden_vocabulary():
     words = {"Suresh Yadav", "Vikram Desai", "Ananya Iyer", "Fischer", "Meridian", "FSL-2240", "MHT-PB", "FP-SB"}
     canon = Path("/app/dataset/01_Structured_Backbone/asset_registry.csv")
     if canon.exists():
-        words |= {line.split(",")[0] for line in canon.read_text().splitlines()[1:] if line}
+        words |= {line.split(",")[0] for line in canon.read_text(encoding="utf-8", errors="replace").splitlines()[1:] if line}
     return words
 
 
@@ -597,13 +597,13 @@ def test_the_dataset_is_written_in_the_six_golden_style_folders(written, docs, s
     pdfs = {d.file_name for d in docs if d.mime == "application/pdf"}
     assert {p.name for p in (root / files.CORPUS).iterdir()} == pdfs
     assert {p.name for p in (root / files.VARIANTS).iterdir()} == {d.file_name for d in docs} - pdfs
-    assert counts["documents"] == len(docs) and (root / files.REGISTER[0] / files.REGISTER[1]).read_text().count("\n") == counts["assets"] + 1
+    assert counts["documents"] == len(docs) and (root / files.REGISTER[0] / files.REGISTER[1]).read_text(encoding="utf-8", errors="replace").count("\n") == counts["assets"] + 1
 
 
 def test_showcase_files_sit_beside_the_golden_ones_and_never_share_a_name(written, docs):
     root, _ = written
     golden = Path(__file__).resolve().parents[1] / "dataset" / "00_Reference" / "dataset_manifest.csv"
-    golden_names = {ln.split(",")[1] for ln in golden.read_text().splitlines()[1:]} if golden.exists() else set()
+    golden_names = {ln.split(",")[1] for ln in golden.read_text(encoding="utf-8", errors="replace").splitlines()[1:]} if golden.exists() else set()
     doc_names = {d.file_name for d in docs}
     written_files = [p for p in root.rglob("*") if p.is_file()]
     assert written_files

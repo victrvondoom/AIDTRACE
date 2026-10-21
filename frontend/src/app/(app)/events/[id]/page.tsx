@@ -106,10 +106,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               {typeof event.payload.work_order_id === "string" && event.payload.work_order_id && (
                 <section data-testid="work-order-capture" className="rounded-xl border border-line bg-surface px-4 py-4 shadow-sm sm:px-5">
                   <h2 className="text-sm font-semibold text-ink">Capture knowledge from <span className="tabular">{event.payload.work_order_id}</span></h2>
-                  <p className="mt-0.5 text-caption text-muted">Answer the micro-interview or record a voice note. Both go to quarantine for engineering review.</p>
+                  <p className="mt-0.5 text-caption text-muted">Answer the micro-interview or record a voice note in your language. Transcripts go to quarantine for engineering review.</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <ButtonLink href={`/field/elicitation/${encodeURIComponent(event.payload.work_order_id)}`} variant="primary">Knowledge capture</ButtonLink>
-                    <ButtonLink href={`/field/voice/${encodeURIComponent(event.payload.work_order_id)}`}>Voice note</ButtonLink>
+                    <ButtonLink href={`/field/voice/${encodeURIComponent(event.payload.work_order_id)}`}>Multilingual voice note</ButtonLink>
                   </div>
                 </section>
               )}

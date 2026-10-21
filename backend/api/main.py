@@ -27,6 +27,7 @@ from api.routers import (
     briefs,
     compliance,
     consumer,
+    coordination,
     documents,
     drift,
     elicitation,
@@ -185,6 +186,7 @@ def create_app() -> FastAPI:
     app.include_router(agent_memory.router, prefix="/agent-memory", tags=["Agent memory"])
     app.include_router(agents.router, prefix="/agents", tags=["Agent operations"])
     app.include_router(aidtrace_agent.router, prefix="/aidtrace-agent", tags=["AIDTRACE agent"])
+    app.include_router(coordination.router, prefix="/coordination", tags=["Multi-Agent Coordination"])
     app.include_router(resolveai_platform.router, prefix="/resolveai/platform", tags=["ResolveAI Platform (private worker gateway)"])
     app.include_router(sources.router, prefix="/sources", tags=["Source Library"])
 

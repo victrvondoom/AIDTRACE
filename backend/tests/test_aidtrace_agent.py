@@ -148,6 +148,15 @@ def test_status_payload_never_contains_the_key():
     assert FAKE_KEY not in json.dumps(state)
 
 
+def test_unsupported_model_id_is_rejected_before_a_provider_request():
+    client = FakeClient()
+    config = settings(ANTHROPIC_MODEL="not-a-real-model")
+    result = run(orchestrator.answer("Which decisions are stale?", memory=FakeMemory(), settings=config, client=client))
+    assert result["status"] == "unsupported_model"
+    assert result["answered_by"] == "graph"
+    assert client.messages.requests == []
+
+
 def test_ask_endpoint_refuses_before_touching_redis_or_the_graph_when_disabled():
     class ExplodingRedis:
         async def incr(self, *_: Any) -> None:
@@ -271,7 +280,7 @@ def test_the_model_is_called_with_the_configured_model_and_output_cap():
     client = FakeClient([reply("end_turn", text(answer_json()))])
     run(orchestrator.answer("Which decisions are stale?", memory=FakeMemory(), settings=settings(AIDTRACE_LLM_MAX_OUTPUT_TOKENS=512), client=client))
     request = client.messages.requests[0]
-    assert request["model"] == "claude-opus-5-5"
+    assert request["model"] == "claude-opus-5"
     assert request["max_tokens"] == 512
 
 

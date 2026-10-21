@@ -208,7 +208,7 @@ READ_BY_ID_TABLE = {
 async def names_showcase_record(supabase, path_params: Mapping) -> bool:
     """True when any path parameter of the request names a showcase record."""
     for name, value in path_params.items():
-        if name == "asset_id" and is_demo_id(value):
+        if name in ("asset_id", "run_id") and is_demo_id(value):
             return True
         if name == "site_id" and is_demo_site(value):
             return True

@@ -229,7 +229,7 @@ MUST_SCOPE = [
 
 
 def _function_source(relpath: str, name: str) -> str:
-    src = (API / relpath).read_text()
+    src = (API / relpath).read_text(encoding="utf-8", errors="replace")
     for node in ast.walk(ast.parse(src)):
         if isinstance(node, ast.AsyncFunctionDef | ast.FunctionDef) and node.name == name:
             return ast.get_source_segment(src, node) or ""
@@ -414,7 +414,18 @@ def test_the_routes_a_demo_write_cannot_reach_are_exactly_the_ones_that_should_s
         ("POST", "/agent-memory/actions/approve"),
         ("POST", "/agent-memory/recall"),
         ("POST", "/agent-memory/resolveai/remember"),
+        ("POST", "/agent-memory/context"),
+        ("POST", "/agent-memory/evidence/preview"),
+        ("POST", "/agent-memory/evidence/import"),
+        ("POST", "/agent-memory/engineering"),
+        ("POST", "/agent-memory/engineering/transcribe"),
         ("POST", "/agents/tools/invoke"),
+        ("POST", "/aidtrace-agent/ask"),
+        ("POST", "/coordination/runs"),
+        ("POST", "/coordination/runs/{run_id}/resume"),
+        ("POST", "/coordination/runs/{run_id}/tasks/{task_id}/cancel"),
+        ("POST", "/coordination/unlearning/delete"),
+        ("POST", "/graphlab/site-cypher"),
     }
 
 
@@ -680,7 +691,7 @@ def test_the_read_fence_is_installed_and_every_by_id_read_names_a_parameter_it_u
 
     app = create_app()
     assert showcase_read_fence in [d.dependency for d in app.router.dependencies]
-    understood = {"asset_id", "site_id", "work_order_id", *tenant.READ_BY_ID_TABLE}
+    understood = {"asset_id", "site_id", "work_order_id", "run_id", *tenant.READ_BY_ID_TABLE}
     unknown = {
         (r.path, p) for r in app.routes if "GET" in getattr(r, "methods", ()) for p in r.param_convertors
         if p not in understood
