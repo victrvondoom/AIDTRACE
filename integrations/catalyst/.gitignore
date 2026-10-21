@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.DS_Store
+data/
+out/
+*.tif
+*.tiff
+EXAMPLE BATCHES FOR LOCAL REFERENCE/
+web/node_modules/
+web/dist/
+assets/.build/

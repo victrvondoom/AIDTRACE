@@ -25,6 +25,7 @@ from api.routers import (
     audit_log,
     auth,
     briefs,
+    catalyst_platform,
     compliance,
     consumer,
     coordination,
@@ -38,6 +39,7 @@ from api.routers import (
     greenchain,
     health,
     hub,
+    physics,
     resolveai,
     resolveai_platform,
     search,
@@ -183,11 +185,13 @@ def create_app() -> FastAPI:
     app.include_router(greenchain.router, prefix="/greenchain", tags=["GreenChain"])
     app.include_router(fraud.router, prefix="/fraud", tags=["Fraud Investigation"])
     app.include_router(hub.router, prefix="/hub", tags=["Hub capabilities"])
+    app.include_router(physics.router, prefix="/physics", tags=["Physics and mathematics (supply chain)"])
     app.include_router(agent_memory.router, prefix="/agent-memory", tags=["Agent memory"])
     app.include_router(agents.router, prefix="/agents", tags=["Agent operations"])
     app.include_router(aidtrace_agent.router, prefix="/aidtrace-agent", tags=["AIDTRACE agent"])
     app.include_router(coordination.router, prefix="/coordination", tags=["Multi-Agent Coordination"])
     app.include_router(resolveai_platform.router, prefix="/resolveai/platform", tags=["ResolveAI Platform (private worker gateway)"])
+    app.include_router(catalyst_platform.router, prefix="/catalyst", tags=["Catalyst QC (private worker gateway)"])
     app.include_router(sources.router, prefix="/sources", tags=["Source Library"])
 
     # -------------------------------------------------------------------------

@@ -29,6 +29,12 @@ if _secret_file.exists():
     os.environ.setdefault("RESOLVEAI_GATEWAY_SECRET", _secret_file.read_text(encoding="utf-8").strip())
     os.environ.setdefault("RESOLVEAI_WORKER_URL", "http://127.0.0.1:8200")
 
+# Private Catalyst QC worker (scripts/start_catalyst_worker.py): same pattern, its own secret file.
+_catalyst_secret_file = ROOT / "var" / "catalyst" / "gateway.secret"
+if _catalyst_secret_file.exists():
+    os.environ.setdefault("CATALYST_GATEWAY_SECRET", _catalyst_secret_file.read_text(encoding="utf-8").strip())
+    os.environ.setdefault("CATALYST_WORKER_URL", "http://127.0.0.1:8300")
+
 if os.environ["APP_ENV"] != "development":
     sys.exit("dev_harness.py only runs with APP_ENV=development.")
 if os.environ.get("SUPABASE_URL"):

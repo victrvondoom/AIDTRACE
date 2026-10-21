@@ -1,0 +1,336 @@
+"""qc/features.py and qc/attribute.py on synthetic fields: three designed "batches" with real material
+differences (Si loading, Si particle size) and no strip, size or pixel-size leakage."""
+
+import json
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from qc import attribute as A
+from qc import features as F
+from qc.schema import Field
+
+from test_ml import PX, synth_field
+
+TILE_UM = 4.0  # synthetic fields are 12 um tall, so tiles must be small
+
+
+def _batch(name: str, offset: int, n_si: int, scale: float, n_strips: int = 4, per_strip: int = 2) -> list[Field]:
+    fields = []
+    for s in range(n_strips):
+        for k in range(per_strip):
+            ch, _, _ = synth_field(seed=1000 * offset + 10 * s + k, shape=(480, 960), n_si=n_si)
+            if scale != 1.0:  # rescale particle sizes: zoom every channel, crop or tile back to shape
+                from scipy.ndimage import zoom
+
+                for c in ("BSE", "ETD", "InLens"):
+                    z = zoom(ch[c].astype(float), scale, order=1)
+                    z = np.tile(z, (int(np.ceil(480 / z.shape[0])), int(np.ceil(960 / z.shape[1]))))[:480, :960]
+                    ch[c] = np.clip(z, 0, 255).astype(np.uint8)
+            fields.append(Field(name, f"{name}_s{s}_{k}", f"{offset * 10 + s}_1016000", ch, PX))
+    return fields
+
+
+@pytest.fixture(scope="module")
+def table() -> pd.DataFrame:
+    # Batch_1: many small Si particles; Batch_2: few large ones; Batch_3 (baseline): in between
+    fields = _batch("Batch_1", 1, n_si=34, scale=0.7) + _batch("Batch_2", 2, n_si=10, scale=1.6) + _batch("Batch_3", 3, n_si=20, scale=1.0)
+    return pd.DataFrame([F.image_features(f, tile_um=TILE_UM) for f in fields])
+
+
+def test_feature_table_shape_and_families(table):
+    assert list(table.columns[:3]) == F.META_COLUMNS
+    assert len(table) == 24
+    for fam in F.FAMILIES:
+        assert F.feature_columns(table, (fam,)), fam
+    F.assert_no_leakage(table.columns)
+    assert not F.feature_columns(table, F.MATERIAL_FAMILIES) == F.feature_columns(table, F.FAMILIES)  # imaging kept apart
+    # regional features see the designed Si loading
+    d50 = table.groupby("batch")["kpi_si_d50_um"].mean()
+    assert d50["Batch_1"] < d50["Batch_3"] < d50["Batch_2"]
+
+
+def test_leakage_guard():
+    with pytest.raises(ValueError):
+        F.assert_no_leakage(["batch", "image_id", "reg_si_frac_mean", "strip_number"])
+    with pytest.raises(ValueError):
+        F.assert_no_leakage(["img_height"])
+    F.assert_no_leakage(["batch", "image_id", "strip_id", "reg_si_frac_mean"])
+
+
+def test_loso_separates_designed_batches_above_null(table):
+    cv = A.loso_cv(table)
+    assert cv["n_strips"] == 12 and cv["n_images"] == 24
+    assert cv["balanced_accuracy"] >= 0.75
+    null = A.permutation_null(table, n=15, seed=1)
+    assert cv["balanced_accuracy"] > null["p95"]
+    assert sum(cv["confusion"]["Batch_2"].values()) == 8
+
+
+def test_model_roundtrip_predict_and_reasons(table, tmp_path):
+    model = A.fit_model(table, "Batch_3")
+    path = tmp_path / "m.json"
+    A.save_model(model, path)
+    loaded = A.load_model(path)
+    assert loaded["classes"] == ["Batch_1", "Batch_2", "Batch_3"] and loaded["baseline"] == "Batch_3"
+    assert not any(any(f in c for f in F.FORBIDDEN) for c in loaded["features"])
+    p1, p2 = A.predict(model, table), A.predict(loaded, table)
+    probs = p1[[f"p_{c}" for c in model["classes"]]].to_numpy()
+    assert np.allclose(probs.sum(axis=1), 1) and np.allclose(probs, p2[[f"p_{c}" for c in model["classes"]]].to_numpy())
+    assert (p1["predicted"] == table["batch"]).mean() >= 0.9  # training fit
+    assert all(len(r) == A.N_REASONS for r in p1["reasons"])
+    assert {"feature", "z", "contribution"} <= set(p1["reasons"][0][0])
+    json.dumps(model, default=A._json_default)
+
+
+def test_balanced_assignment_gives_k_per_class():
+    rng = np.random.default_rng(0)
+    probs = rng.dirichlet(np.ones(3), size=9)
+    assigned = A.balanced_assignment(probs, ["a", "b", "c"], 3)
+    assert sorted(assigned) == ["a"] * 3 + ["b"] * 3 + ["c"] * 3
+    # unanimous argmax would break balance; assignment must still give 3 each
+    skew = np.tile([0.8, 0.1, 0.1], (9, 1))
+    assert sorted(A.balanced_assignment(skew, ["a", "b", "c"], 3)) == ["a"] * 3 + ["b"] * 3 + ["c"] * 3
+
+
+def test_baseline_distance_flags_far_image_not_baseline(table):
+    model = A.fit_model(table, "Batch_3")
+    bs = model["baseline_stats"]
+    assert bs["n_segments"] == 4 and bs["threshold"] is not None
+    pred = A.predict(model, table)
+    base = pred[pred["batch"] == "Batch_3"]
+    assert base["unfamiliar"].sum() <= 1  # baseline images sit inside their own calibration
+    far = table[table["batch"] == "Batch_3"].iloc[[0]].copy()
+    for c in F.feature_columns(far, F.MATERIAL_FAMILIES):
+        far[c] = far[c] * 5 + 3
+    out = A.predict(model, far).iloc[0]
+    assert out["unfamiliar"] is True or out["unfamiliar"] == True  # noqa: E712
+    assert out["baseline_distance"] > bs["threshold"] and out["n_deviating"] > 0
+    assert out["deviations"][0]["direction"] in ("above", "below")
+
+
+def test_dry_run_holds_out_whole_strips(table):
+    res = A.dry_run(table, "Batch_3", per_batch=2, seed=0)
+    held = pd.DataFrame(res["held_out"])
+    assert held.groupby("batch").size().tolist() == [2, 2, 2]
+    assert {"balanced_accuracy", "balanced_assignment_accuracy", "train_loso", "C"} <= set(res)
+    assert res["balanced_accuracy"] >= 0.5
+
+
+def test_rank_features_uses_segment_means(table):
+    rank = A.rank_features(table, top=10)
+    assert {"feature", "family", "effect_size", "loso_acc", "mean_Batch_1", "mean_Batch_3"} <= set(rank.columns)
+    assert rank["loso_acc"].iloc[0] >= 0.75
+    assert rank["family"].isin(F.FAMILIES).all()
+
+
+# ---------------------------------------------------------------- deep_ family (no torch needed)
+
+def _fake_embed(x: np.ndarray) -> np.ndarray:
+    """Stand-in for DINOv2: a few tile statistics, so the plumbing is tested without the model."""
+    return np.stack([x.mean((1, 2)), x.std((1, 2)), np.percentile(x, 10, axis=(1, 2)), np.percentile(x, 90, axis=(1, 2))], 1)
+
+
+def test_deep_features_columns_and_merge(table):
+    from qc import deep as D
+
+    ch, _, _ = synth_field(seed=7, shape=(480, 960), n_si=20)
+    field = Field("Batch_1", "img_x", "1_1016000", ch, PX)
+    assert D.tiles(D.stretch(ch["InLens"]), scale=2, tile=64).shape[1:] == (64, 64)
+    assert D.tiles(np.zeros((40, 40), np.float32), scale=2, tile=64).shape == (1, 64, 64)  # padded
+    row = D.deep_features(field, embed=_fake_embed, tile=64)
+    cols = [c for c in row if c.startswith("deep_")]
+    assert cols[0] == "deep_inlens_s2_mean_000" and len(cols) == 8
+    F.assert_no_leakage(row)
+    deep = pd.DataFrame([row | {"image_id": table["image_id"].iloc[0], "batch": table["batch"].iloc[0]}])
+    merged = D.merge_deep(table, deep)
+    assert len(merged) == len(table) and merged[cols].notna().sum().min() == 1
+    again = D.merge_deep(merged, deep.assign(**{cols[0]: 99.0}))  # replaces, never duplicates
+    assert len(again) == len(table) and again[cols[0]].max() == 99.0
+
+
+@pytest.fixture(scope="module")
+def deep_table(table) -> pd.DataFrame:
+    """The synthetic table plus 300 deep_ columns: noise, with the batch signal in 3 directions."""
+    rng = np.random.default_rng(0)
+    y = table["batch"].map({"Batch_1": -1.0, "Batch_2": 1.0, "Batch_3": 0.0}).to_numpy()
+    basis = rng.normal(size=(3, 300))
+    deep = rng.normal(size=(len(table), 300)) + 3 * np.column_stack([y, y**2, y]) @ basis
+    return pd.concat([table, pd.DataFrame(deep, columns=[f"deep_inlens_s2_mean_{k:03d}" for k in range(300)])], axis=1)
+
+
+def test_reducer_fits_pca_inside_folds_and_roundtrips(deep_table, tmp_path):
+    cv = A.loso_cv(deep_table, ("deep",))
+    assert cv["n_features"] == 300 and cv["balanced_accuracy"] >= 0.75
+    model = A.fit_model(deep_table, "Batch_3", ("deep",))
+    assert model["model_features"] == [f"deep_pc{i:02d}" for i in range(1, A.DEEP_COMPONENTS + 1)]
+    assert len(model["coef"][0]) == A.DEEP_COMPONENTS and len(model["baseline_stats"]["mean"]) == A.DEEP_COMPONENTS
+    A.save_model(model, tmp_path / "m.json")
+    loaded = A.load_model(tmp_path / "m.json")
+    p1, p2 = A.predict(model, deep_table), A.predict(loaded, deep_table)
+    assert np.allclose(p1["p_Batch_1"], p2["p_Batch_1"])
+    assert all(r["feature"].startswith("deep_pc") for r in p1["reasons"].iloc[0])
+    mixed = A.fit_model(deep_table, "Batch_3", (*F.MATERIAL_FAMILIES, "deep"))  # material columns pass through
+    assert mixed["model_features"][-1] == f"deep_pc{A.DEEP_COMPONENTS:02d}" and "kpi_si_d50_um" in mixed["model_features"]
+    assert A.predict(mixed, deep_table)["predicted"].notna().all()
+
+
+# ---------------------------------------------------------------- always a bet, confidence, stages, reasons
+
+def test_every_image_gets_a_batch_even_when_unlike_anything(table):
+    model = A.fit_model(table, "Batch_3")
+    odd = table.iloc[[0, 9, 17]].copy()
+    cols = F.feature_columns(odd, F.MATERIAL_FAMILIES)
+    odd.loc[odd.index[0], cols] = np.nan                                  # nothing measured
+    odd.loc[odd.index[1], cols] = odd.loc[odd.index[1], cols] * -40 + 9   # far from every batch
+    out = A.predict(model, odd)
+    assert out["predicted"].isin(model["classes"]).all() and np.isfinite(out["confidence"]).all()
+    assert all(p in s for p, s in zip(out["predicted"], out["prediction_set"]))
+    assert out["confidence_tier"].isin([name for name, _ in A.TIERS]).all()
+    assert out["unfamiliar"].iloc[1] == True and out["predicted"].iloc[1] in model["classes"]  # noqa: E712
+
+
+def test_calibration_is_a_held_out_record(table):
+    model = A.fit_model(table, "Batch_3")
+    cal = model["calibration"]
+    assert cal["method"] == "venn_abers" and cal["n"] == len(table) and sum(t["n"] for t in cal["tiers"]) == len(table)
+    assert sum(t["right"] for t in cal["tiers"]) == round(cal["accuracy"] * cal["n"])
+    assert 0 <= cal["conformal"]["qhat"] <= 1 and cal["stages"]["baseline"]["n"] == len(table)
+    assert 0 <= cal["conformal"]["coverage"] <= 1 and 1 <= cal["conformal"]["mean_size"] <= 3
+    points = cal["venn_abers"]                                 # one out-of-fold p(baseline) and label per image
+    assert len(points["scores"]) == len(points["labels"]) == len(table) and sum(points["labels"]) == (table["batch"] == "Batch_3").sum()
+    assert model["loso"]["balanced_accuracy"] == cal["balanced_accuracy"] and "classifier_balanced_accuracy" in model["loso"]
+    out = A.predict(model, table).iloc[0]
+    assert out["confidence_record"]["n"] == next(t["n"] for t in cal["tiers"] if t["tier"] == out["confidence_tier"])
+    json.dumps(model, default=A._json_default)
+
+
+def test_venn_abers_gives_an_interval_around_the_calibrated_probability():
+    scores = np.array([0.05, 0.1, 0.2, 0.3, 0.45, 0.55, 0.7, 0.8, 0.9, 0.95])
+    labels = np.array([0, 0, 0, 1, 0, 1, 1, 1, 1, 1.0])
+    low = A.venn_abers(scores, labels, 0.02)
+    high = A.venn_abers(scores, labels, 0.97)
+    assert 0 <= low[0] <= low[1] <= 0.5 <= high[0] <= high[1] <= 1
+    raw = np.array([[0.6, 0.38, 0.02], [0.01, 0.02, 0.97], [0.0, 0.0, 0.5]])
+    probs, intervals = A._calibrated(raw, ["Batch_1", "Batch_2", "Batch_3"], "Batch_3", {"scores": scores, "labels": labels})
+    assert np.allclose(probs.sum(axis=1), 1) and ((intervals[:, 0] <= probs[:, 2]) & (probs[:, 2] <= intervals[:, 1])).all()
+    assert np.isclose(probs[0, 0] / probs[0, 1], 0.6 / 0.38)   # the variations keep their raw proportions
+    assert np.isclose(probs[2, 0], probs[2, 1])                # nothing to share out: split evenly
+    assert A._calibrated(raw, ["Batch_1", "Batch_2", "Batch_3"], "Batch_3", None) == (raw, None)
+
+
+def test_the_bet_follows_the_stages():
+    classes = ["Batch_1", "Batch_2", "Batch_3"]
+    assert classes[A._call(np.array([0.3, 0.25, 0.45]), classes, "Batch_3")] == "Batch_1"   # more likely not the baseline
+    assert classes[A._call(np.array([0.3, 0.2, 0.5]), classes, "Batch_3")] == "Batch_3"
+    assert classes[A._call(np.array([0.3, 0.25, 0.45]), classes, "Batch_9")] == "Batch_3"   # no baseline: plain argmax
+
+
+def test_stage_calls_say_different_from_baseline_then_in_what_way(table):
+    model = A.fit_model(table, "Batch_3")
+    out = A.predict(model, table)
+    base, other = out[out["predicted"] == "Batch_3"].iloc[0], out[out["predicted"] != "Batch_3"].iloc[0]
+    assert base["stage_baseline"]["call"] == "Batch_3" and base["stage_variation"] is None
+    assert other["stage_baseline"]["call"] == "not Batch_3" and other["stage_variation"]["call"] == other["predicted"]
+    assert 0.5 <= other["stage_variation"]["confidence"] <= 1
+    low, high = other["stage_baseline"]["interval"]           # the range of "not Batch_3", not of p(Batch_3)
+    assert 0 <= low <= other["stage_baseline"]["confidence"] <= high <= 1
+    calls = A._stage_calls(np.array([0.34, 0.33, 0.33]), ["Batch_1", "Batch_2", "Batch_3"], "Batch_3", (0.2, 0.4))
+    assert calls["stage_baseline"]["call"] == "not Batch_3" and abs(calls["stage_variation"]["confidence"] - 0.34 / 0.67) < 1e-9
+    assert np.allclose(calls["stage_baseline"]["interval"], [0.6, 0.8])
+
+
+def test_a_stage_no_better_than_guessing_is_marked_and_cannot_rule_out_its_options(table):
+    classes, p = ["Batch_1", "Batch_2", "Batch_3"], np.array([0.46, 0.43, 0.11])
+    weak = A._stage_calls(p, classes, "Batch_3", stages={"baseline": {"right": 26, "n": 31}, "variation": {"right": 8, "n": 12}})
+    assert weak["stage_baseline"]["record"]["established"] and weak["stage_baseline"]["record"]["p_value"] < 0.001
+    second = weak["stage_variation"]
+    assert second["call"] == "Batch_1" and second["record"] == {"right": 8, "n": 12, "chance": 0.5, "p_value": 0.1938, "established": False}
+    assert "lean, not a finding" in second["note"]
+    strong = A._stage_calls(p, classes, "Batch_3", stages={"variation": {"right": 12, "n": 12}})["stage_variation"]
+    assert strong["record"]["established"] and "note" not in strong
+    assert "record" not in A._stage_calls(p, classes, "Batch_3")["stage_variation"]           # no record, nothing claimed
+    model = A.fit_model(table, "Batch_3")
+    model["calibration"]["stages"]["variation"] = {"right": 1, "n": 2}
+    out = A.predict(model, table)
+    for _, row in out[out["stage_variation"].notna()].iterrows():
+        assert {"Batch_1", "Batch_2"} <= set(row["prediction_set"]) and row["prediction_set"][0] == row["predicted"]
+        assert row["confidence_tier"] == "low"                                                # a guess is never shown as confident
+        assert {r["stage"] for r in row["reasons"]} <= {"baseline", "all"}                     # explained by the part that is established
+
+
+def test_unfamiliar_is_measured_against_the_assigned_batch(table):
+    model = A.fit_model(table, "Batch_3")
+    assert set(model["batch_stats"]) == set(model["classes"]) and model["batch_stats"]["Batch_3"] == model["baseline_stats"]
+    out = A.predict(model, table)
+    assert out["unfamiliar"].sum() <= 2                       # training images sit inside their own batch
+    first = out[out["predicted"] == "Batch_1"].iloc[0]         # judged against Batch_1's range, not the baseline's
+    assert first["predicted_threshold"] == model["batch_stats"]["Batch_1"]["threshold"]
+    assert first["baseline_threshold"] == model["baseline_stats"]["threshold"] and "outside_baseline" in first
+
+
+def test_reasons_read_in_material_terms(table, deep_table):
+    reasons = A.predict(A.fit_model(table, "Batch_3"), table)["reasons"].iloc[0]
+    assert all(r["stage"] == "all" and ("SD" in r["text"] or "about the same" in r["text"]) for r in reasons)
+    assert all("Batch_3" in r["text"] and r["closest_batch"] in ("Batch_1", "Batch_2", "Batch_3") for r in reasons)
+    model = A.fit_model(deep_table, "Batch_3", ("deep",))
+    assert set(model["explain"]["translations"]["all"]) == set(model["model_features"])
+    reasons = A.predict(model, deep_table)["reasons"].iloc[0]
+    top = reasons[0]                                           # the designed signal moves with the material features
+    assert top["label"].startswith("DINOv2 image pattern") and top["related"]
+    assert all(abs(c["r"]) >= A.TRANSLATE_MIN_R and c["feature"] in model["explain"]["named"] for c in top["related"])
+    assert "which moves with" in top["text"] and "r = " in top["text"]
+
+
+def test_staged_model_roundtrips_and_multiplies_its_stages(deep_table, tmp_path):
+    staged = (F.MATERIAL_FAMILIES, ("deep",))
+    cv = A.loso_cv(deep_table, staged=staged, baseline="Batch_3")
+    assert cv["balanced_accuracy"] >= 0.75 and cv["staged"] == [list(F.MATERIAL_FAMILIES), ["deep"]]
+    model = A.fit_model(deep_table, "Batch_3", staged=staged)
+    assert model["kind"] == "staged" and set(model["stages"]) == {"baseline", "variation"}
+    assert model["stages"]["baseline"]["classes"] == ["Batch_3", "not Batch_3"] and model["stages"]["variation"]["classes"] == ["Batch_1", "Batch_2"]
+    A.save_model(model, tmp_path / "m.json")
+    p1, p2 = A.predict(model, deep_table), A.predict(A.load_model(tmp_path / "m.json"), deep_table)
+    cols = [f"p_{c}" for c in model["classes"]]
+    assert np.allclose(p1[cols].sum(axis=1), 1) and np.allclose(p1[cols], p2[cols])
+    assert (p1["predicted"] == deep_table["batch"]).mean() >= 0.9
+    other = p1[p1["predicted"] != "Batch_3"]["reasons"].iloc[0]
+    assert [r["stage"] for r in other] == ["baseline"] * (A.N_REASONS // 2) + ["variation"] * (A.N_REASONS - A.N_REASONS // 2)
+    assert {r["stage"] for r in p1[p1["predicted"] == "Batch_3"]["reasons"].iloc[0]} == {"baseline"}
+    null = A.permutation_null(deep_table, n=5, seed=1, staged=staged, baseline="Batch_3")
+    assert cv["balanced_accuracy"] > null["p95"]
+
+
+def test_importance_says_what_each_stage_leans_on(deep_table):
+    model = A.fit_model(deep_table, "Batch_3", staged=(F.MATERIAL_FAMILIES, ("deep",)))
+    imp = model["explain"]["importance"]
+    assert set(imp) == {"baseline", "variation"}
+    for role, part in imp.items():
+        assert abs(sum(part["families"].values()) - 1) < 1e-3 and len(part["features"]) <= A.IMPORTANCE_TOP
+        shares = [f["share"] for f in part["features"]]
+        assert shares == sorted(shares, reverse=True) and all(f["higher_means"] in model["stages"][role]["classes"] for f in part["features"])
+    assert set(imp["variation"]["families"]) == {"deep"} and "deep" not in imp["baseline"]["families"]
+    top = imp["variation"]["features"][0]
+    assert top["label"].startswith("DINOv2 image pattern") and all({"feature", "label", "r"} <= set(t) for t in top["related"])
+    assert all(t["feature"].startswith("img_") and abs(t["r"]) >= A.TRANSLATE_MIN_R for t in top["imaging"])   # named, never a model input
+    assert not any(f.startswith("img_") for f in model["features"])
+    assert all(f["label"] != f["feature"] for f in imp["baseline"]["features"])
+
+
+def test_repeated_dry_runs_report_spread_and_held_out_confidence(table):
+    res = A.dry_runs(table, "Batch_3", per_batch=2, repeats=3)
+    assert res["repeats"] == 3 and 1 <= res["distinct_draws"] <= 3
+    assert res["balanced_accuracy"]["min"] <= res["balanced_accuracy"]["mean"] <= res["balanced_accuracy"]["max"]
+    assert sum(t["n"] for t in res["tiers"]) == 3 * 6 and 0 <= res["prediction_set"]["coverage"] <= 1
+    assert res["prediction_set"]["mean_size"] >= 1 and set(res["per_batch_accuracy"]) == {"Batch_1", "Batch_2", "Batch_3"}
+
+
+def test_describe_gives_plain_names():
+    assert F.describe("kpi_si_d50_um", {"si_d50_um": {"name": "median silicon particle size"}}) == "median silicon particle size"
+    assert F.describe("reg_si_frac_sd") == "silicon fraction, spread between regions"
+    assert F.describe("tex_inlens_glcm_homogeneity_d1") == "InLens texture smoothness at 0.05 um"
+    assert F.describe("tex_bse_si_lbp4") == "BSE fine texture inside silicon: share of straight edges"
+    assert F.describe("par_d50_um") == "median silicon particle size (D50)" and F.describe("par_solidity_iqr") == "spread of silicon particle compactness"
+    assert F.describe("deep_pc03") == "deep_pc03"
+    assert F.describe("img_inlens_p1") == "InLens imaging: darkest grey level" and F.describe("img_bse_noise") == "BSE imaging: noise"

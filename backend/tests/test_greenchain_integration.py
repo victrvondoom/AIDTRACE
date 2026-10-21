@@ -5,13 +5,13 @@ import os
 from types import SimpleNamespace
 
 import pytest
+from domains.greenchain import kairos_adapter as adapter
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.dependencies import get_current_user, get_settings
 from api.routers.graphlab import router as graphlab_router
 from api.routers.greenchain import router
-from domains.greenchain import kairos_adapter as adapter
 
 requires_falkordb = pytest.mark.skipif(not os.getenv("FALKORDB_TEST_URL"), reason="set FALKORDB_TEST_URL")
 

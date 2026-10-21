@@ -91,6 +91,15 @@ Open http://localhost:3001 for the landing page and http://localhost:3001/hub fo
 3. Restart the backend.
 4. Optional connectivity check (one paid request): `$env:AIDTRACE_LIVE_SMOKE = "1"; ..\.venv\Scripts\python.exe scripts\aidtrace_agent_live_smoke.py` from `backend`.
 
+## Modules inside AIDtrace
+
+- **Supply-chain physics and mathematics** (`/physics/*`, `backend/domains/physics/`): cold-chain shelf life (Arrhenius, mean
+  kinetic temperature), payload heat transfer (lumped capacitance), queue waits (Kingman, Little) and inventory policy (EOQ,
+  safety stock). Every response names its formula and assumptions. No frontend page yet.
+- **Catalyst QC** (`/catalyst/*`, `integrations/catalyst`): electrode-material batch QC from FIB-SEM images. Runs as a private
+  worker in its own virtualenv because its pins conflict with Kairos's. Start it with `scripts\start_catalyst_worker.py`.
+  Setup, the gateway rules and what is not yet verified: [docs/integration/CATALYST_INTEGRATION.md](docs/integration/CATALYST_INTEGRATION.md).
+
 ## Tests
 
 ```powershell

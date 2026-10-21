@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-
 from orchestration.cli import main
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "orchestration" / "examples" / "demo_workflow.json"

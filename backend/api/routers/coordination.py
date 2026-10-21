@@ -22,8 +22,8 @@ from api.services import tenant
 from api.services.coordination import (
     CAPABILITY_REGISTRY,
     CoordinationGraphStore,
-    CoordinatorAgent,
     CoordinationStoreUnavailable,
+    CoordinatorAgent,
     DependencyScheduler,
 )
 

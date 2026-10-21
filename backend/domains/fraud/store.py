@@ -3,9 +3,8 @@
 Deliberately self-contained (falkordb only, no `api` package imports) so the MCP server can run as a small private
 process in its own environment, away from the pins that conflict with the MCP SDK.
 """
-from falkordb import FalkorDB
-
 from domains.fraud import config
+from falkordb import FalkorDB
 
 
 class GraphStore:

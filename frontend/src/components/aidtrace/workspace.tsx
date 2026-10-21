@@ -18,7 +18,16 @@ import { ExtensionPanel } from "./extensions/panel";
 import { extensionById, isAvailable } from "./extensions/registry";
 
 const VIEWS: { id: ViewId; label: string }[] = [{ id: "globe", label: "Globe" }, { id: "graph", label: "Graph" }, { id: "lineage", label: "Lineage" }, { id: "timeline", label: "Timeline" }];
-const EXAMPLES = ["Which suppliers are exposed?", "What changed since the last review?", "Which decision needs attention?"];
+/** Starter questions that name a supplier or decision this workspace actually holds, so an example always points at something that exists. */
+function examplesFor(data: AidtraceData): string[] {
+  const exposed = recommendedFrom(data) ?? data.scenario?.manufacturers.find((m) => !m.isCurrent)?.name ?? null;
+  const outdated = data.snap?.decisions.some((d) => isUnsafe(d.status)) ?? false;
+  return [
+    exposed ? `Which suppliers become risky if ${plain(exposed)} is compromised?` : "Which suppliers are exposed?",
+    "What changed since the last review?",
+    outdated ? "Which decisions rely on outdated evidence?" : "Which decision needs attention?",
+  ];
+}
 const plain = (name: string) => name.replace("Illustrative ", "");
 const dot: Record<Stage["status"], string> = { pending: "bg-line", running: "bg-accent animate-pulse", done: "bg-ink", skipped: "bg-muted", failed: "bg-danger" };
 
@@ -202,7 +211,7 @@ function LeftPanel(props: {
         </div>
         {focused && !question && (
           <ul className="absolute inset-x-4 top-[calc(100%-0.5rem)] z-10 border border-line bg-surface shadow-sm" aria-label="Examples">
-            {EXAMPLES.map((q) => <li key={q}><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => void ask(q)} className="block w-full px-3 py-2 text-left text-micro text-ink hover:bg-surface-2">{q}</button></li>)}
+            {examplesFor(data).map((q) => <li key={q}><button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => void ask(q)} className="block w-full px-3 py-2 text-left text-micro text-ink hover:bg-surface-2">{q}</button></li>)}
           </ul>
         )}
       </form>

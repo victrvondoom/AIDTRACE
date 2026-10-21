@@ -1,0 +1,243 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Audit.dc.html": {
+      "expand": "fill",
+      "h": 1320,
+      "is_interactive": true,
+      "title": "Audit log + batch passport",
+      "w": 1440,
+      "x": 3040,
+      "y": 3600
+    },
+    "Brand.dc.html": {
+      "h": 1180,
+      "title": "Identity & components",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Compare-Focus.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "title": "v2 · Compare — look here first",
+      "w": 1440,
+      "x": 0,
+      "y": 5940
+    },
+    "Compare-Guided.dc.html": {
+      "expand": "fill",
+      "h": 1900,
+      "is_interactive": true,
+      "title": "v3 · Compare — guided by Claude",
+      "w": 1440,
+      "x": 0,
+      "y": 7900
+    },
+    "Compare.dc.html": {
+      "expand": "fill",
+      "h": 1880,
+      "is_interactive": true,
+      "title": "Compare a batch to baseline",
+      "w": 1440,
+      "x": 0,
+      "y": 3600
+    },
+    "Identify-Analyzing.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "title": "2 · Identify — analysing",
+      "w": 1440,
+      "x": 1520,
+      "y": 1600
+    },
+    "Identify-Result-Focus.dc.html": {
+      "expand": "fill",
+      "h": 1420,
+      "is_interactive": true,
+      "title": "v2 · Identify result — look here first",
+      "w": 1440,
+      "x": 1520,
+      "y": 5940
+    },
+    "Identify-Result.dc.html": {
+      "expand": "fill",
+      "h": 1560,
+      "is_interactive": true,
+      "title": "3 · Identify — result",
+      "w": 1440,
+      "x": 3040,
+      "y": 1600
+    },
+    "Main.dc.html": {
+      "expand": "fill",
+      "h": 1000,
+      "is_interactive": true,
+      "title": "1 · Identify — drop a tile",
+      "w": 1440,
+      "x": 0,
+      "y": 1600
+    },
+    "Settings-Baseline.dc.html": {
+      "expand": "fill",
+      "h": 1240,
+      "is_interactive": true,
+      "title": "v2 · Settings — default baseline",
+      "w": 1440,
+      "x": 3040,
+      "y": 5940
+    },
+    "Viewer.dc.html": {
+      "expand": "fill",
+      "h": 1180,
+      "is_interactive": true,
+      "title": "Tile viewer + segmentation",
+      "w": 1440,
+      "x": 1520,
+      "y": 3600
+    },
+    "Identify-Result-Peek.dc.html": {
+      "expand": "fill",
+      "h": 1420,
+      "is_interactive": true,
+      "title": "v3 · Identify — region peek & pin",
+      "w": 1440,
+      "x": 2060,
+      "y": 7900
+    },
+    "Compare-Clear.dc.html": {
+      "expand": "fill",
+      "h": 1800,
+      "is_interactive": true,
+      "title": "v4 · Compare — why, what moved, what to do",
+      "w": 1440,
+      "x": 0,
+      "y": 10260
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-03T19:05:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "baselineNote": {
+      "fill": "green",
+      "text": "Baseline, two levels.\n\nDefault (Settings): written to config/decision.yaml → baseline, logged in the audit, locked once rules are frozen.\n\nOne-off (Compare picker): any other batch for this comparison only. The default doesn't move; a 'Make default' link goes to Settings.\n\nBaseline tiles can be left out (reference_exclude), e.g. the four with a raised black level.",
+      "w": 440,
+      "x": 4560,
+      "y": 6620
+    },
+    "flowNote": {
+      "fill": "gray",
+      "text": "Simplified IA: four places.\n\nIdentify: one tile in, a batch out.\nCompare: a whole batch against any baseline (Batch 3 by default).\nLibrary: every tile, with the segmentation viewer.\nAudit: what was decided, with which rules, and proof nothing moved.\n\nLabs (impact, sample size, 3D) sit in the sidebar as 'soon' so the roadmap is visible without cluttering the core.",
+      "w": 420,
+      "x": 1520,
+      "y": 560
+    },
+    "guideContract": {
+      "fill": "purple",
+      "text": "What Claude gets and returns.\n\nIn: the evidence JSON (differences, odd tiles, imaging, rule results, next_action) and dictionary entries. No images.\n\nOut, as JSON, never free HTML:\n• summary: ≤3 sentences, numbers as slots, e.g. {diff:si_graphite_ratio}, {tile:4ih2ggld.si_graphite_ratio}, {whatif:1}\n• steps: up to 4 × {target: verdict | moved | tiles | next, title, text}\n• whatifs: requests from a fixed menu (leave tiles out, other baseline), which Catalyst computes\n\nCatalyst renders the chips from the slots, so a number can't be wrong. A slot that doesn't resolve drops its sentence. Two failures = template text.",
+      "w": 460,
+      "x": 1520,
+      "y": 7900
+    },
+    "guideStyle": {
+      "text": "House rules for the words (in the prompt, checked after).\n\n• ≤3 sentences in the summary, ≤2 per step, ≤28 words per sentence.\n• Say 'differs from the baseline', never 'defective' or 'bad'.\n• Say 'not settled' when the status is unclear. Never stronger than the statistics.\n• No adjectives like significant, crucial, notable unless a rule fired.\n• No restating the verdict; no 'In summary'; no exclamation marks.\n• Name tiles by ID, properties by their dictionary name.\n• Next steps only from next_action and the dictionary's supplier check.",
+      "w": 460,
+      "x": 1520,
+      "y": 8620
+    },
+    "lookNote": {
+      "fill": "orange",
+      "text": "Look: a dark lab bench. 32 px grid underneath everything, frosted glass for anything that floats (verdicts, controls, toolbars over images).\n\nOrange belongs to the cat and to silicon. Batches keep their own colours everywhere: Batch 3 teal (baseline), Batch 1 blue, Batch 2 violet.\n\nVerdicts: Accept green, Investigate yellow, Reject red, always with a word, never colour alone.",
+      "w": 420,
+      "x": 1520,
+      "y": 0
+    },
+    "rowCore": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Core flow · Which batch is this tile from?",
+      "w": 240,
+      "x": 0,
+      "y": 1300
+    },
+    "rowFocus": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "v2 · The answer, three things to look at, everything else folded",
+      "w": 240,
+      "x": 0,
+      "y": 5640
+    },
+    "rowGuide": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "v3 · Claude points and explains · look closer without leaving",
+      "w": 240,
+      "x": 0,
+      "y": 7600
+    },
+    "rowMore": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "Batch vs baseline · Images · Audit",
+      "w": 240,
+      "x": 0,
+      "y": 3300
+    },
+    "slotNote": {
+      "fill": "blue",
+      "text": "Highlight slot: swappable by design.\n\n1. Answer: verdict + one plain sentence.\n2. Caveats: pinned, never ranked (imaging changed, unfamiliar tile, rules not frozen).\n3. Look here first: at most 3 cards. Each card = finding id, title, numbers, band, the tiles behind it, why it matters, and 'why it's here'.\n4. Everything else: folded, with a one-line summary on each row.\n\nThe UI only renders the top 3 of a ranked list the backend sends. Who ranks is a setting: statistics (compare() drivers, today), Pat's feature ranking (when ready), or Claude (experimental: may only pick from findings already computed, never writes numbers).",
+      "w": 440,
+      "x": 4560,
+      "y": 5940
+    },
+    "peekNote": {
+      "fill": "teal",
+      "w": 440,
+      "x": 3580,
+      "y": 7900,
+      "text": "Region peek: look closer without leaving.\n\nHover or keyboard-focus a region (or its reason card): a glass peek opens beside it with a magnified crop, the region ringed, a scale bar and one line of what was measured there.\n\nClick pins it: an inspector panel on the right with detector switch (BSE / ETD / InLens), silicon and pore layers, ← → through all regions, and 'Open full tile' for the Library.\n\nSame component for any tile thumbnail or tile chip (Compare cards, guided summary). Regions stay marked PREVIEW until the model returns real heatmap regions."
+    },
+    "rowClear": {
+      "kind": "title1",
+      "maxW": 4480,
+      "text": "v4 · Compare, clearer: the call and why, what moved, what to do",
+      "w": 240,
+      "x": 0,
+      "y": 9960
+    },
+    "clearNote": {
+      "fill": "orange",
+      "w": 460,
+      "x": 1520,
+      "y": 10260,
+      "text": "Compare, clearer (v4). Replaces Compare-Focus.\n\n1. Answer: verdict, one sentence with its numbers, and 'Why it isn't Accept' (the evidence's reasons, grouped: odd tiles, imaging, controls). The two caveat banners fold into it.\n2. What moved: one chart, one row per property, the 90% range against the ±1.5σ tolerance, so 'not settled' is visible (the range crosses the edge). Click a row for why it matters, the supplier check and the tiles behind it.\n3. The two tiles behind it, shown once, with the without-them number.\n4. Next steps from next_action and the dictionary.\n5. Folded: all properties tile by tile, explanations, run details.\n\nNo code names (T2 = 'mid-grey silicon share'). Claude's walkthrough is a quiet button, not the loudest thing on the page."
+    }
+  },
+  "order": [
+    "Brand.dc.html",
+    "Main.dc.html",
+    "Identify-Analyzing.dc.html",
+    "Identify-Result.dc.html",
+    "Compare.dc.html",
+    "Viewer.dc.html",
+    "Audit.dc.html",
+    "Compare-Focus.dc.html",
+    "Identify-Result-Focus.dc.html",
+    "Settings-Baseline.dc.html",
+    "Compare-Guided.dc.html",
+    "Identify-Result-Peek.dc.html",
+    "Compare-Clear.dc.html"
+  ],
+  "pages": [],
+  "title": "Catalyst — App Redesign"
+}

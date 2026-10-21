@@ -6,7 +6,6 @@ import os
 import random
 
 import pytest
-
 from domains.fraud import actions, seed
 from domains.fraud.investigator import Investigator
 from domains.fraud.store import GraphStore

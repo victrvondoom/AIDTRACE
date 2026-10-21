@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from api.services.memory.engineering_vault import EngineeringMemoryVault, EngineeringVaultIncomplete
 from api.services.drift.store import TraversalLimitExceeded
+from api.services.memory.engineering_vault import EngineeringMemoryVault, EngineeringVaultIncomplete
 
 
 class PagedLineageStore:

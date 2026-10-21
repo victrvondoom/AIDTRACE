@@ -6,12 +6,12 @@ import time
 from types import SimpleNamespace
 
 import pytest
+from domains.fraud.store import GraphStore
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from api.dependencies import get_current_user, get_settings
 from api.routers.fraud import router
-from domains.fraud.store import GraphStore
 
 URL = os.environ.get("FALKORDB_TEST_URL", "")
 pytestmark = pytest.mark.skipif(not URL, reason="set FALKORDB_TEST_URL")

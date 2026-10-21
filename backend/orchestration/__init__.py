@@ -6,7 +6,7 @@ the CLI, and the limits.
 """
 
 from .agents import AgentSpec, run_agent
-from .backends import ChatBackend, ChatResponse, SGLangBackend, ScriptedBackend, ToolCall
+from .backends import ChatBackend, ChatResponse, ScriptedBackend, SGLangBackend, ToolCall
 from .config import Settings, validate_base_url
 from .doctor import DoctorReport, Health, probe
 from .errors import (

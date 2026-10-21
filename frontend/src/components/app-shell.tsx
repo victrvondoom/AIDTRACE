@@ -22,8 +22,6 @@ import { SpatialInteraction } from "./spatial-interaction";
 // Staff surfaces (Assure group + RCA) are hidden from field workers. Dev-bypass (no session)
 // defaults to engineer, so an unauthenticated demo still sees everything.
 const STAFF: Role[] = ["engineer", "reliability", "admin"];
-/** Staff plus the read-only compliance auditor — mirrors STAFF_AND_COMPLIANCE in use-role.ts. */
-const STAFF_AND_COMPLIANCE: Role[] = [...STAFF, "compliance"];
 
 // Nav keys → the shared Phosphor set (components/icon.tsx). Conventional metaphors
 // over clever ones: a sidebar is scanned, not read.

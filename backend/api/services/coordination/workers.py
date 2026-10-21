@@ -8,7 +8,6 @@ from api.services.coordination.contracts import (
     ActionProposal,
     AgentRole,
     Task,
-    TaskStatus,
 )
 from api.services.coordination.graph_store import CoordinationGraphStore
 

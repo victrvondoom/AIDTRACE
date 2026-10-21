@@ -9,8 +9,17 @@ from uuid import UUID
 
 from api.services.drift.engine import ImpactPath
 from api.services.drift.model import (
-    ContractError, EvidenceStrength, Label, MemoryKind, Rel, Verdict, Verification,
-    check_key, now_iso, resolve_authority, stable_hash,
+    ContractError,
+    EvidenceStrength,
+    Label,
+    MemoryKind,
+    Rel,
+    Verdict,
+    Verification,
+    check_key,
+    now_iso,
+    resolve_authority,
+    stable_hash,
 )
 from api.services.memory.agent_memory import AgentMemory
 

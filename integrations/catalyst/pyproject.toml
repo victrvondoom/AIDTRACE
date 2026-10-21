@@ -1,0 +1,50 @@
+[project]
+name = "catalyst"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.8.0",
+    "fastapi>=0.141.1",
+    "imagecodecs>=2026.3.6",
+    "numpy>=2.4.6",
+    "pandas>=3.0.6",
+    "pydantic>=2.13.5",
+    "python-multipart>=0.0.32",
+    "pyyaml>=6.0.3",
+    "scikit-image>=0.26.0",
+    "scikit-learn>=1.9.1",
+    "scipy>=1.17.1",
+    "tifffile>=2026.3.3",
+    # the frozen attribution model needs the DINOv2 features (qc/deep.py), so the API does too
+    "torch>=2.8",
+    "transformers>=4.56,<5",
+    "uvicorn>=0.54.0",
+]
+
+[project.optional-dependencies]
+# kept so the documented `--extra deep` commands still work; the same packages are regular dependencies now.
+deep = [
+    "torch>=2.8",
+    "transformers>=4.56,<5",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+]
+
+[tool.uv]
+exclude-newer = "2026-09-26T00:00:00Z"
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform != 'darwin'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

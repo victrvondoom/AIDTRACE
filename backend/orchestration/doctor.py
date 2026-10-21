@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 import httpx
 
@@ -12,7 +12,7 @@ from .config import validate_base_url
 from .errors import BackendError
 
 
-class Health(str, Enum):
+class Health(StrEnum):
     OK = "OK"
     MODEL_NOT_LISTED = "MODEL_NOT_LISTED"
     AUTH_REJECTED = "AUTH_REJECTED"

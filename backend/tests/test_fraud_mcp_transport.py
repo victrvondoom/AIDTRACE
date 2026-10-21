@@ -13,7 +13,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from domains.fraud import seed
 from domains.fraud.store import GraphStore
 

@@ -22,9 +22,8 @@ from api.routers.resolveai import _site_for_user
 from api.services import tenant
 from api.services.drift.model import ContractError
 from api.services.drift.store import TraversalLimitExceeded
-from api.services.memory import greenchain_decisions, resolveai_memory
+from api.services.memory import evidence_intake, greenchain_decisions, resolveai_memory
 from api.services.memory.agent_memory import AgentMemory
-from api.services.memory import evidence_intake
 from api.services.memory.context import build_llm_context
 from api.services.memory.engineering_vault import EngineeringMemoryVault, EngineeringVaultIncomplete
 

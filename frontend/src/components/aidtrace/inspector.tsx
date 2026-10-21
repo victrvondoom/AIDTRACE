@@ -48,8 +48,8 @@ export function Inspector({ data, selection, onSelect, open, onOpen, investigati
   const { scenario, snap, lineage, site, demo } = data;
   const supplier = selection?.kind === "supplier" ? scenario?.manufacturers.find((m) => m.id === selection.id) : undefined;
   const lineageNode: LineageNode | undefined = selection ? lineage?.nodes.find((n) => n.id === selection.id) : undefined;
-  const allNodes = site?.graph.nodes ?? demo?.graph.nodes ?? [];
-  const allEdges = site?.graph.edges ?? demo?.graph.edges ?? [];
+  const allNodes = useMemo(() => site?.graph.nodes ?? demo?.graph.nodes ?? [], [site, demo]);
+  const allEdges = useMemo(() => site?.graph.edges ?? demo?.graph.edges ?? [], [site, demo]);
   const graphNode = selection?.kind === "node" ? allNodes.find((n) => n.id === selection.id) : undefined;
   const nodeMap = useMemo(() => new Map(allNodes.map((n) => [n.id, n])), [allNodes]);
   const outgoingEdges = useMemo(() => (graphNode ? allEdges.filter((e) => e.source === graphNode.id) : []), [graphNode, allEdges]);

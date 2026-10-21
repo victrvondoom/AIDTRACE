@@ -3,9 +3,36 @@ import { describe, expect, it, vi } from "vitest";
 import type { MemorySnapshot } from "@/lib/lab-api";
 import { buildLineage } from "@/lib/aidtrace-lineage";
 import type { AidtraceData } from "./data";
-import { LineageView, TimelineView } from "./views";
+import { cypherPresets, LineageView, TimelineView } from "./views";
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
+
+describe("cypherPresets", () => {
+  const node = (id: string, type: string) => ({ id, label: id, type, props: {} });
+  const edge = (source: string, target: string, rel: string) => ({ source, target, rel, weight: 1, certainty: "definite" as const, at: null, until: null, disabled: false });
+
+  it("keeps the two generic presets when there is no persisted graph", () => {
+    expect(cypherPresets(null).map((p) => p.label)).toEqual(["Node counts", "Relationship stats"]);
+  });
+
+  it("builds presets from the labels and relationship types the graph actually holds", () => {
+    const graph = {
+      nodes: [node("s1", "Supplier"), node("s2", "Supplier"), node("c1", "Claim"), node("d1", "Decision")],
+      edges: [edge("c1", "s1", "SUPPORTED_BY"), edge("d1", "c1", "RELIES_ON"), edge("d1", "s2", "RELIES_ON")],
+    };
+    const presets = cypherPresets(graph);
+    expect(presets.map((p) => p.label)).toContain("Sample Supplier");
+    expect(presets.map((p) => p.label)).toContain("RELIES_ON links");
+    expect(presets.find((p) => p.label === "Sample Supplier")?.query).toBe("MATCH (n:`Supplier`) RETURN n.id AS id, labels(n)[0] AS type LIMIT 10");
+  });
+
+  it("never turns a value that is not a plain identifier into Cypher", () => {
+    const graph = { nodes: [node("x", "Bad`Label; DROP")], edges: [edge("x", "x", "rel with space")] };
+    const presets = cypherPresets(graph);
+    expect(presets.map((p) => p.label)).toEqual(["Node counts", "Relationship stats"]);
+    expect(presets.every((p) => !p.query.includes("DROP") && !p.query.includes("rel with space"))).toBe(true);
+  });
+});
 
 const snap: MemorySnapshot = {
   sources: [

@@ -28,7 +28,7 @@ from .model import (
 
 try:
     from api.services.coordination.contracts import CoordinationLabel, CoordinationRel
-    _COORDINATION_LABELS = {l.value for l in CoordinationLabel}
+    _COORDINATION_LABELS = {label.value for label in CoordinationLabel}
     _COORDINATION_RELS = {r.value for r in CoordinationRel}
 except ImportError:
     _COORDINATION_LABELS = set()

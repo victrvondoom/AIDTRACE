@@ -18,9 +18,10 @@ import json
 from datetime import UTC, datetime
 from typing import Any
 
+from domains.greenchain import kairos_adapter as adapter
+
 from api.services.drift.model import Label, Rel, stable_hash
 from api.services.memory.agent_memory import AgentMemory, _slug
-from domains.greenchain import kairos_adapter as adapter
 
 AGENT = "agent:greenchain-scorer"
 DATASETS = tuple(adapter.DATASETS)

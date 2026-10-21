@@ -11,6 +11,10 @@ import asyncio
 from typing import Any
 
 import structlog
+from domains.greenchain import kairos_adapter as adapter
+from domains.greenchain import main as gc
+from domains.greenchain.ml_scorer import compute_composite_scores
+from domains.greenchain.transport import rescore_transport
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -19,10 +23,6 @@ from api.dependencies import CurrentUserDep, SettingsDep, require_role
 from api.routers.resolveai import _site_for_user
 from api.services import tenant
 from api.services.consumer.store import GraphStore
-from domains.greenchain import kairos_adapter as adapter
-from domains.greenchain import main as gc
-from domains.greenchain.ml_scorer import compute_composite_scores
-from domains.greenchain.transport import rescore_transport
 
 log = structlog.get_logger(__name__)
 router = APIRouter()

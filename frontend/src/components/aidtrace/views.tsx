@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { InteractiveGlobe } from "@/components/features/greenchain/InteractiveGlobe";
 import { GraphViews, TYPE_TONES, TYPE_GLYPHS, type GraphMarks } from "@/components/graph-views";
 import { Button, StatusBadge } from "@/components/ui";
-import type { LabGraph, LabNode } from "@/lib/graph-layout";
+import type { LabGraph } from "@/lib/graph-layout";
 import type { SupplyScenarioSelectableNodeId } from "@/lib/greenchain/supply-chain-scenario";
 import { chainOf, isUnsafe, LINEAGE_COLUMNS, LINEAGE_LABELS, type LineageNode } from "@/lib/aidtrace-lineage";
 import { getSiteGraph, runSiteCypher, type CypherQueryResult } from "@/lib/lab-api";
@@ -66,6 +66,30 @@ export function GlobeView({ data, selection, onSelect, recommendedName, banner }
 
 // ---- Graph -----------------------------------------------------------------------------------------------------------------------------
 
+const CYPHER_IDENTIFIER = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** Console presets built from what the persisted graph really holds. Only plain identifiers become labels or relationship types, so a preset never names a
+ *  record type the graph lacks and never breaks out of its backticks. */
+export function cypherPresets(graph: LabGraph | null): { label: string; query: string }[] {
+  const presets = [
+    { label: "Node counts", query: "MATCH (n) RETURN labels(n)[0] AS type, count(n) AS cnt ORDER BY cnt DESC" },
+    { label: "Relationship stats", query: "MATCH ()-[r]->() RETURN type(r) AS relationship, count(r) AS cnt ORDER BY cnt DESC" },
+  ];
+  if (!graph) return presets;
+  const mostCommon = (values: unknown[]) => {
+    const counts = new Map<string, number>();
+    for (const v of values) if (typeof v === "string" && CYPHER_IDENTIFIER.test(v)) counts.set(v, (counts.get(v) ?? 0) + 1);
+    return [...counts].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([v]) => v);
+  };
+  for (const type of mostCommon(graph.nodes.map((n) => n.type))) {
+    presets.push({ label: `Sample ${type}`, query: `MATCH (n:\`${type}\`) RETURN n.id AS id, labels(n)[0] AS type LIMIT 10` });
+  }
+  for (const rel of mostCommon(graph.edges.map((e) => e.rel))) {
+    presets.push({ label: `${rel} links`, query: `MATCH (a)-[r:\`${rel}\`]->(b) RETURN a.id AS source, type(r) AS relationship, b.id AS target LIMIT 10` });
+  }
+  return presets;
+}
+
 export function GraphView({ data, selection, onSelect }: ViewProps) {
   const [source, setSource] = useState<"scenario" | "site">("site");
   const [fetched, setFetched] = useState<AidtraceData["site"]>(null);
@@ -108,6 +132,8 @@ export function GraphView({ data, selection, onSelect }: ViewProps) {
   }, [rawGraph, typeFilter]);
 
   const falkor = site?.falkordb;
+  // Presets follow the persisted graph, because the console queries that graph and not the scenario sandbox.
+  const presets = useMemo(() => cypherPresets(site?.graph ?? null), [site]);
 
   // Compute node type distribution
   const typeCounts = useMemo(() => {
@@ -168,13 +194,6 @@ export function GraphView({ data, selection, onSelect }: ViewProps) {
     const m = node.type === "Supplier" ? data.scenario?.manufacturers.find((x) => x.name === node.label) : undefined;
     onSelect(m ? { kind: "supplier", id: m.id, label: m.name } : { kind: "node", id: node.id, label: node.label });
   }
-
-  const PRESET_QUERIES = [
-    { label: "Node Counts", query: "MATCH (n) RETURN labels(n)[0] AS type, count(n) AS cnt ORDER BY cnt DESC" },
-    { label: "Claims & Evidence", query: "MATCH (c:Claim)-[:SUPPORTED_BY]->(s:SourceVersion) RETURN c.id, c.fact_key, s.id, s.title LIMIT 10" },
-    { label: "Decision Lineage", query: "MATCH (d:Decision)-[r]->(target) RETURN d.id, type(r), target.id LIMIT 10" },
-    { label: "Relationship Stats", query: "MATCH ()-[r]->() RETURN type(r) AS relationship, count(r) AS cnt ORDER BY cnt DESC" },
-  ];
 
   return (
     <div className="flex size-full flex-col overflow-y-auto p-3" data-testid="aidtrace-graph-view">
@@ -248,7 +267,7 @@ export function GraphView({ data, selection, onSelect }: ViewProps) {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <span className="text-caption font-semibold text-ink">Read-only Cypher on your site graph</span>
               <div className="flex flex-wrap items-center gap-1">
-                {PRESET_QUERIES.map((p) => (
+                {presets.map((p) => (
                   <button
                     key={p.label}
                     type="button"

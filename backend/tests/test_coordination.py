@@ -1,8 +1,8 @@
 """Coordination unit tests use an explicit test graph, never an implicit production fallback."""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -20,7 +20,6 @@ from api.services.coordination import (
     Run,
     Task,
     TaskStatus,
-    ValidationWorker,
     VerifiedUnlearningEngine,
     evaluate_source_independence,
 )

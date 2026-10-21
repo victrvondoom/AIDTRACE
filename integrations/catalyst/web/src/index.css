@@ -1,0 +1,246 @@
+@import "tailwindcss";
+/* In the components layer, so a utility on an element (text-cx-orange-text on a .lbl, p-0 on a .panel) wins. */
+@import "../../design/tokens.css" layer(components);
+
+@theme inline {
+  --font-cx: var(--cx-font);
+  --font-cxmono: var(--cx-mono);
+
+  --color-cx-bg: var(--cx-bg);
+  --color-cx-surface: var(--cx-surface);
+  --color-cx-sidebar: var(--cx-sidebar);
+  --color-cx-line: var(--cx-line);
+  --color-cx-line-soft: var(--cx-line-soft);
+  --color-cx-text: var(--cx-text);
+  --color-cx-text-strong: var(--cx-text-strong);
+  --color-cx-text-2: var(--cx-text-2);
+  --color-cx-muted: var(--cx-muted);
+  --color-cx-faint: var(--cx-faint);
+
+  --color-cx-orange: var(--cx-orange);
+  --color-cx-orange-hover: var(--cx-orange-hover);
+  --color-cx-orange-text: var(--cx-orange-text);
+  --color-cx-on-orange: var(--cx-on-orange);
+  --color-cx-paper: var(--cx-paper);
+
+  --color-cx-batch-1: var(--cx-batch-1);
+  --color-cx-batch-2: var(--cx-batch-2);
+  --color-cx-batch-3: var(--cx-batch-3);
+  --color-cx-new: var(--cx-new);
+
+  --color-cx-accept: var(--cx-accept);
+  --color-cx-accept-text: var(--cx-accept-text);
+  --color-cx-investigate: var(--cx-investigate);
+  --color-cx-investigate-text: var(--cx-investigate-text);
+  --color-cx-reject: var(--cx-reject);
+  --color-cx-reject-text: var(--cx-reject-text);
+
+  --color-cx-phase-si: var(--cx-phase-si);
+  --color-cx-phase-pore: var(--cx-phase-pore);
+  --color-cx-phase-binder: var(--cx-phase-binder);
+  --color-cx-phase-graphite: var(--cx-phase-graphite);
+
+  --radius-cx-control: var(--cx-r-control);
+  --radius-cx-card: var(--cx-r-card);
+  --radius-cx-hero: var(--cx-r-hero);
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background: var(--cx-bg);
+  }
+
+  a {
+    color: var(--cx-orange-text);
+  }
+  a:hover {
+    color: #ffb98a;
+  }
+}
+
+@layer components {
+/* Numbers Catalyst filled into guide text (Compare-Guided): a value chip and a tile chip. */
+.chip-num,
+.chip-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 1px;
+  border-radius: 7px;
+  font: 500 0.86em var(--cx-mono);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+.chip-num {
+  padding: 1px 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  color: var(--cx-text-strong);
+  cursor: help;
+}
+.chip-tile {
+  padding: 1px 7px 1px 2px;
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  color: var(--cx-investigate-text);
+  text-decoration: none;
+}
+.chip-tile:hover {
+  color: #fef3c7;
+}
+.chip-tile img {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  object-fit: cover;
+  display: block;
+}
+.tag-claude {
+  font: 500 10px var(--cx-mono);
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 154, 92, 0.45);
+  color: #ffb27f;
+}
+
+/* Walkthrough: the current section is ringed, the rest dimmed. */
+.tour-section {
+  border-radius: 22px;
+  transition: opacity 0.25s, box-shadow 0.25s, filter 0.25s;
+}
+.tour-on {
+  box-shadow: 0 0 0 2px rgba(246, 245, 242, 0.6), 0 0 0 10px rgba(246, 245, 242, 0.06);
+}
+.tour-off {
+  opacity: 0.25;
+  filter: saturate(0.3);
+}
+
+/* Working-state pulse (Identify "analyzing" scan line). */
+@keyframes cxpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.scan {
+  animation: cxpulse 1.6s ease-in-out infinite;
+}
+
+/* Identify: no stage events (older backend) -> the line sweeps on a loop instead of parking. */
+@keyframes cxsweep {
+  from {
+    left: 0%;
+  }
+  to {
+    left: 100%;
+  }
+}
+.sweep {
+  animation: cxsweep 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes cxspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: cxspin 0.9s linear infinite;
+}
+/* Audit: the parody GENERATE LAWSUIT button. */
+.lawsuit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 68px;
+  border: 0;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ef4444, #dc2626 55%, #b91c1c);
+  color: #fff;
+  font: 700 18px var(--cx-mono);
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 0 #7f1d1d, 0 14px 34px -10px rgba(220, 38, 38, 0.85);
+  transition: transform 0.08s, box-shadow 0.08s, filter 0.15s;
+}
+.lawsuit-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.lawsuit-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 0 #7f1d1d, 0 6px 18px -8px rgba(220, 38, 38, 0.85);
+}
+.lawsuit-btn:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 3px;
+}
+.lawsuit-btn:disabled {
+  cursor: progress;
+}
+@keyframes cxsiren {
+  0%,
+  100% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 0 #7f1d1d, 0 0 0 0 rgba(239, 68, 68, 0.55);
+  }
+  50% {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 4px 0 #7f1d1d, 0 0 0 14px rgba(239, 68, 68, 0);
+  }
+}
+.lawsuit-run {
+  animation: cxsiren 0.9s ease-out infinite;
+}
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin,
+  .scan,
+  .sweep,
+  .lawsuit-run {
+    animation: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.animate-rise {
+  animation: rise 0.4s ease-out both;
+}
+
+/* Print: the batch passport only, full width on white paper. */
+@media print {
+  body,
+  .cx {
+    background: #fff !important;
+    background-image: none !important;
+  }
+  .print-hidden {
+    display: none !important;
+  }
+  .print-block {
+    display: block !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .passport {
+    box-shadow: none !important;
+    margin: 0 auto;
+    max-width: 720px;
+  }
+  .passport .mono {
+    word-break: break-all;
+  }
+}

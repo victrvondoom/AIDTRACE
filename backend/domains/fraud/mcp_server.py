@@ -5,10 +5,9 @@ Run:  python -m app.mcp_server        (stdio transport)
 Exposed: read tools plus propose_freeze. Approval and execution are deliberately NOT exposed over MCP,
 so an external agent can propose an action but cannot carry it out.
 """
-from mcp.server.fastmcp import FastMCP
-
 from domains.fraud.store import GraphStore
 from domains.fraud.tools import GraphTools
+from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("track1-fraud-graph")
 _tools: GraphTools | None = None

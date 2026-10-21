@@ -16,16 +16,16 @@ import uuid
 from typing import Any
 
 import structlog
+from domains.fraud import actions, config, policy, seed
+from domains.fraud.investigator import Investigator
+from domains.fraud.store import GraphStore
+from domains.fraud.tools import GraphTools
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 
 from api.dependencies import CurrentUserDep, SettingsDep, require_role
 from api.routers.resolveai import _site_for_user
 from api.services import tenant
-from domains.fraud import actions, config, policy, seed
-from domains.fraud.investigator import Investigator
-from domains.fraud.store import GraphStore
-from domains.fraud.tools import GraphTools
 
 log = structlog.get_logger(__name__)
 router = APIRouter()

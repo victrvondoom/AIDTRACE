@@ -11,7 +11,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from .agents import run_agent
@@ -22,7 +22,7 @@ from .trace import Trace
 from .workflow import TaskSpec, Workflow, render_input, validate_workflow
 
 
-class TaskState(str, Enum):
+class TaskState(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCEEDED = "SUCCEEDED"

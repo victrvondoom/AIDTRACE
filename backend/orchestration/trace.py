@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 REDACTED = "[REDACTED]"
@@ -29,7 +29,7 @@ class Trace:
     def record(self, event_type: str, **data: Any) -> Event:
         event = Event(
             seq=len(self._events) + 1,
-            at=datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+            at=datetime.now(UTC).isoformat(timespec="milliseconds"),
             type=event_type,
             data={key: self._scrub(value) for key, value in data.items() if value is not None},
         )

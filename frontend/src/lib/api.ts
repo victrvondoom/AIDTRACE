@@ -167,6 +167,14 @@ export function expireSession(): void {
   endSession(true);
 }
 
+/** Hard navigation to the sign-in page. A full load is deliberate: it drops every in-memory token and cache, and this module runs outside React, where no
+ *  router exists to push a client-side route. */
+function sendToLogin(): void {
+  if (typeof window === "undefined") return;
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- full load required, see sendToLogin's note
+  window.location.assign("/login");
+}
+
 function endSession(keepOffline: boolean): void {
   if (typeof window === "undefined") return;
   let token: string | null = null;
@@ -261,14 +269,14 @@ export async function postJson<T>(path: string, body: unknown, timeoutMs = WRITE
     if (!refreshed) {
       // clear session and redirect — no router available outside components
       expireSession();
-      if (typeof window !== "undefined") window.location.href = "/login";
+      sendToLogin();
       throw new Error(`${path} → HTTP 401`);
     }
     res = await makeReq(getToken());
   }
   if (res.status === 401) {
     expireSession();
-    if (typeof window !== "undefined") window.location.assign("/login");
+    sendToLogin();
   }
   if (!res.ok) throw new Error(`${path} → HTTP ${res.status}`);
   return (await res.json()) as T;
@@ -302,7 +310,7 @@ async function postSse(
   });
   if (res.status === 401) {
     expireSession();
-    if (typeof window !== "undefined") window.location.assign("/login");
+    sendToLogin();
   }
   if (!res.ok) throw new Error(`${path} → HTTP ${res.status}`);
   if (!res.body) throw new Error(`${path} → no response body to stream`);
@@ -529,14 +537,14 @@ async function getJson<T>(path: string, timeoutMs = 4000, requireAuth = false): 
   if (res.status === 401 && sentToken) {
     if (!await refreshAccessToken()) {
       expireSession();
-      if (typeof window !== "undefined") window.location.assign("/login");
+      sendToLogin();
       throw new Error(`${path} → HTTP 401`);
     }
     res = await makeRequest();
   }
   if (res.status === 401 && sentToken) {
     expireSession();
-    if (typeof window !== "undefined") window.location.assign("/login");
+    sendToLogin();
   }
   if (!res.ok) throw new Error(`${path} → HTTP ${res.status}`);
   return (await res.json()) as T;
