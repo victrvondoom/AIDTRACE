@@ -64,7 +64,7 @@ opentelemetry-instrumentation-httpx==0.49b0
 # needs protobuf 5. Raising THIS one package moves protobuf to 5.x with qdrant-client and
 # temporalio untouched — temporalio declares `protobuf>=3.20` with no upper bound.
 # Without the pin a future resolve can silently pick an old grpcio-tools and re-break the chain.
-grpcio-tools>=1.66
+grpcio-tools>=1.84.0
 
 # --- PDF Processing ---
 PyMuPDF==1.24.5
