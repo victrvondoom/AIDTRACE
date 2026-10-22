@@ -6,42 +6,42 @@
 # advisories (fixed in starlette 1.3.1). 0.135.1 is the newest fastapi that still accepts the
 # pinned pydantic 2.7.4 (0.135.2 wants >=2.9), and it lets starlette float. The explicit floor
 # below stops a future resolve from sliding back under the fixes.
-fastapi==0.135.1
+fastapi==0.146.0
 starlette>=1.3.1
-uvicorn[standard]==0.30.1
+uvicorn[standard]==0.54.0
 python-multipart==0.0.32
-httpx==0.27.0
+httpx==0.28.1
 
 # --- Config & Validation ---
-pydantic==2.7.4
-pydantic-settings==2.3.4
+pydantic==2.14.1
+pydantic-settings==2.16.0
 python-dotenv==1.2.4
 
 # --- Database Clients ---
 neo4j==5.21.0
-qdrant-client==1.9.1
+qdrant-client==1.19.1
 elasticsearch==8.13.1
 redis==5.0.6
 # FalkorDB client for the Evidence Drift graph. 1.0.10 is the newest release whose redis bound
 # (>=5.0.1,<6) accepts the redis==5.0.6 pin above; 1.2+ needs redis 6/7/8 and would move Celery's
 # transport. See docs/integration/DEPENDENCY_CONFLICTS.md.
-falkordb==1.0.10
-supabase==2.5.3
+falkordb==1.8.0
+supabase==2.33.0
 
 # --- Async Task Queue ---
-celery==5.4.0
+celery==5.6.3
 
 # --- Durable Workflows ---
-temporalio==1.6.0
+temporalio==1.34.0
 
 # --- HTTP / Async ---
-aiohttp==3.14.4
+aiohttp==3.14.5
 anyio==4.15.1
 
 # --- AIDTRACE agent (Claude reasoning) ---
 # Imported lazily by api/services/aidtrace_agent/provider.py. With no key or the switch off nothing is
 # imported, so this pin does not make the key a requirement. Bump deliberately, with the tests run.
-anthropic==1.14.0
+anthropic==1.15.0
 
 # --- Observability ---
 # OTEL core + instrumentation move as a matched pair (1.x <-> 0.xxbN). Upgrade all six together.
@@ -51,12 +51,12 @@ anthropic==1.14.0
 # removes — so the `setuptools` cap in the Testing section was load-bearing, not stale as
 # previously assumed, and lifting it alone crashed `api.main` on import.
 # 0.49b0 is the first release that dropped `pkg_resources`, which is what unpins setuptools.
-opentelemetry-api==1.28.0
-opentelemetry-sdk==1.28.0
-opentelemetry-exporter-otlp-proto-http==1.28.0
-opentelemetry-instrumentation-fastapi==0.49b0
-opentelemetry-instrumentation-redis==0.49b0
-opentelemetry-instrumentation-httpx==0.49b0
+opentelemetry-api==1.45.1
+opentelemetry-sdk==1.45.1
+opentelemetry-exporter-otlp-proto-http==1.45.1
+opentelemetry-instrumentation-fastapi==0.66b1
+opentelemetry-instrumentation-redis==0.66b1
+opentelemetry-instrumentation-httpx==0.66b1
 
 # Transitive via qdrant-client, pinned explicitly because it is the linchpin of the protobuf
 # constraint. qdrant-client asks only for `grpcio-tools>=1.41.0`, and pip was resolving to 1.62.3,
@@ -67,7 +67,7 @@ opentelemetry-instrumentation-httpx==0.49b0
 grpcio-tools>=1.66
 
 # --- PDF Processing ---
-PyMuPDF==1.24.5
+PyMuPDF==1.28.2
 
 # --- Spreadsheet ingestion (.xlsx/.ods: work-order exports, asset registries) ---
 # Pure-python, read-only streaming. Hand-rolling zip+XML would silently mangle date
@@ -105,8 +105,8 @@ setuptools>=84.0.0
 # GreenChain engines (migrated; pins match the versions the models were trained with)
 catboost==1.2.10
 xgboost==2.1.1
-scikit-learn==1.5.0
+scikit-learn==1.9.1
 pandas==2.2.2
-joblib==1.4.2
-beautifulsoup4==4.12.3
+joblib==1.6.0
+beautifulsoup4==4.15.0
 # optional live discovery: dedalus-labs (needs provider keys; absent = NOT_CONNECTED)
